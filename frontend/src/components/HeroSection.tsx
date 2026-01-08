@@ -16,10 +16,10 @@ const HeroSection = () => {
               <br />
               <span className="italic">built for you.</span>
             </h1>
-            
+
             <p className="text-lg md:text-xl text-hero-foreground/80 max-w-lg">
-              Join 70M+ people using LinkHub for their link in bio. One link to help you 
-              share everything you create, curate and sell from your Instagram, TikTok, 
+              Join 70M+ people using tapvisit for their link in bio. One link to help you
+              share everything you create, curate and sell from your Instagram, TikTok,
               Twitter, YouTube and other social media profiles.
             </p>
 
@@ -27,7 +27,7 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4 max-w-md">
               <div className="flex-1 relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-hero-foreground/60 font-medium">
-                  linkhub.me/
+                  tapvisit.me/
                 </span>
                 <input
                   type="text"
@@ -54,7 +54,7 @@ const HeroSection = () => {
                   <h3 className="font-bold text-lg">@creative</h3>
                   <p className="text-sm text-muted-foreground text-center">Digital creator & artist</p>
                 </div>
-                
+
                 <div className="space-y-3 mt-6">
                   {["My Portfolio", "Shop Prints", "YouTube Channel", "Newsletter"].map((link, i) => (
                     <div key={i} className="w-full py-3 px-4 bg-secondary rounded-xl text-center text-sm font-medium hover:scale-105 transition-transform cursor-pointer">

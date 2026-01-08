@@ -21,7 +21,7 @@ const Navbar = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-hero-foreground" />
-              <span className="text-xl font-bold text-foreground">LinkHub</span>
+              <span className="text-xl font-bold text-foreground">tapvisit</span>
             </Link>
 
             {/* Desktop Navigation */}

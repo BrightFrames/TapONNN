@@ -3,7 +3,12 @@ import { Sparkles, Twitter, Instagram, Youtube, Linkedin } from "lucide-react";
 
 const Footer = () => {
   const footerLinks = {
-    Product: ["Features", "Pricing", "Templates", "Integrations"],
+    Product: [
+      { name: "Features", href: "#" },
+      { name: "Pricing", href: "/pricing" },
+      { name: "Templates", href: "#" },
+      { name: "Integrations", href: "#" },
+    ],
     Company: ["About", "Blog", "Careers", "Press"],
     Resources: ["Help Center", "Community", "Developers", "Status"],
     Legal: ["Privacy", "Terms", "Cookies", "Licenses"],
@@ -24,7 +29,7 @@ const Footer = () => {
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <Sparkles className="w-6 h-6 text-primary" />
-              <span className="text-xl font-bold text-card">LinkHub</span>
+              <span className="text-xl font-bold text-card">tapvisit</span>
             </Link>
             <p className="text-card/60 text-sm">
               The only link you'll ever need to share everything.
@@ -36,16 +41,29 @@ const Footer = () => {
             <div key={category}>
               <h4 className="font-semibold text-card mb-4">{category}</h4>
               <ul className="space-y-2">
-                {links.map((link) => (
-                  <li key={link}>
-                    <Link
-                      to="#"
-                      className="text-card/60 hover:text-primary transition-colors text-sm"
-                    >
-                      {link}
-                    </Link>
-                  </li>
-                ))}
+                {links.map((link) => {
+                  const linkName = typeof link === "string" ? link : link.name;
+                  const linkHref = typeof link === "string" ? "#" : link.href;
+                  return (
+                    <li key={linkName}>
+                      {linkHref.startsWith("#") ? (
+                        <a
+                          href={linkHref}
+                          className="text-card/60 hover:text-primary transition-colors text-sm"
+                        >
+                          {linkName}
+                        </a>
+                      ) : (
+                        <Link
+                          to={linkHref}
+                          className="text-card/60 hover:text-primary transition-colors text-sm"
+                        >
+                          {linkName}
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
@@ -54,9 +72,9 @@ const Footer = () => {
         {/* Bottom */}
         <div className="border-t border-card/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-card/40 text-sm">
-            © 2024 LinkHub. All rights reserved.
+            © 2024 tapvisit. All rights reserved.
           </p>
-          
+
           <div className="flex items-center gap-4">
             {socialLinks.map((social, i) => (
               <a

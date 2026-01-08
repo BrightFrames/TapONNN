@@ -15,7 +15,7 @@ const FeatureSection = () => {
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-share-foreground" />
                   <span className="text-share-foreground font-bold text-lg italic">BILLIE</span>
                 </div>
-                
+
                 <div className="space-y-3 mt-4">
                   <div className="w-full py-3 px-4 bg-share-foreground/20 rounded-xl flex items-center gap-3">
                     <div className="w-8 h-8 bg-primary rounded-lg" />
@@ -60,12 +60,12 @@ const FeatureSection = () => {
           {/* Right - Content */}
           <div className="space-y-8 order-1 lg:order-2">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-feature-foreground italic">
-              Create and customize your LinkHub in minutes
+              Create and customize your tapvisit in minutes
             </h2>
-            
+
             <p className="text-lg text-feature-foreground/80 max-w-lg">
-              Connect all your content across social media, websites, stores and more in 
-              one link in bio. Customize every detail or let LinkHub automatically enhance 
+              Connect all your content across social media, websites, stores and more in
+              one link in bio. Customize every detail or let tapvisit automatically enhance
               it to match your brand and drive more clicks.
             </p>
 

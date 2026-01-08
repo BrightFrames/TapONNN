@@ -16,12 +16,12 @@ const ShareSection = () => {
           {/* Left - Content */}
           <div className="space-y-8">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-share-foreground italic">
-              Share your LinkHub anywhere you like!
+              Share your tapvisit anywhere you like!
             </h2>
-            
+
             <p className="text-lg text-share-foreground/80 max-w-lg">
-              Add your unique LinkHub URL to all the platforms and places you find your 
-              audience. Then use your QR code to drive your offline traffic back to your 
+              Add your unique tapvisit URL to all the platforms and places you find your
+              audience. Then use your QR code to drive your offline traffic back to your
               link in bio.
             </p>
 
@@ -47,7 +47,7 @@ const ShareSection = () => {
                   <div className="flex-1 flex items-center justify-center">
                     <card.icon className="w-16 h-16 text-card" />
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-primary rounded-full" />
                     <div className="flex-1">
