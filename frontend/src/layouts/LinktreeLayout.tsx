@@ -10,10 +10,16 @@ import {
     BarChart3,
     Zap,
     Bell,
-    Megaphone
+    Megaphone,
+    ChevronDown
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 const NavItem = ({ icon: Icon, label, active = false, badge }: { icon: any, label: string, active?: boolean, badge?: string }) => (
     <div className={`
@@ -48,18 +54,32 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
                         <img src="/logotap2.png" alt="Tap2" className="w-8 h-8" />
                     </div>
 
-                    {/* Menu Group 1 */}
+                    {/* Menu Group 1 - Collapsible */}
+                    <Collapsible defaultOpen className="mb-6 space-y-1">
+                        <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-gray-900 bg-[#E8E6E1] rounded-lg group hover:bg-[#E0DED9] transition-colors">
+                            <div className="flex items-center gap-2">
+                                <LayoutGrid className="w-4 h-4" />
+                                <span>My Tap2</span>
+                            </div>
+                            <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+
+                        <CollapsibleContent className="space-y-1 pt-1">
+                            <div className="pl-0">
+                                <div onClick={() => navigate('/dashboard')}>
+                                    <NavItem icon={List} label="Links" active={location.pathname === '/dashboard'} />
+                                </div>
+                                <div onClick={() => navigate('/shop')}>
+                                    <NavItem icon={Store} label="Shop" active={location.pathname === '/shop'} />
+                                </div>
+                                <div onClick={() => navigate('/design')}>
+                                    <NavItem icon={Palette} label="Design" active={location.pathname === '/design'} />
+                                </div>
+                            </div>
+                        </CollapsibleContent>
+                    </Collapsible>
+
                     <div className="space-y-1 mb-6">
-                        <h3 className="text-xs font-semibold text-gray-500 px-3 mb-2 flex items-center justify-between">
-                            My Tap2
-                        </h3>
-                        <div onClick={() => navigate('/dashboard')}>
-                            <NavItem icon={List} label="Links" active={location.pathname === '/dashboard'} />
-                        </div>
-                        <NavItem icon={Store} label="Shop" />
-                        <div onClick={() => navigate('/design')}>
-                            <NavItem icon={Palette} label="Design" active={location.pathname === '/design'} />
-                        </div>
                         <NavItem icon={Users} label="Join community" />
                     </div>
 

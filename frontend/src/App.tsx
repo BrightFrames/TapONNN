@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Design from "./pages/Design";
+import Shop from "./pages/Shop";
 import Overview from "./pages/Overview";
 import { AuthProvider } from "./contexts/AuthContext";
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/overview" element={<Overview />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/shop" element={<Shop />} />
             <Route path="/design" element={<Design />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
