@@ -70,7 +70,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
             {/* Sidebar */}
             <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col fixed h-full z-10 hidden md:flex">
                 <div className="p-6">
-                    <h1 className="text-2xl font-bold tracking-tight">tapvisit</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">Tap2</h1>
                 </div>
 
                 <nav className="flex-1 px-4 space-y-1 overflow-y-auto">

@@ -1,99 +1,227 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import LinkCard from "@/components/LinkCard";
-import PhonePreview from "@/components/PhonePreview";
 import { Button } from "@/components/ui/button";
-import { Plus, Zap, Share } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+    Plus,
+    Sparkles,
+    Share2,
+    Copy,
+    ExternalLink,
+    Link2,
+    Smartphone,
+    Instagram,
+    Globe
+} from "lucide-react";
 
 interface Link {
     id: string;
     title: string;
     url: string;
     isActive: boolean;
+    clicks?: number;
 }
 
 const Dashboard = () => {
-    // Mock Data State
-    const [links, setLinks] = useState<Link[]>([
-        { id: '1', title: 'Instagram', url: 'https://instagram.com/sourabh_upadhyay', isActive: true },
-    ]);
+    const { user, links: authLinks, updateLinks } = useAuth();
+    const [links, setLinks] = useState<Link[]>(authLinks);
+
+    // Sync with AuthContext
+    useEffect(() => {
+        setLinks(authLinks);
+    }, [authLinks]);
+
+    const userName = user?.name || "Creator";
+    const username = user?.username || "user";
+    const userInitial = userName[0]?.toUpperCase() || "U";
 
     const addLink = () => {
         const newLink: Link = {
             id: Date.now().toString(),
-            title: 'Title',
+            title: 'New Link',
             url: '',
-            isActive: true
+            isActive: true,
+            clicks: 0
         };
-        setLinks([newLink, ...links]);
+        const newLinks = [newLink, ...links];
+        setLinks(newLinks);
+        updateLinks(newLinks);
     };
 
     const updateLink = (id: string, field: keyof Link, value: any) => {
-        setLinks(links.map(l => l.id === id ? { ...l, [field]: value } : l));
+        const newLinks = links.map(l => l.id === id ? { ...l, [field]: value } : l);
+        setLinks(newLinks);
+        updateLinks(newLinks);
     };
 
     const deleteLink = (id: string) => {
-        setLinks(links.filter(l => l.id !== id));
+        const newLinks = links.filter(l => l.id !== id);
+        setLinks(newLinks);
+        updateLinks(newLinks);
+    };
+
+    const copyProfileLink = () => {
+        navigator.clipboard.writeText(`tap2.me/${username}`);
     };
 
     return (
         <LinktreeLayout>
             <div className="flex h-full">
-                {/* Center Column: Editor */}
-                <div className="flex-1 max-w-3xl mx-auto py-10 px-4 md:px-8 overflow-y-auto">
-                    <div className="flex justify-between items-center mb-8">
-                        <h1 className="text-2xl font-bold">Links</h1>
-                        <div className="flex gap-3">
-                            <Button variant="outline" className="rounded-full gap-2 h-10 px-6 font-medium">
-                                <Zap className="w-4 h-4" /> Enhance
-                            </Button>
+                {/* Main Editor */}
+                <div className="flex-1 py-8 px-6 md:px-10 overflow-y-auto">
+                    <div className="max-w-2xl mx-auto">
 
-                            <div className="relative">
-                                <div className="bg-gray-100 rounded-full px-4 py-2 text-sm text-gray-500 pr-10 border border-gray-200">
-                                    linktr.ee/sourbhupadhyay
-                                </div>
-                                <Button size="icon" variant="ghost" className="absolute right-1 top-1 h-7 w-7 rounded-full">
-                                    <Share className="w-3 h-3" />
+                        {/* Header */}
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900">Links</h1>
+                                <p className="text-gray-500 text-sm mt-1">Manage your profile links</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50">
+                                    <Sparkles className="w-4 h-4" /> Enhance
                                 </Button>
+
+                                <div className="relative group">
+                                    <div className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-full px-4 py-2 text-sm text-gray-600 pr-10 border border-gray-200 cursor-pointer">
+                                        tap2.me/{username}
+                                    </div>
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="absolute right-1 top-1 h-7 w-7 rounded-full hover:bg-gray-300"
+                                        onClick={copyProfileLink}
+                                    >
+                                        <Copy className="w-3.5 h-3.5" />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Add Link Block */}
-                    <Button
-                        onClick={addLink}
-                        className="w-full bg-[#7535f5] hover:bg-[#6025d5] text-white rounded-full h-12 text-base font-semibold mb-10 shadow-lg shadow-purple-200 transition-all hover:scale-[1.01]"
-                    >
-                        <Plus className="w-5 h-5 mr-2" /> Add
-                    </Button>
+                        {/* Add Link Button */}
+                        <Button
+                            onClick={addLink}
+                            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl h-14 text-base font-semibold mb-8 shadow-lg shadow-purple-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-2"
+                        >
+                            <Plus className="w-5 h-5" /> Add New Link
+                        </Button>
 
-                    {/* Empty State or List */}
-                    <div className="space-y-4 pb-20">
-                        {links.length === 0 && (
-                            <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                                <h3 className="text-lg font-medium text-gray-600">You don't have any links yet</h3>
-                                <p className="text-gray-400 mt-2">Click the Add button to get started</p>
-                            </div>
-                        )}
-                        {links.map(link => (
-                            <LinkCard
-                                key={link.id}
-                                link={link}
-                                onUpdate={updateLink}
-                                onDelete={deleteLink}
-                            />
-                        ))}
+                        {/* Links List */}
+                        <div className="space-y-4 pb-20">
+                            {links.length === 0 && (
+                                <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-white rounded-2xl border-2 border-dashed border-gray-200">
+                                    <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        <Link2 className="w-8 h-8 text-purple-600" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-2">No links yet</h3>
+                                    <p className="text-gray-500 text-sm mb-6">Add your first link to get started</p>
+                                    <Button onClick={addLink} variant="outline" className="rounded-full gap-2">
+                                        <Plus className="w-4 h-4" /> Add your first link
+                                    </Button>
+                                </div>
+                            )}
+                            {links.map(link => (
+                                <LinkCard
+                                    key={link.id}
+                                    link={link}
+                                    onUpdate={updateLink}
+                                    onDelete={deleteLink}
+                                />
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                {/* Right Column: Preview (Hidden on small screens) */}
-                <div className="w-[450px] border-l border-gray-200 hidden xl:flex items-center justify-center bg-white relative">
-                    <div className="sticky top-24">
-                        <PhonePreview
-                            username="sourabhupadhyay"
-                            links={links}
-                        />
+                {/* Phone Preview - Right Side */}
+                <div className="w-[400px] border-l border-gray-100 hidden xl:flex items-center justify-center bg-gradient-to-b from-gray-50 to-white relative p-8">
+                    <div className="sticky top-8">
+                        {/* Phone Frame */}
+                        <div className="w-[300px] h-[620px] bg-black rounded-[3rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">
+                            {/* Notch */}
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-2xl z-20" />
+
+                            {/* Status Bar */}
+                            <div className="h-8 w-full bg-[#132c25] flex items-center justify-between px-8 text-[10px] text-white font-medium pt-1">
+                                <span>9:41</span>
+                                <div className="flex gap-1.5 items-center">
+                                    <div className="flex gap-0.5">
+                                        <div className="w-1 h-1 bg-white rounded-full" />
+                                        <div className="w-1 h-1 bg-white rounded-full" />
+                                        <div className="w-1 h-1.5 bg-white rounded-full" />
+                                        <div className="w-1 h-2 bg-white rounded-full" />
+                                    </div>
+                                    <span className="text-[8px]">5G</span>
+                                    <div className="w-5 h-2.5 border border-white rounded-sm relative">
+                                        <div className="absolute inset-0.5 right-1 bg-white rounded-[1px]" />
+                                        <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-1 bg-white rounded-r" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Screen Content */}
+                            <div className="h-full w-full bg-[#132c25] overflow-y-auto text-white p-6 pb-20">
+                                {/* Share Button */}
+                                <div className="absolute top-12 right-6 w-8 h-8 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center">
+                                    <ExternalLink className="w-4 h-4 text-white/70" />
+                                </div>
+
+                                <div className="flex flex-col items-center mt-8 space-y-3">
+                                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
+                                        <AvatarImage src={user?.avatar} />
+                                        <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
+                                            {userInitial}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <h2 className="text-xl font-bold tracking-tight">@{username}</h2>
+                                    <div className="flex gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer">
+                                            <Instagram className="w-4 h-4" />
+                                        </div>
+                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer">
+                                            <Globe className="w-4 h-4" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 space-y-3">
+                                    {links.filter(l => l.isActive).map((link) => (
+                                        <a
+                                            key={link.id}
+                                            href={link.url || '#'}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="block w-full py-4 px-6 bg-[#e9f6e3] text-[#132c25] rounded-full text-center font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform text-sm shadow-lg"
+                                        >
+                                            {link.title}
+                                        </a>
+                                    ))}
+                                    {links.filter(l => l.isActive).length === 0 && (
+                                        <div className="text-center text-white/40 text-sm py-8">
+                                            Add links to see them here
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Footer */}
+                                <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6">
+                                    <button className="bg-white text-black px-5 py-2.5 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-shadow">
+                                        Join @{username} on Tap2
+                                    </button>
+                                    <div className="text-[10px] text-white/30">Powered by Tap2</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Preview Label */}
+                        <div className="text-center mt-6">
+                            <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
+                                <Smartphone className="w-4 h-4" /> Live Preview
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">Changes sync in real-time</p>
+                        </div>
                     </div>
                 </div>
             </div>

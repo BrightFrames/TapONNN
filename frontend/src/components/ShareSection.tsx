@@ -16,11 +16,11 @@ const ShareSection = () => {
           {/* Left - Content */}
           <div className="space-y-8">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-share-foreground italic">
-              Share your tapvisit anywhere you like!
+              Share your Tap2 anywhere you like!
             </h2>
 
             <p className="text-lg text-share-foreground/80 max-w-lg">
-              Add your unique tapvisit URL to all the platforms and places you find your
+              Add your unique Tap2 URL to all the platforms and places you find your
               audience. Then use your QR code to drive your offline traffic back to your
               link in bio.
             </p>

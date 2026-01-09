@@ -9,6 +9,9 @@ import NotFound from "./pages/NotFound";
 import Template from "./pages/Template";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics";
+import Design from "./pages/Design";
+import Overview from "./pages/Overview";
 import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -26,6 +29,9 @@ const App = () => (
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/overview" element={<Overview />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/design" element={<Design />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

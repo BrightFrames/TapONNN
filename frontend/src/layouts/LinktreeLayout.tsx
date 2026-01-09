@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
     LayoutGrid,
     List,
@@ -26,6 +27,9 @@ const NavItem = ({ icon: Icon, label, active = false, badge }: { icon: any, labe
 )
 
 const LinktreeLayout = ({ children }: { children: ReactNode }) => {
+    const location = useLocation();
+    const navigate = useNavigate();
+
     return (
         <div className="min-h-screen bg-gray-50/50 flex flex-col font-sans">
             {/* Top Banner */}
@@ -41,26 +45,32 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
                 <aside className="w-64 bg-white border-r border-gray-100 hidden lg:flex flex-col py-6 pl-6 pr-2 h-[calc(100vh-48px)] sticky top-0 overflow-y-auto">
                     {/* User */}
                     <div className="flex items-center gap-3 mb-8 px-2">
-                        <Button variant="ghost" size="icon" className="rounded-full w-8 h-8">
-                            <span className="font-bold text-xl">🌲</span>
-                        </Button>
+                        <img src="/logotap2.png" alt="Tap2" className="w-8 h-8" />
                     </div>
 
                     {/* Menu Group 1 */}
                     <div className="space-y-1 mb-6">
                         <h3 className="text-xs font-semibold text-gray-500 px-3 mb-2 flex items-center justify-between">
-                            My Linktree
+                            My Tap2
                         </h3>
-                        <NavItem icon={List} label="Links" active />
+                        <div onClick={() => navigate('/dashboard')}>
+                            <NavItem icon={List} label="Links" active={location.pathname === '/dashboard'} />
+                        </div>
                         <NavItem icon={Store} label="Shop" />
-                        <NavItem icon={Palette} label="Design" />
+                        <div onClick={() => navigate('/design')}>
+                            <NavItem icon={Palette} label="Design" active={location.pathname === '/design'} />
+                        </div>
                         <NavItem icon={Users} label="Join community" />
                     </div>
 
                     {/* Menu Group 2 */}
                     <div className="space-y-1 mb-6">
-                        <NavItem icon={LayoutGrid} label="Overviw" />
-                        <NavItem icon={BarChart3} label="Analytics" />
+                        <div onClick={() => navigate('/overview')}>
+                            <NavItem icon={LayoutGrid} label="Overview" active={location.pathname === '/overview'} />
+                        </div>
+                        <div onClick={() => navigate('/analytics')}>
+                            <NavItem icon={BarChart3} label="Insights" active={location.pathname === '/analytics'} />
+                        </div>
                         <NavItem icon={Settings} label="Settings" />
                     </div>
 

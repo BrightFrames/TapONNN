@@ -20,8 +20,8 @@ const Navbar = () => {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-hero-foreground" />
-              <span className="text-xl font-bold text-foreground">tapvisit</span>
+              <img src="/logotap2.png" alt="Tap2" className="w-7 h-7" />
+              <span className="text-xl font-bold text-foreground">Tap2</span>
             </Link>
 
             {/* Desktop Navigation */}

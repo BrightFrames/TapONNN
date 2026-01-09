@@ -60,12 +60,12 @@ const FeatureSection = () => {
           {/* Right - Content */}
           <div className="space-y-8 order-1 lg:order-2">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-feature-foreground italic">
-              Create and customize your tapvisit in minutes
+              Create and customize your Tap2 in minutes
             </h2>
 
             <p className="text-lg text-feature-foreground/80 max-w-lg">
               Connect all your content across social media, websites, stores and more in
-              one link in bio. Customize every detail or let tapvisit automatically enhance
+              one link in bio. Customize every detail or let Tap2 automatically enhance
               it to match your brand and drive more clicks.
             </p>
 

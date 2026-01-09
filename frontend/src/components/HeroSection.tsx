@@ -18,7 +18,7 @@ const HeroSection = () => {
             </h1>
 
             <p className="text-lg md:text-xl text-hero-foreground/80 max-w-lg">
-              Join 70M+ people using tapvisit for their link in bio. One link to help you
+              Join 70M+ people using Tap2 for their link in bio. One link to help you
               share everything you create, curate and sell from your Instagram, TikTok,
               Twitter, YouTube and other social media profiles.
             </p>
@@ -27,7 +27,7 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4 max-w-md">
               <div className="flex-1 relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-hero-foreground/60 font-medium">
-                  tapvisit.me/
+                  tap2.me/
                 </span>
                 <input
                   type="text"

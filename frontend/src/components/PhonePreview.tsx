@@ -68,7 +68,7 @@ const PhonePreview = ({
                 </div>
 
                 <div className="mt-auto absolute bottom-8 w-full left-0 flex flex-col items-center gap-2">
-                    <button className="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">Join @{username} on Linktree</button>
+                    <button className="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">Join @{username} on Tap2</button>
                     <div className="text-[10px] text-white/40">Report • Privacy</div>
                 </div>
             </div>
