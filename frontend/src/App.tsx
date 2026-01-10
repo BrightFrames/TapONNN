@@ -12,7 +12,9 @@ import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Design from "./pages/Design";
 import Shop from "./pages/Shop";
+import Audience from "./pages/Audience";
 import Overview from "./pages/Overview";
+import Earnings from "./pages/Earnings";
 import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -33,6 +35,8 @@ const App = () => (
             <Route path="/overview" element={<Overview />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/shop" element={<Shop />} />
+            <Route path="/audience" element={<Audience />} />
+            <Route path="/earnings" element={<Earnings />} />
             <Route path="/design" element={<Design />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

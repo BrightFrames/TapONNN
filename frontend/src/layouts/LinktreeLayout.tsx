@@ -11,7 +11,9 @@ import {
     Zap,
     Bell,
     Megaphone,
-    ChevronDown
+    ChevronDown,
+    Coins,
+    DollarSign
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -85,8 +87,38 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
 
                     {/* Menu Group 2 */}
                     <div className="space-y-1 mb-6">
-                        <div onClick={() => navigate('/overview')}>
-                            <NavItem icon={LayoutGrid} label="Overview" active={location.pathname === '/overview'} />
+                        <Collapsible defaultOpen={location.pathname.includes('/overview') || location.pathname.includes('/earnings')} className="space-y-1">
+                            <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-lg group transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <Coins className="w-4 h-4" />
+                                    <span>Earn</span>
+                                </div>
+                                <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="space-y-1 pt-1">
+                                <div className="pl-4 border-l border-gray-100 ml-5 space-y-1">
+                                    <div onClick={() => navigate('/overview')}>
+                                        <div className={`
+                                            flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors
+                                            ${location.pathname === '/overview' ? 'text-gray-900 font-semibold bg-gray-100' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
+                                        `}>
+                                            <span className="flex-1">Overview</span>
+                                        </div>
+                                    </div>
+                                    <div onClick={() => navigate('/earnings')}>
+                                        <div className={`
+                                            flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors
+                                            ${location.pathname === '/earnings' ? 'text-gray-900 font-semibold bg-gray-100' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
+                                        `}>
+                                            <span className="flex-1">Earnings</span>
+                                            <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 border border-gray-200">$0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </CollapsibleContent>
+                        </Collapsible>
+                        <div onClick={() => navigate('/audience')}>
+                            <NavItem icon={Users} label="Audience" active={location.pathname === '/audience'} />
                         </div>
                         <div onClick={() => navigate('/analytics')}>
                             <NavItem icon={BarChart3} label="Insights" active={location.pathname === '/analytics'} />
