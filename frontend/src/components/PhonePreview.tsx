@@ -66,10 +66,34 @@ const PhonePreview = ({
                         <div className="text-center text-white/50 text-sm mt-10">Add links to see them here</div>
                     )}
                 </div>
+                <div className="mt-auto absolute bottom-8 w-full left-0 flex flex-col items-center gap-2">
+                    <button className="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">Join @{username} on Tap2</button>
+                    <div className="text-[10px] text-white/40">Report • Privacy</div>
+=======
+                <div className="relative z-10 mt-auto absolute bottom-6 w-full left-0 flex flex-col items-center gap-3">
+                    {!isShopPreview && <button className="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">Join @{username} on Linktree</button>}
+
+                    {isShopPreview && (
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="flex items-center gap-2 text-white">
+                                <span className="font-bold text-lg tracking-tight">Linktree*</span>
+                                <span className="text-base font-light opacity-80">✕</span>
+                                <span className="text-sm font-light italic opacity-90">Daniel Triendl</span>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex gap-2 text-[10px] text-white/50 font-medium">
+                        <span>Report</span>
+                        <span>•</span>
+                        <span>Privacy</span>
+                    </div>
 
                 <div className="mt-auto absolute bottom-8 w-full left-0 flex flex-col items-center gap-2">
                     <button className="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">Join @{username} on Tap2</button>
                     <div className="text-[10px] text-white/40">Report • Privacy</div>
+
+
                 </div>
             </div>
         </div>

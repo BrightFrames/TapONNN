@@ -1,13 +1,38 @@
+import { useState } from "react";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { ArrowUpRight, ArrowDownRight, MousePointerClick, Eye, Users, Clock, Globe, Smartphone, ExternalLink } from "lucide-react";
+import {
+    ArrowUpRight,
+    ArrowDownRight,
+    MousePointerClick,
+    Eye,
+    Users,
+    Clock,
+    Globe,
+    Smartphone,
+    ExternalLink,
+    Percent,
+    DollarSign,
+    Info,
+    ChevronRight,
+    ChevronDown,
+    UserPlus,
+    Instagram,
+    Lock
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Mock Data for Charts
 const chartData = [
@@ -23,7 +48,7 @@ const chartData = [
 const chartConfig = {
     views: {
         label: "Views",
-        color: "#8884d8", // Fallback, usually use CSS variables
+        color: "#8884d8",
     },
     clicks: {
         label: "Clicks",
@@ -32,20 +57,44 @@ const chartConfig = {
 };
 
 const Analytics = () => {
-    const { links } = useAuth();
+    const { user, links } = useAuth();
     const [timeRange, setTimeRange] = useState("7d");
+    const [dateRange, setDateRange] = useState("Last 7 days");
 
-    // Mock calculations or use real data if available
-    const totalViews = 15420;
-    const totalClicks = 4250;
-    const ctr = ((totalClicks / totalViews) * 100).toFixed(1);
+    // Calculate real stats from links
+    const totalClicks = links.reduce((sum, link) => sum + (link.clicks || 0), 0);
+    const totalViews = Math.round(totalClicks * 3.2); // Estimated views based on clicks
+    const ctr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : "0";
+    const clickRate = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : "0";
+    const subscribers = 34; // Mock subscriber count
+    const earnings = 0;
 
-    // Sort links by simulated performance or mock data
-    const topLinks = [
+    // Sort links by clicks for "Most clicked" section
+    const topLinks = [...links].sort((a, b) => (b.clicks || 0) - (a.clicks || 0)).slice(0, 5);
+
+    // Mock top links for the chart section
+    const mockTopLinks = [
         { title: "My Portfolio", url: "/portfolio", clicks: 1250, change: "+12%" },
         { title: "YouTube Channel", url: "youtube.com/user", clicks: 890, change: "+5%" },
         { title: "Latest Blog Post", url: "/blog/new", clicks: 650, change: "-2%" },
         { title: "Instagram", url: "instagram.com/user", clicks: 420, change: "+8%" },
+    ];
+
+    const dateOptions = [
+        { label: "Last 7 days", locked: false },
+        { label: "Last 28 days", locked: false },
+        { label: "Last 90 days", locked: true },
+        { label: "Last 365 days", locked: true },
+        { label: "Custom range", locked: false },
+    ];
+
+    // Lifetime stats
+    const lifetimeStats = [
+        { icon: Eye, value: totalViews.toLocaleString(), label: "Views" },
+        { icon: MousePointerClick, value: totalClicks.toLocaleString(), label: "Clicks" },
+        { icon: Percent, value: `${clickRate}%`, label: "Click rate" },
+        { icon: Users, value: subscribers.toString(), label: "Subscribers" },
+        { icon: DollarSign, value: `$${earnings.toFixed(2)}`, label: "Earnings" },
     ];
 
     return (
@@ -73,6 +122,21 @@ const Analytics = () => {
                         <Button variant="outline" className="rounded-full gap-2 hidden sm:flex">
                             <ExternalLink className="w-4 h-4" /> Export Data
                         </Button>
+                    </div>
+                </div>
+
+                {/* Lifetime Totals */}
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-6">Lifetime totals</h2>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                        {lifetimeStats.map((stat) => (
+                            <div key={stat.label} className="bg-gray-50 rounded-xl p-4">
+                                <stat.icon className="w-5 h-5 text-gray-400 mb-3" />
+                                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                                <div className="text-sm text-gray-500">{stat.label}</div>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
@@ -180,19 +244,19 @@ const Analytics = () => {
                                     <Button variant="ghost" size="sm" className="text-purple-600">View All</Button>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
-                                    {topLinks.map((link, idx) => (
+                                    {(topLinks.length > 0 ? topLinks : mockTopLinks).map((link, idx) => (
                                         <div key={idx} className="space-y-2">
                                             <div className="flex items-center justify-between text-sm">
                                                 <div className="font-medium text-gray-900">{link.title}</div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-bold text-gray-900">{link.clicks.toLocaleString()}</span>
-                                                    <span className={`text-xs ${link.change.startsWith('+') ? 'text-green-600' : 'text-red-500'}`}>{link.change}</span>
+                                                    <span className="font-bold text-gray-900">{(link.clicks || 0).toLocaleString()}</span>
+                                                    {link.change && <span className={`text-xs ${link.change.startsWith('+') ? 'text-green-600' : 'text-red-500'}`}>{link.change}</span>}
                                                 </div>
                                             </div>
                                             <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                                                 <div
                                                     className="h-full bg-purple-500 rounded-full"
-                                                    style={{ width: `${(link.clicks / 1500) * 100}%` }}
+                                                    style={{ width: `${((link.clicks || 0) / 1500) * 100}%` }}
                                                 />
                                             </div>
                                         </div>
@@ -200,7 +264,7 @@ const Analytics = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Device & Location (Simplified for UI Demo) */}
+                            {/* Device & Location */}
                             <div className="space-y-6">
                                 <Card className="border-gray-100 shadow-sm flex-1">
                                     <CardHeader>
@@ -257,13 +321,86 @@ const Analytics = () => {
 
                     </TabsContent>
 
-                    <TabsContent value="audience" className="min-h-[300px] flex items-center justify-center text-gray-500">
-                        Audience analytics content goes here.
+                    <TabsContent value="audience" className="space-y-6">
+                        {/* Audience Section */}
+                        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <h3 className="font-semibold text-gray-900">Audience</h3>
+                                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs">
+                                        Sample data
+                                    </Badge>
+                                </div>
+                                <ChevronRight className="w-5 h-5 text-gray-400" />
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-8">
+                                <div>
+                                    <Users className="w-5 h-5 text-gray-400 mb-2" />
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-2xl font-bold text-gray-900">3.2k</span>
+                                        <span className="text-sm text-green-600 font-medium">7% ↑</span>
+                                    </div>
+                                    <div className="text-sm text-gray-500">Total audience</div>
+                                </div>
+                                <div>
+                                    <UserPlus className="w-5 h-5 text-gray-400 mb-2" />
+                                    <div className="text-2xl font-bold text-gray-900">{subscribers}</div>
+                                    <div className="text-sm text-gray-500">Subscriber growth</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-gray-400 mb-2">Top growth tool</div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                                            📚
+                                        </div>
+                                        <div className="text-sm font-medium text-gray-900">A Buyers' and Sellers' Guide</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Visitors */}
+                        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <h3 className="font-semibold text-gray-900">Visitors</h3>
+                                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs">
+                                        Sample data
+                                    </Badge>
+                                </div>
+                                <ChevronRight className="w-5 h-5 text-gray-400" />
+                            </div>
+
+                            <div className="text-gray-600 text-sm leading-relaxed">
+                                <p>
+                                    Most commonly your visitors are based in <span className="font-semibold text-gray-900">India</span>,
+                                    care about <span className="inline-flex items-center gap-1"><span className="text-yellow-500">💡</span> People & Society</span>,
+                                    and find you on <span className="inline-flex items-center gap-1"><Instagram className="w-4 h-4 text-pink-500" /> Instagram</span> using
+                                    <span className="inline-flex items-center gap-1 ml-1"><Smartphone className="w-4 h-4" /> mobile devices</span>.
+                                </p>
+                            </div>
+
+                            {/* Mini world map placeholder */}
+                            <div className="mt-4 h-20 bg-gray-50 rounded-lg flex items-center justify-center">
+                                <Globe className="w-12 h-12 text-purple-200" />
+                            </div>
+                        </div>
                     </TabsContent>
+
                     <TabsContent value="content" className="min-h-[300px] flex items-center justify-center text-gray-500">
                         Content performance details go here.
                     </TabsContent>
                 </Tabs>
+
+                {/* Feedback */}
+                <div className="text-center py-4">
+                    <p className="text-sm text-gray-600">
+                        <span className="font-semibold">Got ideas?</span> We're listening!
+                        <a href="#" className="text-purple-600 hover:underline ml-1">Share feedback</a>
+                    </p>
+                </div>
+
             </div>
         </LinktreeLayout>
     );

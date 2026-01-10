@@ -12,7 +12,7 @@ import {
     Megaphone,
     ChevronDown,
     Coins,
-    Menu // Added Menu icon
+    Menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,28 +26,33 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 
-const NavItem = ({ icon: Icon, label, active = false, badge }: { icon: any, label: string, active?: boolean, badge?: string }) => (
-    <div className={`
-        flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors
-        ${active ? 'bg-gray-100 text-gray-900 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}
-    `}>
+const NavItem = ({ icon: Icon, label, active = false, badge, onClick }: { icon: any, label: string, active?: boolean, badge?: string, onClick?: () => void }) => (
+    <div
+        onClick={onClick}
+        className={`
+            flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors
+            ${active ? 'bg-gray-100 text-gray-900 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}
+        `}
+    >
         <Icon className={`w-4 h-4 ${active ? 'text-gray-900' : 'text-gray-500'}`} />
         <span className="flex-1">{label}</span>
         {badge && <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">{badge}</span>}
     </div>
 )
 
-const SidebarContent = ({ navigate, location, onClose }: { navigate: any, location: any, onClose?: () => void }) => {
+// Sidebar content component for reuse in desktop and mobile
+const SidebarContent = ({ navigate, location, onClose }: { navigate: (path: string) => void, location: { pathname: string }, onClose?: () => void }) => {
     const handleNav = (path: string) => {
         navigate(path);
-        if (onClose) onClose();
-    }
+        onClose?.();
+    };
 
     return (
-        <div className="flex flex-col h-full py-6 px-4 lg:px-6 overflow-y-auto">
-            {/* User */}
+        <div className="flex flex-col py-6 px-4 h-full overflow-y-auto">
+            {/* Logo */}
             <div className="flex items-center gap-3 mb-8 px-2">
                 <img src="/logotap2.png" alt="Tap2" className="w-8 h-8" />
+                <span className="font-bold text-lg">Tap2</span>
             </div>
 
             {/* Menu Group 1 - Collapsible */}
@@ -62,15 +67,9 @@ const SidebarContent = ({ navigate, location, onClose }: { navigate: any, locati
 
                 <CollapsibleContent className="space-y-1 pt-1">
                     <div className="pl-0">
-                        <div onClick={() => handleNav('/dashboard')}>
-                            <NavItem icon={List} label="Links" active={location.pathname === '/dashboard'} />
-                        </div>
-                        <div onClick={() => handleNav('/shop')}>
-                            <NavItem icon={Store} label="Shop" active={location.pathname === '/shop'} />
-                        </div>
-                        <div onClick={() => handleNav('/design')}>
-                            <NavItem icon={Palette} label="Design" active={location.pathname === '/design'} />
-                        </div>
+                        <NavItem icon={List} label="Links" active={location.pathname === '/dashboard'} onClick={() => handleNav('/dashboard')} />
+                        <NavItem icon={Store} label="Shop" active={location.pathname === '/shop'} onClick={() => handleNav('/shop')} />
+                        <NavItem icon={Palette} label="Design" active={location.pathname === '/design'} onClick={() => handleNav('/design')} />
                     </div>
                 </CollapsibleContent>
             </Collapsible>
@@ -81,43 +80,9 @@ const SidebarContent = ({ navigate, location, onClose }: { navigate: any, locati
 
             {/* Menu Group 2 */}
             <div className="space-y-1 mb-6">
-                <Collapsible defaultOpen={location.pathname.includes('/overview') || location.pathname.includes('/earnings')} className="space-y-1">
-                    <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-lg group transition-colors">
-                        <div className="flex items-center gap-3">
-                            <Coins className="w-4 h-4" />
-                            <span>Earn</span>
-                        </div>
-                        <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-1 pt-1">
-                        <div className="pl-4 border-l border-gray-100 ml-5 space-y-1">
-                            <div onClick={() => handleNav('/overview')}>
-                                <div className={`
-                                    flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors
-                                    ${location.pathname === '/overview' ? 'text-gray-900 font-semibold bg-gray-100' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
-                                `}>
-                                    <span className="flex-1">Overview</span>
-                                </div>
-                            </div>
-                            <div onClick={() => handleNav('/earnings')}>
-                                <div className={`
-                                    flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors
-                                    ${location.pathname === '/earnings' ? 'text-gray-900 font-semibold bg-gray-100' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
-                                `}>
-                                    <span className="flex-1">Earnings</span>
-                                    <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 border border-gray-200">$0.00</span>
-                                </div>
-                            </div>
-                        </div>
-                    </CollapsibleContent>
-                </Collapsible>
-                <div onClick={() => handleNav('/audience')}>
-                    <NavItem icon={Users} label="Audience" active={location.pathname === '/audience'} />
-                </div>
-                <div onClick={() => handleNav('/insights')}>
-                    <NavItem icon={BarChart3} label="Insights" active={location.pathname === '/insights'} />
-                </div>
-                <NavItem icon={Settings} label="Settings" />
+                <NavItem icon={LayoutGrid} label="Overview" onClick={() => handleNav('/overview')} />
+                <NavItem icon={BarChart3} label="Analytics" onClick={() => handleNav('/analytics')} />
+                <NavItem icon={Settings} label="Settings" onClick={() => handleNav('/settings')} />
             </div>
 
             {/* Bottom Status */}
