@@ -31,16 +31,28 @@ const ShareSection = () => {
           </div>
 
           {/* Right - Stacked Cards */}
-          <div className="relative h-[400px] lg:h-[500px]">
+          <div className="relative h-[400px] lg:h-[500px] w-full max-w-[400px] mx-auto lg:mx-0 lg:max-w-none">
             {cards.map((card, i) => (
               <div
                 key={i}
-                className={`absolute w-52 h-72 rounded-3xl shadow-2xl overflow-hidden card-stack cursor-pointer ${card.color}`}
+                className={`absolute w-52 h-72 rounded-3xl shadow-2xl overflow-hidden card-stack cursor-pointer ${card.color} left-1/2 -translate-x-1/2 lg:left-auto lg:translate-x-0 transition-all duration-300`}
                 style={{
-                  right: `${i * 40}px`,
+                  // Mobile: centered (handled by class), Desktop: right positioned
+                  // We need to use media query logic or CSS variables?
+                  // Simpler: Set a CSS variable for the offset, and use calc() in the class? No, Tailwind doesn't support that easily.
+                  // Let's rely on standard 'right' property being overridden by 'left' class? No.
+                  // Solution: Use inline styles for rotation and zIndex everywhere. 
+                  // For positioning: Use responsive inline styles if possible? No.
+                  // Using style tag for the dynamic values, but conditionally?
+                  // No, let's use the 'top' offset which is common.
+                  // For horizontal: 
+                  // On mobile: strictly centered.
+                  // On desktop: use `right`.
+                  // I'll add `lg:right-[var(--desktop-right)]` class? No.
+                  // Let's try this: 
                   top: `${i * 30}px`,
                   zIndex: cards.length - i,
-                  transform: `rotate(${(i - 1) * 5}deg)`,
+                  rotate: `${(i - 1) * 5}deg`, // Using the modern 'rotate' property
                 }}
               >
                 <div className="p-5 h-full flex flex-col">

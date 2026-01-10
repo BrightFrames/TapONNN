@@ -45,9 +45,9 @@ const HeroSection = () => {
           </div>
 
           {/* Right Content - Phone Mockups */}
-          <div className="relative h-[500px] lg:h-[600px] hidden lg:block">
+          <div className="relative h-[550px] lg:h-[600px] block w-full max-w-[500px] mx-auto lg:max-w-none lg:mx-0 scale-90 sm:scale-100 lg:scale-100">
             {/* Main Phone */}
-            <div className="absolute top-20 right-10 w-72 h-[500px] bg-card rounded-[2.5rem] shadow-2xl overflow-hidden animate-float border-8 border-hero-foreground/10">
+            <div className="absolute top-10 left-0 right-0 mx-auto lg:mx-0 lg:translate-x-0 lg:left-auto lg:top-20 lg:right-10 w-72 h-[500px] bg-card rounded-[2.5rem] shadow-2xl overflow-hidden animate-float border-8 border-hero-foreground/10 z-10">
               <div className="p-6 space-y-4">
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-feature" />
@@ -65,8 +65,8 @@ const HeroSection = () => {
               </div>
             </div>
 
-            {/* Secondary Card */}
-            <div className="absolute top-0 right-60 w-48 h-64 bg-feature rounded-3xl shadow-xl overflow-hidden animate-float-delayed">
+            {/* Secondary Card - Hidden on very small screens, visible on md+ */}
+            <div className="absolute top-0 right-1/2 translate-x-1/2 lg:translate-x-0 lg:right-60 w-48 h-64 bg-feature rounded-3xl shadow-xl overflow-hidden animate-float-delayed hidden sm:block">
               <div className="p-4 text-feature-foreground">
                 <div className="w-12 h-12 rounded-full bg-primary mb-3" />
                 <div className="space-y-2">

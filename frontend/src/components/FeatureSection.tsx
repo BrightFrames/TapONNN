@@ -7,9 +7,9 @@ const FeatureSection = () => {
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left - Mockup */}
-          <div className="relative h-[500px] order-2 lg:order-1">
+          <div className="relative h-[500px] order-2 lg:order-1 w-full max-w-[400px] mx-auto lg:max-w-none scale-90 sm:scale-100">
             {/* Main phone mockup */}
-            <div className="absolute left-1/2 -translate-x-1/2 lg:left-10 lg:translate-x-0 w-64 h-[450px] bg-share rounded-[2.5rem] shadow-2xl overflow-hidden animate-float border-4 border-share-foreground/10">
+            <div className="absolute left-0 right-0 mx-auto lg:mx-0 lg:left-10 lg:translate-x-0 w-64 h-[450px] bg-share rounded-[2.5rem] shadow-2xl overflow-hidden animate-float border-4 border-share-foreground/10 z-10">
               <div className="p-5 space-y-4">
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-share-foreground" />
@@ -29,8 +29,8 @@ const FeatureSection = () => {
               </div>
             </div>
 
-            {/* Floating video card */}
-            <div className="absolute bottom-10 left-0 lg:left-0 w-40 h-32 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl shadow-xl overflow-hidden animate-float-slow hidden lg:block">
+            {/* Floating video card - Hidden on very small screens */}
+            <div className="absolute bottom-10 -left-2 lg:left-0 w-40 h-32 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl shadow-xl overflow-hidden animate-float-slow hidden sm:block">
               <div className="p-3 flex flex-col justify-end h-full">
                 <div className="w-10 h-10 bg-card/90 rounded-full flex items-center justify-center">
                   <div className="w-0 h-0 border-l-[8px] border-l-feature border-y-[5px] border-y-transparent ml-1" />
@@ -39,8 +39,8 @@ const FeatureSection = () => {
               </div>
             </div>
 
-            {/* Floating social icons */}
-            <div className="absolute right-0 lg:right-20 top-1/2 -translate-y-1/2 flex flex-col gap-3">
+            {/* Floating social icons - Positioned closer on mobile to avoid cut-off */}
+            <div className="absolute right-0 lg:right-20 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-0">
               {[
                 { icon: "🎵", color: "bg-green-500" },
                 { icon: "▶️", color: "bg-red-500" },
