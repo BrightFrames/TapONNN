@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import LinkCard from "@/components/LinkCard";
 import { Button } from "@/components/ui/button";
@@ -64,7 +64,9 @@ const Dashboard = () => {
     };
 
     const copyProfileLink = () => {
-        navigator.clipboard.writeText(`tap2.me/${username}`);
+        const url = `${window.location.origin}/${username}`;
+        navigator.clipboard.writeText(url);
+        toast.success("Profile link copied to clipboard!");
     };
 
     return (
@@ -86,7 +88,10 @@ const Dashboard = () => {
                                 </Button>
 
                                 <div className="relative group">
-                                    <div className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-full px-4 py-2 text-sm text-gray-600 pr-10 border border-gray-200 cursor-pointer">
+                                    <div
+                                        onClick={() => window.open(`/${username}`, '_blank')}
+                                        className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-full px-4 py-2 text-sm text-gray-600 pr-10 border border-gray-200 cursor-pointer"
+                                    >
                                         tap2.me/{username}
                                     </div>
                                     <Button

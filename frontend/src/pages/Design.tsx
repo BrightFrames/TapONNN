@@ -1,9 +1,10 @@
 
 import React, { useState } from "react";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
-import { templates, TemplateData, getButtonIcon } from "@/data/templates";
+import { templates, TemplateData, getButtonIcon, categories } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Reuse TemplateCard but with selection overlay
 const DesignTemplateCard = ({
@@ -91,7 +92,12 @@ const DesignTemplateCard = ({
 };
 
 const Design = () => {
-    const [selectedTemplate, setSelectedTemplate] = useState<string>("artemis");
+    const { selectedTheme, updateTheme } = useAuth(); // Use context
+    const [selectedCategory, setSelectedCategory] = useState<string>("All");
+
+    const filteredTemplates = templates.filter(t =>
+        selectedCategory === "All" || t.category === selectedCategory
+    );
 
     return (
         <LinktreeLayout>
@@ -104,16 +110,38 @@ const Design = () => {
                         </p>
                     </div>
 
+                    {/* Category Filter */}
+                    <div className="mb-8 flex flex-wrap gap-2">
+                        {categories.map((cat) => (
+                            <button
+                                key={cat}
+                                onClick={() => setSelectedCategory(cat)}
+                                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === cat
+                                    ? "bg-gray-900 text-white shadow-md"
+                                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                                    }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-x-8 gap-y-12 justify-items-center">
-                        {templates.map((t) => (
+                        {filteredTemplates.map((t) => (
                             <DesignTemplateCard
                                 key={t.id}
                                 template={t}
-                                isSelected={selectedTemplate === t.id}
-                                onSelect={setSelectedTemplate}
+                                isSelected={selectedTheme === t.id}
+                                onSelect={updateTheme}
                             />
                         ))}
                     </div>
+
+                    {filteredTemplates.length === 0 && (
+                        <div className="text-center py-20 text-gray-500">
+                            No templates found in this category.
+                        </div>
+                    )}
                 </div>
             </div>
         </LinktreeLayout>

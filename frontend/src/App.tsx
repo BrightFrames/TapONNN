@@ -15,6 +15,7 @@ import Shop from "./pages/Shop";
 import Audience from "./pages/Audience";
 import Overview from "./pages/Overview";
 import Earnings from "./pages/Earnings";
+import PublicProfile from "./pages/PublicProfile";
 import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/audience" element={<Audience />} />
             <Route path="/earnings" element={<Earnings />} />
             <Route path="/design" element={<Design />} />
+            <Route path="/:username" element={<PublicProfile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
