@@ -1,27 +1,53 @@
 
 const express = require('express');
 const cors = require('cors');
-const { createClient } = require('@supabase/supabase-js');
+
+// Keep process alive hack (Debug)
+setInterval(() => { }, 60000);
+const { Pool } = require('pg');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Global Error Handlers to prevent silent exits
+process.on('uncaughtException', (err) => {
+    console.error('UNCAUGHT EXCEPTION:', err);
+    // Keep running if possible, or exit with error
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('UNHANDLED REJECTION:', reason);
+});
+
+process.on('exit', (code) => {
+    console.log(`Process exited with code: ${code}`);
+});
+
+process.on('beforeExit', (code) => {
+    console.log('Process execution completed. Node is initiating exit...');
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Supabase Client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+// Postgres Client
+const pool = new Pool({
+    connectionString: process.env.DB_URI,
+});
 
-if (!supabaseUrl || !supabaseKey) {
-    console.error("Missing Supabase URL or Key in .env");
-}
+// Check DB Connection
+pool.connect((err, client, release) => {
+    if (err) {
+        return console.error('Error acquiring client', err.stack);
+    }
+    console.log('Connected to Database via PG');
+    release();
+});
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Auth Middleware
+// Auth Middleware (Manual JWT Verification)
 const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -29,14 +55,21 @@ const authMiddleware = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
+    const jwtSecret = process.env.JWT_SECRET;
+
+    if (!jwtSecret) {
+        console.error("Missing JWT_SECRET in .env");
+        return res.status(500).json({ error: "Server Configuration Error" });
+    }
 
     try {
-        const { data: { user }, error } = await supabase.auth.getUser(token);
-        if (error || !user) throw new Error("Invalid token");
-
-        req.user = user;
+        const decoded = jwt.verify(token, jwtSecret);
+        // Supabase JWTs typically assume the 'sub' claim is the user ID.
+        // We might need to check if 'decoded.sub' exists.
+        req.user = { id: decoded.sub, email: decoded.email };
         next();
     } catch (err) {
+        console.error("JWT Verification Fail:", err.message);
         return res.status(401).json({ error: "Unauthorized" });
     }
 };
@@ -45,7 +78,7 @@ const authMiddleware = async (req, res, next) => {
 
 // Health check
 app.get('/', (req, res) => {
-    res.send('TapONN Backend is running');
+    res.send('TapONN Backend is running (PG Driver)');
 });
 
 // GET Public Profile by Username (Public)
@@ -53,17 +86,16 @@ app.get('/api/profile/:username', async (req, res) => {
     const { username } = req.params;
 
     try {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('username', username)
-            .single();
+        // Query: select * from profiles where username = $1
+        const result = await pool.query('SELECT * FROM profiles WHERE username = $1', [username]);
 
-        if (error) throw error;
-        if (!data) return res.status(404).json({ error: 'User not found' });
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
-        res.json(data);
+        res.json(result.rows[0]);
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -73,16 +105,13 @@ app.get('/api/links/public/:userId', async (req, res) => {
     const { userId } = req.params;
 
     try {
-        const { data, error } = await supabase
-            .from('links')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('is_active', true)
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        res.json(data);
+        const result = await pool.query(
+            'SELECT * FROM links WHERE user_id = $1 AND is_active = true ORDER BY created_at DESC',
+            [userId]
+        );
+        res.json(result.rows);
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -92,20 +121,20 @@ app.get('/api/my-links', authMiddleware, async (req, res) => {
     const userId = req.user.id;
 
     try {
-        const { data, error } = await supabase
-            .from('links')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        res.json(data);
+        const result = await pool.query(
+            'SELECT * FROM links WHERE user_id = $1 ORDER BY created_at DESC',
+            [userId]
+        );
+        res.json(result.rows);
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
 
 // SYNC/UPDATE Links (Authenticated)
+// Supabase 'upsert' handled insert/update. We simply iterate here.
+// Transaction would be better for atomicity.
 app.post('/api/links', authMiddleware, async (req, res) => {
     const userId = req.user.id;
     const { links } = req.body;
@@ -114,38 +143,52 @@ app.post('/api/links', authMiddleware, async (req, res) => {
         return res.status(400).json({ error: "Invalid data" });
     }
 
+    const client = await pool.connect();
+
     try {
-        const updates = links.map(l => ({
-            id: (l.id.length < 30) ? undefined : l.id,
-            user_id: userId, // Enforce user ID from token
-            title: l.title,
-            url: l.url,
-            is_active: l.isActive,
-            clicks: l.clicks
-        }));
+        await client.query('BEGIN'); // Start Transaction
 
-        // Filter valid updates
-        const validUpdates = updates.map(u => {
-            if (u.id && u.id.length < 30) {
-                const { id, ...rest } = u;
-                return rest;
+        const returnData = [];
+
+        for (const l of links) {
+            // Check if update or insert
+            // If ID is UUID (length > 30 approx), it's likely an update.
+            // If ID is short temp string, it's an insert.
+
+            if (l.id && l.id.length > 30) {
+                // UPDATE
+                const updateQuery = `
+                    UPDATE links 
+                    SET title =$1, url =$2, is_active =$3, clicks =$4
+                    WHERE id = $5 AND user_id = $6
+                    RETURNING *
+                `;
+                const res = await client.query(updateQuery, [l.title, l.url, l.isActive, l.clicks, l.id, userId]);
+                if (res.rows[0]) returnData.push(res.rows[0]);
+            } else {
+                // INSERT
+                const insertQuery = `
+                    INSERT INTO links (user_id, title, url, is_active, clicks)
+                    VALUES ($1, $2, $3, $4, $5)
+                    RETURNING *
+                `;
+                const res = await client.query(insertQuery, [userId, l.title, l.url, l.isActive, l.clicks]);
+                if (res.rows[0]) returnData.push(res.rows[0]);
             }
-            return u;
-        });
+        }
 
-        // Delete existing links not in the update payload?
-        // Ideally yes for a full sync, but for now just upsert.
-        // To strictly "show me the details from the account only", ensuring I don't edit others is key.
-        // RLS does this in DB, but Node layer check (userId above) adds double safety.
+        // What about deleted links? 
+        // Logic in previous code: "Delete existing links not in the update payload? ... for now just upsert."
+        // So we won't delete anything yet, matching parity.
 
-        const { data, error } = await supabase.from('links').upsert(validUpdates).select();
-
-        if (error) throw error;
-
-        res.json({ success: true, data });
+        await client.query('COMMIT');
+        res.json({ success: true, data: returnData });
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error("Error updating links:", err);
         res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
     }
 });
 
@@ -155,14 +198,10 @@ app.post('/api/profile/theme', authMiddleware, async (req, res) => {
     const { themeId } = req.body;
 
     try {
-        const { error } = await supabase
-            .from('profiles')
-            .update({ selected_theme: themeId })
-            .eq('id', userId);
-
-        if (error) throw error;
+        await pool.query('UPDATE profiles SET selected_theme = $1 WHERE id = $2', [themeId, userId]);
         res.json({ success: true });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
