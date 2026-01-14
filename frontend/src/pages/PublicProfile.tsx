@@ -15,7 +15,24 @@ const PublicProfile = () => {
     const [links, setLinks] = useState<any[]>([]);
     const [notFound, setNotFound] = useState(false);
 
-    const API_URL = "http://localhost:5000/api";
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+    // Track link click before opening
+    const handleLinkClick = async (link: any, e: React.MouseEvent) => {
+        e.preventDefault();
+
+        // Track the click (fire and forget - don't block navigation)
+        if (link.id && link.id.length > 30) {
+            fetch(`${API_URL}/links/${link.id}/click`, {
+                method: 'POST'
+            }).catch(() => {
+                // Silently fail - don't block the user
+            });
+        }
+
+        // Open the link in a new tab
+        window.open(link.url, '_blank', 'noopener,noreferrer');
+    };
 
     useEffect(() => {
         const fetchPublicProfile = async () => {
@@ -44,6 +61,7 @@ const PublicProfile = () => {
                     name: userProfile.full_name,
                     username: userProfile.username,
                     avatar: userProfile.avatar_url,
+                    bio: userProfile.bio,
                     selectedTheme: userProfile.selected_theme
                 });
 
@@ -52,6 +70,13 @@ const PublicProfile = () => {
                 const publicLinks = await linksRes.json();
 
                 setLinks(publicLinks || []);
+
+                // Track the profile view (fire and forget)
+                fetch(`${API_URL}/profile/${username}/view`, {
+                    method: 'POST'
+                }).catch(() => {
+                    // Silently fail - don't block the user experience
+                });
 
             } catch (error) {
                 console.error("Error fetching public profile:", error);
@@ -111,9 +136,15 @@ const PublicProfile = () => {
                     <h1 className={`text-2xl font-bold tracking-tight mb-2 ${template.textColor}`}>
                         @{profile.username}
                     </h1>
-                    <p className={`text-sm opacity-90 ${template.textColor}`}>
-                        {profile.role || "Welcome to my page"}
-                    </p>
+                    {profile.bio ? (
+                        <p className={`text-sm opacity-90 max-w-sm ${template.textColor}`}>
+                            {profile.bio}
+                        </p>
+                    ) : (
+                        <p className={`text-sm opacity-70 ${template.textColor}`}>
+                            Welcome to my page
+                        </p>
+                    )}
                 </div>
 
                 {/* Social Icons (Placeholder logic if not in DB) */}
@@ -133,9 +164,8 @@ const PublicProfile = () => {
                             <a
                                 key={link.id}
                                 href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`w-full block text-center px-6 py-4 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] ${template.buttonStyle}`}
+                                onClick={(e) => handleLinkClick(link, e)}
+                                className={`w-full block text-center px-6 py-4 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${template.buttonStyle}`}
                             >
                                 {link.title}
                             </a>

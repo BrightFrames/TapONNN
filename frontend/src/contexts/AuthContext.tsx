@@ -8,6 +8,7 @@ interface User {
     username: string;
     avatar?: string;
     email?: string;
+    email_confirmed_at?: string;
 }
 
 interface Link {
@@ -17,6 +18,7 @@ interface Link {
     isActive: boolean;
     clicks?: number;
     user_id?: string;
+    position?: number;
 }
 
 interface AuthContextType {
@@ -30,6 +32,7 @@ interface AuthContextType {
     signUp: (email: string, pass: string, username: string, name: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => Promise<void>;
     updateLinks: (links: Link[]) => Promise<void>;
+    deleteLink: (linkId: string) => Promise<void>;
     updateTheme: (themeId: string) => Promise<void>;
 }
 
@@ -42,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [links, setLinks] = useState<Link[]>([]);
     const [selectedTheme, setSelectedTheme] = useState<string>("artemis");
 
-    const API_URL = "http://localhost:5000/api";
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
     const fetchUserData = async (userId: string) => {
         try {
@@ -81,12 +84,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
             if (profile) {
+                // Get auth user to check email verification status
+                const { data: { user: authUser } } = await supabase.auth.getUser();
+
                 setUser({
                     id: profile.id,
                     name: profile.full_name,
                     username: profile.username,
                     avatar: profile.avatar_url,
-                    email: profile.email
+                    email: profile.email || authUser?.email,
+                    email_confirmed_at: authUser?.email_confirmed_at
                 });
                 setSelectedTheme(profile.selected_theme || "artemis");
 
@@ -256,6 +263,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const deleteLink = async (linkId: string) => {
+        if (!user) return;
+
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+
+        if (!token) {
+            toast.error("Not authenticated");
+            return;
+        }
+
+        // Optimistic update - remove from local state immediately
+        const previousLinks = links;
+        setLinks(links.filter(l => l.id !== linkId));
+
+        try {
+            const response = await fetch(`${API_URL}/links/${linkId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                // Revert on failure
+                setLinks(previousLinks);
+                const error = await response.json();
+                toast.error(error.error || "Failed to delete link");
+            } else {
+                toast.success("Link deleted");
+            }
+        } catch (err) {
+            // Revert on error
+            setLinks(previousLinks);
+            console.error("Error deleting link:", err);
+            toast.error("Failed to delete link");
+        }
+    };
+
     const updateTheme = async (themeId: string) => {
         setSelectedTheme(themeId);
         if (user) {
@@ -269,7 +315,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ themeId }) // userId removed
+                    body: JSON.stringify({ themeId })
                 });
             }
         }
@@ -287,6 +333,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             signUp,
             logout,
             updateLinks,
+            deleteLink,
             updateTheme
         }}>
             {children}

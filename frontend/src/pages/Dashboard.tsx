@@ -1,14 +1,29 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
-import LinkCard from "@/components/LinkCard";
+import SortableLinkCard from "@/components/SortableLinkCard";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from "@dnd-kit/core";
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import {
     Plus,
     Sparkles,
-    Share2,
     Copy,
     ExternalLink,
     Link2,
@@ -23,11 +38,26 @@ interface Link {
     url: string;
     isActive: boolean;
     clicks?: number;
+    position?: number;
 }
 
 const Dashboard = () => {
-    const { user, links: authLinks, updateLinks } = useAuth();
+    const { user, links: authLinks, updateLinks, deleteLink: deleteLinkFromApi } = useAuth();
     const [links, setLinks] = useState<Link[]>(authLinks);
+
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+    // Sensors for drag and drop
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // 8px movement before drag starts
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     // Sync with AuthContext
     useEffect(() => {
@@ -44,9 +74,10 @@ const Dashboard = () => {
             title: 'New Link',
             url: '',
             isActive: true,
-            clicks: 0
+            clicks: 0,
+            position: 0
         };
-        const newLinks = [newLink, ...links];
+        const newLinks = [newLink, ...links.map((l, i) => ({ ...l, position: i + 1 }))];
         setLinks(newLinks);
         updateLinks(newLinks);
     };
@@ -57,10 +88,62 @@ const Dashboard = () => {
         updateLinks(newLinks);
     };
 
-    const deleteLink = (id: string) => {
-        const newLinks = links.filter(l => l.id !== id);
-        setLinks(newLinks);
-        updateLinks(newLinks);
+    const deleteLink = async (id: string) => {
+        // Use the API-based delete for existing links (UUID format)
+        if (id.length > 30) {
+            await deleteLinkFromApi(id);
+        } else {
+            // For temporary local links that haven't been saved yet
+            const newLinks = links.filter(l => l.id !== id);
+            setLinks(newLinks);
+        }
+    };
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (over && active.id !== over.id) {
+            setLinks((items) => {
+                const oldIndex = items.findIndex((item) => item.id === active.id);
+                const newIndex = items.findIndex((item) => item.id === over.id);
+
+                const newItems = arrayMove(items, oldIndex, newIndex);
+
+                // Update positions
+                const itemsWithPositions = newItems.map((item, index) => ({
+                    ...item,
+                    position: index
+                }));
+
+                // Persist to backend
+                persistReorder(itemsWithPositions);
+
+                return itemsWithPositions;
+            });
+        }
+    };
+
+    const persistReorder = async (reorderedLinks: Link[]) => {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+
+        if (!token) return;
+
+        try {
+            await fetch(`${API_URL}/links/reorder`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    links: reorderedLinks.map(l => ({ id: l.id, position: l.position }))
+                })
+            });
+        } catch (err) {
+            console.error("Error persisting reorder:", err);
+            toast.error("Failed to save link order");
+        }
     };
 
     const copyProfileLink = () => {
@@ -80,7 +163,7 @@ const Dashboard = () => {
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">Links</h1>
-                                <p className="text-gray-500 text-sm mt-1">Manage your profile links</p>
+                                <p className="text-gray-500 text-sm mt-1">Manage your profile links • Drag to reorder</p>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50">
@@ -114,7 +197,7 @@ const Dashboard = () => {
                             <Plus className="w-5 h-5" /> Add New Link
                         </Button>
 
-                        {/* Links List */}
+                        {/* Links List with Drag and Drop */}
                         <div className="space-y-4 pb-20">
                             {links.length === 0 && (
                                 <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-white rounded-2xl border-2 border-dashed border-gray-200">
@@ -128,14 +211,26 @@ const Dashboard = () => {
                                     </Button>
                                 </div>
                             )}
-                            {links.map(link => (
-                                <LinkCard
-                                    key={link.id}
-                                    link={link}
-                                    onUpdate={updateLink}
-                                    onDelete={deleteLink}
-                                />
-                            ))}
+
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <SortableContext
+                                    items={links.map(l => l.id)}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    {links.map(link => (
+                                        <SortableLinkCard
+                                            key={link.id}
+                                            link={link}
+                                            onUpdate={updateLink}
+                                            onDelete={deleteLink}
+                                        />
+                                    ))}
+                                </SortableContext>
+                            </DndContext>
                         </div>
                     </div>
                 </div>
@@ -235,3 +330,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+

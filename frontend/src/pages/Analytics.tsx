@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,9 +24,11 @@ import {
     ChevronDown,
     UserPlus,
     Instagram,
-    Lock
+    Lock,
+    Loader2
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -34,17 +36,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Mock Data for Charts
-const chartData = [
-    { date: "Jan 01", views: 120, clicks: 45 },
-    { date: "Jan 02", views: 155, clicks: 52 },
-    { date: "Jan 03", views: 250, clicks: 89 },
-    { date: "Jan 04", views: 180, clicks: 65 },
-    { date: "Jan 05", views: 320, clicks: 120 },
-    { date: "Jan 06", views: 290, clicks: 95 },
-    { date: "Jan 07", views: 450, clicks: 160 },
-];
-
+// Chart config
 const chartConfig = {
     views: {
         label: "Views",
@@ -56,21 +48,76 @@ const chartConfig = {
     },
 };
 
+interface AnalyticsSummary {
+    totalClicks: number;
+    linkCount: number;
+    topLinks: { id: string; title: string; url: string; clicks: number }[];
+}
+
 const Analytics = () => {
     const { user, links } = useAuth();
     const [timeRange, setTimeRange] = useState("7d");
     const [dateRange, setDateRange] = useState("Last 7 days");
+    const [loading, setLoading] = useState(true);
+    const [analyticsData, setAnalyticsData] = useState<AnalyticsSummary | null>(null);
 
-    // Calculate real stats from links
-    const totalClicks = links.reduce((sum, link) => sum + (link.clicks || 0), 0);
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+    // Fetch real analytics from backend
+    useEffect(() => {
+        const fetchAnalytics = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/analytics/summary`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setAnalyticsData(data);
+                }
+            } catch (err) {
+                console.error("Error fetching analytics:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAnalytics();
+    }, []);
+
+    // Calculate stats - prefer backend data, fallback to local links
+    const totalClicks = analyticsData?.totalClicks ?? links.reduce((sum, link) => sum + (link.clicks || 0), 0);
     const totalViews = Math.round(totalClicks * 3.2); // Estimated views based on clicks
     const ctr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : "0";
     const clickRate = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : "0";
     const subscribers = 34; // Mock subscriber count
     const earnings = 0;
 
-    // Sort links by clicks for "Most clicked" section
-    const topLinks = [...links].sort((a, b) => (b.clicks || 0) - (a.clicks || 0)).slice(0, 5);
+    // Sort links by clicks for "Most clicked" section - use backend data if available
+    const topLinks = analyticsData?.topLinks?.length
+        ? analyticsData.topLinks
+        : [...links].sort((a, b) => (b.clicks || 0) - (a.clicks || 0)).slice(0, 5);
+
+    // Generate chart data based on current time range (mock for now)
+    const chartData = [
+        { date: "Jan 01", views: Math.round(totalViews * 0.15), clicks: Math.round(totalClicks * 0.12) },
+        { date: "Jan 02", views: Math.round(totalViews * 0.18), clicks: Math.round(totalClicks * 0.14) },
+        { date: "Jan 03", views: Math.round(totalViews * 0.22), clicks: Math.round(totalClicks * 0.20) },
+        { date: "Jan 04", views: Math.round(totalViews * 0.12), clicks: Math.round(totalClicks * 0.10) },
+        { date: "Jan 05", views: Math.round(totalViews * 0.25), clicks: Math.round(totalClicks * 0.22) },
+        { date: "Jan 06", views: Math.round(totalViews * 0.20), clicks: Math.round(totalClicks * 0.18) },
+        { date: "Jan 07", views: Math.round(totalViews * 0.28), clicks: Math.round(totalClicks * 0.24) },
+    ];
 
     // Mock top links for the chart section
     const mockTopLinks = [
