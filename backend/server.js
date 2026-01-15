@@ -1,11 +1,9 @@
 
 const express = require('express');
 const cors = require('cors');
-
-// Keep process alive hack (Debug)
-setInterval(() => { }, 60000);
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const app = express();
@@ -14,24 +12,16 @@ const port = process.env.PORT || 5000;
 // Global Error Handlers to prevent silent exits
 process.on('uncaughtException', (err) => {
     console.error('UNCAUGHT EXCEPTION:', err);
-    // Keep running if possible, or exit with error
 });
 
 process.on('unhandledRejection', (reason, promise) => {
     console.error('UNHANDLED REJECTION:', reason);
 });
 
-process.on('exit', (code) => {
-    console.log(`Process exited with code: ${code}`);
-});
-
-process.on('beforeExit', (code) => {
-    console.log('Process execution completed. Node is initiating exit...');
-});
-
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Postgres Client
 const pool = new Pool({
@@ -64,8 +54,7 @@ const authMiddleware = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, jwtSecret);
-        // Supabase JWTs typically assume the 'sub' claim is the user ID.
-        req.user = { id: decoded.sub, email: decoded.email };
+        req.user = decoded; // { id, email }
         next();
     } catch (err) {
         console.error("JWT Verification Fail:", err.message);
@@ -79,6 +68,153 @@ const authMiddleware = async (req, res, next) => {
 app.get('/', (req, res) => {
     res.send('TapVisit Backend is running (PG Driver)');
 });
+
+// --- AUTHENTICATION ROUTES ---
+
+// SIGNUP
+app.post('/api/auth/signup', async (req, res) => {
+    const { email, password, username, full_name } = req.body;
+
+    if (!email || !password || !username || !full_name) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Check if user already exists
+        const userCheck = await client.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (userCheck.rows.length > 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: "User already exists with this email" });
+        }
+
+        const profileCheck = await client.query('SELECT * FROM profiles WHERE username = $1', [username]);
+        if (profileCheck.rows.length > 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: "Username already taken" });
+        }
+
+        // 2. Hash password
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(password, salt);
+
+        // 3. Create User
+        const userResult = await client.query(
+            'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
+            [email, passwordHash]
+        );
+        const newUser = userResult.rows[0];
+
+        // 4. Create Profile
+        const profileResult = await client.query(
+            'INSERT INTO profiles (id, username, full_name, email, selected_theme) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [newUser.id, username, full_name, email, 'artemis']
+        );
+        const newProfile = profileResult.rows[0];
+
+        await client.query('COMMIT');
+
+        // 5. Generate Token
+        const token = jwt.sign(
+            { id: newUser.id, email: newUser.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.json({
+            token,
+            user: {
+                id: newUser.id,
+                email: newUser.email,
+                username: newProfile.username,
+                full_name: newProfile.full_name
+            }
+        });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error("Signup Error:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        client.release();
+    }
+});
+
+// LOGIN
+app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ error: "Missing credentials" });
+    }
+
+    try {
+        // 1. Find user
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (result.rows.length === 0) {
+            return res.status(400).json({ error: "Invalid credentials" });
+        }
+
+        const user = result.rows[0];
+
+        // 2. Check password
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        if (!isMatch) {
+            return res.status(400).json({ error: "Invalid credentials" });
+        }
+
+        // 3. Get User Profile for extra data
+        const profileResult = await pool.query('SELECT * FROM profiles WHERE id = $1', [user.id]);
+        const profile = profileResult.rows[0] || {};
+
+        // 4. Generate Token
+        const token = jwt.sign(
+            { id: user.id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.json({
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                username: profile.username,
+                full_name: profile.full_name,
+                avatar: profile.avatar_url
+            }
+        });
+
+    } catch (err) {
+        console.error("Login Error:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// GET CURRENT USER (Me)
+app.get('/api/auth/me', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Fetch profile
+        const profileResult = await pool.query('SELECT * FROM profiles WHERE id = $1', [userId]);
+
+        if (profileResult.rows.length === 0) {
+            // Fallback if profile missing but user exists (should rarely happen)
+            return res.json({ id: userId, email: req.user.email });
+        }
+
+        res.json(profileResult.rows[0]);
+    } catch (err) {
+        console.error("Me Error:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+
+// --- APP ROUTES ---
 
 // GET Public Profile by Username (Public)
 app.get('/api/profile/:username', async (req, res) => {
@@ -154,20 +290,20 @@ app.post('/api/links', authMiddleware, async (req, res) => {
                 // UPDATE
                 const updateQuery = `
                     UPDATE links 
-                    SET title = $1, url = $2, is_active = $3, clicks = $4, position = $5
-                    WHERE id = $6 AND user_id = $7
+                    SET title = $1, url = $2, is_active = $3, clicks = $4, position = $5, thumbnail = $6
+                    WHERE id = $7 AND user_id = $8
                     RETURNING *
                 `;
-                const result = await client.query(updateQuery, [l.title, l.url, l.isActive, l.clicks || 0, position, l.id, userId]);
+                const result = await client.query(updateQuery, [l.title, l.url, l.isActive, l.clicks || 0, position, l.thumbnail || null, l.id, userId]);
                 if (result.rows[0]) returnData.push(result.rows[0]);
             } else {
                 // INSERT
                 const insertQuery = `
-                    INSERT INTO links (user_id, title, url, is_active, clicks, position)
-                    VALUES ($1, $2, $3, $4, $5, $6)
+                    INSERT INTO links (user_id, title, url, is_active, clicks, position, thumbnail)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
                     RETURNING *
                 `;
-                const result = await client.query(insertQuery, [userId, l.title, l.url, l.isActive, l.clicks || 0, position]);
+                const result = await client.query(insertQuery, [userId, l.title, l.url, l.isActive, l.clicks || 0, position, l.thumbnail || null]);
                 if (result.rows[0]) returnData.push(result.rows[0]);
             }
         }
@@ -244,42 +380,76 @@ app.put('/api/links/reorder', authMiddleware, async (req, res) => {
 app.post('/api/links/:linkId/click', async (req, res) => {
     const { linkId } = req.params;
 
+    const client = await pool.connect();
     try {
+        await client.query('BEGIN');
+
         // Increment click count
-        const result = await pool.query(
-            'UPDATE links SET clicks = COALESCE(clicks, 0) + 1 WHERE id = $1 RETURNING clicks',
+        const result = await client.query(
+            'UPDATE links SET clicks = COALESCE(clicks, 0) + 1 WHERE id = $1 RETURNING clicks, user_id',
             [linkId]
         );
 
         if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
             return res.status(404).json({ error: 'Link not found' });
         }
 
+        const userId = result.rows[0].user_id;
+
+        // Log event for history
+        await client.query(
+            'INSERT INTO analytics_events (user_id, event_type, link_id) VALUES ($1, $2, $3)',
+            [userId, 'click', linkId]
+        );
+
+        await client.query('COMMIT');
         res.json({ success: true, clicks: result.rows[0].clicks });
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error("Error tracking click:", err);
         res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
     }
 });
 
 // Track Profile View (Public - called when someone views a public profile)
+// Track Profile View (Public - called when someone views a public profile)
 app.post('/api/profile/:username/view', async (req, res) => {
     const { username } = req.params;
 
+    const client = await pool.connect();
     try {
-        // First get the profile to ensure it exists
-        const profileResult = await pool.query('SELECT id FROM profiles WHERE username = $1', [username]);
+        await client.query('BEGIN');
+
+        // Increment view count in profiles
+        const profileResult = await client.query(
+            'UPDATE profiles SET total_views = COALESCE(total_views, 0) + 1 WHERE username = $1 RETURNING id',
+            [username]
+        );
 
         if (profileResult.rows.length === 0) {
+            await client.query('ROLLBACK');
             return res.status(404).json({ error: 'Profile not found' });
         }
 
-        // Increment view count (add view_count column if not exists, or just return success)
-        // For now, just return success - full analytics tracking can be added later with a separate table
+        const userId = profileResult.rows[0].id;
+
+        // Log event for history
+        await client.query(
+            'INSERT INTO analytics_events (user_id, event_type) VALUES ($1, $2)',
+            [userId, 'view']
+        );
+
+        await client.query('COMMIT');
         res.json({ success: true });
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error("Error tracking view:", err);
         res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
     }
 });
 
@@ -320,6 +490,10 @@ app.put('/api/profile', authMiddleware, async (req, res) => {
             updates.push(`full_name = $${paramIndex++}`);
             values.push(full_name);
         }
+        if (req.body.social_links !== undefined) {
+            updates.push(`social_links = $${paramIndex++}`);
+            values.push(req.body.social_links);
+        }
         if (username !== undefined) {
             // Check if username is already taken
             const existing = await pool.query(
@@ -348,33 +522,80 @@ app.put('/api/profile', authMiddleware, async (req, res) => {
     }
 });
 
+// Change Password (Authenticated)
+app.post('/api/auth/change-password', authMiddleware, async (req, res) => {
+    const userId = req.user.id;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(newPassword, salt);
+
+        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, userId]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Error changing password:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get Analytics Summary (Authenticated)
 // Get Analytics Summary (Authenticated)
 app.get('/api/analytics/summary', authMiddleware, async (req, res) => {
     const userId = req.user.id;
 
     try {
-        // Get total clicks across all links
+        // 1. Total Clicks
         const clicksResult = await pool.query(
             'SELECT COALESCE(SUM(clicks), 0) as total_clicks FROM links WHERE user_id = $1',
             [userId]
         );
 
-        // Get link count
+        // 2. Link Count
         const linksResult = await pool.query(
             'SELECT COUNT(*) as link_count FROM links WHERE user_id = $1',
             [userId]
         );
 
-        // Get top links
+        // 3. Top Links
         const topLinksResult = await pool.query(
             'SELECT id, title, url, clicks FROM links WHERE user_id = $1 ORDER BY clicks DESC LIMIT 5',
             [userId]
         );
 
+        // 4. Total Views (Lifetime)
+        const viewsResult = await pool.query('SELECT total_views FROM profiles WHERE id = $1', [userId]);
+        const totalViews = viewsResult.rows[0]?.total_views || 0;
+
+        // 5. Subscribers
+        const subResult = await pool.query('SELECT COUNT(*) as count FROM subscribers WHERE creator_id = $1', [userId]);
+        const subscriberCount = parseInt(subResult.rows[0].count) || 0;
+
+        // 6. Chart Data (Last 7 Days)
+        // Note: This fetches days that HAVE data. Frontend might need to fill gaps or we do it here.
+        // For simplicity, we send what we have.
+        const chartResult = await pool.query(`
+            SELECT 
+                TO_CHAR(created_at, 'Mon DD') as date,
+                COUNT(*) FILTER (WHERE event_type = 'view') as views,
+                COUNT(*) FILTER (WHERE event_type = 'click') as clicks
+            FROM analytics_events 
+            WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '7 days'
+            GROUP BY TO_CHAR(created_at, 'Mon DD'), created_at::date
+            ORDER BY created_at::date
+        `, [userId]);
+
         res.json({
             totalClicks: parseInt(clicksResult.rows[0].total_clicks) || 0,
             linkCount: parseInt(linksResult.rows[0].link_count) || 0,
-            topLinks: topLinksResult.rows
+            topLinks: topLinksResult.rows,
+            totalViews: parseInt(totalViews) || 0,
+            subscribers: subscriberCount,
+            chartData: chartResult.rows
         });
     } catch (err) {
         console.error("Error fetching analytics:", err);

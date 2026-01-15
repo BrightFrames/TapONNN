@@ -24,6 +24,7 @@ import {
     Sheet,
     SheetContent,
     SheetTrigger,
+    SheetTitle,
 } from "@/components/ui/sheet";
 
 const NavItem = ({ icon: Icon, label, active = false, badge, onClick }: { icon: any, label: string, active?: boolean, badge?: string, onClick?: () => void }) => (
@@ -136,6 +137,7 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
                                 </Button>
                             </SheetTrigger>
                             <SheetContent side="left" className="p-0 w-[300px] z-[60]">
+                                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                                 <SidebarContent navigate={navigate} location={location} onClose={() => setIsMobileOpen(false)} />
                             </SheetContent>
                         </Sheet>

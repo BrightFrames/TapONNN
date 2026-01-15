@@ -52,6 +52,9 @@ interface AnalyticsSummary {
     totalClicks: number;
     linkCount: number;
     topLinks: { id: string; title: string; url: string; clicks: number }[];
+    totalViews: number;
+    subscribers: number;
+    chartData: { date: string; views: string; clicks: string }[];
 }
 
 const Analytics = () => {
@@ -95,37 +98,60 @@ const Analytics = () => {
         fetchAnalytics();
     }, []);
 
-    // Calculate stats - prefer backend data, fallback to local links
-    const totalClicks = analyticsData?.totalClicks ?? links.reduce((sum, link) => sum + (link.clicks || 0), 0);
-    const totalViews = Math.round(totalClicks * 3.2); // Estimated views based on clicks
-    const ctr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : "0";
-    const clickRate = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : "0";
-    const subscribers = 34; // Mock subscriber count
-    const earnings = 0;
+    // Helper to fill missing dates for the last 7 days (or selected range)
+    const fillChartData = (backendData: { date: string; views: string; clicks: string }[] | undefined) => {
+        const filledData = [];
+        const today = new Date();
+        const daysToMap = 7; // Default 7 days
 
-    // Sort links by clicks for "Most clicked" section - use backend data if available
+        // Create map of existing data
+        const dataMap = new Map();
+        if (backendData) {
+            backendData.forEach(item => {
+                dataMap.set(item.date, {
+                    views: parseInt(item.views),
+                    clicks: parseInt(item.clicks)
+                });
+            });
+        }
+
+        // Iterate backwards from today
+        for (let i = daysToMap - 1; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(today.getDate() - i);
+            // Format: 'Jan 01' (matches Postgres TO_CHAR(..., 'Mon DD'))
+            const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+
+            const existing = dataMap.get(dateStr);
+            filledData.push({
+                date: dateStr,
+                views: existing ? existing.views : 0,
+                clicks: existing ? existing.clicks : 0
+            });
+        }
+        return filledData;
+    };
+
+    // Calculate stats - prefer backend data
+    const totalClicks = analyticsData?.totalClicks ?? links.reduce((sum, link) => sum + (link.clicks || 0), 0);
+    const totalViews = analyticsData?.totalViews ?? 0;
+    const subscribers = analyticsData?.subscribers ?? 0;
+
+    // Derived stats
+    const ctr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : "0.0";
+    const clickRate = ctr; // same thing
+    const earnings = 0; // Not implemented yet
+
+    // Sort links by clicks - use backend data if available
     const topLinks = analyticsData?.topLinks?.length
         ? analyticsData.topLinks
         : [...links].sort((a, b) => (b.clicks || 0) - (a.clicks || 0)).slice(0, 5);
 
-    // Generate chart data based on current time range (mock for now)
-    const chartData = [
-        { date: "Jan 01", views: Math.round(totalViews * 0.15), clicks: Math.round(totalClicks * 0.12) },
-        { date: "Jan 02", views: Math.round(totalViews * 0.18), clicks: Math.round(totalClicks * 0.14) },
-        { date: "Jan 03", views: Math.round(totalViews * 0.22), clicks: Math.round(totalClicks * 0.20) },
-        { date: "Jan 04", views: Math.round(totalViews * 0.12), clicks: Math.round(totalClicks * 0.10) },
-        { date: "Jan 05", views: Math.round(totalViews * 0.25), clicks: Math.round(totalClicks * 0.22) },
-        { date: "Jan 06", views: Math.round(totalViews * 0.20), clicks: Math.round(totalClicks * 0.18) },
-        { date: "Jan 07", views: Math.round(totalViews * 0.28), clicks: Math.round(totalClicks * 0.24) },
-    ];
+    // Process chart data
+    const chartData = fillChartData(analyticsData?.chartData);
 
-    // Mock top links for the chart section
-    const mockTopLinks = [
-        { title: "My Portfolio", url: "/portfolio", clicks: 1250, change: "+12%" },
-        { title: "YouTube Channel", url: "youtube.com/user", clicks: 890, change: "+5%" },
-        { title: "Latest Blog Post", url: "/blog/new", clicks: 650, change: "-2%" },
-        { title: "Instagram", url: "instagram.com/user", clicks: 420, change: "+8%" },
-    ];
+    // Empty mock links
+    const mockTopLinks: any[] = [];
 
     const dateOptions = [
         { label: "Last 7 days", locked: false },
@@ -180,7 +206,7 @@ const Analytics = () => {
                         {lifetimeStats.map((stat) => (
                             <div key={stat.label} className="bg-gray-50 rounded-xl p-4">
                                 <stat.icon className="w-5 h-5 text-gray-400 mb-3" />
-                                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                                <div className="text-2xl font-bold text-gray-900">{stat.label === "Earnings" ? stat.value : stat.value}</div>
                                 <div className="text-sm text-gray-500">{stat.label}</div>
                             </div>
                         ))}
@@ -308,6 +334,11 @@ const Analytics = () => {
                                             </div>
                                         </div>
                                     ))}
+                                    {topLinks.length === 0 && (
+                                        <div className="text-center py-6 text-gray-500 text-sm">
+                                            No link data yet.
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
 
@@ -318,28 +349,8 @@ const Analytics = () => {
                                         <CardTitle className="text-lg font-semibold text-gray-900">Top Locations</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                                                <div className="flex items-center gap-3">
-                                                    <Globe className="w-5 h-5 text-blue-500" />
-                                                    <span className="font-medium text-gray-700">United States</span>
-                                                </div>
-                                                <span className="font-bold text-gray-900">45%</span>
-                                            </div>
-                                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                                                <div className="flex items-center gap-3">
-                                                    <Globe className="w-5 h-5 text-indigo-500" />
-                                                    <span className="font-medium text-gray-700">India</span>
-                                                </div>
-                                                <span className="font-bold text-gray-900">22%</span>
-                                            </div>
-                                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                                                <div className="flex items-center gap-3">
-                                                    <Globe className="w-5 h-5 text-green-500" />
-                                                    <span className="font-medium text-gray-700">United Kingdom</span>
-                                                </div>
-                                                <span className="font-bold text-gray-900">12%</span>
-                                            </div>
+                                        <div className="space-y-4 text-center py-4 text-gray-500 text-sm">
+                                            No location data available yet
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -349,17 +360,8 @@ const Analytics = () => {
                                         <CardTitle className="text-lg font-semibold text-gray-900">Device Analytics</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex-1 p-4 border border-gray-100 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors">
-                                                <Smartphone className="w-6 h-6 text-gray-400 mb-2" />
-                                                <div className="text-xl font-bold text-gray-900">85%</div>
-                                                <div className="text-xs text-gray-500">Mobile</div>
-                                            </div>
-                                            <div className="flex-1 p-4 border border-gray-100 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors">
-                                                <Globe className="w-6 h-6 text-gray-400 mb-2" />
-                                                <div className="text-xl font-bold text-gray-900">15%</div>
-                                                <div className="text-xs text-gray-500">Desktop</div>
-                                            </div>
+                                        <div className="text-center py-4 text-gray-500 text-sm">
+                                            No device data available yet
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -374,36 +376,12 @@ const Analytics = () => {
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-3">
                                     <h3 className="font-semibold text-gray-900">Audience</h3>
-                                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs">
-                                        Sample data
-                                    </Badge>
                                 </div>
                                 <ChevronRight className="w-5 h-5 text-gray-400" />
                             </div>
 
-                            <div className="grid grid-cols-3 gap-8">
-                                <div>
-                                    <Users className="w-5 h-5 text-gray-400 mb-2" />
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-2xl font-bold text-gray-900">3.2k</span>
-                                        <span className="text-sm text-green-600 font-medium">7% ↑</span>
-                                    </div>
-                                    <div className="text-sm text-gray-500">Total audience</div>
-                                </div>
-                                <div>
-                                    <UserPlus className="w-5 h-5 text-gray-400 mb-2" />
-                                    <div className="text-2xl font-bold text-gray-900">{subscribers}</div>
-                                    <div className="text-sm text-gray-500">Subscriber growth</div>
-                                </div>
-                                <div>
-                                    <div className="text-xs text-gray-400 mb-2">Top growth tool</div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                                            📚
-                                        </div>
-                                        <div className="text-sm font-medium text-gray-900">A Buyers' and Sellers' Guide</div>
-                                    </div>
-                                </div>
+                            <div className="text-center py-8 text-gray-500">
+                                Collect more data to unlock audience insights.
                             </div>
                         </div>
 
@@ -412,25 +390,12 @@ const Analytics = () => {
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-3">
                                     <h3 className="font-semibold text-gray-900">Visitors</h3>
-                                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs">
-                                        Sample data
-                                    </Badge>
                                 </div>
                                 <ChevronRight className="w-5 h-5 text-gray-400" />
                             </div>
 
-                            <div className="text-gray-600 text-sm leading-relaxed">
-                                <p>
-                                    Most commonly your visitors are based in <span className="font-semibold text-gray-900">India</span>,
-                                    care about <span className="inline-flex items-center gap-1"><span className="text-yellow-500">💡</span> People & Society</span>,
-                                    and find you on <span className="inline-flex items-center gap-1"><Instagram className="w-4 h-4 text-pink-500" /> Instagram</span> using
-                                    <span className="inline-flex items-center gap-1 ml-1"><Smartphone className="w-4 h-4" /> mobile devices</span>.
-                                </p>
-                            </div>
-
-                            {/* Mini world map placeholder */}
-                            <div className="mt-4 h-20 bg-gray-50 rounded-lg flex items-center justify-center">
-                                <Globe className="w-12 h-12 text-purple-200" />
+                            <div className="text-gray-600 text-sm leading-relaxed text-center py-8">
+                                No visitor data recorded yet.
                             </div>
                         </div>
                     </TabsContent>

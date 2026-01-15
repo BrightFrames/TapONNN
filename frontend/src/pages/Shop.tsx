@@ -1,5 +1,6 @@
 
 import LinktreeLayout from "@/layouts/LinktreeLayout";
+import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,9 +9,22 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Shop = () => {
-    const { user, links: authLinks } = useAuth();
-    const username = user?.username || "vivekbhadoriya054";
-    const userInitial = (user?.name || "V")[0]?.toUpperCase();
+    const { user, links: authLinks, isLoading, selectedTheme } = useAuth();
+
+
+    if (isLoading) {
+        return <div className="h-screen w-full flex items-center justify-center bg-gray-50">
+            <div className="animate-spin w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full"></div>
+        </div>;
+    }
+
+    const username = user?.username || "user";
+    const userInitial = (user?.name || "U")[0]?.toUpperCase();
+
+    const currentTemplate = templates.find(t => t.id === selectedTheme) || templates[0];
+    const bgStyle = currentTemplate.bgImage
+        ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+        : {};
     return (
         <LinktreeLayout>
             <div className="flex h-full">
@@ -54,7 +68,7 @@ const Shop = () => {
                             </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                            <h2 className="text-xl font-bold mb-1">@vivekbhadoriya054</h2>
+                            <h2 className="text-xl font-bold mb-1">@{user?.username || "user"}</h2>
                             <button className="text-gray-400 text-sm hover:underline mb-2">Add bio</button>
                             <div className="flex gap-2">
                                 {/* Placeholder social icons as per screenshot */}
@@ -118,7 +132,7 @@ const Shop = () => {
                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-2xl z-20" />
 
                             {/* Status Bar */}
-                            <div className="h-8 w-full bg-[#132c25] flex items-center justify-between px-8 text-[10px] text-white font-medium pt-1">
+                            <div className="h-8 w-full bg-black flex items-center justify-between px-8 text-[10px] text-white font-medium pt-1 z-30 relative">
                                 <span>9:41</span>
                                 <div className="flex gap-1.5 items-center">
                                     <div className="flex gap-0.5">
@@ -136,55 +150,79 @@ const Shop = () => {
                             </div>
 
                             {/* Screen Content */}
-                            <div className="h-full w-full bg-[#132c25] overflow-y-auto text-white p-6 pb-20">
+                            <div
+                                className={`h-full w-full overflow-y-auto p-6 pb-20 ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor}`}
+                                style={bgStyle}
+                            >
+                                {/* Overlay for readibility overlay if needed */}
+                                {currentTemplate.bgImage && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
+
                                 {/* Share Button */}
-                                <div className="absolute top-12 right-6 w-8 h-8 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center">
-                                    <ExternalLink className="w-4 h-4 text-white/70" />
+                                <div className="absolute top-12 right-6 w-8 h-8 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center z-10">
+                                    <ExternalLink className={`w-4 h-4 ${currentTemplate.textColor ? 'opacity-80' : 'text-gray-700'}`} />
                                 </div>
 
-                                <div className="flex flex-col items-center mt-8 space-y-3">
-                                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
+                                <div className="flex flex-col items-center mt-8 space-y-3 relative z-10">
+                                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl" key={user?.avatar}>
                                         <AvatarImage src={user?.avatar} />
                                         <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
                                             {userInitial}
                                         </AvatarFallback>
                                     </Avatar>
                                     <h2 className="text-xl font-bold tracking-tight">@{username}</h2>
-                                    <div className="flex gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer">
-                                            <Instagram className="w-4 h-4" />
-                                        </div>
-                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer">
-                                            <Globe className="w-4 h-4" />
-                                        </div>
+                                    <div className="flex gap-3 flex-wrap justify-center px-4">
+                                        {user?.social_links && Object.entries(user.social_links).map(([platform, url]) => {
+                                            if (!url) return null;
+                                            const Icon = getIconForThumbnail(platform);
+                                            return Icon ? (
+                                                <a
+                                                    key={platform}
+                                                    href={url.startsWith('http') ? url : `https://${url}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer backdrop-blur-sm"
+                                                >
+                                                    <Icon className="w-4 h-4" />
+                                                </a>
+                                            ) : null;
+                                        })}
                                     </div>
                                 </div>
 
-                                <div className="mt-8 space-y-3">
-                                    {authLinks.filter(l => l.isActive).map((link) => (
-                                        <a
-                                            key={link.id}
-                                            href={link.url || '#'}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="block w-full py-4 px-6 bg-[#e9f6e3] text-[#132c25] rounded-full text-center font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform text-sm shadow-lg"
-                                        >
-                                            {link.title}
-                                        </a>
-                                    ))}
+                                <div className="mt-8 space-y-3 relative z-10">
+                                    import {getIconForThumbnail} from "@/utils/socialIcons";
+
+                                    // ...
+
+                                    {authLinks.filter(l => l.isActive).map((link) => {
+                                        const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
+                                        return (
+                                            <a
+                                                key={link.id}
+                                                href={link.url || '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className={`block w-full flex items-center justify-center relative ${currentTemplate.buttonStyle}`}
+                                            >
+                                                {Icon && (
+                                                    <Icon className="absolute left-4 w-5 h-5 opacity-90" />
+                                                )}
+                                                <span className="truncate max-w-[200px]">{link.title}</span>
+                                            </a>
+                                        );
+                                    })}
                                     {authLinks.filter(l => l.isActive).length === 0 && (
-                                        <div className="text-center text-white/40 text-sm py-8">
+                                        <div className={`text-center text-sm py-8 ${currentTemplate.textColor} opacity-60`}>
                                             Add links to see them here
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Footer */}
-                                <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6">
-                                    <button className="bg-white text-black px-5 py-2.5 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-shadow">
+                                <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-10">
+                                    <button className="bg-white/10 backdrop-blur-md border border-white/20 text-current px-5 py-2.5 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-shadow">
                                         Join @{username} on Tap2
                                     </button>
-                                    <div className="text-[10px] text-white/30">Powered by Tap2</div>
                                 </div>
                             </div>
                         </div>
@@ -194,7 +232,7 @@ const Shop = () => {
                             <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
                                 <Share className="w-4 h-4" /> Live Preview
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">Changes sync in real-time</p>
+                            <p className="text-xs text-gray-400 mt-1">Reflects your current theme</p>
                         </div>
                     </div>
                 </div>

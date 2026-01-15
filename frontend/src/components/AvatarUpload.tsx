@@ -46,46 +46,25 @@ const AvatarUpload = ({ currentAvatarUrl, userName, onUploadComplete }: AvatarUp
         setUploading(true);
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                toast.error("Not authenticated");
+            // Convert to Base64
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const base64String = reader.result as string;
+                // Pass base64 string directly to parent
+                // Parent (Settings.tsx) will save this to the 'avatar_url' field in profiles table
+                onUploadComplete(base64String);
+                toast.success("Image selected. Click 'Save Changes' to apply.");
                 setUploading(false);
-                return;
-            }
-
-            // Generate unique filename
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-            const filePath = `avatars/${fileName}`;
-
-            // Upload file to Supabase Storage
-            const { data, error } = await supabase.storage
-                .from('avatars')
-                .upload(filePath, file, {
-                    cacheControl: '3600',
-                    upsert: true
-                });
-
-            if (error) {
-                console.error("Upload error:", error);
-                toast.error("Failed to upload image. Make sure the 'avatars' bucket exists in Supabase Storage.");
-                setPreviewUrl(null);
-                return;
-            }
-
-            // Get public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('avatars')
-                .getPublicUrl(filePath);
-
-            // Notify parent component
-            onUploadComplete(publicUrl);
-            toast.success("Avatar uploaded successfully!");
+            };
+            reader.onerror = (error) => {
+                console.error("Error reading file:", error);
+                toast.error("Failed to process image");
+                setUploading(false);
+            };
         } catch (err) {
             console.error("Upload error:", err);
-            toast.error("Failed to upload avatar");
-            setPreviewUrl(null);
-        } finally {
+            toast.error("Failed to process avatar");
             setUploading(false);
         }
     };

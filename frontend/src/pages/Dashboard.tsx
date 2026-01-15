@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { templates } from "@/data/templates";
 import {
     DndContext,
     closestCenter,
@@ -29,8 +30,12 @@ import {
     Link2,
     Smartphone,
     Instagram,
-    Globe
+    Globe,
+    Trash2
 } from "lucide-react";
+
+import { getIconForThumbnail } from "@/utils/socialIcons";
+import { SocialLinksDialog } from "@/components/SocialLinksDialog";
 
 interface Link {
     id: string;
@@ -39,10 +44,11 @@ interface Link {
     isActive: boolean;
     clicks?: number;
     position?: number;
+    thumbnail?: string;
 }
 
 const Dashboard = () => {
-    const { user, links: authLinks, updateLinks, deleteLink: deleteLinkFromApi } = useAuth();
+    const { user, links: authLinks, updateLinks, deleteLink: deleteLinkFromApi, selectedTheme, refreshProfile } = useAuth();
     const [links, setLinks] = useState<Link[]>(authLinks);
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -68,6 +74,14 @@ const Dashboard = () => {
     const username = user?.username || "user";
     const userInitial = userName[0]?.toUpperCase() || "U";
 
+    // Get current template based on theme
+    const currentTemplate = templates.find(t => t.id === selectedTheme) || templates[0];
+
+    // Background style
+    const bgStyle = currentTemplate.bgImage
+        ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+        : {};
+
     const addLink = () => {
         const newLink: Link = {
             id: Date.now().toString(),
@@ -75,7 +89,8 @@ const Dashboard = () => {
             url: '',
             isActive: true,
             clicks: 0,
-            position: 0
+            position: 0,
+            thumbnail: ''
         };
         const newLinks = [newLink, ...links.map((l, i) => ({ ...l, position: i + 1 }))];
         setLinks(newLinks);
@@ -83,7 +98,27 @@ const Dashboard = () => {
     };
 
     const updateLink = (id: string, field: keyof Link, value: any) => {
-        const newLinks = links.map(l => l.id === id ? { ...l, [field]: value } : l);
+        let newLinks = links.map(l => {
+            if (l.id === id) {
+                const updatedLink = { ...l, [field]: value };
+
+                // Auto-detect thumbnail from URL
+                if (field === 'url' && !l.thumbnail && typeof value === 'string') {
+                    const url = value.toLowerCase();
+                    if (url.includes('instagram.com')) updatedLink.thumbnail = 'instagram';
+                    else if (url.includes('facebook.com')) updatedLink.thumbnail = 'facebook';
+                    else if (url.includes('twitter.com') || url.includes('x.com')) updatedLink.thumbnail = 'twitter';
+                    else if (url.includes('linkedin.com')) updatedLink.thumbnail = 'linkedin';
+                    else if (url.includes('youtube.com')) updatedLink.thumbnail = 'youtube';
+                    else if (url.includes('github.com')) updatedLink.thumbnail = 'github';
+                    else if (url.includes('tiktok.com')) updatedLink.thumbnail = 'tiktok';
+                    else if (url.includes('mailto:')) updatedLink.thumbnail = 'mail';
+                }
+
+                return updatedLink;
+            }
+            return l;
+        });
         setLinks(newLinks);
         updateLinks(newLinks);
     };
@@ -152,12 +187,48 @@ const Dashboard = () => {
         toast.success("Profile link copied to clipboard!");
     };
 
+    const saveSocialLinks = async (updatedLinks: Record<string, string>) => {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) return;
+
+        try {
+            await fetch(`${API_URL}/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ social_links: updatedLinks })
+            });
+            await refreshProfile();
+        } catch (err) {
+            console.error("Error saving socials:", err);
+            toast.error("Failed to save social links");
+        }
+    };
+
+    const handleClearAll = async () => {
+        if (!confirm("Are you sure you want to delete ALL links? This action cannot be undone.")) return;
+
+        // Delete all links sequentially
+        for (const link of links) {
+            if (link.id.length > 30) {
+                // Determine if it's a real backend ID (long string) vs generated temporary ID
+                await deleteLinkFromApi(link.id);
+            }
+        }
+        setLinks([]);
+    };
+
     return (
         <LinktreeLayout>
             <div className="flex h-full">
                 {/* Main Editor */}
                 <div className="flex-1 py-8 px-6 md:px-10 overflow-y-auto">
                     <div className="max-w-2xl mx-auto">
+
+
 
                         {/* Header */}
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -166,11 +237,17 @@ const Dashboard = () => {
                                 <p className="text-gray-500 text-sm mt-1">Manage your profile links • Drag to reorder</p>
                             </div>
                             <div className="flex items-center gap-3">
+                                <SocialLinksDialog initialLinks={user?.social_links || {}} onSave={saveSocialLinks}>
+                                    <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50">
+                                        <Instagram className="w-4 h-4" /> Socials
+                                    </Button>
+                                </SocialLinksDialog>
                                 <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50">
                                     <Sparkles className="w-4 h-4" /> Enhance
                                 </Button>
 
                                 <div className="relative group">
+
                                     <div
                                         onClick={() => window.open(`/${username}`, '_blank')}
                                         className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-full px-4 py-2 text-sm text-gray-600 pr-10 border border-gray-200 cursor-pointer"
@@ -189,13 +266,22 @@ const Dashboard = () => {
                             </div>
                         </div>
 
-                        {/* Add Link Button */}
-                        <Button
-                            onClick={addLink}
-                            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl h-14 text-base font-semibold mb-8 shadow-lg shadow-purple-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-2"
-                        >
-                            <Plus className="w-5 h-5" /> Add New Link
-                        </Button>
+                        {/* Add Link Button & Clear All */}
+                        <div className="flex gap-4 mb-8">
+                            <Button
+                                onClick={addLink}
+                                className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl h-14 text-base font-semibold shadow-lg shadow-purple-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-2"
+                            >
+                                <Plus className="w-5 h-5" /> Add New Link
+                            </Button>
+                            <Button
+                                onClick={handleClearAll}
+                                variant="outline"
+                                className="h-14 px-6 rounded-2xl border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 font-medium"
+                            >
+                                <Trash2 className="w-5 h-5 mr-2" /> Clear All
+                            </Button>
+                        </div>
 
                         {/* Links List with Drag and Drop */}
                         <div className="space-y-4 pb-20">
@@ -244,7 +330,7 @@ const Dashboard = () => {
                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-2xl z-20" />
 
                             {/* Status Bar */}
-                            <div className="h-8 w-full bg-[#132c25] flex items-center justify-between px-8 text-[10px] text-white font-medium pt-1">
+                            <div className="h-8 w-full bg-black flex items-center justify-between px-8 text-[10px] text-white font-medium pt-1 z-30 relative">
                                 <span>9:41</span>
                                 <div className="flex gap-1.5 items-center">
                                     <div className="flex gap-0.5">
@@ -261,14 +347,20 @@ const Dashboard = () => {
                                 </div>
                             </div>
 
-                            {/* Screen Content */}
-                            <div className="h-full w-full bg-[#132c25] overflow-y-auto text-white p-6 pb-20">
+                            {/* Screen Content - Dynamic Style Applied Here */}
+                            <div
+                                className={`h-full w-full overflow-y-auto p-6 pb-20 ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor}`}
+                                style={bgStyle}
+                            >
+                                {/* Overlay for readibility overlay if needed */}
+                                {currentTemplate.bgImage && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
+
                                 {/* Share Button */}
-                                <div className="absolute top-12 right-6 w-8 h-8 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center">
-                                    <ExternalLink className="w-4 h-4 text-white/70" />
+                                <div className="absolute top-12 right-6 w-8 h-8 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center z-10">
+                                    <ExternalLink className={`w-4 h-4 ${currentTemplate.textColor ? 'opacity-80' : 'text-gray-700'}`} />
                                 </div>
 
-                                <div className="flex flex-col items-center mt-8 space-y-3">
+                                <div className="flex flex-col items-center mt-8 space-y-3 relative z-10">
                                     <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
                                         <AvatarImage src={user?.avatar} />
                                         <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
@@ -276,41 +368,58 @@ const Dashboard = () => {
                                         </AvatarFallback>
                                     </Avatar>
                                     <h2 className="text-xl font-bold tracking-tight">@{username}</h2>
-                                    <div className="flex gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer">
-                                            <Instagram className="w-4 h-4" />
-                                        </div>
-                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer">
-                                            <Globe className="w-4 h-4" />
-                                        </div>
+                                    <div className="flex gap-3 flex-wrap justify-center px-4">
+                                        {user?.social_links && Object.entries(user.social_links).map(([platform, url]) => {
+                                            if (!url) return null;
+                                            const Icon = getIconForThumbnail(platform);
+                                            return Icon ? (
+                                                <a
+                                                    key={platform}
+                                                    href={url.startsWith('http') ? url : `https://${url}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer backdrop-blur-sm"
+                                                >
+                                                    <Icon className="w-4 h-4" />
+                                                </a>
+                                            ) : null;
+                                        })}
+                                        {(!user?.social_links || Object.values(user.social_links).every(v => !v)) && (
+                                            <div className="text-xs text-white/50 italic"></div>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="mt-8 space-y-3">
-                                    {links.filter(l => l.isActive).map((link) => (
-                                        <a
-                                            key={link.id}
-                                            href={link.url || '#'}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="block w-full py-4 px-6 bg-[#e9f6e3] text-[#132c25] rounded-full text-center font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform text-sm shadow-lg"
-                                        >
-                                            {link.title}
-                                        </a>
-                                    ))}
+                                <div className="mt-8 space-y-3 relative z-10 w-full px-6">
+                                    {links.filter(l => l.isActive).map((link) => {
+                                        const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
+                                        return (
+                                            <a
+                                                key={link.id}
+                                                href={link.url || '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className={`block w-full flex items-center justify-center relative ${currentTemplate.buttonStyle}`}
+                                            >
+                                                {Icon && (
+                                                    <Icon className="absolute left-4 w-5 h-5 opacity-90" />
+                                                )}
+                                                <span className="truncate max-w-[200px]">{link.title}</span>
+                                            </a>
+                                        );
+                                    })}
                                     {links.filter(l => l.isActive).length === 0 && (
-                                        <div className="text-center text-white/40 text-sm py-8">
+                                        <div className={`text-center text-sm py-8 ${currentTemplate.textColor} opacity-60`}>
                                             Add links to see them here
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Footer */}
-                                <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6">
-                                    <button className="bg-white text-black px-5 py-2.5 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-shadow">
+                                <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-10">
+                                    <button className="bg-white/10 backdrop-blur-md border border-white/20 text-current px-5 py-2.5 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-shadow">
                                         Join @{username} on Tap2
                                     </button>
-                                    <div className="text-[10px] text-white/30">Powered by Tap2</div>
                                 </div>
                             </div>
                         </div>
@@ -320,12 +429,12 @@ const Dashboard = () => {
                             <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
                                 <Smartphone className="w-4 h-4" /> Live Preview
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">Changes sync in real-time</p>
+                            <p className="text-xs text-gray-400 mt-1">Reflects your current theme</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </LinktreeLayout>
+        </LinktreeLayout >
     );
 };
 

@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 interface User {
@@ -9,6 +8,7 @@ interface User {
     avatar?: string;
     email?: string;
     email_confirmed_at?: string;
+    social_links?: Record<string, string>;
 }
 
 interface Link {
@@ -19,6 +19,7 @@ interface Link {
     clicks?: number;
     user_id?: string;
     position?: number;
+    thumbnail?: string;
 }
 
 interface AuthContextType {
@@ -34,6 +35,7 @@ interface AuthContextType {
     updateLinks: (links: Link[]) => Promise<void>;
     deleteLink: (linkId: string) => Promise<void>;
     updateTheme: (themeId: string) => Promise<void>;
+    refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,190 +49,218 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-    const fetchUserData = async (userId: string) => {
-        try {
-            // Fetch Profile via Supabase for Auth
-            let { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    // Helper to get token
+    const getToken = () => localStorage.getItem('auth_token');
 
-            // Handle OAuth First Time Login (Profile creation)
-            if (!profile) {
-                const { data: { user: authUser } } = await supabase.auth.getUser();
-                if (authUser) {
-                    // Create default username from email or metadata
-                    const baseName = authUser.user_metadata.full_name || authUser.email?.split('@')[0] || "user";
-                    const randomSuffix = Math.floor(Math.random() * 10000);
-                    const cleanName = baseName.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-                    const newUsername = `${cleanName}${randomSuffix}`;
+    const fetchUserData = async () => {
+        const token = getToken();
+        if (!token) {
+            setIsLoading(false);
+            return;
+        }
 
-                    const { data: newProfile, error: createError } = await supabase
-                        .from('profiles')
-                        .insert([{
-                            id: userId,
-                            username: newUsername,
-                            full_name: authUser.user_metadata.full_name || "New User",
-                            avatar_url: authUser.user_metadata.avatar_url,
-                            email: authUser.email,
-                            selected_theme: 'artemis'
-                        }])
-                        .select()
-                        .single();
+        // DUMMY USER HANDLING
+        if (token === 'dummy_token_temp_123') {
+            setUser({
+                id: 'dummy_user_id',
+                name: 'Temp User',
+                username: 'tempuser',
+                avatar: 'https://github.com/shadcn.png',
+                email: 'temp@gmail.com',
+                social_links: {
+                    twitter: 'https://twitter.com/tempuser',
+                    instagram: 'https://instagram.com/tempuser'
+                },
+                email_confirmed_at: new Date().toISOString()
+            });
+            setSelectedTheme("artemis");
+            setIsAuthenticated(true);
 
-                    if (createError) {
-                        console.error("Auto-creation of profile failed", createError);
-                        return;
-                    }
-                    profile = newProfile;
+            // Mock links for dummy user
+            setLinks([
+                {
+                    id: 'link1',
+                    title: 'My Portfolio',
+                    url: 'https://example.com',
+                    isActive: true,
+                    clicks: 120,
+                    user_id: 'dummy_user_id',
+                    position: 0
+                },
+                {
+                    id: 'link2',
+                    title: 'GitHub Profile',
+                    url: 'https://github.com',
+                    isActive: true,
+                    clicks: 85,
+                    user_id: 'dummy_user_id',
+                    position: 1
                 }
+            ]);
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            // 1. Fetch User Profile
+            const res = await fetch(`${API_URL}/auth/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!res.ok) {
+                // Token invalid or expired
+                logout();
+                return;
             }
 
-            if (profile) {
-                // Get auth user to check email verification status
-                const { data: { user: authUser } } = await supabase.auth.getUser();
+            const profile = await res.json();
 
-                setUser({
-                    id: profile.id,
-                    name: profile.full_name,
-                    username: profile.username,
-                    avatar: profile.avatar_url,
-                    email: profile.email || authUser?.email,
-                    email_confirmed_at: authUser?.email_confirmed_at
-                });
-                setSelectedTheme(profile.selected_theme || "artemis");
+            setUser({
+                id: profile.id,
+                name: profile.full_name,
+                username: profile.username,
+                avatar: profile.avatar_url,
+                email: profile.email,
+                social_links: profile.social_links || {},
+                email_confirmed_at: new Date().toISOString() // Assuming confirmed if logged in
+            });
+            setSelectedTheme(profile.selected_theme || "artemis");
+            setIsAuthenticated(true);
 
-                // Fetch Links via Backend API (Securely)
-                const { data: { session } } = await supabase.auth.getSession();
-                const token = session?.access_token;
+            // 2. Fetch Links
+            const linksRes = await fetch(`${API_URL}/my-links`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-                if (token) {
-                    try {
-                        const linksRes = await fetch(`${API_URL}/my-links`, {
-                            headers: {
-                                'Authorization': `Bearer ${token}`
-                            }
-                        });
-                        if (linksRes.ok) {
-                            const userLinks = await linksRes.json();
-                            if (Array.isArray(userLinks)) {
-                                setLinks(userLinks.map((l: any) => ({
-                                    id: l.id,
-                                    title: l.title,
-                                    url: l.url,
-                                    isActive: l.is_active,
-                                    clicks: l.clicks,
-                                    user_id: l.user_id
-                                })));
-                            }
-                        }
-                    } catch (e) {
-                        console.error("API Link Fetch Error", e);
-                    }
+            if (linksRes.ok) {
+                const userLinks = await linksRes.json();
+                if (Array.isArray(userLinks)) {
+                    setLinks(userLinks.map((l: any) => ({
+                        id: l.id,
+                        title: l.title,
+                        url: l.url,
+                        isActive: l.is_active,
+                        clicks: l.clicks,
+                        user_id: l.user_id,
+                        position: l.position
+                    })));
                 }
             }
 
         } catch (error) {
             console.error("Error fetching user data:", error);
+            logout();
+        } finally {
+            setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        // Check active session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                setIsAuthenticated(true);
-                fetchUserData(session.user.id);
-            } else {
-                setIsAuthenticated(false);
-            }
-            setIsLoading(false);
-        });
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (session) {
-                setIsAuthenticated(true);
-                fetchUserData(session.user.id);
-            } else {
-                setIsAuthenticated(false);
-                setUser(null);
-                setLinks([]);
-            }
-            setIsLoading(false);
-        });
-
-        return () => subscription.unsubscribe();
+        fetchUserData();
     }, []);
 
     const login = async (email: string, pass: string) => {
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password: pass,
-        });
+        // DUMMY LOGIN CHECK
+        if (email === "temp@gmail.com" && pass === "temp123") {
+            // Save dummy token
+            localStorage.setItem('auth_token', 'dummy_token_temp_123');
 
-        if (error) {
-            console.error("Login error:", error);
-            return { success: false, error: error.message };
+            // Set state immediately (mimic fetchUserData success for dummy)
+            setUser({
+                id: 'dummy_user_id',
+                name: 'Temp User',
+                username: 'tempuser',
+                avatar: 'https://github.com/shadcn.png',
+                email: 'temp@gmail.com',
+                email_confirmed_at: new Date().toISOString()
+            });
+            setIsAuthenticated(true);
+
+            // Trigger fetch data to populate links (which will see the token)
+            setTimeout(() => fetchUserData(), 100);
+
+            return { success: true };
         }
-        return { success: true };
+
+        try {
+            const res = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password: pass })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                return { success: false, error: data.error };
+            }
+
+            // Save token
+            localStorage.setItem('auth_token', data.token);
+
+            // Set state
+            setUser({
+                id: data.user.id,
+                name: data.user.full_name,
+                username: data.user.username,
+                avatar: data.user.avatar,
+                email: data.user.email,
+                email_confirmed_at: new Date().toISOString()
+            });
+            setIsAuthenticated(true);
+
+            // Fetch links immediately
+            fetchUserData();
+
+            return { success: true };
+        } catch (err: any) {
+            console.error("Login unexpected error:", err);
+            return { success: false, error: "Network error" };
+        }
     };
 
     const loginWithGoogle = async () => {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: `${window.location.origin}/dashboard`
-            }
-        });
-
-        if (error) {
-            return { success: false, error: error.message };
-        }
-        return { success: true };
+        // Placeholder - requires backend Oauth implementation
+        toast.info("Google Login temporarily unavailable due to backend migration.");
+        return { success: false, error: "Not implemented" };
     };
 
     const signUp = async (email: string, pass: string, username: string, name: string) => {
-        // 1. Check if username exists
-        const { data: existingUser } = await supabase
-            .from('profiles')
-            .select('username')
-            .eq('username', username)
-            .single();
+        try {
+            const res = await fetch(`${API_URL}/auth/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password: pass, username, full_name: name })
+            });
 
-        if (existingUser) {
-            return { success: false, error: "Username already taken" };
-        }
+            const data = await res.json();
 
-        // 2. Sign up auth user
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password: pass,
-        });
-
-        if (error) {
-            return { success: false, error: error.message };
-        }
-
-        if (data.user) {
-            // 3. Create profile
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .insert([
-                    {
-                        id: data.user.id,
-                        username,
-                        full_name: name,
-                        selected_theme: 'artemis'
-                    }
-                ]);
-
-            if (profileError) {
-                return { success: false, error: "Account created but profile setup failed. Please contact support." };
+            if (!res.ok) {
+                return { success: false, error: data.error };
             }
-        }
 
-        return { success: true };
+            // Save token
+            localStorage.setItem('auth_token', data.token);
+
+            // Set state
+            setUser({
+                id: data.user.id,
+                name: data.user.full_name,
+                username: data.user.username,
+                email: data.user.email,
+                email_confirmed_at: new Date().toISOString()
+            });
+            setIsAuthenticated(true);
+
+            return { success: true };
+        } catch (err: any) {
+            console.error("Signup unexpected error:", err);
+            return { success: false, error: "Network error" };
+        }
     };
 
     const logout = async () => {
-        await supabase.auth.signOut();
+        localStorage.removeItem('auth_token');
         setIsAuthenticated(false);
         setUser(null);
         setLinks([]);
@@ -238,11 +268,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const updateLinks = async (newLinks: Link[]) => {
         setLinks(newLinks);
-        if (!user) return;
-
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-
+        const token = getToken();
         if (!token) return;
 
         try {
@@ -252,11 +278,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ links: newLinks }) // userId removed, server gets it from token
+                body: JSON.stringify({ links: newLinks })
             });
-
-            // Refresh
-            // await fetchUserData(user.id);
         } catch (err) {
             console.error("Error syncing links:", err);
             toast.error("Failed to save changes");
@@ -264,17 +287,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deleteLink = async (linkId: string) => {
-        if (!user) return;
-
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-
+        const token = getToken();
         if (!token) {
             toast.error("Not authenticated");
             return;
         }
 
-        // Optimistic update - remove from local state immediately
+        // Optimistic update
         const previousLinks = links;
         setLinks(links.filter(l => l.id !== linkId));
 
@@ -287,7 +306,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
 
             if (!response.ok) {
-                // Revert on failure
                 setLinks(previousLinks);
                 const error = await response.json();
                 toast.error(error.error || "Failed to delete link");
@@ -295,7 +313,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 toast.success("Link deleted");
             }
         } catch (err) {
-            // Revert on error
             setLinks(previousLinks);
             console.error("Error deleting link:", err);
             toast.error("Failed to delete link");
@@ -304,21 +321,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const updateTheme = async (themeId: string) => {
         setSelectedTheme(themeId);
-        if (user) {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-
-            if (token) {
-                await fetch(`${API_URL}/profile/theme`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ themeId })
-                });
-            }
+        const token = getToken();
+        if (token) {
+            await fetch(`${API_URL}/profile/theme`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ themeId })
+            });
         }
+    };
+
+    const refreshProfile = async () => {
+        await fetchUserData();
     };
 
     return (
@@ -334,7 +351,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             logout,
             updateLinks,
             deleteLink,
-            updateTheme
+            updateTheme,
+            refreshProfile
         }}>
             {children}
         </AuthContext.Provider>

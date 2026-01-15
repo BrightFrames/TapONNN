@@ -3,6 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ThumbnailSelector } from "@/components/ThumbnailSelector";
 import {
     GripVertical,
     Image as ImageIcon,
@@ -16,7 +17,21 @@ import {
     MoreHorizontal,
     Eye,
     EyeOff,
-    Link2
+    Link2,
+    Instagram,
+    Facebook,
+    Twitter,
+    Linkedin,
+    Youtube,
+    Github,
+    Globe,
+    Mail,
+    Phone,
+    Music,
+    Video,
+    ShoppingBag,
+    MapPin,
+    Calendar
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -32,6 +47,7 @@ interface Link {
     isActive: boolean;
     clicks?: number;
     position?: number;
+    thumbnail?: string;
 }
 
 interface SortableLinkCardProps {
@@ -39,6 +55,24 @@ interface SortableLinkCardProps {
     onUpdate: (id: string, field: keyof Link, value: any) => void;
     onDelete: (id: string) => void;
 }
+
+const iconMap: any = {
+    instagram: Instagram,
+    facebook: Facebook,
+    twitter: Twitter,
+    linkedin: Linkedin,
+    youtube: Youtube,
+    github: Github,
+    tiktok: Music,
+    globe: Globe,
+    mail: Mail,
+    phone: Phone,
+    music: Music,
+    video: Video,
+    store: ShoppingBag,
+    location: MapPin,
+    calendar: Calendar
+};
 
 const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) => {
     const {
@@ -60,6 +94,8 @@ const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) =
     const copyUrl = () => {
         navigator.clipboard.writeText(link.url);
     };
+
+    const ThumbnailIcon = link.thumbnail && iconMap[link.thumbnail] ? iconMap[link.thumbnail] : null;
 
     return (
         <div
@@ -86,8 +122,18 @@ const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) =
                 <div className="flex-1 p-5">
                     <div className="flex justify-between items-start gap-4">
                         <div className="flex-1 space-y-2">
-                            {/* Title */}
-                            <div className="flex items-center gap-2 group/title">
+                            {/* Title with Thumbnail Preview */}
+                            <div className="flex items-center gap-3 group/title">
+                                {ThumbnailIcon ? (
+                                    <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+                                        <ThumbnailIcon className="w-4 h-4" />
+                                    </div>
+                                ) : (
+                                    <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center">
+                                        <Link2 className="w-4 h-4" />
+                                    </div>
+                                )}
+
                                 <Input
                                     className="font-semibold text-base border-transparent hover:border-gray-200 focus:border-purple-400 focus:ring-1 focus:ring-purple-400 bg-transparent px-2 h-9 w-full max-w-[280px] rounded-lg transition-colors"
                                     value={link.title}
@@ -98,9 +144,8 @@ const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) =
                             </div>
 
                             {/* URL */}
-                            <div className="flex items-center gap-2 group/url">
+                            <div className="flex items-center gap-2 group/url pl-11">
                                 <div className="flex items-center gap-1.5 flex-1">
-                                    <Link2 className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                                     <Input
                                         className="text-sm text-gray-500 border-transparent hover:border-gray-200 focus:border-purple-400 focus:ring-1 focus:ring-purple-400 bg-transparent px-2 h-8 w-full rounded-lg transition-colors"
                                         value={link.url}
@@ -141,10 +186,16 @@ const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) =
                     {/* Bottom Toolbar */}
                     <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-4">
                         <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg h-8 px-2 gap-1.5 text-xs">
-                                <ImageIcon className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">Thumbnail</span>
-                            </Button>
+                            <ThumbnailSelector
+                                currentThumbnail={link.thumbnail}
+                                onSelect={(val) => onUpdate(link.id, 'thumbnail', val)}
+                            >
+                                <Button variant="ghost" size="sm" className={`text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg h-8 px-2 gap-1.5 text-xs ${link.thumbnail ? 'text-purple-600 bg-purple-50' : ''}`}>
+                                    <ImageIcon className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Thumbnail</span>
+                                </Button>
+                            </ThumbnailSelector>
+
                             <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg h-8 px-2 gap-1.5 text-xs">
                                 <Star className="w-3.5 h-3.5" />
                                 <span className="hidden sm:inline">Highlight</span>

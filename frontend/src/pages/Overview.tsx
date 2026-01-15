@@ -1,27 +1,26 @@
-
+import { useState, useEffect } from "react";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { templates } from "@/data/templates";
+import { supabase } from "@/lib/supabase";
 import {
-    Activity,
-    ArrowUpRight,
     Copy,
     ExternalLink,
     Eye,
-    Link2,
     MousePointerClick,
     Share2,
     Sparkles,
     Users,
-    Zap,
     TrendingUp,
-    ShoppingBag,
     Instagram,
-    Globe
+    Globe,
+    Zap,
 } from "lucide-react";
+import { getIconForThumbnail } from "@/utils/socialIcons";
 import {
     AreaChart,
     Area,
@@ -33,42 +32,88 @@ import {
 } from 'recharts';
 
 const Overview = () => {
-    const { user, links } = useAuth();
+    const { user, links, selectedTheme } = useAuth();
+    const [analyticsData, setAnalyticsData] = useState<any>(null);
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+    // Fetch real analytics
+    useEffect(() => {
+        const fetchAnalytics = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_URL}/analytics/summary`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setAnalyticsData(data);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchAnalytics();
+    }, []);
 
     // Use real user data or fallback
     const userName = user?.name || "Creator";
     const username = user?.username || "user";
     const userInitial = userName[0]?.toUpperCase() || "U";
 
-    // Mock analytics data
-    const stats = {
-        totalViews: 128400,
-        totalClicks: 42800,
-        subscribers: 1204,
-        ctr: 33.4,
-        topLink: links[0] || { title: 'Instagram', clicks: 1240 }
+    // Calculate real stats
+    const totalClicks = analyticsData?.totalClicks ?? links.reduce((sum, link) => sum + (link.clicks || 0), 0);
+    const totalViews = analyticsData?.totalViews ?? 0;
+    const subscribers = analyticsData?.subscribers ?? 0;
+    const ctr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : 0;
+
+    // Helper to fill chart data
+    const fillChartData = (backendData: any[]) => {
+        const filledData = [];
+        const today = new Date();
+        const dataMap = new Map();
+        if (backendData) {
+            backendData.forEach(item => {
+                dataMap.set(item.date, { views: parseInt(item.views), clicks: parseInt(item.clicks) });
+            });
+        }
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(today.getDate() - i);
+            const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+            const existing = dataMap.get(dateStr);
+            filledData.push({
+                name: dateStr, // naming 'name' for XAxis
+                views: existing ? existing.views : 0,
+                clicks: existing ? existing.clicks : 0
+            });
+        }
+        return filledData;
     };
 
-    const activityFeed = [
-        { id: 1, type: "click", text: `Someone clicked on '${links[0]?.title || "Instagram"}'`, time: "2 mins ago", icon: MousePointerClick, color: "text-blue-500", bg: "bg-blue-100" },
-        { id: 2, type: "subscribe", text: "New subscriber: alex_j", time: "15 mins ago", icon: Users, color: "text-emerald-500", bg: "bg-emerald-100" },
-        { id: 3, type: "view", text: "Profile reached 1k views today", time: "1 hour ago", icon: TrendingUp, color: "text-violet-500", bg: "bg-violet-100" },
-        { id: 4, type: "sale", text: "New sale: Digital Art Pack", time: "2 hours ago", icon: ShoppingBag, color: "text-amber-500", bg: "bg-amber-100" },
-    ];
-
-    const chartData = [
-        { name: 'Mon', views: 400, clicks: 120 },
-        { name: 'Tue', views: 300, clicks: 90 },
-        { name: 'Wed', views: 550, clicks: 180 },
-        { name: 'Thu', views: 450, clicks: 140 },
-        { name: 'Fri', views: 600, clicks: 200 },
-        { name: 'Sat', views: 800, clicks: 280 },
-        { name: 'Sun', views: 950, clicks: 350 },
+    const chartData = analyticsData?.chartData ? fillChartData(analyticsData.chartData) : [
+        { name: 'Mon', views: 0, clicks: 0 },
+        { name: 'Tue', views: 0, clicks: 0 },
+        { name: 'Wed', views: 0, clicks: 0 },
+        { name: 'Thu', views: 0, clicks: 0 },
+        { name: 'Fri', views: 0, clicks: 0 },
+        { name: 'Sat', views: 0, clicks: 0 },
+        { name: 'Sun', views: 0, clicks: 0 },
     ];
 
     const copyLink = () => {
-        navigator.clipboard.writeText(`linktr.ee/${username}`);
+        navigator.clipboard.writeText(`${window.location.origin}/${username}`);
     };
+
+    // Get current template based on theme
+    const currentTemplate = templates.find(t => t.id === selectedTheme) || templates[0];
+
+    // Background style
+    const bgStyle = currentTemplate.bgImage
+        ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+        : {};
 
     return (
         <LinktreeLayout>
@@ -82,7 +127,7 @@ const Overview = () => {
                         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iYSIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cGF0aCBkPSJNLTEwIDMwaDYwdjJoLTYweiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNhKSIvPjwvc3ZnPg==')] opacity-50" />
                         <div className="relative p-8 flex items-center justify-between">
                             <div className="flex items-center gap-5">
-                                <Avatar className="w-16 h-16 border-4 border-white/30 shadow-xl">
+                                <Avatar className="w-16 h-16 border-4 border-white/30 shadow-xl" key={user?.avatar}>
                                     <AvatarImage src={user?.avatar} />
                                     <AvatarFallback className="bg-white/20 text-white text-2xl font-bold backdrop-blur-sm">
                                         {userInitial}
@@ -119,7 +164,7 @@ const Overview = () => {
                                     </div>
                                     <Badge className="bg-white/20 text-white border-none text-[10px]">Lifetime</Badge>
                                 </div>
-                                <div className="text-3xl font-bold mb-0.5">{(stats.totalViews / 1000).toFixed(1)}k</div>
+                                <div className="text-3xl font-bold mb-0.5">{totalViews}</div>
                                 <p className="text-white/70 text-sm">Total Views</p>
                             </CardContent>
                         </Card>
@@ -130,11 +175,8 @@ const Overview = () => {
                                     <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
                                         <MousePointerClick className="w-5 h-5" />
                                     </div>
-                                    <div className="flex items-center text-emerald-600 text-xs font-semibold bg-emerald-50 px-2 py-1 rounded-full">
-                                        <ArrowUpRight className="w-3 h-3 mr-0.5" /> 12%
-                                    </div>
                                 </div>
-                                <div className="text-3xl font-bold mb-0.5 text-gray-900">{(stats.totalClicks / 1000).toFixed(1)}k</div>
+                                <div className="text-3xl font-bold mb-0.5 text-gray-900">{totalClicks}</div>
                                 <p className="text-gray-500 text-sm">Total Clicks</p>
                             </CardContent>
                         </Card>
@@ -145,11 +187,8 @@ const Overview = () => {
                                     <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl">
                                         <Users className="w-5 h-5" />
                                     </div>
-                                    <div className="flex items-center text-emerald-600 text-xs font-semibold bg-emerald-50 px-2 py-1 rounded-full">
-                                        <ArrowUpRight className="w-3 h-3 mr-0.5" /> 5%
-                                    </div>
                                 </div>
-                                <div className="text-3xl font-bold mb-0.5 text-gray-900">{stats.subscribers.toLocaleString()}</div>
+                                <div className="text-3xl font-bold mb-0.5 text-gray-900">{subscribers}</div>
                                 <p className="text-gray-500 text-sm">Subscribers</p>
                             </CardContent>
                         </Card>
@@ -161,7 +200,7 @@ const Overview = () => {
                                         <TrendingUp className="w-5 h-5" />
                                     </div>
                                 </div>
-                                <div className="text-3xl font-bold mb-0.5 text-gray-900">{stats.ctr}%</div>
+                                <div className="text-3xl font-bold mb-0.5 text-gray-900">{ctr}%</div>
                                 <p className="text-gray-500 text-sm">Click Rate</p>
                             </CardContent>
                         </Card>
@@ -177,7 +216,7 @@ const Overview = () => {
                                         <CardTitle className="text-lg">Weekly Performance</CardTitle>
                                         <CardDescription>Views and clicks over the last 7 days</CardDescription>
                                     </div>
-                                    <Badge variant="outline" className="text-xs">This Week</Badge>
+                                    <Badge variant="outline" className="text-xs">No Data</Badge>
                                 </div>
                             </CardHeader>
                             <CardContent className="pt-0">
@@ -206,7 +245,7 @@ const Overview = () => {
                             </CardContent>
                         </Card>
 
-                        {/* Activity Feed */}
+                        {/* Recent Activity - Empty State */}
                         <Card className="md:col-span-2 border border-gray-100">
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-lg flex items-center gap-2">
@@ -214,18 +253,8 @@ const Overview = () => {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-4">
-                                    {activityFeed.map((item) => (
-                                        <div key={item.id} className="flex gap-3 items-start">
-                                            <div className={`p-2 rounded-xl shrink-0 ${item.bg} ${item.color}`}>
-                                                <item.icon className="w-4 h-4" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-sm font-medium text-gray-800 truncate">{item.text}</p>
-                                                <p className="text-xs text-gray-400 mt-0.5">{item.time}</p>
-                                            </div>
-                                        </div>
-                                    ))}
+                                <div className="flex flex-col items-center justify-center text-center py-8 text-gray-500">
+                                    <p className="text-sm">No recent activity</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -257,6 +286,11 @@ const Overview = () => {
                                         </div>
                                     </div>
                                 ))}
+                                {links.length === 0 && (
+                                    <div className="text-center py-6 text-gray-500 text-sm">
+                                        No links to show yet.
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -272,7 +306,7 @@ const Overview = () => {
                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-2xl z-20" />
 
                             {/* Status Bar */}
-                            <div className="h-8 w-full bg-[#132c25] flex items-center justify-between px-8 text-[10px] text-white font-medium pt-1">
+                            <div className="h-8 w-full bg-black flex items-center justify-between px-8 text-[10px] text-white font-medium pt-1 z-30 relative">
                                 <span>9:41</span>
                                 <div className="flex gap-1.5 items-center">
                                     <div className="flex gap-0.5">
@@ -290,58 +324,87 @@ const Overview = () => {
                             </div>
 
                             {/* Screen Content */}
-                            <div className="h-full w-full bg-[#132c25] overflow-y-auto text-white p-6 pb-20">
+                            <div
+                                className={`h-full w-full overflow-y-auto p-6 pb-20 ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor}`}
+                                style={bgStyle}
+                            >
+                                {/* Overlay for readibility overlay if needed */}
+                                {currentTemplate.bgImage && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
+
                                 {/* Share Button */}
-                                <div className="absolute top-12 right-6 w-8 h-8 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center">
-                                    <ExternalLink className="w-4 h-4 text-white/70" />
+                                <div className="absolute top-12 right-6 w-8 h-8 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center z-10">
+                                    <ExternalLink className={`w-4 h-4 ${currentTemplate.textColor ? 'opacity-80' : 'text-gray-700'}`} />
                                 </div>
 
-                                <div className="flex flex-col items-center mt-8 space-y-3">
-                                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
+                                <div className="flex flex-col items-center mt-8 space-y-3 relative z-10">
+                                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl" key={user?.avatar}>
                                         <AvatarImage src={user?.avatar} />
                                         <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
                                             {userInitial}
                                         </AvatarFallback>
                                     </Avatar>
                                     <h2 className="text-xl font-bold tracking-tight">@{username}</h2>
-                                    <div className="flex gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer">
-                                            <Instagram className="w-4 h-4" />
-                                        </div>
-                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer">
-                                            <Globe className="w-4 h-4" />
-                                        </div>
+                                    <div className="flex gap-3 flex-wrap justify-center px-4">
+                                        {user?.social_links && Object.entries(user.social_links).map(([platform, url]) => {
+                                            if (!url) return null;
+                                            const Icon = getIconForThumbnail(platform);
+                                            return Icon ? (
+                                                <a
+                                                    key={platform}
+                                                    href={url.startsWith('http') ? url : `https://${url}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer backdrop-blur-sm"
+                                                >
+                                                    <Icon className="w-4 h-4" />
+                                                </a>
+                                            ) : null;
+                                        })}
                                     </div>
                                 </div>
 
-                                <div className="mt-8 space-y-3">
-                                    {links.filter(l => l.isActive).map((link) => (
-                                        <a
-                                            key={link.id}
-                                            href={link.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="block w-full py-4 px-6 bg-[#e9f6e3] text-[#132c25] rounded-full text-center font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform text-sm shadow-lg"
-                                        >
-                                            {link.title}
-                                        </a>
-                                    ))}
+                                <div className="mt-8 space-y-3 relative z-10">
+
+
+                                    {links.filter(l => l.isActive).map((link) => {
+                                        const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
+                                        return (
+                                            <a
+                                                key={link.id}
+                                                href={link.url || '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className={`block w-full flex items-center justify-center relative ${currentTemplate.buttonStyle}`}
+                                            >
+                                                {Icon && (
+                                                    <Icon className="absolute left-4 w-5 h-5 opacity-90" />
+                                                )}
+                                                <span className="truncate max-w-[200px]">{link.title}</span>
+                                            </a>
+                                        );
+                                    })}
+                                    {links.filter(l => l.isActive).length === 0 && (
+                                        <div className={`text-center text-sm py-8 ${currentTemplate.textColor} opacity-60`}>
+                                            Add links to see them here
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Footer */}
-                                <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6">
-                                    <button className="bg-white text-black px-5 py-2.5 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-shadow">
+                                <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-10">
+                                    <button className="bg-white/10 backdrop-blur-md border border-white/20 text-current px-5 py-2.5 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-shadow">
                                         Join @{username} on Tap2
                                     </button>
-                                    <div className="text-[10px] text-white/30">Powered by Tap2</div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Preview Label */}
                         <div className="text-center mt-6">
-                            <p className="text-sm font-medium text-gray-600">Live Preview</p>
-                            <p className="text-xs text-gray-400 mt-1">This is how your profile looks</p>
+                            <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
+                                <Share2 className="w-4 h-4" /> Live Preview
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">Reflects your current theme</p>
                         </div>
                     </div>
                 </div>

@@ -12,7 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
 import {
     User,
     Lock,
@@ -27,7 +26,7 @@ import {
 } from "lucide-react";
 
 const Settings = () => {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, refreshProfile } = useAuth();
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -47,16 +46,25 @@ const Settings = () => {
     // Load profile data
     useEffect(() => {
         const loadProfile = async () => {
-            if (!user?.id) return;
+            const token = localStorage.getItem('auth_token');
+            if (!token) return;
+
+            // DUMMY USER HANDLING
+            if (token === 'dummy_token_temp_123') {
+                setFullName("Temp User");
+                setUsername("tempuser");
+                setBio("This is a dummy account for testing purposes.");
+                setAvatarUrl("https://github.com/shadcn.png");
+                return;
+            }
 
             try {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
 
-                if (data) {
+                if (response.ok) {
+                    const data = await response.json();
                     setFullName(data.full_name || data.name || "");
                     setUsername(data.username || "");
                     setBio(data.bio || "");
@@ -67,18 +75,18 @@ const Settings = () => {
             }
         };
 
-        loadProfile();
-    }, [user?.id]);
+        if (isAuthenticated) {
+            loadProfile();
+        }
+    }, [isAuthenticated, API_URL]);
 
     const handleAvatarUpload = (url: string) => {
-        setAvatarUrl(url);
+        setAvatarUrl(url); // This now receives base64 string
     };
 
     const handleSaveProfile = async () => {
         setSaving(true);
-
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
+        const token = localStorage.getItem('auth_token');
 
         if (!token) {
             toast.error("Not authenticated");
@@ -107,6 +115,7 @@ const Settings = () => {
                 toast.error(result.error || "Failed to update profile");
             } else {
                 toast.success("Profile updated successfully!");
+                await refreshProfile(); // Refresh global context
             }
         } catch (err) {
             console.error("Error saving profile:", err);
@@ -128,14 +137,22 @@ const Settings = () => {
         }
 
         setSaving(true);
+        const token = localStorage.getItem('auth_token');
 
         try {
-            const { error } = await supabase.auth.updateUser({
-                password: newPassword
+            const response = await fetch(`${API_URL}/auth/change-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ newPassword })
             });
 
-            if (error) {
-                toast.error(error.message);
+            const data = await response.json();
+
+            if (!response.ok) {
+                toast.error(data.error || "Failed to change password");
             } else {
                 toast.success("Password updated successfully!");
                 setCurrentPassword("");
@@ -151,25 +168,8 @@ const Settings = () => {
     };
 
     const handleResetPassword = async () => {
-        if (!user?.email) {
-            toast.error("No email found");
-            return;
-        }
-
-        try {
-            const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-                redirectTo: `${window.location.origin}/reset-password`
-            });
-
-            if (error) {
-                toast.error(error.message);
-            } else {
-                toast.success("Password reset email sent!");
-            }
-        } catch (err) {
-            console.error("Error sending reset email:", err);
-            toast.error("Failed to send reset email");
-        }
+        toast.info("Password reset via email is currently disabled. Please contact support.");
+        // Requires backend SMTP integration
     };
 
     const handleDeleteAccount = async () => {
