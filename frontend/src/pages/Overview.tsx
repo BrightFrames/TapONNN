@@ -121,87 +121,82 @@ const Overview = () => {
                 {/* Main Content */}
                 <div className="flex-1 max-w-4xl py-8 px-6 md:px-10 overflow-y-auto">
 
-                    {/* Welcome Card - Premium Glassmorphism */}
-                    <div className="relative mb-8 rounded-3xl overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600" />
-                        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iYSIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cGF0aCBkPSJNLTEwIDMwaDYwdjJoLTYweiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNhKSIvPjwvc3ZnPg==')] opacity-50" />
-                        <div className="relative p-8 flex items-center justify-between">
-                            <div className="flex items-center gap-5">
-                                <Avatar className="w-16 h-16 border-4 border-white/30 shadow-xl" key={user?.avatar}>
-                                    <AvatarImage src={user?.avatar} />
-                                    <AvatarFallback className="bg-white/20 text-white text-2xl font-bold backdrop-blur-sm">
-                                        {userInitial}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="text-white/70 text-sm font-medium mb-1">Welcome back,</p>
-                                    <h1 className="text-2xl font-bold text-white tracking-tight">{userName}</h1>
-                                    <p className="text-white/60 text-sm mt-0.5">@{username}</p>
-                                </div>
+                    {/* Welcome Card - Clean & Modern */}
+                    <div className="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <Avatar className="w-16 h-16 border-2 border-border" key={user?.avatar}>
+                                <AvatarImage src={user?.avatar} />
+                                <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+                                    {userInitial}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <h1 className="text-3xl font-bold tracking-tight text-foreground">{userName}</h1>
+                                <p className="text-muted-foreground">@{username}</p>
                             </div>
-                            <div className="flex gap-3">
-                                <Button
-                                    variant="secondary"
-                                    className="bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm rounded-full gap-2"
-                                    onClick={copyLink}
-                                >
-                                    <Copy className="w-4 h-4" /> Copy Link
-                                </Button>
-                                <Button className="bg-white text-purple-700 hover:bg-white/90 rounded-full gap-2 font-semibold shadow-lg">
-                                    <Share2 className="w-4 h-4" /> Share
-                                </Button>
-                            </div>
+                        </div>
+                        <div className="flex gap-3 w-full md:w-auto">
+                            <Button
+                                variant="outline"
+                                className="gap-2 flex-1 md:flex-none"
+                                onClick={copyLink}
+                            >
+                                <Copy className="w-4 h-4" /> Copy Link
+                            </Button>
+                            <Button className="gap-2 flex-1 md:flex-none">
+                                <Share2 className="w-4 h-4" /> Share
+                            </Button>
                         </div>
                     </div>
 
-                    {/* Stats Grid - Premium Cards */}
+                    {/* Stats Grid - Standard Cards */}
                     <div className="grid gap-4 md:grid-cols-4 mb-8">
-                        <Card className="bg-gradient-to-br from-violet-500 to-purple-600 text-white border-none shadow-lg shadow-purple-200/50 hover:shadow-xl transition-shadow">
+                        <Card className="hover:bg-muted/50 transition-colors">
                             <CardContent className="pt-6">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm">
-                                        <Eye className="w-5 h-5" />
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="p-2 bg-primary/10 text-primary rounded-lg">
+                                        <Eye className="w-4 h-4" />
                                     </div>
-                                    <Badge className="bg-white/20 text-white border-none text-[10px]">Lifetime</Badge>
+                                    <Badge variant="secondary" className="text-[10px]">Lifetime</Badge>
                                 </div>
-                                <div className="text-3xl font-bold mb-0.5">{totalViews}</div>
-                                <p className="text-white/70 text-sm">Total Views</p>
+                                <div className="text-2xl font-bold">{totalViews}</div>
+                                <p className="text-muted-foreground text-xs">Total Views</p>
                             </CardContent>
                         </Card>
 
-                        <Card className="border border-gray-100 shadow-sm hover:shadow-md transition-shadow bg-white">
+                        <Card className="hover:bg-muted/50 transition-colors">
                             <CardContent className="pt-6">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
-                                        <MousePointerClick className="w-5 h-5" />
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg">
+                                        <MousePointerClick className="w-4 h-4" />
                                     </div>
                                 </div>
-                                <div className="text-3xl font-bold mb-0.5 text-gray-900">{totalClicks}</div>
-                                <p className="text-gray-500 text-sm">Total Clicks</p>
+                                <div className="text-2xl font-bold">{totalClicks}</div>
+                                <p className="text-muted-foreground text-xs">Total Clicks</p>
                             </CardContent>
                         </Card>
 
-                        <Card className="border border-gray-100 shadow-sm hover:shadow-md transition-shadow bg-white">
+                        <Card className="hover:bg-muted/50 transition-colors">
                             <CardContent className="pt-6">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl">
-                                        <Users className="w-5 h-5" />
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg">
+                                        <Users className="w-4 h-4" />
                                     </div>
                                 </div>
-                                <div className="text-3xl font-bold mb-0.5 text-gray-900">{subscribers}</div>
-                                <p className="text-gray-500 text-sm">Subscribers</p>
+                                <div className="text-2xl font-bold">{subscribers}</div>
+                                <p className="text-muted-foreground text-xs">Subscribers</p>
                             </CardContent>
                         </Card>
 
-                        <Card className="border border-gray-100 shadow-sm hover:shadow-md transition-shadow bg-white">
+                        <Card className="hover:bg-muted/50 transition-colors">
                             <CardContent className="pt-6">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="p-2.5 bg-amber-100 text-amber-600 rounded-xl">
-                                        <TrendingUp className="w-5 h-5" />
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="p-2 bg-amber-500/10 text-amber-500 rounded-lg">
+                                        <TrendingUp className="w-4 h-4" />
                                     </div>
                                 </div>
-                                <div className="text-3xl font-bold mb-0.5 text-gray-900">{ctr}%</div>
-                                <p className="text-gray-500 text-sm">Click Rate</p>
+                                <div className="text-2xl font-bold">{ctr}%</div>
+                                <p className="text-muted-foreground text-xs">Click Rate</p>
                             </CardContent>
                         </Card>
                     </div>
@@ -224,22 +219,22 @@ const Overview = () => {
                                     <AreaChart data={chartData}>
                                         <defs>
                                             <linearGradient id="colorViews2" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2} />
-                                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} />
+                                                <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
                                             </linearGradient>
                                             <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.2} />
-                                                <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                        <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={11} stroke="#9ca3af" />
-                                        <YAxis axisLine={false} tickLine={false} fontSize={11} stroke="#9ca3af" />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} stroke="hsl(var(--muted-foreground))" />
+                                        <YAxis axisLine={false} tickLine={false} fontSize={12} stroke="hsl(var(--muted-foreground))" />
                                         <Tooltip
-                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                                            contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', color: 'hsl(var(--foreground))', fontSize: '12px' }}
                                         />
-                                        <Area type="monotone" dataKey="views" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorViews2)" />
-                                        <Area type="monotone" dataKey="clicks" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#colorClicks)" />
+                                        <Area type="monotone" dataKey="views" stroke="#22c55e" strokeWidth={2} fillOpacity={1} fill="url(#colorViews2)" />
+                                        <Area type="monotone" dataKey="clicks" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorClicks)" />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </CardContent>
@@ -270,19 +265,19 @@ const Overview = () => {
                         <CardContent>
                             <div className="space-y-3">
                                 {links.filter(l => l.isActive).slice(0, 3).map((link, index) => (
-                                    <div key={link.id} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                                    <div key={link.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 hover:bg-muted/50 transition-colors">
                                         <div className="flex items-center gap-4">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white ${index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-amber-700'}`}>
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-muted text-muted-foreground">
                                                 {index + 1}
                                             </div>
                                             <div>
-                                                <h4 className="font-semibold text-gray-900">{link.title}</h4>
-                                                <p className="text-xs text-gray-500 truncate max-w-[200px]">{link.url}</p>
+                                                <h4 className="font-medium text-sm text-foreground">{link.title}</h4>
+                                                <p className="text-xs text-muted-foreground truncate max-w-[200px]">{link.url}</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="font-bold text-gray-900">{link.clicks?.toLocaleString() || 0}</div>
-                                            <div className="text-xs text-gray-500">clicks</div>
+                                            <div className="font-bold text-foreground text-sm">{link.clicks?.toLocaleString() || 0}</div>
+                                            <div className="text-xs text-muted-foreground">clicks</div>
                                         </div>
                                     </div>
                                 ))}

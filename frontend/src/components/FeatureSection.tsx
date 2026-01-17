@@ -3,7 +3,7 @@ import { Palette, BarChart3, Zap, Globe } from "lucide-react";
 
 const FeatureSection = () => {
   return (
-    <section className="section-feature py-24 px-4 overflow-hidden">
+    <section className="bg-muted/30 py-24 px-4 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left - Mockup */}
@@ -59,17 +59,17 @@ const FeatureSection = () => {
 
           {/* Right - Content */}
           <div className="space-y-8 order-1 lg:order-2">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-feature-foreground italic">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-foreground tracking-tight">
               Create and customize your Tap2 in minutes
             </h2>
 
-            <p className="text-lg text-feature-foreground/80 max-w-lg">
+            <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
               Connect all your content across social media, websites, stores and more in
               one link in bio. Customize every detail or let Tap2 automatically enhance
               it to match your brand and drive more clicks.
             </p>
 
-            <Button variant="feature" size="xl" className="group">
+            <Button size="lg" className="rounded-full px-8 h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all">
               Get started for free
             </Button>
 
@@ -81,8 +81,8 @@ const FeatureSection = () => {
                 { icon: Zap, label: "Fast setup" },
                 { icon: Globe, label: "Custom domains" },
               ].map((feature, i) => (
-                <div key={i} className="flex items-center gap-3 text-feature-foreground/90">
-                  <div className="w-10 h-10 bg-feature-foreground/10 rounded-xl flex items-center justify-center">
+                <div key={i} className="flex items-center gap-3 text-foreground/80">
+                  <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
                     <feature.icon className="w-5 h-5" />
                   </div>
                   <span className="font-medium">{feature.label}</span>

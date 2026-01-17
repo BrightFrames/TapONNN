@@ -3,7 +3,9 @@ import { useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { templates } from "@/data/templates";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Instagram, Twitter, Mail, Loader2, Link2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Instagram, Twitter, Mail, Loader2, Link2, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const PublicProfile = () => {
@@ -91,18 +93,30 @@ const PublicProfile = () => {
 
     if (loading) {
         return (
-            <div className="h-screen w-full flex items-center justify-center bg-gray-50">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <div className="min-h-screen w-full flex flex-col items-center py-16 px-6 bg-background space-y-8">
+                <div className="flex flex-col items-center space-y-4">
+                    <Skeleton className="h-24 w-24 rounded-full" />
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-4 w-64" />
+                </div>
+                <div className="w-full max-w-lg space-y-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <Skeleton key={i} className="h-16 w-full rounded-xl" />
+                    ))}
+                </div>
             </div>
         );
     }
 
     if (notFound || !profile) {
         return (
-            <div className="h-screen w-full flex flex-col items-center justify-center bg-gray-50 text-center px-4">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">User not found</h2>
-                <p className="text-gray-500 mb-6">The page you're looking for doesn't exist.</p>
-                <a href="/" className="text-purple-600 hover:underline">Go Home</a>
+            <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background text-center px-4">
+                <div className="bg-muted p-4 rounded-full mb-4">
+                    <Link2 className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h2 className="text-2xl font-bold tracking-tight mb-2">Profile not found</h2>
+                <p className="text-muted-foreground mb-6">The page you're looking for doesn't exist.</p>
+                <Button variant="default" onClick={() => window.location.href = '/'}>Go Home</Button>
             </div>
         );
     }
@@ -180,8 +194,9 @@ const PublicProfile = () => {
 
                 {/* Footer */}
                 <div className="mt-16 text-center">
-                    <a href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-xs font-semibold hover:bg-white/20 transition-colors text-white">
-                        <span>Tap2</span>
+                    <a href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-background/20 backdrop-blur-md border border-white/10 rounded-full text-xs font-semibold hover:bg-background/30 transition-all text-foreground hover:scale-105">
+                        <Sparkles className="w-3 h-3 text-primary" />
+                        <span>Create your own Tap2</span>
                     </a>
                 </div>
             </div>

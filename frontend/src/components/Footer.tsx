@@ -22,16 +22,16 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-hero-foreground text-card py-16 px-4">
+    <footer className="bg-slate-950 text-slate-200 py-16 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Logo & Description */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <Sparkles className="w-6 h-6 text-primary" />
-              <span className="text-xl font-bold text-card">Tap2</span>
+              <span className="text-xl font-bold text-white">Tap2</span>
             </Link>
-            <p className="text-card/60 text-sm">
+            <p className="text-slate-400 text-sm">
               The only link you'll ever need to share everything.
             </p>
           </div>
@@ -39,7 +39,7 @@ const Footer = () => {
           {/* Links */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h4 className="font-semibold text-card mb-4">{category}</h4>
+              <h4 className="font-semibold text-white mb-4">{category}</h4>
               <ul className="space-y-2">
                 {links.map((link) => {
                   const linkName = typeof link === "string" ? link : link.name;
@@ -49,14 +49,14 @@ const Footer = () => {
                       {linkHref.startsWith("#") ? (
                         <a
                           href={linkHref}
-                          className="text-card/60 hover:text-primary transition-colors text-sm"
+                          className="text-slate-400 hover:text-primary transition-colors text-sm"
                         >
                           {linkName}
                         </a>
                       ) : (
                         <Link
                           to={linkHref}
-                          className="text-card/60 hover:text-primary transition-colors text-sm"
+                          className="text-slate-400 hover:text-primary transition-colors text-sm"
                         >
                           {linkName}
                         </Link>
@@ -70,8 +70,8 @@ const Footer = () => {
         </div>
 
         {/* Bottom */}
-        <div className="border-t border-card/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-card/40 text-sm">
+        <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-slate-500 text-sm">
             © 2024 Tap2. All rights reserved.
           </p>
 

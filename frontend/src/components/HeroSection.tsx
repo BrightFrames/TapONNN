@@ -6,27 +6,27 @@ const HeroSection = () => {
   const [username, setUsername] = useState("");
 
   return (
-    <section className="section-hero min-h-screen pt-32 pb-20 px-4 overflow-hidden">
-      <div className="max-w-7xl mx-auto">
+    <section className="bg-background min-h-screen pt-32 pb-20 px-4 overflow-hidden flex flex-col justify-center">
+      <div className="max-w-7xl mx-auto w-full">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
-          <div className="space-y-8 animate-fade-in">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight text-hero-foreground">
-              <span className="italic">A link in bio</span>
+          <div className="space-y-8 animate-fade-in text-center lg:text-left">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight text-foreground tracking-tight">
+              A link in bio
               <br />
-              <span className="italic">built for you.</span>
+              <span className="text-primary">built for you.</span>
             </h1>
 
-            <p className="text-lg md:text-xl text-hero-foreground/80 max-w-lg">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-lg mx-auto lg:mx-0 leading-relaxed">
               Join 70M+ people using Tap2 for their link in bio. One link to help you
               share everything you create, curate and sell from your Instagram, TikTok,
               Twitter, YouTube and other social media profiles.
             </p>
 
             {/* Username Input */}
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md">
+            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto lg:mx-0">
               <div className="flex-1 relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-hero-foreground/60 font-medium">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium select-none">
                   tap2.me/
                 </span>
                 <input
@@ -34,20 +34,19 @@ const HeroSection = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="yourname"
-                  className="w-full h-14 pl-28 pr-4 rounded-pill border-2 border-hero-foreground/20 bg-transparent text-hero-foreground placeholder:text-hero-foreground/40 focus:border-hero-foreground focus:outline-none transition-colors"
+                  className="w-full h-12 pl-24 pr-4 rounded-lg border border-input bg-background/50 ring-offset-background focus:ring-2 focus:ring-ring focus:border-input transition-all outline-none shadow-sm"
                 />
               </div>
-              <Button variant="hero" size="xl" className="group">
+              <Button size="lg" className="h-12 px-8 rounded-lg font-semibold text-base shadow-lg hover:shadow-primary/25 transition-all duration-300">
                 Get started
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
           </div>
 
           {/* Right Content - Phone Mockups */}
-          <div className="relative h-[550px] lg:h-[600px] block w-full max-w-[500px] mx-auto lg:max-w-none lg:mx-0 scale-90 sm:scale-100 lg:scale-100">
+          <div className="relative h-[550px] lg:h-[600px] w-full max-w-[500px] mx-auto lg:max-w-none lg:mx-0 scale-90 sm:scale-100 lg:scale-100 hidden md:block">
             {/* Main Phone */}
-            <div className="absolute top-10 left-0 right-0 mx-auto lg:mx-0 lg:translate-x-0 lg:left-auto lg:top-20 lg:right-10 w-72 h-[500px] bg-card rounded-[2.5rem] shadow-2xl overflow-hidden animate-float border-8 border-hero-foreground/10 z-10">
+            <div className="absolute top-10 left-0 right-0 mx-auto lg:mx-0 lg:translate-x-0 lg:left-auto lg:top-20 lg:right-10 w-72 h-[500px] bg-card rounded-[2.5rem] shadow-2xl overflow-hidden animate-float border-[8px] border-slate-900 z-10 ring-1 ring-white/10">
               <div className="p-6 space-y-4">
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-feature" />
