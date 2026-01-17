@@ -10,66 +10,78 @@ const signup = async (req, res) => {
         return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const client = await pool.connect();
+    let client;
     try {
-        await client.query('BEGIN');
+        client = await pool.connect();
+        try {
+            await client.query('BEGIN');
 
-        // 1. Check if user already exists
-        const userCheck = await client.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (userCheck.rows.length > 0) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ error: "User already exists with this email" });
-        }
-
-        const profileCheck = await client.query('SELECT * FROM profiles WHERE username = $1', [username]);
-        if (profileCheck.rows.length > 0) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ error: "Username already taken" });
-        }
-
-        // 2. Hash password
-        const salt = await bcrypt.genSalt(10);
-        const passwordHash = await bcrypt.hash(password, salt);
-
-        // 3. Create User
-        const userResult = await client.query(
-            'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
-            [email, passwordHash]
-        );
-        const newUser = userResult.rows[0];
-
-        // 4. Create Profile
-        const profileResult = await client.query(
-            'INSERT INTO profiles (id, username, full_name, email, selected_theme) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [newUser.id, username, full_name, email, 'artemis']
-        );
-        const newProfile = profileResult.rows[0];
-
-        await client.query('COMMIT');
-
-        // 5. Generate Token
-        const token = jwt.sign(
-            { id: newUser.id, email: newUser.email },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
-
-        res.json({
-            token,
-            user: {
-                id: newUser.id,
-                email: newUser.email,
-                username: newProfile.username,
-                full_name: newProfile.full_name
+            // 1. Check if user already exists
+            const userCheck = await client.query('SELECT * FROM users WHERE email = $1', [email]);
+            if (userCheck.rows.length > 0) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: "User already exists with this email" });
             }
-        });
 
+            const profileCheck = await client.query('SELECT * FROM profiles WHERE username = $1', [username]);
+            if (profileCheck.rows.length > 0) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: "Username already taken" });
+            }
+
+            // 2. Hash password
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(password, salt);
+
+            // 3. Create User
+            const userResult = await client.query(
+                'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
+                [email, passwordHash]
+            );
+            const newUser = userResult.rows[0];
+
+            // 4. Create Profile
+            const profileResult = await client.query(
+                'INSERT INTO profiles (id, username, full_name, email, selected_theme) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+                [newUser.id, username, full_name, email, 'artemis']
+            );
+            const newProfile = profileResult.rows[0];
+
+            await client.query('COMMIT');
+
+            // 5. Generate Token
+            const token = jwt.sign(
+                { id: newUser.id, email: newUser.email },
+                process.env.JWT_SECRET,
+                { expiresIn: '7d' }
+            );
+
+            res.json({
+                token,
+                user: {
+                    id: newUser.id,
+                    email: newUser.email,
+                    username: newProfile.username,
+                    full_name: newProfile.full_name
+                }
+            });
+
+        } catch (err) {
+            if (client) {
+                try {
+                    await client.query('ROLLBACK');
+                } catch (rollbackErr) {
+                    console.error("Rollback error:", rollbackErr);
+                }
+            }
+            console.error("Signup Error:", err);
+            res.status(500).json({ error: err.message });
+        } finally {
+            if (client) client.release();
+        }
     } catch (err) {
-        await client.query('ROLLBACK');
-        console.error("Signup Error:", err);
+        if (client) client.release();
         res.status(500).json({ error: err.message });
-    } finally {
-        client.release();
     }
 };
 

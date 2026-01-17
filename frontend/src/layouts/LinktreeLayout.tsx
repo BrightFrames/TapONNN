@@ -14,7 +14,8 @@ import {
     Coins,
     Menu,
     LogOut,
-    ExternalLink
+    ExternalLink,
+    DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,6 +75,22 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                     <NavItem icon={List} label="Links" active={location.pathname === '/dashboard'} onClick={() => handleNav('/dashboard')} />
                     <NavItem icon={Store} label="Shop" active={location.pathname === '/shop'} onClick={() => handleNav('/shop')} />
                     <NavItem icon={Palette} label="Design" active={location.pathname === '/design'} onClick={() => handleNav('/design')} />
+                </CollapsibleContent>
+            </Collapsible>
+
+            {/* Earn Group - Collapsible */}
+            <Collapsible className="mb-6 space-y-1">
+                <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors group">
+                    <div className="flex items-center gap-2">
+                        <Coins className="w-4 h-4" />
+                        <span>Earn</span>
+                    </div>
+                    <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180 opacity-50" />
+                </CollapsibleTrigger>
+
+                <CollapsibleContent className="space-y-1 pt-2 pl-2">
+                    <NavItem icon={LayoutGrid} label="Overview" active={location.pathname === '/dashboard/earn'} onClick={() => handleNav('/dashboard/earn')} />
+                    <NavItem icon={DollarSign} label="Earnings" badge="$0.00" active={location.pathname === '/dashboard/earn/history'} onClick={() => handleNav('/dashboard/earn/history')} />
                 </CollapsibleContent>
             </Collapsible>
 

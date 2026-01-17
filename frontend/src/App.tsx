@@ -15,6 +15,7 @@ import Shop from "./pages/Shop";
 import Audience from "./pages/Audience";
 import Overview from "./pages/Overview";
 import Earnings from "./pages/Earnings";
+import EarnOverview from "./pages/EarnOverview";
 import Settings from "./pages/Settings";
 import PublicProfile from "./pages/PublicProfile";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -46,6 +47,10 @@ const App = () => (
             <Route path="/earnings" element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
             <Route path="/design" element={<ProtectedRoute><Design /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+
+            {/* Earn Routes */}
+            <Route path="/dashboard/earn" element={<ProtectedRoute><EarnOverview /></ProtectedRoute>} />
+            <Route path="/dashboard/earn/history" element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
 
             {/* Public Profile - Must be last to avoid catching other routes */}
             <Route path="/:username" element={<PublicProfile />} />
