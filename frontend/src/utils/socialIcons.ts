@@ -34,5 +34,6 @@ export const iconMap: any = {
 };
 
 export const getIconForThumbnail = (thumbnail: string) => {
-    return iconMap[thumbnail] || null;
+    if (!thumbnail) return null;
+    return iconMap[thumbnail.toLowerCase()] || null;
 };

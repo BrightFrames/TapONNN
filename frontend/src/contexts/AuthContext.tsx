@@ -9,6 +9,7 @@ interface User {
     email?: string;
     email_confirmed_at?: string;
     social_links?: Record<string, string>;
+    design_config?: any;
 }
 
 interface Link {
@@ -35,6 +36,7 @@ interface AuthContextType {
     updateLinks: (links: Link[]) => Promise<void>;
     deleteLink: (linkId: string) => Promise<void>;
     updateTheme: (themeId: string) => Promise<void>;
+    updateProfile: (data: Partial<User>) => Promise<void>;
     refreshProfile: () => Promise<void>;
 }
 
@@ -122,6 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 avatar: profile.avatar_url,
                 email: profile.email,
                 social_links: profile.social_links || {},
+                design_config: profile.design_config || {},
                 email_confirmed_at: new Date().toISOString() // Assuming confirmed if logged in
             });
             setSelectedTheme(profile.selected_theme || "artemis");
@@ -319,6 +322,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const updateProfile = async (data: Partial<User>) => {
+        const token = getToken();
+        if (!token) return;
+
+        try {
+            await fetch(`${API_URL}/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+            await fetchUserData(); // Refresh local state
+            toast.success("Profile updated");
+        } catch (err) {
+            console.error("Error updating profile:", err);
+            toast.error("Failed to update profile");
+        }
+    };
+
     const updateTheme = async (themeId: string) => {
         setSelectedTheme(themeId);
         const token = getToken();
@@ -352,6 +376,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             updateLinks,
             deleteLink,
             updateTheme,
+            updateProfile,
             refreshProfile
         }}>
             {children}

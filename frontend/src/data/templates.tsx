@@ -256,4 +256,165 @@ export const templates: TemplateData[] = [
         icons: [<MessageCircle size={18} />, <Twitter size={18} />],
         category: "Telegram"
     }
+    // PREMIUM THEMES (Patterns/Gradients)
+    {
+        id: "aura",
+        name: "Aura",
+        creator: "Tap2 Premium",
+        role: "",
+        bgClass: "bg-[#E6E5D7]",
+        avatar: "Aa",
+        textColor: "text-[#3D3D3D]",
+        buttonStyle: "bg-transparent border border-[#3D3D3D] text-[#3D3D3D] rounded-3xl h-12 flex items-center justify-center font-serif text-lg",
+        links: ["Link One", "Link Two", "Link Three"],
+        icons: [],
+        category: "Creative"
+    },
+    {
+        id: "bliss",
+        name: "Bliss",
+        creator: "Tap2 Premium",
+        role: "",
+        bgImage: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=800&q=80",
+        avatar: "Aa",
+        textColor: "text-[#2D3436]",
+        buttonStyle: "bg-white/40 backdrop-blur-md rounded-2xl h-12 flex items-center justify-center font-sans font-medium text-[#2D3436]",
+        links: ["Link One", "Link Two", "Link Three"],
+        icons: [],
+        category: "Creative"
+    },
+    {
+        id: "blocks",
+        name: "Blocks",
+        creator: "Tap2 Premium",
+        role: "",
+        bgClass: "bg-[#7F00FF]", // Vivid Purple
+        avatar: "Aa",
+        textColor: "text-white",
+        buttonStyle: "bg-[#E056FD] border-2 border-black text-black h-12 flex items-center justify-center font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]",
+        links: ["Link One", "Link Two", "Link Three"],
+        icons: [],
+        category: "Creative"
+    },
+    {
+        id: "bloom",
+        name: "Bloom",
+        creator: "Tap2 Premium",
+        role: "",
+        bgClass: "bg-gradient-to-b from-[#FF6B6B] to-[#5563DE]", // Red to Blue gradient
+        avatar: "Aa",
+        textColor: "text-white",
+        buttonStyle: "bg-transparent border border-white rounded-full h-12 flex items-center justify-center text-white",
+        links: ["Link One", "Link Two", "Link Three"],
+        icons: [],
+        category: "Creative"
+    },
+    {
+        id: "breeze",
+        name: "Breeze",
+        creator: "Tap2 Premium",
+        role: "",
+        bgClass: "bg-gradient-to-br from-[#FF9A9E] to-[#FECFEF]", // Pink Gradient
+        avatar: "Aa",
+        textColor: "text-[#4A4A4A]",
+        buttonStyle: "bg-white/60 backdrop-blur-sm rounded-xl h-12 flex items-center justify-center text-[#4A4A4A] font-serif",
+        links: ["Link One", "Link Two", "Link Three"],
+        icons: [],
+        category: "Creative"
+    },
+    {
+        id: "encore",
+        name: "Encore",
+        creator: "Tap2 Premium",
+        role: "",
+        bgClass: "bg-[#111]",
+        bgImage: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80", // Dark concert vibe
+        avatar: "Aa",
+        textColor: "text-[#E0C097]", // Champagne gold
+        buttonStyle: "bg-transparent border border-[#E0C097] text-[#E0C097] rounded-none h-12 flex items-center justify-center font-light uppercase tracking-widest",
+        links: ["Link One", "Link Two", "Link Three"],
+        icons: [],
+        category: "Music"
+    },
+    {
+        id: "grid",
+        name: "Grid",
+        creator: "Tap2 Premium",
+        role: "",
+        bgClass: "bg-[#EDF7C2]", // Light Lime
+        avatar: "AA",
+        textColor: "text-black",
+        buttonStyle: "bg-white border-2 border-black rounded-full h-12 flex items-center justify-center font-black italic shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all",
+        links: ["Link One", "Link Two", "Link Three"],
+        icons: [],
+        category: "Creative"
+    },
+    {
+        id: "groove",
+        name: "Groove",
+        creator: "Tap2 Premium",
+        role: "",
+        bgImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80", // Liquid abstract
+        avatar: "Aa",
+        textColor: "text-white",
+        buttonStyle: "bg-black/30 backdrop-blur-md rounded-full h-12 flex items-center justify-center text-white font-bold",
+        links: ["Link One", "Link Two", "Link Three"],
+        icons: [],
+        category: "Creative"
+    },
+    {
+        id: "haven",
+        name: "Haven",
+        creator: "Tap2 Premium",
+        role: "",
+        bgClass: "bg-[#D7CCC8]", // Earthy Beige
+        bgImage: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=800&q=80", // Minimalist architecture
+        avatar: "Aa",
+        textColor: "text-[#4E342E]",
+        buttonStyle: "bg-[#F5F5F5] rounded-xl h-12 flex items-center justify-center text-[#4E342E] font-medium shadow-sm",
+        links: ["Link One", "Link Two", "Link Three"],
+        icons: [],
+        category: "Creative"
+    },
+    {
+        id: "lake",
+        name: "Lake",
+        creator: "Tap2 Premium",
+        role: "",
+        bgClass: "bg-[#0F172A]", // Dark Navy
+        bgImage: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=800&q=80", // Dark water
+        avatar: "Aa",
+        textColor: "text-white",
+        buttonStyle: "bg-white/10 backdrop-blur-md rounded-lg h-12 flex items-center justify-center text-white font-light tracking-wide",
+        links: ["Link One", "Link Two", "Link Three"],
+        icons: [],
+        category: "Nature"
+    },
+    {
+        id: "mineral",
+        name: "Mineral",
+        creator: "Tap2 Premium",
+        role: "",
+        bgClass: "bg-[#FDEEDC]", // Soft Peach/Beige
+        avatar: "Aa",
+        textColor: "text-[#1C1C1C]",
+        buttonStyle: "bg-transparent border border-[#1C1C1C] rounded-[2rem] h-12 flex items-center justify-center text-[#1C1C1C] font-serif",
+        links: ["Link One", "Link Two", "Link Three"],
+        icons: [],
+        category: "Creative"
+    },
+    {
+        id: "nourish",
+        name: "Nourish",
+        creator: "Tap2 Premium",
+        role: "",
+        bgClass: "bg-[#556B2F]", // Olive Green
+        bgImage: "https://images.unsplash.com/photo-1615485925694-a692a543a993?auto=format&fit=crop&w=800&q=80", // Green texture
+        avatar: "Aa",
+        textColor: "text-[#F1F8E9]",
+        buttonStyle: "bg-[#81C784] text-[#1B5E20] rounded-full h-12 flex items-center justify-center font-bold",
+        links: ["Link One", "Link Two", "Link Three"],
+        icons: [],
+        category: "Nature"
+    }
 ];

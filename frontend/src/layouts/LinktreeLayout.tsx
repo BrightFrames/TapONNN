@@ -26,6 +26,8 @@ import {
     SheetTrigger,
     SheetTitle,
 } from "@/components/ui/sheet";
+import ShareModal from "@/components/ShareModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NavItem = ({ icon: Icon, label, active = false, badge, onClick }: { icon: any, label: string, active?: boolean, badge?: string, onClick?: () => void }) => (
     <Button
@@ -41,7 +43,7 @@ const NavItem = ({ icon: Icon, label, active = false, badge, onClick }: { icon: 
 
 // Sidebar content component for reuse in desktop and mobile
 // Sidebar content component for reuse in desktop and mobile
-const SidebarContent = ({ navigate, location, onClose }: { navigate: (path: string) => void, location: { pathname: string }, onClose?: () => void }) => {
+const SidebarContent = ({ navigate, location, onClose, onShare }: { navigate: (path: string) => void, location: { pathname: string }, onClose?: () => void, onShare: () => void }) => {
     const handleNav = (path: string) => {
         navigate(path);
         onClose?.();
@@ -100,7 +102,7 @@ const SidebarContent = ({ navigate, location, onClose }: { navigate: (path: stri
                 </div>
                 <div className="flex gap-2 mt-4 text-muted-foreground">
                     <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full ml-auto"><Settings className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full"><Megaphone className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full" onClick={onShare}><Megaphone className="w-4 h-4" /></Button>
                 </div>
             </div>
         </div>
@@ -111,6 +113,10 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
+    const { user } = useAuth();
+
+    const shareUrl = `${window.location.origin}/${user?.username}`;
 
     // Close mobile menu on route change
     useEffect(() => {
@@ -141,7 +147,7 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
                             </SheetTrigger>
                             <SheetContent side="left" className="p-0 w-[280px] z-[60] border-r">
                                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                                <SidebarContent navigate={navigate} location={location} onClose={() => setIsMobileOpen(false)} />
+                                <SidebarContent navigate={navigate} location={location} onClose={() => setIsMobileOpen(false)} onShare={() => setShareOpen(true)} />
                             </SheetContent>
                         </Sheet>
                         <div className="flex items-center gap-2">
@@ -155,7 +161,7 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
 
                 {/* Desktop Sidebar */}
                 <aside className="w-64 bg-sidebar border-r hidden lg:block h-full overflow-y-auto">
-                    <SidebarContent navigate={navigate} location={location} />
+                    <SidebarContent navigate={navigate} location={location} onShare={() => setShareOpen(true)} />
                 </aside>
 
                 {/* Main Content Area */}
@@ -163,7 +169,17 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
                     {children}
                 </main>
             </div>
+
+            {user?.username && (
+                <ShareModal
+                    open={shareOpen}
+                    onOpenChange={setShareOpen}
+                    username={user.username}
+                    url={shareUrl}
+                />
+            )}
         </div>
+
     )
 }
 

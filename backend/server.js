@@ -136,7 +136,7 @@ app.post('/api/auth/signup', async (req, res) => {
     } catch (err) {
         await client.query('ROLLBACK');
         console.error("Signup Error:", err);
-        res.status(500).json({ error: "Internal Server Error" });
+        res.status(500).json({ error: err.message });
     } finally {
         client.release();
     }
@@ -145,8 +145,10 @@ app.post('/api/auth/signup', async (req, res) => {
 // LOGIN
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
+    console.log("Login attempt:", { email, passwordProvided: !!password });
 
     if (!email || !password) {
+        console.log("Login failed: Missing credentials");
         return res.status(400).json({ error: "Missing credentials" });
     }
 
@@ -154,7 +156,8 @@ app.post('/api/auth/login', async (req, res) => {
         // 1. Find user
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         if (result.rows.length === 0) {
-            return res.status(400).json({ error: "Invalid credentials" });
+            console.log("Login failed: User not found", email);
+            return res.status(400).json({ error: "Invalid credentials" }); // User not found
         }
 
         const user = result.rows[0];
@@ -162,7 +165,8 @@ app.post('/api/auth/login', async (req, res) => {
         // 2. Check password
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
-            return res.status(400).json({ error: "Invalid credentials" });
+            console.log("Login failed: Password mismatch for", email);
+            return res.status(400).json({ error: "Invalid credentials" }); // Password mismatch
         }
 
         // 3. Get User Profile for extra data
@@ -494,6 +498,10 @@ app.put('/api/profile', authMiddleware, async (req, res) => {
             updates.push(`social_links = $${paramIndex++}`);
             values.push(req.body.social_links);
         }
+        if (req.body.design_config !== undefined) {
+            updates.push(`design_config = $${paramIndex++}`);
+            values.push(req.body.design_config);
+        }
         if (username !== undefined) {
             // Check if username is already taken
             const existing = await pool.query(
@@ -599,6 +607,129 @@ app.get('/api/analytics/summary', authMiddleware, async (req, res) => {
         });
     } catch (err) {
         console.error("Error fetching analytics:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- COMMERCE ROUTES (Products & Orders) ---
+
+// CREATE Product (Authenticated)
+app.post('/api/products', authMiddleware, async (req, res) => {
+    const userId = req.user.id;
+    const { title, price, description, type, image_url, file_url, is_active } = req.body;
+
+    if (!title || price === undefined) {
+        return res.status(400).json({ error: "Title and Price are required" });
+    }
+
+    try {
+        const result = await pool.query(
+            'INSERT INTO products (user_id, title, description, price, type, image_url, file_url, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+            [userId, title, description || '', price, type || 'physical', image_url || null, file_url || null, is_active !== false]
+        );
+        res.json({ success: true, product: result.rows[0] });
+    } catch (err) {
+        console.error("Error creating product:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET My Products (Authenticated)
+app.get('/api/products', authMiddleware, async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const result = await pool.query(
+            'SELECT * FROM products WHERE user_id = $1 ORDER BY created_at DESC',
+            [userId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error fetching products:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE Product (Authenticated)
+app.delete('/api/products/:productId', authMiddleware, async (req, res) => {
+    const userId = req.user.id;
+    const { productId } = req.params;
+
+    try {
+        const result = await pool.query(
+            'DELETE FROM products WHERE id = $1 AND user_id = $2 RETURNING id',
+            [productId, userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Product not found or access denied' });
+        }
+        res.json({ success: true, deletedId: productId });
+    } catch (err) {
+        console.error("Error deleting product:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET Public Products (Public Shop)
+app.get('/api/public/products/:username', async (req, res) => {
+    const { username } = req.params;
+
+    try {
+        // First get user_id from username
+        const userRes = await pool.query('SELECT id FROM profiles WHERE username = $1', [username]);
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const userId = userRes.rows[0].id;
+
+        // Get active products
+        const result = await pool.query(
+            'SELECT * FROM products WHERE user_id = $1 AND is_active = true ORDER BY created_at DESC',
+            [userId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error fetching shop:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// CREATE Order (Checkout/Donation) - Public or Auth
+app.post('/api/orders', async (req, res) => {
+    const { seller_id, buyer_email, product_id, amount, type } = req.body;
+
+    // Basic validation
+    if (!seller_id || !amount) {
+        return res.status(400).json({ error: "Missing required order fields" });
+    }
+
+    // In a real app, verify Stripe payment intent here.
+    // For now, we simulate a successful transaction.
+
+    try {
+        const result = await pool.query(
+            'INSERT INTO orders (seller_id, buyer_email, product_id, amount, status, type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [seller_id, buyer_email || 'anonymous', product_id || null, amount, 'completed', type || 'product_sale']
+        );
+        res.json({ success: true, order: result.rows[0] });
+    } catch (err) {
+        console.error("Error creating order:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET My Orders (Authenticated - for Earnings)
+app.get('/api/orders', authMiddleware, async (req, res) => {
+    const userId = req.user.id;
+
+    try {
+        const result = await pool.query(
+            'SELECT * FROM orders WHERE seller_id = $1 ORDER BY created_at DESC',
+            [userId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error fetching orders:", err);
         res.status(500).json({ error: err.message });
     }
 });
