@@ -94,6 +94,13 @@ const Settings = () => {
             return;
         }
 
+        // DUMMY USER HANDLING - don't call real API
+        if (token === 'dummy_token_temp_123') {
+            toast.success("Profile updated (Demo Mode)");
+            setSaving(false);
+            return;
+        }
+
         try {
             const response = await fetch(`${API_URL}/profile`, {
                 method: 'PUT',
@@ -138,6 +145,15 @@ const Settings = () => {
 
         setSaving(true);
         const token = localStorage.getItem('auth_token');
+
+        // DUMMY USER HANDLING - don't call real API
+        if (token === 'dummy_token_temp_123') {
+            toast.success("Password updated (Demo Mode)");
+            setNewPassword("");
+            setConfirmPassword("");
+            setSaving(false);
+            return;
+        }
 
         try {
             const response = await fetch(`${API_URL}/auth/change-password`, {

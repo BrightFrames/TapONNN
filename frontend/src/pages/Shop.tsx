@@ -52,6 +52,17 @@ const Shop = () => {
     const fetchProducts = async () => {
         const token = localStorage.getItem('auth_token');
         if (!token) return;
+
+        // DUMMY USER HANDLING - return mock data
+        if (token === 'dummy_token_temp_123') {
+            setProducts([
+                { id: 'demo1', title: 'Sample Product', description: 'Demo product for testing', price: 29.99, type: 'digital', is_active: true },
+                { id: 'demo2', title: 'Premium Course', description: 'Learn something new', price: 99.99, type: 'digital', is_active: true }
+            ]);
+            setLoadingProducts(false);
+            return;
+        }
+
         try {
             const res = await fetch(`${API_URL}/products`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -71,6 +82,24 @@ const Shop = () => {
         e.preventDefault();
         setIsSubmitting(true);
         const token = localStorage.getItem('auth_token');
+
+        // DUMMY USER HANDLING
+        if (token === 'dummy_token_temp_123') {
+            const demoProduct: Product = {
+                id: `demo-${Date.now()}`,
+                title: newProduct.title,
+                description: newProduct.description,
+                price: parseFloat(newProduct.price),
+                type: newProduct.type as 'physical' | 'digital',
+                is_active: true
+            };
+            setProducts([demoProduct, ...products]);
+            setIsAddOpen(false);
+            setNewProduct({ title: "", price: "", description: "", type: "physical", image_url: "" });
+            toast.success("Product created (Demo Mode)");
+            setIsSubmitting(false);
+            return;
+        }
 
         try {
             const res = await fetch(`${API_URL}/products`, {
@@ -102,6 +131,14 @@ const Shop = () => {
     const handleDeleteProduct = async (id: string) => {
         if (!confirm("Are you sure?")) return;
         const token = localStorage.getItem('auth_token');
+
+        // DUMMY USER HANDLING
+        if (token === 'dummy_token_temp_123') {
+            setProducts(products.filter(p => p.id !== id));
+            toast.success("Product deleted (Demo Mode)");
+            return;
+        }
+
         try {
             await fetch(`${API_URL}/products/${id}`, {
                 method: 'DELETE',

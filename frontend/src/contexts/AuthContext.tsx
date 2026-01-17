@@ -274,6 +274,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const token = getToken();
         if (!token) return;
 
+        // DUMMY USER HANDLING - don't call real API
+        if (token === 'dummy_token_temp_123') {
+            return; // Just update local state
+        }
+
         try {
             await fetch(`${API_URL}/links`, {
                 method: 'POST',
@@ -299,6 +304,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Optimistic update
         const previousLinks = links;
         setLinks(links.filter(l => l.id !== linkId));
+
+        // DUMMY USER HANDLING
+        if (token === 'dummy_token_temp_123') {
+            toast.success("Link deleted (Demo Mode)");
+            return;
+        }
 
         try {
             const response = await fetch(`${API_URL}/links/${linkId}`, {
@@ -326,6 +337,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const token = getToken();
         if (!token) return;
 
+        // DUMMY USER HANDLING
+        if (token === 'dummy_token_temp_123') {
+            toast.success("Profile updated (Demo Mode)");
+            return;
+        }
+
         try {
             await fetch(`${API_URL}/profile`, {
                 method: 'PUT',
@@ -346,16 +363,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const updateTheme = async (themeId: string) => {
         setSelectedTheme(themeId);
         const token = getToken();
-        if (token) {
-            await fetch(`${API_URL}/profile/theme`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ themeId })
-            });
+
+        // DUMMY USER HANDLING
+        if (!token || token === 'dummy_token_temp_123') {
+            return; // Just update local state
         }
+        await fetch(`${API_URL}/profile/theme`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ themeId })
+        });
     };
 
     const refreshProfile = async () => {

@@ -255,7 +255,7 @@ export const templates: TemplateData[] = [
         links: ["Join VIP Channel", "Free Analysis", "Support Bot", "Website"],
         icons: [<MessageCircle size={18} />, <Twitter size={18} />],
         category: "Telegram"
-    }
+    },
     // PREMIUM THEMES (Patterns/Gradients)
     {
         id: "aura",

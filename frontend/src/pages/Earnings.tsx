@@ -17,6 +17,16 @@ const Earnings = () => {
             const token = localStorage.getItem('auth_token');
             if (!token) return;
 
+            // DUMMY USER HANDLING - return mock data
+            if (token === 'dummy_token_temp_123') {
+                setStats({
+                    lifetime: 1249.50,
+                    pending: 89.00,
+                    activeProducts: 5
+                });
+                return;
+            }
+
             try {
                 // Fetch Orders
                 const orderRes = await fetch(`${API_URL}/orders`, {
