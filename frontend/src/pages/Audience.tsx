@@ -17,8 +17,8 @@ const Audience = () => {
                             <button
                                 onClick={() => setActiveTab("contacts")}
                                 className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${activeTab === "contacts"
-                                        ? "bg-gray-200 text-gray-900"
-                                        : "text-gray-500 hover:text-gray-900"
+                                    ? "bg-gray-200 text-gray-900"
+                                    : "text-gray-500 hover:text-gray-900"
                                     }`}
                             >
                                 Contacts
@@ -26,8 +26,8 @@ const Audience = () => {
                             <button
                                 onClick={() => setActiveTab("integrations")}
                                 className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${activeTab === "integrations"
-                                        ? "bg-gray-200 text-gray-900"
-                                        : "text-gray-500 hover:text-gray-900"
+                                    ? "bg-gray-200 text-gray-900"
+                                    : "text-gray-500 hover:text-gray-900"
                                     }`}
                             >
                                 Integrations
@@ -78,7 +78,7 @@ const Audience = () => {
                     </div>
 
                     <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                        Let visitors subscribe to your Linktree for updates
+                        Let visitors subscribe to your Tap2 for updates
                     </h2>
                     <p className="text-gray-500 mb-8 font-medium">
                         Let's start growing your contact list.
