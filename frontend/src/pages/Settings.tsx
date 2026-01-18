@@ -49,15 +49,6 @@ const Settings = () => {
             const token = localStorage.getItem('auth_token');
             if (!token) return;
 
-            // DUMMY USER HANDLING
-            if (token === 'dummy_token_temp_123') {
-                setFullName("Temp User");
-                setUsername("tempuser");
-                setBio("This is a dummy account for testing purposes.");
-                setAvatarUrl("https://github.com/shadcn.png");
-                return;
-            }
-
             try {
                 const response = await fetch(`${API_URL}/auth/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -90,13 +81,6 @@ const Settings = () => {
 
         if (!token) {
             toast.error("Not authenticated");
-            setSaving(false);
-            return;
-        }
-
-        // DUMMY USER HANDLING - don't call real API
-        if (token === 'dummy_token_temp_123') {
-            toast.success("Profile updated (Demo Mode)");
             setSaving(false);
             return;
         }
@@ -145,15 +129,6 @@ const Settings = () => {
 
         setSaving(true);
         const token = localStorage.getItem('auth_token');
-
-        // DUMMY USER HANDLING - don't call real API
-        if (token === 'dummy_token_temp_123') {
-            toast.success("Password updated (Demo Mode)");
-            setNewPassword("");
-            setConfirmPassword("");
-            setSaving(false);
-            return;
-        }
 
         try {
             const response = await fetch(`${API_URL}/auth/change-password`, {

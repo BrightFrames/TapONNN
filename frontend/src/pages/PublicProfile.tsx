@@ -63,28 +63,6 @@ const PublicProfile = () => {
         const fetchPublicProfile = async () => {
             if (!username) return;
 
-            // DUMMY USER HANDLING - return mock profile for tempuser
-            if (username === 'tempuser') {
-                setProfile({
-                    id: 'dummy_user_id',
-                    name: 'Temp User',
-                    username: 'tempuser',
-                    avatar: 'https://github.com/shadcn.png',
-                    bio: 'This is a demo profile for testing purposes.',
-                    selectedTheme: 'artemis'
-                });
-                setLinks([
-                    { id: 'demo1', title: 'My Portfolio', url: 'https://example.com', is_active: true },
-                    { id: 'demo2', title: 'GitHub Profile', url: 'https://github.com', is_active: true },
-                    { id: 'demo3', title: 'Twitter', url: 'https://twitter.com', is_active: true }
-                ]);
-                setProducts([
-                    { id: 'prod1', title: 'Sample Product', description: 'A demo product', price: 29.99, image_url: null }
-                ]);
-                setLoading(false);
-                return;
-            }
-
             // Optimization: If viewing own profile
             if (authUser && authUser.username === username) {
                 setProfile(authUser);

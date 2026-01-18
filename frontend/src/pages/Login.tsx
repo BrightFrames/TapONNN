@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,19 @@ const Login = () => {
 
     const [loading, setLoading] = useState(false);
 
-    const { login, signUp, loginWithGoogle } = useAuth();
+    const { login, signUp, loginWithGoogle, isAuthenticated, isLoading } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Get the redirect path from ProtectedRoute, default to /dashboard
+    const from = (location.state as any)?.from?.pathname || "/dashboard";
+
+    // Redirect to dashboard if already logged in
+    useEffect(() => {
+        if (!isLoading && isAuthenticated) {
+            navigate(from, { replace: true });
+        }
+    }, [isAuthenticated, isLoading, navigate, from]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -31,7 +42,7 @@ const Login = () => {
                 const { success, error } = await login(email, password);
                 if (success) {
                     toast.success("Welcome back!");
-                    navigate("/dashboard");
+                    navigate(from, { replace: true });
                 } else {
                     toast.error(error || "Invalid credentials");
                 }
@@ -39,8 +50,8 @@ const Login = () => {
                 // Sign Up
                 const { success, error } = await signUp(email, password, username, fullName);
                 if (success) {
-                    toast.success("Account created! Please check your email and login.");
-                    navigate("/dashboard");
+                    toast.success("Account created successfully!");
+                    navigate(from, { replace: true });
                 } else {
                     toast.error(error || "Sign up failed");
                 }

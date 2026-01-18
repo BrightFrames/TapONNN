@@ -54,51 +54,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Helper to get token
     const getToken = () => localStorage.getItem('auth_token');
 
+    // Check if token is expired (JWT decode without verification)
+    const isTokenExpired = (token: string): boolean => {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const expiry = payload.exp * 1000; // Convert to milliseconds
+            return Date.now() >= expiry;
+        } catch {
+            return true; // Invalid token format
+        }
+    };
+
+    // Validate token on mount and periodically
+    const validateToken = async (): Promise<boolean> => {
+        const token = getToken();
+        if (!token) return false;
+
+        if (isTokenExpired(token)) {
+            await logout();
+            return false;
+        }
+        return true;
+    };
+
     const fetchUserData = async () => {
         const token = getToken();
         if (!token) {
-            setIsLoading(false);
-            return;
-        }
-
-        // DUMMY USER HANDLING
-        if (token === 'dummy_token_temp_123') {
-            setUser({
-                id: 'dummy_user_id',
-                name: 'Temp User',
-                username: 'tempuser',
-                avatar: 'https://github.com/shadcn.png',
-                email: 'temp@gmail.com',
-                social_links: {
-                    twitter: 'https://twitter.com/tempuser',
-                    instagram: 'https://instagram.com/tempuser'
-                },
-                email_confirmed_at: new Date().toISOString()
-            });
-            setSelectedTheme("artemis");
-            setIsAuthenticated(true);
-
-            // Mock links for dummy user
-            setLinks([
-                {
-                    id: 'link1',
-                    title: 'My Portfolio',
-                    url: 'https://example.com',
-                    isActive: true,
-                    clicks: 120,
-                    user_id: 'dummy_user_id',
-                    position: 0
-                },
-                {
-                    id: 'link2',
-                    title: 'GitHub Profile',
-                    url: 'https://github.com',
-                    isActive: true,
-                    clicks: 85,
-                    user_id: 'dummy_user_id',
-                    position: 1
-                }
-            ]);
             setIsLoading(false);
             return;
         }
@@ -110,8 +91,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
 
             if (!res.ok) {
-                // Token invalid or expired
-                logout();
+                // Token invalid or expired - clear auth state
+                console.warn("Token validation failed, logging out");
+                await logout();
                 return;
             }
 
@@ -152,7 +134,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         } catch (error) {
             console.error("Error fetching user data:", error);
-            logout();
+            // Only logout if it's an auth error, not a network error
+            const token = getToken();
+            if (token && isTokenExpired(token)) {
+                await logout();
+            }
         } finally {
             setIsLoading(false);
         }
@@ -163,28 +149,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const login = async (email: string, pass: string) => {
-        // DUMMY LOGIN CHECK
-        if (email === "temp@gmail.com" && pass === "temp123") {
-            // Save dummy token
-            localStorage.setItem('auth_token', 'dummy_token_temp_123');
-
-            // Set state immediately (mimic fetchUserData success for dummy)
-            setUser({
-                id: 'dummy_user_id',
-                name: 'Temp User',
-                username: 'tempuser',
-                avatar: 'https://github.com/shadcn.png',
-                email: 'temp@gmail.com',
-                email_confirmed_at: new Date().toISOString()
-            });
-            setIsAuthenticated(true);
-
-            // Trigger fetch data to populate links (which will see the token)
-            setTimeout(() => fetchUserData(), 100);
-
-            return { success: true };
-        }
-
         try {
             const res = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
@@ -263,21 +227,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const logout = async () => {
+        // Clear all auth-related storage
         localStorage.removeItem('auth_token');
+        sessionStorage.clear();
+
+        // Reset all auth state
         setIsAuthenticated(false);
         setUser(null);
         setLinks([]);
+        setSelectedTheme('artemis');
+
+        toast.success("Logged out successfully");
     };
 
     const updateLinks = async (newLinks: Link[]) => {
         setLinks(newLinks);
         const token = getToken();
         if (!token) return;
-
-        // DUMMY USER HANDLING - don't call real API
-        if (token === 'dummy_token_temp_123') {
-            return; // Just update local state
-        }
 
         try {
             await fetch(`${API_URL}/links`, {
@@ -305,12 +271,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const previousLinks = links;
         setLinks(links.filter(l => l.id !== linkId));
 
-        // DUMMY USER HANDLING
-        if (token === 'dummy_token_temp_123') {
-            toast.success("Link deleted (Demo Mode)");
-            return;
-        }
-
         try {
             const response = await fetch(`${API_URL}/links/${linkId}`, {
                 method: 'DELETE',
@@ -337,12 +297,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const token = getToken();
         if (!token) return;
 
-        // DUMMY USER HANDLING
-        if (token === 'dummy_token_temp_123') {
-            toast.success("Profile updated (Demo Mode)");
-            return;
-        }
-
         try {
             await fetch(`${API_URL}/profile`, {
                 method: 'PUT',
@@ -363,11 +317,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const updateTheme = async (themeId: string) => {
         setSelectedTheme(themeId);
         const token = getToken();
+        if (!token) return;
 
-        // DUMMY USER HANDLING
-        if (!token || token === 'dummy_token_temp_123') {
-            return; // Just update local state
-        }
         await fetch(`${API_URL}/profile/theme`, {
             method: 'POST',
             headers: {
