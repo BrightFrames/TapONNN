@@ -51,7 +51,8 @@ const Login = () => {
                 const { success, error } = await signUp(email, password, username, fullName);
                 if (success) {
                     toast.success("Account created successfully!");
-                    navigate(from, { replace: true });
+                    // Redirect new users to pricing page
+                    navigate("/pricing", { replace: true });
                 } else {
                     toast.error(error || "Sign up failed");
                 }

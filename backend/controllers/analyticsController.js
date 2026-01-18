@@ -1,62 +1,94 @@
-const pool = require('../config/db');
+const mongoose = require('mongoose');
 
-// Get Analytics Summary (Authenticated)
-const getSummary = async (req, res) => {
-    const userId = req.user.id;
+// Analytics Schema (for tracking views and clicks)
+const profileViewSchema = new mongoose.Schema({
+    profile_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Profile',
+        required: true
+    },
+    viewed_at: {
+        type: Date,
+        default: Date.now
+    },
+    ip_address: String,
+    user_agent: String,
+    referrer: String
+});
 
+profileViewSchema.index({ profile_id: 1, viewed_at: -1 });
+
+const ProfileView = mongoose.model('ProfileView', profileViewSchema);
+
+// Track profile view
+const trackProfileView = async (req, res) => {
     try {
-        // 1. Total Clicks
-        const clicksResult = await pool.query(
-            'SELECT COALESCE(SUM(clicks), 0) as total_clicks FROM links WHERE user_id = $1',
-            [userId]
-        );
+        const { profileId } = req.params;
 
-        // 2. Link Count
-        const linksResult = await pool.query(
-            'SELECT COUNT(*) as link_count FROM links WHERE user_id = $1',
-            [userId]
-        );
+        const view = new ProfileView({
+            profile_id: profileId,
+            ip_address: req.ip,
+            user_agent: req.get('User-Agent'),
+            referrer: req.get('Referrer')
+        });
 
-        // 3. Top Links
-        const topLinksResult = await pool.query(
-            'SELECT id, title, url, clicks FROM links WHERE user_id = $1 ORDER BY clicks DESC LIMIT 5',
-            [userId]
-        );
+        await view.save();
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error tracking view:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
 
-        // 4. Total Views (Lifetime)
-        const viewsResult = await pool.query('SELECT total_views FROM profiles WHERE id = $1', [userId]);
-        const totalViews = viewsResult.rows[0]?.total_views || 0;
+// Get analytics for user
+const getAnalytics = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const Profile = require('../models/Profile');
+        const Link = require('../models/Link');
 
-        // 5. Subscribers
-        const subResult = await pool.query('SELECT COUNT(*) as count FROM subscribers WHERE creator_id = $1', [userId]);
-        const subscriberCount = parseInt(subResult.rows[0].count) || 0;
+        // Get profile
+        const profile = await Profile.findOne({ user_id: userId });
+        if (!profile) {
+            return res.json({ views: 0, clicks: 0, links: [] });
+        }
 
-        // 6. Chart Data (Last 7 Days)
-        const chartResult = await pool.query(`
-            SELECT 
-                TO_CHAR(created_at, 'Mon DD') as date,
-                COUNT(*) FILTER (WHERE event_type = 'view') as views,
-                COUNT(*) FILTER (WHERE event_type = 'click') as clicks
-            FROM analytics_events 
-            WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '7 days'
-            GROUP BY TO_CHAR(created_at, 'Mon DD'), created_at::date
-            ORDER BY created_at::date
-        `, [userId]);
+        // Count views (last 30 days)
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const viewCount = await ProfileView.countDocuments({
+            profile_id: profile._id,
+            viewed_at: { $gte: thirtyDaysAgo }
+        });
+
+        // Get link stats
+        const links = await Link.find({ user_id: userId }).lean();
+        const totalClicks = links.reduce((sum, l) => sum + (l.clicks || 0), 0);
+
+        // Top links by clicks
+        const topLinks = links
+            .sort((a, b) => (b.clicks || 0) - (a.clicks || 0))
+            .slice(0, 5)
+            .map(l => ({
+                id: l._id,
+                title: l.title,
+                url: l.url,
+                clicks: l.clicks || 0
+            }));
 
         res.json({
-            totalClicks: parseInt(clicksResult.rows[0].total_clicks) || 0,
-            linkCount: parseInt(linksResult.rows[0].link_count) || 0,
-            topLinks: topLinksResult.rows,
-            totalViews: parseInt(totalViews) || 0,
-            subscribers: subscriberCount,
-            chartData: chartResult.rows
+            views: viewCount,
+            clicks: totalClicks,
+            topLinks,
+            linkCount: links.length
         });
     } catch (err) {
-        console.error("Error fetching analytics:", err);
-        res.status(500).json({ error: err.message });
+        console.error('Error fetching analytics:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
 module.exports = {
-    getSummary
+    trackProfileView,
+    getAnalytics,
+    ProfileView
 };

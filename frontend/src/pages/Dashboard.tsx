@@ -53,7 +53,7 @@ interface Link {
 }
 
 const Dashboard = () => {
-    const { user, links: authLinks, updateLinks, deleteLink: deleteLinkFromApi, selectedTheme, refreshProfile, updateProfile } = useAuth();
+    const { user, links: authLinks, addLink, updateLinks, deleteLink: deleteLinkFromApi, selectedTheme, refreshProfile, updateProfile } = useAuth();
     const [links, setLinks] = useState<Link[]>(authLinks);
     const [isAddingLink, setIsAddingLink] = useState(false);
     const [socialPreview, setSocialPreview] = useState<Record<string, string> | null>(null);
@@ -94,24 +94,15 @@ const Dashboard = () => {
         if (isAddingLink) return; // Prevent double-clicks
         setIsAddingLink(true);
 
-        const newLink: Link = {
-            id: `temp_${Date.now()}`,
-            title: 'New Link',
-            url: '',
-            isActive: true,
-            clicks: 0,
-            position: 0,
-            thumbnail: ''
-        };
-
-        // Add to local state immediately for responsive UI
-        const newLinks = [newLink, ...links.map((l, i) => ({ ...l, position: i + 1 }))];
-        setLinks(newLinks);
-
-        // Sync to backend
-        await updateLinks(newLinks);
-
-        setIsAddingLink(false);
+        try {
+            // Use the dedicated addLink API that creates a single link
+            // AuthContext's addLink updates its state, useEffect syncs to local state
+            await addLink();
+        } catch (err) {
+            console.error("Error adding link:", err);
+        } finally {
+            setIsAddingLink(false);
+        }
     };
 
     const updateLink = (id: string, field: keyof Link, value: any) => {

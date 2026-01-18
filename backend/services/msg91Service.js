@@ -2,6 +2,9 @@ const axios = require('axios');
 
 const MSG91_AUTH_KEY = process.env.MSG91_AUTH_KEY;
 const MSG91_TEMPLATE_ID = process.env.MSG91_TEMPLATE_ID;
+const MSG91_EMAIL_DOMAIN = process.env.MSG91_EMAIL_DOMAIN || 'tap2.me';
+const MSG91_WELCOME_TEMPLATE_ID = process.env.MSG91_WELCOME_EMAIL_TEMPLATE_ID;
+const MSG91_SUBSCRIPTION_TEMPLATE_ID = process.env.MSG91_SUBSCRIPTION_EMAIL_TEMPLATE_ID;
 
 /**
  * Send OTP to a mobile number using MSG91
@@ -151,8 +154,112 @@ const resendOTP = async (phoneNumber, retryType = 'text') => {
     }
 };
 
+/**
+ * Send transactional email using MSG91
+ * @param {string} to - Recipient email address
+ * @param {string} templateId - MSG91 email template ID
+ * @param {object} variables - Template variables
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+const sendEmail = async (to, templateId, variables = {}) => {
+    try {
+        if (!MSG91_AUTH_KEY) {
+            console.error('MSG91_AUTH_KEY not configured');
+            return { success: false, message: 'Email service not configured' };
+        }
+
+        if (!templateId) {
+            console.error('Email template ID not provided');
+            return { success: false, message: 'Email template not configured' };
+        }
+
+        const response = await axios.post(
+            'https://control.msg91.com/api/v5/email/send',
+            {
+                to: [{ email: to }],
+                from: { email: `noreply@${MSG91_EMAIL_DOMAIN}`, name: 'Tap2' },
+                domain: MSG91_EMAIL_DOMAIN,
+                template_id: templateId,
+                variables: variables
+            },
+            {
+                headers: {
+                    'authkey': MSG91_AUTH_KEY,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        if (response.data && (response.data.type === 'success' || response.status === 200)) {
+            console.log('MSG91 Email sent successfully to:', to);
+            return { success: true, message: 'Email sent successfully' };
+        } else {
+            console.error('MSG91 Send Email Error:', response.data);
+            return {
+                success: false,
+                message: response.data?.message || 'Failed to send email'
+            };
+        }
+    } catch (error) {
+        console.error('MSG91 Send Email Exception:', error.response?.data || error.message);
+        return {
+            success: false,
+            message: error.response?.data?.message || 'Failed to send email'
+        };
+    }
+};
+
+/**
+ * Send welcome email to new user
+ * @param {string} email - User's email
+ * @param {string} username - User's username
+ * @param {string} fullName - User's full name
+ */
+const sendWelcomeEmail = async (email, username, fullName) => {
+    if (!MSG91_WELCOME_TEMPLATE_ID) {
+        console.log('Welcome email template not configured (MSG91_WELCOME_EMAIL_TEMPLATE_ID)');
+        return { success: false, message: 'Welcome email template not configured' };
+    }
+
+    return sendEmail(email, MSG91_WELCOME_TEMPLATE_ID, {
+        name: fullName,
+        username: username,
+        profile_url: `https://tap2.me/${username}`
+    });
+};
+
+/**
+ * Send subscription confirmation email
+ * @param {string} email - User's email
+ * @param {string} fullName - User's full name
+ * @param {string} planName - Subscription plan name
+ * @param {number} amount - Amount paid
+ * @param {Date} expiresAt - Subscription expiry date
+ */
+const sendSubscriptionEmail = async (email, fullName, planName, amount, expiresAt) => {
+    if (!MSG91_SUBSCRIPTION_TEMPLATE_ID) {
+        console.log('Subscription email template not configured (MSG91_SUBSCRIPTION_EMAIL_TEMPLATE_ID)');
+        return { success: false, message: 'Subscription email template not configured' };
+    }
+
+    return sendEmail(email, MSG91_SUBSCRIPTION_TEMPLATE_ID, {
+        name: fullName,
+        plan_name: planName,
+        amount: amount.toString(),
+        expires_at: new Date(expiresAt).toLocaleDateString('en-IN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        })
+    });
+};
+
 module.exports = {
     sendOTP,
     verifyOTP,
-    resendOTP
+    resendOTP,
+    sendEmail,
+    sendWelcomeEmail,
+    sendSubscriptionEmail
 };
+

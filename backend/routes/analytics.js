@@ -4,6 +4,6 @@ const authMiddleware = require('../middleware/auth');
 const analyticsController = require('../controllers/analyticsController');
 
 // GET /api/analytics/summary (Authenticated)
-router.get('/summary', authMiddleware, analyticsController.getSummary);
+router.get('/summary', authMiddleware, analyticsController.getAnalytics);
 
 module.exports = router;

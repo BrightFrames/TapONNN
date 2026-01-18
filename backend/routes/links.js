@@ -10,16 +10,13 @@ router.get('/public/:userId', linksController.getPublicLinks);
 router.get('/my-links', authMiddleware, linksController.getMyLinks);
 
 // POST /api/links/single (Authenticated) - Add a single link
-router.post('/single', authMiddleware, linksController.addSingleLink);
+router.post('/single', authMiddleware, linksController.createLink);
 
 // POST /api/links (Authenticated) - Sync/Update links
 router.post('/', authMiddleware, linksController.syncLinks);
 
 // DELETE /api/links/:linkId (Authenticated)
 router.delete('/:linkId', authMiddleware, linksController.deleteLink);
-
-// PUT /api/links/reorder (Authenticated)
-router.put('/reorder', authMiddleware, linksController.reorderLinks);
 
 // POST /api/links/:linkId/click (Public) - Track click
 router.post('/:linkId/click', linksController.trackClick);

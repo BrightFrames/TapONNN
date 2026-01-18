@@ -169,7 +169,7 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
             <div className="bg-primary text-primary-foreground py-2 px-4 text-center text-xs font-medium flex justify-center items-center gap-4">
                 <span className="hidden sm:inline">Unlock more tools to grow your audience faster.</span>
                 <span className="sm:hidden">Upgrade to unlock more tools.</span>
-                <Button size="sm" variant="secondary" className="h-7 px-3 text-xs rounded-full gap-1">
+                <Button size="sm" variant="secondary" className="h-7 px-3 text-xs rounded-full gap-1" onClick={() => navigate('/pricing')}>
                     <Zap className="w-3 h-3 fill-current" /> Upgrade
                 </Button>
             </div>

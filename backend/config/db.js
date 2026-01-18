@@ -1,17 +1,30 @@
-const { Pool } = require('pg');
-require('dotenv').config();
+const mongoose = require('mongoose');
 
-const pool = new Pool({
-    connectionString: process.env.DB_URI,
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+    console.error('MONGODB_URI not defined in environment variables');
+    process.exit(1);
+}
+
+mongoose.connect(MONGODB_URI, {
+    dbName: 'tap2'
+})
+    .then(() => {
+        console.log('✅ Connected to MongoDB Atlas');
+    })
+    .catch((err) => {
+        console.error('❌ MongoDB connection error:', err);
+        process.exit(1);
+    });
+
+// Handle connection events
+mongoose.connection.on('error', (err) => {
+    console.error('MongoDB connection error:', err);
 });
 
-// Check DB Connection on startup
-pool.connect((err, client, release) => {
-    if (err) {
-        return console.error('Error acquiring client', err.stack);
-    }
-    console.log('Connected to Database via PG');
-    release();
+mongoose.connection.on('disconnected', () => {
+    console.log('MongoDB disconnected');
 });
 
-module.exports = pool;
+module.exports = mongoose;

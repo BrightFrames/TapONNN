@@ -29,12 +29,13 @@ const linksRoutes = require('./routes/links');
 const profileRoutes = require('./routes/profile');
 const analyticsRoutes = require('./routes/analytics');
 const commerceRoutes = require('./routes/commerce');
+const subscriptionRoutes = require('./routes/subscription');
 
 // --- Routes ---
 
 // Health check
 app.get('/', (req, res) => {
-    res.send('TapVisit Backend is running (PG Driver)');
+    res.send('Tap2 Backend is running (MongoDB)');
 });
 
 // Mount Routes
@@ -43,6 +44,7 @@ app.use('/api/links', linksRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api', commerceRoutes); // Products, orders, public/products
+app.use('/api/payments', subscriptionRoutes); // Subscription & payments
 
 // Legacy route support - /api/my-links is now under /api/links/my-links
 // But since it was originally at /api/my-links, we add an alias
