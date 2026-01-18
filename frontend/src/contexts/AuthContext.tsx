@@ -363,11 +363,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 },
                 body: JSON.stringify(data)
             });
-            await fetchUserData(); // Refresh local state
+
+            // Optimistic Update: Update local user state immediately
+            setUser(prev => prev ? {
+                ...prev,
+                ...data, // This will include social_links with empty strings
+                social_links: {
+                    ...(prev.social_links || {}),
+                    ...(data.social_links || {})
+                }
+            } : null);
+
+            await fetchUserData(); // Refresh local state from server to confirm
             toast.success("Profile updated");
         } catch (err) {
             console.error("Error updating profile:", err);
             toast.error("Failed to update profile");
+            // Revert on error could be implemented here if we tracked previous state
+            await fetchUserData(); // Force sync on error
         }
     };
 

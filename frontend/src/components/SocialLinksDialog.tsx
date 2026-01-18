@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-    DialogFooter
+    DialogFooter,
+    DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,8 @@ import { toast } from "sonner";
 interface SocialLinksDialogProps {
     initialLinks: Record<string, string>;
     onSave: (links: Record<string, string>) => Promise<void>;
+    onLinksChange?: (links: Record<string, string>) => void;
+    onOpenChange?: (open: boolean) => void;
     children: React.ReactNode;
 }
 
@@ -50,11 +53,28 @@ const SOCIAL_PLATFORMS = [
     { id: 'whatsapp', icon: Phone, label: 'WhatsApp', placeholder: 'wa.me/number' },
 ];
 
-export const SocialLinksDialog = ({ initialLinks, onSave, children }: SocialLinksDialogProps) => {
+export const SocialLinksDialog = ({ initialLinks, onSave, onLinksChange, onOpenChange, children }: SocialLinksDialogProps) => {
     const [open, setOpen] = useState(false);
     const [links, setLinks] = useState<Record<string, string>>(initialLinks || {});
     const [loading, setLoading] = useState(false);
     const [selectedPlatform, setSelectedPlatform] = useState<string>("");
+
+    // Notify parent of changes
+    useEffect(() => {
+        onLinksChange?.(links);
+    }, [links, onLinksChange]);
+
+    // Handle initialLinks updates (if user saves and re-opens) and open state changes
+    useEffect(() => {
+        if (open) {
+            setLinks(initialLinks || {});
+        }
+    }, [open, initialLinks]);
+
+    const handleOpenChange = (newOpen: boolean) => {
+        setOpen(newOpen);
+        onOpenChange?.(newOpen);
+    }
 
     const handleChange = (id: string, value: string) => {
         setLinks(prev => ({ ...prev, [id]: value }));
@@ -76,7 +96,7 @@ export const SocialLinksDialog = ({ initialLinks, onSave, children }: SocialLink
         setLoading(true);
         try {
             await onSave(links);
-            setOpen(false);
+            handleOpenChange(false);
             toast.success("Social links updated!");
         } catch (error) {
             console.error(error);
@@ -90,19 +110,18 @@ export const SocialLinksDialog = ({ initialLinks, onSave, children }: SocialLink
     const activePlatforms = SOCIAL_PLATFORMS.filter(p => links.hasOwnProperty(p.id));
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Social Icons</DialogTitle>
+                    <DialogDescription>
+                        Add your social profiles to display them as icons at the top of your page.
+                    </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-6 py-4">
-                    <p className="text-sm text-gray-500">
-                        Add your social profiles to display them as icons at the top of your page.
-                    </p>
-
                     {/* Active Links List */}
                     <div className="space-y-4">
                         {activePlatforms.map(({ id, icon: Icon, label, placeholder }) => (
@@ -160,7 +179,7 @@ export const SocialLinksDialog = ({ initialLinks, onSave, children }: SocialLink
                     )}
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
                     <Button onClick={handleSave} disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white">
                         {loading ? "Saving..." : "Save Changes"}
                     </Button>
