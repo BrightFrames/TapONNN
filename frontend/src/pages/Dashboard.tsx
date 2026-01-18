@@ -48,7 +48,7 @@ interface Link {
 }
 
 const Dashboard = () => {
-    const { user, links: authLinks, updateLinks, deleteLink: deleteLinkFromApi, selectedTheme, refreshProfile } = useAuth();
+    const { user, links: authLinks, updateLinks, deleteLink: deleteLinkFromApi, selectedTheme, refreshProfile, updateProfile } = useAuth();
     const [links, setLinks] = useState<Link[]>(authLinks);
     const [isAddingLink, setIsAddingLink] = useState(false);
     const [socialPreview, setSocialPreview] = useState<Record<string, string> | null>(null);
@@ -200,31 +200,18 @@ const Dashboard = () => {
     };
 
     const saveSocialLinks = async (updatedLinks: Record<string, string>) => {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-        if (!token) return;
-
         try {
-            await fetch(`${API_URL}/profile`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ social_links: updatedLinks })
-            });
-            await refreshProfile();
-            // Important: After saving, we reset the preview. 
-            // The Dashboard rendering logic falls back to user.social_links.
-            // Since we know backend saves empty strings, refreshProfile() should return them.
-            // If the user's "icon disappearing" issue happens, it means refreshProfile 
-            // result didn't include the empty string keys or filtering happened.
-            // To be safe, we can manually update the 'links' local state or user object if needed,
-            // but refreshProfile should handle it.
+            // Use updateProfile from AuthContext to get optimistic updates
+            await updateProfile({ social_links: updatedLinks });
+
+            // Access token check is handled inside updateProfile now (or we assume logged in)
+            // If we needed to check token specifically before call, useAuth usually handles that.
+
+            // Reset preview mode - the optimistic update ensures icons stay visible
             setSocialPreview(null);
         } catch (err) {
             console.error("Error saving socials:", err);
-            toast.error("Failed to save social links");
+            // toast handled in updateProfile
         }
     };
 
