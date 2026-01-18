@@ -32,6 +32,33 @@ const getMyLinks = async (req, res) => {
     }
 };
 
+// ADD a Single New Link (Authenticated)
+const addSingleLink = async (req, res) => {
+    const userId = req.user.id;
+    const { title = 'New Link', url = '', isActive = true, thumbnail = '' } = req.body;
+
+    try {
+        // First, shift all existing links' positions by 1
+        await pool.query(
+            'UPDATE links SET position = position + 1 WHERE user_id = $1',
+            [userId]
+        );
+
+        // Insert the new link at position 0
+        const result = await pool.query(
+            `INSERT INTO links (user_id, title, url, is_active, clicks, position, thumbnail)
+             VALUES ($1, $2, $3, $4, 0, 0, $5)
+             RETURNING *`,
+            [userId, title, url, isActive, thumbnail || null]
+        );
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error("Error adding single link:", err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
 // SYNC/UPDATE Links (Authenticated)
 const syncLinks = async (req, res) => {
     const userId = req.user.id;
@@ -183,6 +210,7 @@ const trackClick = async (req, res) => {
 module.exports = {
     getPublicLinks,
     getMyLinks,
+    addSingleLink,
     syncLinks,
     deleteLink,
     reorderLinks,

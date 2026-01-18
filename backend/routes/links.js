@@ -9,6 +9,9 @@ router.get('/public/:userId', linksController.getPublicLinks);
 // GET /api/my-links (Authenticated)
 router.get('/my-links', authMiddleware, linksController.getMyLinks);
 
+// POST /api/links/single (Authenticated) - Add a single link
+router.post('/single', authMiddleware, linksController.addSingleLink);
+
 // POST /api/links (Authenticated) - Sync/Update links
 router.post('/', authMiddleware, linksController.syncLinks);
 

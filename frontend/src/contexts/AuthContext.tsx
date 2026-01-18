@@ -33,6 +33,7 @@ interface AuthContextType {
     loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
     signUp: (email: string, pass: string, username: string, name: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => Promise<void>;
+    addLink: () => Promise<Link | null>;
     updateLinks: (links: Link[]) => Promise<void>;
     deleteLink: (linkId: string) => Promise<void>;
     updateTheme: (themeId: string) => Promise<void>;
@@ -237,7 +238,63 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLinks([]);
         setSelectedTheme('artemis');
 
+
         toast.success("Logged out successfully");
+    };
+
+    // Add a single new link
+    const addLink = async (): Promise<Link | null> => {
+        const token = getToken();
+        if (!token) {
+            toast.error("Not authenticated");
+            return null;
+        }
+
+        const newLink: Link = {
+            id: '', // Will be assigned by backend
+            title: 'New Link',
+            url: '',
+            isActive: true,
+            clicks: 0,
+            position: 0,
+            thumbnail: ''
+        };
+
+        try {
+            const res = await fetch(`${API_URL}/links/single`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(newLink)
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                toast.error(error.error || "Failed to add link");
+                return null;
+            }
+
+            const data = await res.json();
+            const createdLink: Link = {
+                id: data.id,
+                title: data.title,
+                url: data.url,
+                isActive: data.is_active,
+                clicks: data.clicks,
+                position: data.position,
+                thumbnail: data.thumbnail
+            };
+
+            // Add to beginning and update positions
+            setLinks(prev => [createdLink, ...prev.map((l, i) => ({ ...l, position: i + 1 }))]);
+            return createdLink;
+        } catch (err) {
+            console.error("Error adding link:", err);
+            toast.error("Failed to add link");
+            return null;
+        }
     };
 
     const updateLinks = async (newLinks: Link[]) => {
@@ -344,6 +401,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             loginWithGoogle,
             signUp,
             logout,
+            addLink,
             updateLinks,
             deleteLink,
             updateTheme,

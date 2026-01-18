@@ -102,7 +102,7 @@ const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) =
             ref={setNodeRef}
             style={style}
             className={`
-                bg-white rounded-2xl border shadow-sm overflow-hidden group
+                bg-white rounded-xl sm:rounded-2xl border shadow-sm overflow-hidden group
                 transition-all duration-200 hover:shadow-md hover:border-gray-300
                 ${!link.isActive ? 'opacity-60' : ''}
                 ${isDragging ? 'shadow-lg ring-2 ring-purple-300' : ''}
@@ -113,102 +113,103 @@ const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) =
                 <div
                     {...attributes}
                     {...listeners}
-                    className="w-12 flex items-center justify-center cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100 touch-none"
+                    className="w-8 sm:w-12 flex items-center justify-center cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100 touch-none"
                 >
-                    <GripVertical className="w-5 h-5" />
+                    <GripVertical className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 p-5">
+                <div className="flex-1 p-3 sm:p-5">
                     <div className="flex justify-between items-start gap-4">
                         <div className="flex-1 space-y-2">
                             {/* Title with Thumbnail Preview */}
-                            <div className="flex items-center gap-3 group/title">
+                            <div className="flex items-center gap-2 sm:gap-3 group/title">
                                 {ThumbnailIcon ? (
-                                    <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
-                                        <ThumbnailIcon className="w-4 h-4" />
+                                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0">
+                                        <ThumbnailIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     </div>
                                 ) : (
-                                    <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center">
-                                        <Link2 className="w-4 h-4" />
+                                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center flex-shrink-0">
+                                        <Link2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     </div>
                                 )}
 
                                 <Input
-                                    className="font-semibold text-base border-transparent hover:border-gray-200 focus:border-purple-400 focus:ring-1 focus:ring-purple-400 bg-transparent px-2 h-9 w-full max-w-[280px] rounded-lg transition-colors"
+                                    className="font-semibold text-sm sm:text-base border-transparent hover:border-gray-200 focus:border-purple-400 focus:ring-1 focus:ring-purple-400 bg-transparent px-1.5 sm:px-2 h-8 sm:h-9 w-full max-w-[180px] sm:max-w-[280px] rounded-lg transition-colors"
                                     value={link.title}
                                     placeholder="Link title"
                                     onChange={(e) => onUpdate(link.id, 'title', e.target.value)}
                                 />
-                                <PenLine className="w-4 h-4 text-gray-300 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                                <PenLine className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-300 opacity-0 group-hover/title:opacity-100 transition-opacity hidden sm:block" />
                             </div>
 
                             {/* URL */}
-                            <div className="flex items-center gap-2 group/url pl-11">
+                            <div className="flex items-center gap-2 group/url pl-9 sm:pl-11">
                                 <div className="flex items-center gap-1.5 flex-1">
                                     <Input
-                                        className="text-sm text-gray-500 border-transparent hover:border-gray-200 focus:border-purple-400 focus:ring-1 focus:ring-purple-400 bg-transparent px-2 h-8 w-full rounded-lg transition-colors"
+                                        className="text-xs sm:text-sm text-gray-500 border-transparent hover:border-gray-200 focus:border-purple-400 focus:ring-1 focus:ring-purple-400 bg-transparent px-1.5 sm:px-2 h-7 sm:h-8 w-full rounded-lg transition-colors"
                                         value={link.url}
                                         placeholder="https://..."
                                         onChange={(e) => onUpdate(link.id, 'url', e.target.value)}
                                     />
                                 </div>
-                                <PenLine className="w-3.5 h-3.5 text-gray-300 opacity-0 group-hover/url:opacity-100 transition-opacity" />
+                                <PenLine className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-300 opacity-0 group-hover/url:opacity-100 transition-opacity hidden sm:block" />
                             </div>
                         </div>
 
                         {/* Right Actions */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5 sm:gap-3">
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="text-gray-400 hover:text-gray-600 h-8 w-8"
+                                className="text-gray-400 hover:text-gray-600 h-7 w-7 sm:h-8 sm:w-8 hidden sm:flex"
                                 onClick={copyUrl}
                             >
-                                <Copy className="w-4 h-4" />
+                                <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </Button>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
                                 {link.isActive ? (
-                                    <Eye className="w-4 h-4 text-green-500" />
+                                    <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
                                 ) : (
-                                    <EyeOff className="w-4 h-4 text-gray-400" />
+                                    <EyeOff className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
                                 )}
                                 <Switch
                                     checked={link.isActive}
                                     onCheckedChange={(c) => onUpdate(link.id, 'isActive', c)}
-                                    className="data-[state=checked]:bg-green-500"
+                                    className="data-[state=checked]:bg-green-500 scale-90 sm:scale-100"
                                 />
                             </div>
                         </div>
                     </div>
 
                     {/* Bottom Toolbar */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-4">
-                        <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-100 mt-3 sm:mt-4">
+                        <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
                             <ThumbnailSelector
                                 currentThumbnail={link.thumbnail}
                                 onSelect={(val) => onUpdate(link.id, 'thumbnail', val)}
                             >
-                                <Button variant="ghost" size="sm" className={`text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg h-8 px-2 gap-1.5 text-xs ${link.thumbnail ? 'text-purple-600 bg-purple-50' : ''}`}>
-                                    <ImageIcon className="w-3.5 h-3.5" />
+                                <Button variant="ghost" size="sm" className={`text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg h-7 sm:h-8 px-1.5 sm:px-2 gap-1 sm:gap-1.5 text-[10px] sm:text-xs ${link.thumbnail ? 'text-purple-600 bg-purple-50' : ''}`}>
+                                    <ImageIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                     <span className="hidden sm:inline">Thumbnail</span>
                                 </Button>
                             </ThumbnailSelector>
 
-                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg h-8 px-2 gap-1.5 text-xs">
-                                <Star className="w-3.5 h-3.5" />
+                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg h-7 sm:h-8 px-1.5 sm:px-2 gap-1 sm:gap-1.5 text-[10px] sm:text-xs">
+                                <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                 <span className="hidden sm:inline">Highlight</span>
                             </Button>
-                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg h-8 px-2 gap-1.5 text-xs">
-                                <Lock className="w-3.5 h-3.5" />
+                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg h-7 sm:h-8 px-1.5 sm:px-2 gap-1 sm:gap-1.5 text-[10px] sm:text-xs">
+                                <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                 <span className="hidden sm:inline">Lock</span>
                             </Button>
 
                             {/* Click Stats */}
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg ml-2">
-                                <BarChart2 className="w-3.5 h-3.5 text-gray-500" />
-                                <span className="text-xs font-medium text-gray-600">{link.clicks || 0} clicks</span>
+                            <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-50 rounded-lg ml-1 sm:ml-2">
+                                <BarChart2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-500" />
+                                <span className="text-[10px] sm:text-xs font-medium text-gray-600">{link.clicks || 0}</span>
+                                <span className="text-[10px] sm:text-xs font-medium text-gray-600 hidden sm:inline"> clicks</span>
                             </div>
                         </div>
 
@@ -242,7 +243,7 @@ const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) =
 
                     {/* Warning for invalid URL */}
                     {link.url.length < 5 && (
-                        <div className="mt-4 bg-amber-50 text-amber-700 text-xs px-4 py-3 rounded-xl flex gap-2 items-center border border-amber-100">
+                        <div className="mt-3 sm:mt-4 bg-amber-50 text-amber-700 text-[10px] sm:text-xs px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl flex gap-2 items-center border border-amber-100">
                             <span className="font-medium">⚠️ Enter a valid URL to publish this link.</span>
                         </div>
                     )}

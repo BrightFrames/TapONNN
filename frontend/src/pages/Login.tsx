@@ -160,6 +160,16 @@ const Login = () => {
                                 minLength={6}
                                 className="h-10"
                             />
+                            {isLogin && (
+                                <div className="flex justify-end">
+                                    <span
+                                        className="text-sm text-primary hover:underline cursor-pointer"
+                                        onClick={() => navigate("/forgot-password")}
+                                    >
+                                        Forgot Password?
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                     <CardFooter className="flex flex-col gap-4">

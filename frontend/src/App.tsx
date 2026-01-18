@@ -8,6 +8,7 @@ import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import Template from "./pages/Template";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Design from "./pages/Design";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/templates" element={<Template />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Protected Routes - Require Authentication */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
