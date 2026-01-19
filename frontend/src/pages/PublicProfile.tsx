@@ -37,7 +37,11 @@ const PublicProfile = () => {
         }
 
         // Open the link in a new tab
-        window.open(link.url, '_blank', 'noopener,noreferrer');
+        let url = link.url;
+        if (url && !url.startsWith('http')) {
+            url = `https://${url}`;
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
     };
     const handleSupport = async () => {
         if (!profile) return;
@@ -222,7 +226,7 @@ const PublicProfile = () => {
                         links.map((link: any) => (
                             <a
                                 key={link.id}
-                                href={link.url}
+                                href={link.url && !link.url.startsWith('http') ? `https://${link.url}` : link.url}
                                 onClick={(e) => handleLinkClick(link, e)}
                                 className={`w-full block text-center px-6 py-4 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${template.buttonStyle}`}
                             >

@@ -453,7 +453,7 @@ const Dashboard = () => {
                                         return (
                                             <a
                                                 key={link.id}
-                                                href={link.url || '#'}
+                                                href={link.url ? (link.url.startsWith('http') ? link.url : `https://${link.url}`) : '#'}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className={`block w-full flex items-center justify-center relative ${currentTemplate.buttonStyle} ${isFeatured ? 'scale-105 ring-2 ring-amber-300/50 shadow-lg' : ''} ${isPriority ? 'animate-pulse ring-2 ring-purple-400/50' : ''}`}

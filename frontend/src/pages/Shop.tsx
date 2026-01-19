@@ -486,7 +486,7 @@ const Shop = () => {
                                                     {products.map(product => (
                                                         <a
                                                             key={product.id}
-                                                            href={product.file_url || '#'}
+                                                            href={product.file_url ? (product.file_url.startsWith('http') ? product.file_url : `https://${product.file_url}`) : '#'}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow block"
