@@ -48,21 +48,9 @@ const profileSchema = new mongoose.Schema({
     design_config: {
         type: mongoose.Schema.Types.Mixed,
         default: {}
-    },
-    created_at: {
-        type: Date,
-        default: Date.now
-    },
-    updated_at: {
-        type: Date,
-        default: Date.now
     }
-});
-
-// Update timestamp on save
-profileSchema.pre('save', function (next) {
-    this.updated_at = new Date();
-    next();
+}, {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
 const Profile = mongoose.model('Profile', profileSchema);

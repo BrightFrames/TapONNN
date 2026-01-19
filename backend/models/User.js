@@ -19,13 +19,6 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-// Hash password before saving
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password_hash')) return next();
-    // Password is already hashed in controller, skip double-hashing
-    next();
-});
-
 // Compare password method
 userSchema.methods.comparePassword = async function (candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password_hash);
