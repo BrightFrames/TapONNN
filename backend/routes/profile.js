@@ -16,4 +16,8 @@ router.put('/', authMiddleware, profileController.updateProfile);
 // POST /api/profile/:profileId/view (Public) - Track view
 router.post('/:profileId/view', analyticsController.trackProfileView);
 
+// GET /api/store/:username (Public) - Get store profile
+router.get('/store/:username', profileController.getPublicStoreProfile);
+
 module.exports = router;
+

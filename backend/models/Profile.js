@@ -48,6 +48,14 @@ const profileSchema = new mongoose.Schema({
     design_config: {
         type: mongoose.Schema.Types.Mixed,
         default: {}
+    },
+    has_store: {
+        type: Boolean,
+        default: false
+    },
+    store_published: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }

@@ -19,6 +19,7 @@ import Earnings from "./pages/Earnings";
 import EarnOverview from "./pages/EarnOverview";
 import Settings from "./pages/Settings";
 import PublicProfile from "./pages/PublicProfile";
+import PublicStore from "./pages/PublicStore";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -53,6 +54,9 @@ const App = () => (
             {/* Earn Routes */}
             <Route path="/dashboard/earn" element={<ProtectedRoute><EarnOverview /></ProtectedRoute>} />
             <Route path="/dashboard/earn/history" element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
+
+            {/* Public Store - Must be before username catch-all */}
+            <Route path="/:username/store" element={<PublicStore />} />
 
             {/* Public Profile - Must be last to avoid catching other routes */}
             <Route path="/:username" element={<PublicProfile />} />

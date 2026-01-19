@@ -11,10 +11,16 @@ interface ShareModalProps {
     onOpenChange: (open: boolean) => void;
     username: string;
     url: string;
+    type?: 'profile' | 'store';
 }
 
-const ShareModal = ({ open, onOpenChange, username, url }: ShareModalProps) => {
+const ShareModal = ({ open, onOpenChange, username, url, type = 'profile' }: ShareModalProps) => {
     const [copied, setCopied] = useState(false);
+
+    const title = type === 'store' ? 'Share your Store' : 'Share your Tap2';
+    const shareMessage = type === 'store'
+        ? `Check out my store: ${url}`
+        : `Check out my Tap2 profile: ${url}`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(url);
@@ -39,7 +45,7 @@ const ShareModal = ({ open, onOpenChange, username, url }: ShareModalProps) => {
             const pngFile = canvas.toDataURL("image/png");
 
             const downloadLink = document.createElement("a");
-            downloadLink.download = `tap2-${username}-qr.png`;
+            downloadLink.download = `tap2-${username}-${type}-qr.png`;
             downloadLink.href = pngFile;
             downloadLink.click();
             toast.success("QR Code downloaded");
@@ -52,7 +58,7 @@ const ShareModal = ({ open, onOpenChange, username, url }: ShareModalProps) => {
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle className="text-center text-xl">Share your Tap2</DialogTitle>
+                    <DialogTitle className="text-center text-xl">{title}</DialogTitle>
                 </DialogHeader>
 
                 <div className="flex flex-col items-center justify-center py-6 space-y-6">
@@ -93,7 +99,7 @@ const ShareModal = ({ open, onOpenChange, username, url }: ShareModalProps) => {
                             <Download className="w-4 h-4 mr-2" />
                             Download QR
                         </Button>
-                        <Button className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white" onClick={() => window.open(`https://wa.me/?text=Check out my Tap2 profile: ${url}`, '_blank')}>
+                        <Button className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(shareMessage)}`, '_blank')}>
                             WhatsApp
                         </Button>
                     </div>

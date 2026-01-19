@@ -1,5 +1,6 @@
 const Profile = require('../models/Profile');
 const Link = require('../models/Link');
+const { Product } = require('../models/Product');
 
 // Get public profile by username
 const getPublicProfile = async (req, res) => {
@@ -21,10 +22,50 @@ const getPublicProfile = async (req, res) => {
             avatar_url: profileObj.avatar_url,
             selected_theme: profileObj.selected_theme,
             social_links: profileObj.social_links instanceof Map ? Object.fromEntries(profileObj.social_links) : profileObj.social_links,
-            design_config: profileObj.design_config
+            design_config: profileObj.design_config,
+            has_store: profileObj.has_store,
+            store_published: profileObj.store_published
         });
     } catch (err) {
         console.error('Error fetching public profile:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// Get public store profile by username
+const getPublicStoreProfile = async (req, res) => {
+    try {
+        const { username } = req.params;
+
+        const profile = await Profile.findOne({ username: username.toLowerCase() });
+
+        if (!profile) {
+            return res.status(404).json({ error: 'Store not found' });
+        }
+
+        // Check if store is published
+        if (!profile.store_published) {
+            return res.status(404).json({ error: 'Store not available' });
+        }
+
+        // Get user's products
+        const products = await Product.find({
+            user_id: profile.user_id,
+            is_active: true
+        }).sort({ created_at: -1 }).lean();
+
+        const profileObj = profile.toObject();
+        res.json({
+            id: profileObj.user_id,
+            username: profileObj.username,
+            full_name: profileObj.full_name,
+            bio: profileObj.bio,
+            avatar_url: profileObj.avatar_url,
+            selected_theme: profileObj.selected_theme,
+            products: products
+        });
+    } catch (err) {
+        console.error('Error fetching public store:', err);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -78,6 +119,8 @@ const updateTheme = async (req, res) => {
 
 module.exports = {
     getPublicProfile,
+    getPublicStoreProfile,
     updateProfile,
     updateTheme
 };
+
