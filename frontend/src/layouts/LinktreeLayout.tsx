@@ -16,7 +16,9 @@ import {
     LogOut,
     ExternalLink,
     DollarSign,
-    Building2
+    Building2,
+    Package,
+    Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,6 +94,22 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                     <NavItem icon={LayoutGrid} label="Integrations" active={location.pathname === '/dashboard/business' && !location.search.includes('tab=')} onClick={() => handleNav('/dashboard/business')} />
                     <NavItem icon={Store} label="My Shop" active={location.search.includes('tab=shop')} onClick={() => handleNav('/dashboard/business?tab=shop')} />
                     <NavItem icon={Coins} label="Earn" active={location.search.includes('tab=earn')} onClick={() => handleNav('/dashboard/business?tab=earn')} />
+                </CollapsibleContent>
+            </Collapsible>
+
+            {/* Marketplace Group - Collapsible */}
+            <Collapsible className="mb-6 space-y-1">
+                <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors group">
+                    <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4" />
+                        <span>Marketplace</span>
+                    </div>
+                    <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180 opacity-50" />
+                </CollapsibleTrigger>
+
+                <CollapsibleContent className="space-y-1 pt-2 pl-2">
+                    <NavItem icon={Sparkles} label="Browse Apps" active={location.pathname === '/marketplace'} onClick={() => handleNav('/marketplace')} />
+                    <NavItem icon={Package} label="My Apps" active={location.pathname === '/my-apps'} onClick={() => handleNav('/my-apps')} />
                 </CollapsibleContent>
             </Collapsible>
 

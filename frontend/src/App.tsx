@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import Template from "./pages/Template";
+import TemplateMarketplace from "./pages/TemplateMarketplace";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
@@ -21,6 +22,8 @@ import Settings from "./pages/Settings";
 import PublicProfile from "./pages/PublicProfile";
 import PublicStore from "./pages/PublicStore";
 import BusinessProfile from "./pages/BusinessProfile";
+import LinktreeMarketplace from "./pages/LinktreeMarketplace";
+import MyApps from "./pages/MyApps";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -37,6 +40,7 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/templates" element={<Template />} />
+            <Route path="/template-marketplace" element={<TemplateMarketplace />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -52,6 +56,8 @@ const App = () => (
             <Route path="/design" element={<ProtectedRoute><Design /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/dashboard/business" element={<ProtectedRoute><BusinessProfile /></ProtectedRoute>} />
+            <Route path="/marketplace" element={<ProtectedRoute><LinktreeMarketplace /></ProtectedRoute>} />
+            <Route path="/my-apps" element={<ProtectedRoute><MyApps /></ProtectedRoute>} />
 
             {/* Earn Routes */}
             <Route path="/dashboard/earn" element={<ProtectedRoute><EarnOverview /></ProtectedRoute>} />

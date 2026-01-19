@@ -4,20 +4,25 @@ const authMiddleware = require('../middleware/auth');
 const profileController = require('../controllers/profileController');
 const analyticsController = require('../controllers/analyticsController');
 
-// GET /api/profile/:username (Public)
-router.get('/:username', profileController.getPublicProfile);
+// --- Specific routes MUST come before parameterized routes ---
+
+// PUT /api/profile (Authenticated) - Update own profile
+router.put('/', authMiddleware, profileController.updateProfile);
 
 // POST /api/profile/theme (Authenticated)
 router.post('/theme', authMiddleware, profileController.updateTheme);
 
-// PUT /api/profile (Authenticated)
-router.put('/', authMiddleware, profileController.updateProfile);
+// GET /api/profile/store/:username (Public) - Get store profile
+router.get('/store/:username', profileController.getPublicStoreProfile);
+
+// --- Parameterized routes (catch-all patterns) ---
+
+// GET /api/profile/:username (Public)
+router.get('/:username', profileController.getPublicProfile);
 
 // POST /api/profile/:profileId/view (Public) - Track view
 router.post('/:profileId/view', analyticsController.trackProfileView);
 
-// GET /api/store/:username (Public) - Get store profile
-router.get('/store/:username', profileController.getPublicStoreProfile);
-
 module.exports = router;
+
 

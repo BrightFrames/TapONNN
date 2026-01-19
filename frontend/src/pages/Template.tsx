@@ -1,11 +1,6 @@
 
-import React from "react";
-import { templates, TemplateData, getButtonIcon } from "../data/templates";
-
-const categories = [
-    "Fashion", "Health and Fitness", "Influencer and Creator", "Marketing",
-    "Music", "Small Business", "Social Media", "Sports", "Telegram", "Whatsapp"
-];
+import React, { useState } from "react";
+import { templates, TemplateData, getButtonIcon, categories } from "../data/templates";
 
 const TemplateCard = ({ template }: { template: TemplateData }) => {
     return (
@@ -65,6 +60,13 @@ const TemplateCard = ({ template }: { template: TemplateData }) => {
 };
 
 const Template = () => {
+    const [selectedCategory, setSelectedCategory] = useState<string>("All");
+
+    // Filter templates based on selected category
+    const filteredTemplates = selectedCategory === "All"
+        ? templates
+        : templates.filter(t => t.category === selectedCategory);
+
     return (
         <div className="min-h-screen bg-[#F9F9F9] text-[#1E2330] font-sans">
             <div className="container mx-auto px-4 py-20">
@@ -87,9 +89,18 @@ const Template = () => {
                             {categories.map((cat, i) => (
                                 <button
                                     key={i}
-                                    className="px-6 py-3 rounded-full border border-gray-200 bg-white text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 transition-colors text-left whitespace-nowrap"
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className={`px-6 py-3 rounded-full border text-sm font-semibold transition-all text-left whitespace-nowrap ${selectedCategory === cat
+                                            ? 'bg-[#1E2330] text-white border-[#1E2330] shadow-lg'
+                                            : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'
+                                        }`}
                                 >
                                     {cat}
+                                    {cat !== "All" && (
+                                        <span className={`ml-2 text-xs ${selectedCategory === cat ? 'text-gray-300' : 'text-gray-400'}`}>
+                                            ({templates.filter(t => t.category === cat).length})
+                                        </span>
+                                    )}
                                 </button>
                             ))}
                         </div>
@@ -97,11 +108,28 @@ const Template = () => {
 
                     {/* Templates Grid */}
                     <div className="flex-1">
+                        {/* Category Header */}
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                {selectedCategory === "All" ? "All Templates" : selectedCategory}
+                            </h2>
+                            <p className="text-gray-500 mt-1">
+                                {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''} available
+                            </p>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16 justify-items-center">
-                            {templates.map((t) => (
+                            {filteredTemplates.map((t) => (
                                 <TemplateCard key={t.id} template={t} />
                             ))}
                         </div>
+
+                        {/* Empty State */}
+                        {filteredTemplates.length === 0 && (
+                            <div className="text-center py-16">
+                                <p className="text-gray-500">No templates found in this category.</p>
+                            </div>
+                        )}
                     </div>
 
                 </div>
@@ -111,3 +139,4 @@ const Template = () => {
 };
 
 export default Template;
+

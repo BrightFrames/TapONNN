@@ -30,6 +30,7 @@ const profileRoutes = require('./routes/profile');
 const analyticsRoutes = require('./routes/analytics');
 const commerceRoutes = require('./routes/commerce');
 const subscriptionRoutes = require('./routes/subscription');
+const marketplaceRoutes = require('./routes/marketplace');
 
 // --- Routes ---
 
@@ -45,6 +46,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api', commerceRoutes); // Products, orders, public/products
 app.use('/api/payments', subscriptionRoutes); // Subscription & payments
+app.use('/api/marketplace', marketplaceRoutes); // Marketplace plugins
 
 // Legacy route support - /api/my-links is now under /api/links/my-links
 // But since it was originally at /api/my-links, we add an alias
