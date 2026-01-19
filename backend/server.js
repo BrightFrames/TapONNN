@@ -50,7 +50,29 @@ const linksController = require('./controllers/linksController');
 const authMiddleware = require('./middleware/auth');
 app.get('/api/my-links', authMiddleware, linksController.getMyLinks);
 
+const pool = require('./config/db');
+
+// Migration to ensure schema is up to date
+const runMigrations = async (retries = 5, delay = 5000) => {
+    while (retries > 0) {
+        try {
+            // Ensure file_url column exists in products table
+            await pool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS file_url TEXT;");
+            console.log("Database schema updated: file_url column verified.");
+            return;
+        } catch (err) {
+            console.error(`Migration Error (Retries left: ${retries - 1}):`, err.message);
+            retries -= 1;
+            if (retries === 0) break;
+            await new Promise(res => setTimeout(res, delay));
+        }
+    }
+    console.error("Migration failed after multiple attempts.");
+};
+
 // Start Server
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
+    // Run migration in background
+    runMigrations();
 });
