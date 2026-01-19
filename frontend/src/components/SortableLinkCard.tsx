@@ -31,7 +31,11 @@ import {
     Video,
     ShoppingBag,
     MapPin,
-    Calendar
+    Calendar,
+    Sparkles,
+    Clock,
+    Archive,
+    Zap
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -48,6 +52,11 @@ interface Link {
     clicks?: number;
     position?: number;
     thumbnail?: string;
+    isFeatured?: boolean;
+    isPriority?: boolean;
+    isArchived?: boolean;
+    scheduledStart?: string;
+    scheduledEnd?: string;
 }
 
 interface SortableLinkCardProps {
@@ -106,6 +115,9 @@ const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) =
                 transition-all duration-200 hover:shadow-md hover:border-gray-300
                 ${!link.isActive ? 'opacity-60' : ''}
                 ${isDragging ? 'shadow-lg ring-2 ring-purple-300' : ''}
+                ${link.isFeatured ? 'ring-2 ring-amber-300 shadow-amber-100 shadow-lg' : ''}
+                ${link.isPriority ? 'ring-2 ring-purple-400 animate-pulse' : ''}
+                ${link.isArchived ? 'opacity-50 bg-gray-50' : ''}
             `}
         >
             <div className="flex">
@@ -196,13 +208,40 @@ const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) =
                                 </Button>
                             </ThumbnailSelector>
 
-                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg h-7 sm:h-8 px-1.5 sm:px-2 gap-1 sm:gap-1.5 text-[10px] sm:text-xs">
-                                <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                                <span className="hidden sm:inline">Highlight</span>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onUpdate(link.id, 'isFeatured', !link.isFeatured)}
+                                className={`rounded-lg h-7 sm:h-8 px-1.5 sm:px-2 gap-1 sm:gap-1.5 text-[10px] sm:text-xs transition-all ${link.isFeatured ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                            >
+                                <Sparkles className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${link.isFeatured ? 'fill-amber-400' : ''}`} />
+                                <span className="hidden sm:inline">Featured</span>
                             </Button>
-                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg h-7 sm:h-8 px-1.5 sm:px-2 gap-1 sm:gap-1.5 text-[10px] sm:text-xs">
-                                <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                                <span className="hidden sm:inline">Lock</span>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onUpdate(link.id, 'isPriority', !link.isPriority)}
+                                className={`rounded-lg h-7 sm:h-8 px-1.5 sm:px-2 gap-1 sm:gap-1.5 text-[10px] sm:text-xs transition-all ${link.isPriority ? 'text-purple-600 bg-purple-50 hover:bg-purple-100' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                            >
+                                <Zap className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${link.isPriority ? 'fill-purple-400' : ''}`} />
+                                <span className="hidden sm:inline">Priority</span>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    const now = new Date().toISOString();
+                                    if (link.scheduledStart) {
+                                        onUpdate(link.id, 'scheduledStart', undefined);
+                                        onUpdate(link.id, 'scheduledEnd', undefined);
+                                    } else {
+                                        onUpdate(link.id, 'scheduledStart', now);
+                                    }
+                                }}
+                                className={`rounded-lg h-7 sm:h-8 px-1.5 sm:px-2 gap-1 sm:gap-1.5 text-[10px] sm:text-xs transition-all ${link.scheduledStart ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                            >
+                                <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                <span className="hidden sm:inline">Schedule</span>
                             </Button>
 
                             {/* Click Stats */}
@@ -228,8 +267,14 @@ const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) =
                                 <DropdownMenuItem onClick={copyUrl}>
                                     <Copy className="w-4 h-4 mr-2" /> Copy URL
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => link.url && window.open(link.url, '_blank')}>
                                     <ExternalLink className="w-4 h-4 mr-2" /> Open link
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => onUpdate(link.id, 'isArchived', !link.isArchived)}
+                                    className="text-amber-600 focus:text-amber-600 focus:bg-amber-50"
+                                >
+                                    <Archive className="w-4 h-4 mr-2" /> {link.isArchived ? 'Unarchive' : 'Archive'}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     className="text-red-600 focus:text-red-600 focus:bg-red-50"

@@ -45,10 +45,15 @@ interface Link {
     clicks?: number;
     position?: number;
     thumbnail?: string;
+    isFeatured?: boolean;
+    isPriority?: boolean;
+    isArchived?: boolean;
+    scheduledStart?: string;
+    scheduledEnd?: string;
 }
 
 const Dashboard = () => {
-    const { user, links: authLinks, updateLinks, deleteLink: deleteLinkFromApi, selectedTheme, refreshProfile, updateProfile } = useAuth();
+    const { user, links: authLinks, addLink, updateLinks, deleteLink: deleteLinkFromApi, selectedTheme, refreshProfile, updateProfile } = useAuth();
     const [links, setLinks] = useState<Link[]>(authLinks);
     const [isAddingLink, setIsAddingLink] = useState(false);
     const [socialPreview, setSocialPreview] = useState<Record<string, string> | null>(null);
@@ -89,24 +94,15 @@ const Dashboard = () => {
         if (isAddingLink) return; // Prevent double-clicks
         setIsAddingLink(true);
 
-        const newLink: Link = {
-            id: `temp_${Date.now()}`,
-            title: 'New Link',
-            url: '',
-            isActive: true,
-            clicks: 0,
-            position: 0,
-            thumbnail: ''
-        };
-
-        // Add to local state immediately for responsive UI
-        const newLinks = [newLink, ...links.map((l, i) => ({ ...l, position: i + 1 }))];
-        setLinks(newLinks);
-
-        // Sync to backend
-        await updateLinks(newLinks);
-
-        setIsAddingLink(false);
+        try {
+            // Use the dedicated addLink API that creates a single link
+            // AuthContext's addLink updates its state, useEffect syncs to local state
+            await addLink();
+        } catch (err) {
+            console.error("Error adding link:", err);
+        } finally {
+            setIsAddingLink(false);
+        }
     };
 
     const updateLink = (id: string, field: keyof Link, value: any) => {
@@ -320,8 +316,8 @@ const Dashboard = () => {
                         </div>
 
                         {/* Links List with Drag and Drop */}
-                        <div className="space-y-3 sm:space-y-4 pb-20">
-                            {links.length === 0 && (
+                        <div className="space-y-3 sm:space-y-4 pb-6">
+                            {links.filter(l => !l.isArchived).length === 0 && (
                                 <div className="text-center py-10 sm:py-16 bg-gradient-to-br from-gray-50 to-white rounded-xl sm:rounded-2xl border-2 border-dashed border-gray-200 px-4">
                                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
                                         <Link2 className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
@@ -340,10 +336,10 @@ const Dashboard = () => {
                                 onDragEnd={handleDragEnd}
                             >
                                 <SortableContext
-                                    items={links.map(l => l.id)}
+                                    items={links.filter(l => !l.isArchived).map(l => l.id)}
                                     strategy={verticalListSortingStrategy}
                                 >
-                                    {links.map(link => (
+                                    {links.filter(l => !l.isArchived).map(link => (
                                         <SortableLinkCard
                                             key={link.id}
                                             link={link}
@@ -354,6 +350,27 @@ const Dashboard = () => {
                                 </SortableContext>
                             </DndContext>
                         </div>
+
+                        {/* Archived Links Section */}
+                        {links.filter(l => l.isArchived).length > 0 && (
+                            <div className="mt-6 mb-20">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="h-px flex-1 bg-gray-200" />
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Archived ({links.filter(l => l.isArchived).length})</span>
+                                    <div className="h-px flex-1 bg-gray-200" />
+                                </div>
+                                <div className="space-y-3 opacity-70">
+                                    {links.filter(l => l.isArchived).map(link => (
+                                        <SortableLinkCard
+                                            key={link.id}
+                                            link={link}
+                                            onUpdate={updateLink}
+                                            onDelete={deleteLink}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -429,24 +446,30 @@ const Dashboard = () => {
                                 </div>
 
                                 <div className="mt-8 space-y-3 relative z-10 w-full px-6">
-                                    {links.filter(l => l.isActive).map((link) => {
+                                    {links.filter(l => l.isActive && !l.isArchived).map((link) => {
                                         const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
+                                        const isFeatured = link.isFeatured;
+                                        const isPriority = link.isPriority;
                                         return (
                                             <a
                                                 key={link.id}
                                                 href={link.url || '#'}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className={`block w-full flex items-center justify-center relative ${currentTemplate.buttonStyle}`}
+                                                className={`block w-full flex items-center justify-center relative ${currentTemplate.buttonStyle} ${isFeatured ? 'scale-105 ring-2 ring-amber-300/50 shadow-lg' : ''} ${isPriority ? 'animate-pulse ring-2 ring-purple-400/50' : ''}`}
+                                                style={isFeatured ? { minHeight: '60px' } : {}}
                                             >
                                                 {Icon && (
                                                     <Icon className="absolute left-4 w-5 h-5 opacity-90" />
                                                 )}
                                                 <span className="truncate max-w-[200px]">{link.title}</span>
+                                                {isFeatured && (
+                                                    <span className="absolute right-3 text-[8px] bg-amber-400/30 text-amber-100 px-1.5 py-0.5 rounded-full">⭐</span>
+                                                )}
                                             </a>
                                         );
                                     })}
-                                    {links.filter(l => l.isActive).length === 0 && (
+                                    {links.filter(l => l.isActive && !l.isArchived).length === 0 && (
                                         <div className={`text-center text-sm py-8 ${currentTemplate.textColor} opacity-60`}>
                                             Add links to see them here
                                         </div>

@@ -108,7 +108,7 @@ const Earnings = () => {
                 <div className="bg-gradient-to-r from-[#1e293b] to-[#334155] rounded-3xl p-8 text-white flex items-center justify-between shadow-lg">
                     <div className="max-w-xl">
                         <h3 className="text-2xl font-bold mb-2">Start monetizing your audience today</h3>
-                        <p className="text-gray-300 mb-6">Connect a payment provider to start accepting payments, tips, and selling digital products directly from your Linktree.</p>
+                        <p className="text-gray-300 mb-6">Connect a payment provider to start accepting payments, tips, and selling digital products directly from your Tap2.</p>
                         <Button className="bg-[#7535f5] hover:bg-[#6025d5] text-white rounded-full px-6 py-6 h-auto text-base font-semibold">
                             Add Payment Provider <ArrowRight className="w-5 h-5 ml-2" />
                         </Button>

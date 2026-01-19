@@ -1,6 +1,9 @@
-const pool = require('../config/db');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const User = require('../models/User');
+const Profile = require('../models/Profile');
+const { PasswordResetToken } = require('../models/Subscription');
+const { sendWelcomeEmail } = require('../services/msg91Service');
 
 // SIGNUP
 const signup = async (req, res) => {
@@ -10,77 +13,63 @@ const signup = async (req, res) => {
         return res.status(400).json({ error: "Missing required fields" });
     }
 
-    let client;
     try {
-        client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-
-            // 1. Check if user already exists
-            const userCheck = await client.query('SELECT * FROM users WHERE email = $1', [email]);
-            if (userCheck.rows.length > 0) {
-                await client.query('ROLLBACK');
-                return res.status(400).json({ error: "User already exists with this email" });
-            }
-
-            const profileCheck = await client.query('SELECT * FROM profiles WHERE username = $1', [username]);
-            if (profileCheck.rows.length > 0) {
-                await client.query('ROLLBACK');
-                return res.status(400).json({ error: "Username already taken" });
-            }
-
-            // 2. Hash password
-            const salt = await bcrypt.genSalt(10);
-            const passwordHash = await bcrypt.hash(password, salt);
-
-            // 3. Create User
-            const userResult = await client.query(
-                'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
-                [email, passwordHash]
-            );
-            const newUser = userResult.rows[0];
-
-            // 4. Create Profile
-            const profileResult = await client.query(
-                'INSERT INTO profiles (id, username, full_name, email, selected_theme) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-                [newUser.id, username, full_name, email, 'artemis']
-            );
-            const newProfile = profileResult.rows[0];
-
-            await client.query('COMMIT');
-
-            // 5. Generate Token
-            const token = jwt.sign(
-                { id: newUser.id, email: newUser.email },
-                process.env.JWT_SECRET,
-                { expiresIn: '7d' }
-            );
-
-            res.json({
-                token,
-                user: {
-                    id: newUser.id,
-                    email: newUser.email,
-                    username: newProfile.username,
-                    full_name: newProfile.full_name
-                }
-            });
-
-        } catch (err) {
-            if (client) {
-                try {
-                    await client.query('ROLLBACK');
-                } catch (rollbackErr) {
-                    console.error("Rollback error:", rollbackErr);
-                }
-            }
-            console.error("Signup Error:", err);
-            res.status(500).json({ error: err.message });
-        } finally {
-            if (client) client.release();
+        // 1. Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: "User already exists with this email" });
         }
+
+        const existingProfile = await Profile.findOne({ username: username.toLowerCase() });
+        if (existingProfile) {
+            return res.status(400).json({ error: "Username already taken" });
+        }
+
+        // 2. Hash password
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(password, salt);
+
+        // 3. Create User
+        const newUser = new User({
+            email,
+            password_hash: passwordHash
+        });
+        await newUser.save();
+
+        // 4. Create Profile
+        const newProfile = new Profile({
+            user_id: newUser._id,
+            username: username.toLowerCase(),
+            full_name,
+            email,
+            selected_theme: 'artemis'
+        });
+        await newProfile.save();
+
+        // 5. Generate Token
+        const token = jwt.sign(
+            { id: newUser._id.toString(), email: newUser.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        // 6. Send Welcome Email (async, don't wait)
+        sendWelcomeEmail(email, username, full_name).catch(err => {
+            console.error('Failed to send welcome email:', err);
+        });
+
+        res.json({
+            token,
+            user: {
+                id: newUser._id,
+                email: newUser.email,
+                username: newProfile.username,
+                full_name: newProfile.full_name
+            }
+        });
+
     } catch (err) {
-        if (client) client.release();
+        console.error("Signup Error:", err);
         res.status(500).json({ error: err.message });
     }
 };
@@ -97,13 +86,11 @@ const login = async (req, res) => {
 
     try {
         // 1. Find user
-        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (result.rows.length === 0) {
+        const user = await User.findOne({ email });
+        if (!user) {
             console.log("Login failed: User not found", email);
             return res.status(400).json({ error: "Invalid credentials" });
         }
-
-        const user = result.rows[0];
 
         // 2. Check password
         const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -113,12 +100,11 @@ const login = async (req, res) => {
         }
 
         // 3. Get User Profile for extra data
-        const profileResult = await pool.query('SELECT * FROM profiles WHERE id = $1', [user.id]);
-        const profile = profileResult.rows[0] || {};
+        const profile = await Profile.findOne({ user_id: user._id });
 
         // 4. Generate Token
         const token = jwt.sign(
-            { id: user.id, email: user.email },
+            { id: user._id.toString(), email: user.email },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
@@ -126,11 +112,11 @@ const login = async (req, res) => {
         res.json({
             token,
             user: {
-                id: user.id,
+                id: user._id,
                 email: user.email,
-                username: profile.username,
-                full_name: profile.full_name,
-                avatar: profile.avatar_url
+                username: profile?.username,
+                full_name: profile?.full_name,
+                avatar: profile?.avatar_url
             }
         });
 
@@ -146,14 +132,27 @@ const me = async (req, res) => {
         const userId = req.user.id;
 
         // Fetch profile
-        const profileResult = await pool.query('SELECT * FROM profiles WHERE id = $1', [userId]);
+        const profile = await Profile.findOne({ user_id: userId });
 
-        if (profileResult.rows.length === 0) {
-            // Fallback if profile missing but user exists (should rarely happen)
+        if (!profile) {
+            // Fallback if profile missing but user exists
             return res.json({ id: userId, email: req.user.email });
         }
 
-        res.json(profileResult.rows[0]);
+        // Convert to plain object and format for frontend
+        const profileObj = profile.toObject();
+        res.json({
+            id: profileObj.user_id,
+            username: profileObj.username,
+            full_name: profileObj.full_name,
+            email: profileObj.email,
+            bio: profileObj.bio,
+            avatar_url: profileObj.avatar_url,
+            phone_number: profileObj.phone_number,
+            selected_theme: profileObj.selected_theme,
+            social_links: profileObj.social_links instanceof Map ? Object.fromEntries(profileObj.social_links) : profileObj.social_links,
+            design_config: profileObj.design_config
+        });
     } catch (err) {
         console.error("Me Error:", err);
         res.status(500).json({ error: "Internal Server Error" });
@@ -173,7 +172,7 @@ const changePassword = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(newPassword, salt);
 
-        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, userId]);
+        await User.findByIdAndUpdate(userId, { password_hash: passwordHash });
         res.json({ success: true });
     } catch (err) {
         console.error("Error changing password:", err);
@@ -191,16 +190,13 @@ const forgotPasswordSendOTP = async (req, res) => {
 
     try {
         // Find user by email
-        const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (userResult.rows.length === 0) {
+        const user = await User.findOne({ email });
+        if (!user) {
             return res.status(404).json({ error: "No account found with this email" });
         }
 
-        const user = userResult.rows[0];
-
         // Get profile with phone number
-        const profileResult = await pool.query('SELECT * FROM profiles WHERE id = $1', [user.id]);
-        const profile = profileResult.rows[0];
+        const profile = await Profile.findOne({ user_id: user._id });
 
         if (!profile || !profile.phone_number) {
             return res.status(400).json({
@@ -213,13 +209,13 @@ const forgotPasswordSendOTP = async (req, res) => {
         const result = await msg91Service.sendOTP(profile.phone_number);
 
         if (result.success) {
-            // Mask phone number for display (e.g., "91****3456")
+            // Mask phone number for display
             const maskedPhone = profile.phone_number.replace(/(\d{2})\d{4,}(\d{4})/, '$1****$2');
             res.json({
                 success: true,
                 message: "OTP sent successfully",
                 maskedPhone,
-                userId: user.id
+                userId: user._id
             });
         } else {
             res.status(500).json({ error: result.message || "Failed to send OTP" });
@@ -240,16 +236,13 @@ const forgotPasswordVerifyOTP = async (req, res) => {
 
     try {
         // Find user by email
-        const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (userResult.rows.length === 0) {
+        const user = await User.findOne({ email });
+        if (!user) {
             return res.status(404).json({ error: "No account found with this email" });
         }
 
-        const user = userResult.rows[0];
-
         // Get phone number
-        const profileResult = await pool.query('SELECT phone_number FROM profiles WHERE id = $1', [user.id]);
-        const profile = profileResult.rows[0];
+        const profile = await Profile.findOne({ user_id: user._id });
 
         if (!profile || !profile.phone_number) {
             return res.status(400).json({ error: "No phone number associated with this account" });
@@ -266,13 +259,18 @@ const forgotPasswordVerifyOTP = async (req, res) => {
             const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
             // Invalidate any existing tokens for this user
-            await pool.query('UPDATE password_reset_tokens SET used = true WHERE user_id = $1', [user.id]);
+            await PasswordResetToken.updateMany(
+                { user_id: user._id },
+                { used: true }
+            );
 
             // Store new reset token
-            await pool.query(
-                'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)',
-                [user.id, resetToken, expiresAt]
-            );
+            const newToken = new PasswordResetToken({
+                user_id: user._id,
+                token: resetToken,
+                expires_at: expiresAt
+            });
+            await newToken.save();
 
             res.json({
                 success: true,
@@ -302,27 +300,26 @@ const resetPassword = async (req, res) => {
 
     try {
         // Find valid, unused token
-        const tokenResult = await pool.query(
-            `SELECT * FROM password_reset_tokens 
-             WHERE token = $1 AND used = false AND expires_at > NOW()`,
-            [resetToken]
-        );
+        const tokenRecord = await PasswordResetToken.findOne({
+            token: resetToken,
+            used: false,
+            expires_at: { $gt: new Date() }
+        });
 
-        if (tokenResult.rows.length === 0) {
+        if (!tokenRecord) {
             return res.status(400).json({ error: "Invalid or expired reset token" });
         }
-
-        const tokenRecord = tokenResult.rows[0];
 
         // Hash new password
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(newPassword, salt);
 
         // Update password
-        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, tokenRecord.user_id]);
+        await User.findByIdAndUpdate(tokenRecord.user_id, { password_hash: passwordHash });
 
         // Mark token as used
-        await pool.query('UPDATE password_reset_tokens SET used = true WHERE id = $1', [tokenRecord.id]);
+        tokenRecord.used = true;
+        await tokenRecord.save();
 
         res.json({ success: true, message: "Password reset successfully" });
     } catch (err) {
@@ -341,16 +338,13 @@ const resendOTP = async (req, res) => {
 
     try {
         // Find user by email
-        const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (userResult.rows.length === 0) {
+        const user = await User.findOne({ email });
+        if (!user) {
             return res.status(404).json({ error: "No account found with this email" });
         }
 
-        const user = userResult.rows[0];
-
         // Get phone number
-        const profileResult = await pool.query('SELECT phone_number FROM profiles WHERE id = $1', [user.id]);
-        const profile = profileResult.rows[0];
+        const profile = await Profile.findOne({ user_id: user._id });
 
         if (!profile || !profile.phone_number) {
             return res.status(400).json({ error: "No phone number associated with this account" });
@@ -381,4 +375,3 @@ module.exports = {
     resetPassword,
     resendOTP
 };
-

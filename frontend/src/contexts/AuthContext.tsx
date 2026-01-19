@@ -80,7 +80,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchUserData = async () => {
         const token = getToken();
+
+        // No token - not authenticated
         if (!token) {
+            setIsAuthenticated(false);
+            setUser(null);
+            setIsLoading(false);
+            return;
+        }
+
+        // Check if token is expired before making API call
+        if (isTokenExpired(token)) {
+            console.warn("Token expired, clearing auth state");
+            localStorage.removeItem('auth_token');
+            setIsAuthenticated(false);
+            setUser(null);
+            setLinks([]);
             setIsLoading(false);
             return;
         }
@@ -93,8 +108,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
             if (!res.ok) {
                 // Token invalid or expired - clear auth state
-                console.warn("Token validation failed, logging out");
-                await logout();
+                console.warn("Token validation failed, clearing auth state");
+                localStorage.removeItem('auth_token');
+                setIsAuthenticated(false);
+                setUser(null);
+                setLinks([]);
+                setIsLoading(false);
                 return;
             }
 
@@ -135,11 +154,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         } catch (error) {
             console.error("Error fetching user data:", error);
-            // Only logout if it's an auth error, not a network error
-            const token = getToken();
-            if (token && isTokenExpired(token)) {
-                await logout();
-            }
+            // Clear auth state on any error
+            setIsAuthenticated(false);
+            setUser(null);
+            setLinks([]);
         } finally {
             setIsLoading(false);
         }

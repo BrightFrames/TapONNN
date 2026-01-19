@@ -240,14 +240,102 @@ const Design = () => {
                             </TabsContent>
 
                             <TabsContent value="wallpaper">
-                                <div className="text-center py-10 text-gray-500">
-                                    Custom wallpaper uploads coming soon.
+                                <div className="space-y-8">
+                                    <h2 className="text-lg font-semibold">Background</h2>
+
+                                    {/* Solid Color */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Solid Color</h3>
+                                        <div className="grid grid-cols-6 gap-3">
+                                            {['#FFFFFF', '#F8FAFC', '#FEF3C7', '#DCFCE7', '#E0E7FF', '#FCE7F3', '#111827', '#1F2937', '#7C3AED', '#059669', '#DC2626', '#F59E0B'].map(color => (
+                                                <button
+                                                    key={color}
+                                                    onClick={() => handleConfigChange('bgColor', color)}
+                                                    className={`w-10 h-10 rounded-xl border-2 transition-all hover:scale-110 ${config.bgColor === color ? 'ring-2 ring-purple-500 ring-offset-2' : 'border-gray-200'}`}
+                                                    style={{ backgroundColor: color }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Gradient Presets */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Gradient</h3>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {[
+                                                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                                                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                                                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                                                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                                                'linear-gradient(135deg, #30cfd0 0%, #330867 100%)'
+                                            ].map((gradient, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => handleConfigChange('bgGradient', gradient)}
+                                                    className={`h-16 rounded-xl border-2 transition-all hover:scale-105 ${config.bgGradient === gradient ? 'ring-2 ring-purple-500 ring-offset-2' : 'border-gray-200'}`}
+                                                    style={{ background: gradient }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Custom Image URL */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Custom Image URL</h3>
+                                        <input
+                                            type="url"
+                                            placeholder="https://example.com/image.jpg"
+                                            value={config.bgImageUrl || ''}
+                                            onChange={(e) => handleConfigChange('bgImageUrl', e.target.value)}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        />
+                                    </div>
                                 </div>
                             </TabsContent>
 
                             <TabsContent value="text">
-                                <div className="text-center py-10 text-gray-500">
-                                    Font customization coming soon.
+                                <div className="space-y-8">
+                                    <h2 className="text-lg font-semibold">Typography</h2>
+
+                                    {/* Font Family */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Font Family</h3>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {[
+                                                { name: 'Inter', className: 'font-sans' },
+                                                { name: 'Poppins', className: 'font-sans' },
+                                                { name: 'Playfair Display', className: 'font-serif' },
+                                                { name: 'Roboto Mono', className: 'font-mono' }
+                                            ].map((font) => (
+                                                <button
+                                                    key={font.name}
+                                                    onClick={() => handleConfigChange('fontFamily', font.name)}
+                                                    className={`p-4 border-2 rounded-xl transition-all hover:border-gray-300 ${config.fontFamily === font.name ? 'border-black bg-gray-50' : 'border-gray-200'}`}
+                                                >
+                                                    <span className={`text-xl ${font.className}`}>Aa</span>
+                                                    <p className="text-xs mt-1 text-gray-600">{font.name}</p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Text Color */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Text Color</h3>
+                                        <div className="grid grid-cols-6 gap-3">
+                                            {['#111827', '#374151', '#6B7280', '#FFFFFF', '#7C3AED', '#059669'].map(color => (
+                                                <button
+                                                    key={color}
+                                                    onClick={() => handleConfigChange('textColor', color)}
+                                                    className={`w-10 h-10 rounded-xl border-2 transition-all hover:scale-110 flex items-center justify-center ${config.textColor === color ? 'ring-2 ring-purple-500 ring-offset-2' : 'border-gray-200'}`}
+                                                    style={{ backgroundColor: color === '#FFFFFF' ? '#000' : '#FFF' }}
+                                                >
+                                                    <span style={{ color }} className="font-bold">A</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </TabsContent>
                         </Tabs>
@@ -259,7 +347,7 @@ const Design = () => {
                     <div className="sticky top-8">
                         <div className="flex items-center justify-center gap-2 mb-6 text-gray-500 text-sm">
                             <span className="bg-gray-100 px-3 py-1 rounded-full text-xs font-mono">
-                                linktr.ee/{user?.username}
+                                tap2.me/{user?.username}
                             </span>
                             <Monitor className="w-4 h-4" />
                         </div>

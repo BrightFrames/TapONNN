@@ -1,218 +1,199 @@
-const pool = require('../config/db');
+const Link = require('../models/Link');
+const Profile = require('../models/Profile');
 
-// GET Public Links for a User
-const getPublicLinks = async (req, res) => {
-    const { userId } = req.params;
-
-    try {
-        const result = await pool.query(
-            'SELECT * FROM links WHERE user_id = $1 AND is_active = true ORDER BY COALESCE(position, 0) ASC, created_at DESC',
-            [userId]
-        );
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
-    }
-};
-
-// GET All Links for Owner (Authenticated)
+// Get user's links
 const getMyLinks = async (req, res) => {
-    const userId = req.user.id;
-
     try {
-        const result = await pool.query(
-            'SELECT * FROM links WHERE user_id = $1 ORDER BY COALESCE(position, 0) ASC, created_at DESC',
-            [userId]
-        );
-        res.json(result.rows);
+        const userId = req.user.id;
+
+        const links = await Link.find({ user_id: userId })
+            .sort({ position: 1 })
+            .lean();
+
+        // Format for frontend
+        const formattedLinks = links.map(l => ({
+            id: l._id,
+            title: l.title,
+            url: l.url,
+            isActive: l.is_active,
+            clicks: l.clicks,
+            position: l.position,
+            thumbnail: l.thumbnail,
+            isFeatured: l.is_featured,
+            isPriority: l.is_priority,
+            isArchived: l.is_archived,
+            scheduledStart: l.scheduled_start,
+            scheduledEnd: l.scheduled_end
+        }));
+
+        res.json(formattedLinks);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        console.error('Error fetching links:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
-// ADD a Single New Link (Authenticated)
-const addSingleLink = async (req, res) => {
-    const userId = req.user.id;
-    const { title = 'New Link', url = '', isActive = true, thumbnail = '' } = req.body;
-
+// Get public links for a user
+const getPublicLinks = async (req, res) => {
     try {
-        // First, shift all existing links' positions by 1
-        await pool.query(
-            'UPDATE links SET position = position + 1 WHERE user_id = $1',
-            [userId]
-        );
+        const { userId } = req.params;
 
-        // Insert the new link at position 0
-        const result = await pool.query(
-            `INSERT INTO links (user_id, title, url, is_active, clicks, position, thumbnail)
-             VALUES ($1, $2, $3, $4, 0, 0, $5)
-             RETURNING *`,
-            [userId, title, url, isActive, thumbnail || null]
-        );
+        const links = await Link.find({
+            user_id: userId,
+            is_active: true,
+            is_archived: { $ne: true }
+        })
+            .sort({ position: 1 })
+            .lean();
 
-        res.json(result.rows[0]);
+        const formattedLinks = links.map(l => ({
+            id: l._id,
+            title: l.title,
+            url: l.url,
+            isActive: l.is_active,
+            clicks: l.clicks,
+            thumbnail: l.thumbnail,
+            isFeatured: l.is_featured,
+            isPriority: l.is_priority
+        }));
+
+        res.json(formattedLinks);
     } catch (err) {
-        console.error("Error adding single link:", err);
-        res.status(500).json({ error: err.message });
+        console.error('Error fetching public links:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
-// SYNC/UPDATE Links (Authenticated)
+// Create a single link
+const createLink = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { title, url, isActive, thumbnail } = req.body;
+
+        const newLink = new Link({
+            user_id: userId,
+            title: title || 'New Link',
+            url: url || '',
+            is_active: isActive !== undefined ? isActive : true,
+            thumbnail: thumbnail || '',
+            position: 0
+        });
+
+        await newLink.save();
+
+        // Update positions for other links
+        await Link.updateMany(
+            { user_id: userId, _id: { $ne: newLink._id } },
+            { $inc: { position: 1 } }
+        );
+
+        res.json({
+            id: newLink._id,
+            title: newLink.title,
+            url: newLink.url,
+            is_active: newLink.is_active,
+            clicks: newLink.clicks,
+            position: newLink.position,
+            thumbnail: newLink.thumbnail
+        });
+    } catch (err) {
+        console.error('Error creating link:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// Sync all links (bulk update)
 const syncLinks = async (req, res) => {
-    const userId = req.user.id;
-    const { links } = req.body;
-
-    if (!Array.isArray(links)) {
-        return res.status(400).json({ error: "Invalid data" });
-    }
-
-    const client = await pool.connect();
-
     try {
-        await client.query('BEGIN');
+        const userId = req.user.id;
+        const { links } = req.body;
 
-        const returnData = [];
+        if (!Array.isArray(links)) {
+            return res.status(400).json({ error: 'Links must be an array' });
+        }
 
-        for (let i = 0; i < links.length; i++) {
-            const l = links[i];
-            const position = l.position !== undefined ? l.position : i;
-
-            if (l.id && l.id.length > 30) {
-                // UPDATE
-                const updateQuery = `
-                    UPDATE links 
-                    SET title = $1, url = $2, is_active = $3, clicks = $4, position = $5, thumbnail = $6
-                    WHERE id = $7 AND user_id = $8
-                    RETURNING *
-                `;
-                const result = await client.query(updateQuery, [l.title, l.url, l.isActive, l.clicks || 0, position, l.thumbnail || null, l.id, userId]);
-                if (result.rows[0]) returnData.push(result.rows[0]);
+        // Process each link
+        for (const link of links) {
+            if (link.id && !link.id.startsWith('temp_')) {
+                // Update existing link
+                await Link.findOneAndUpdate(
+                    { _id: link.id, user_id: userId },
+                    {
+                        title: link.title,
+                        url: link.url,
+                        is_active: link.isActive,
+                        position: link.position,
+                        thumbnail: link.thumbnail,
+                        is_featured: link.isFeatured,
+                        is_priority: link.isPriority,
+                        is_archived: link.isArchived,
+                        scheduled_start: link.scheduledStart,
+                        scheduled_end: link.scheduledEnd,
+                        updated_at: new Date()
+                    }
+                );
             } else {
-                // INSERT
-                const insertQuery = `
-                    INSERT INTO links (user_id, title, url, is_active, clicks, position, thumbnail)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    RETURNING *
-                `;
-                const result = await client.query(insertQuery, [userId, l.title, l.url, l.isActive, l.clicks || 0, position, l.thumbnail || null]);
-                if (result.rows[0]) returnData.push(result.rows[0]);
+                // Create new link
+                const newLink = new Link({
+                    user_id: userId,
+                    title: link.title || 'New Link',
+                    url: link.url || '',
+                    is_active: link.isActive !== undefined ? link.isActive : true,
+                    position: link.position || 0,
+                    thumbnail: link.thumbnail || '',
+                    is_featured: link.isFeatured || false,
+                    is_priority: link.isPriority || false,
+                    is_archived: link.isArchived || false
+                });
+                await newLink.save();
             }
         }
 
-        await client.query('COMMIT');
-        res.json({ success: true, data: returnData });
-    } catch (err) {
-        await client.query('ROLLBACK');
-        console.error("Error updating links:", err);
-        res.status(500).json({ error: err.message });
-    } finally {
-        client.release();
-    }
-};
-
-// DELETE a specific link (Authenticated)
-const deleteLink = async (req, res) => {
-    const userId = req.user.id;
-    const { linkId } = req.params;
-
-    try {
-        // Only delete if the link belongs to the authenticated user
-        const result = await pool.query(
-            'DELETE FROM links WHERE id = $1 AND user_id = $2 RETURNING id',
-            [linkId, userId]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Link not found or access denied' });
-        }
-
-        res.json({ success: true, deletedId: linkId });
-    } catch (err) {
-        console.error("Error deleting link:", err);
-        res.status(500).json({ error: err.message });
-    }
-};
-
-// REORDER Links (Authenticated)
-const reorderLinks = async (req, res) => {
-    const userId = req.user.id;
-    const { links } = req.body; // Array of { id, position }
-
-    if (!Array.isArray(links)) {
-        return res.status(400).json({ error: "Invalid data: expected array of {id, position}" });
-    }
-
-    const client = await pool.connect();
-
-    try {
-        await client.query('BEGIN');
-
-        for (const link of links) {
-            if (!link.id || link.position === undefined) continue;
-
-            await client.query(
-                'UPDATE links SET position = $1 WHERE id = $2 AND user_id = $3',
-                [link.position, link.id, userId]
-            );
-        }
-
-        await client.query('COMMIT');
         res.json({ success: true });
     } catch (err) {
-        await client.query('ROLLBACK');
-        console.error("Error reordering links:", err);
-        res.status(500).json({ error: err.message });
-    } finally {
-        client.release();
+        console.error('Error syncing links:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
-// Track Link Click (Public)
-const trackClick = async (req, res) => {
-    const { linkId } = req.params;
-
-    const client = await pool.connect();
+// Delete a link
+const deleteLink = async (req, res) => {
     try {
-        await client.query('BEGIN');
+        const userId = req.user.id;
+        const { linkId } = req.params;
 
-        // Increment click count
-        const result = await client.query(
-            'UPDATE links SET clicks = COALESCE(clicks, 0) + 1 WHERE id = $1 RETURNING clicks, user_id',
-            [linkId]
-        );
+        const result = await Link.findOneAndDelete({ _id: linkId, user_id: userId });
 
-        if (result.rows.length === 0) {
-            await client.query('ROLLBACK');
+        if (!result) {
             return res.status(404).json({ error: 'Link not found' });
         }
 
-        const userId = result.rows[0].user_id;
-
-        // Log event for history
-        await client.query(
-            'INSERT INTO analytics_events (user_id, event_type, link_id) VALUES ($1, $2, $3)',
-            [userId, 'click', linkId]
-        );
-
-        await client.query('COMMIT');
-        res.json({ success: true, clicks: result.rows[0].clicks });
+        res.json({ success: true });
     } catch (err) {
-        await client.query('ROLLBACK');
-        console.error("Error tracking click:", err);
-        res.status(500).json({ error: err.message });
-    } finally {
-        client.release();
+        console.error('Error deleting link:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// Track link click
+const trackClick = async (req, res) => {
+    try {
+        const { linkId } = req.params;
+
+        await Link.findByIdAndUpdate(linkId, { $inc: { clicks: 1 } });
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error tracking click:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
 module.exports = {
-    getPublicLinks,
     getMyLinks,
-    addSingleLink,
+    getPublicLinks,
+    createLink,
     syncLinks,
     deleteLink,
-    reorderLinks,
     trackClick
 };
