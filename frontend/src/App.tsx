@@ -20,6 +20,7 @@ import EarnOverview from "./pages/EarnOverview";
 import Settings from "./pages/Settings";
 import PublicProfile from "./pages/PublicProfile";
 import PublicStore from "./pages/PublicStore";
+import Integrations from "./pages/Integrations";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
             <Route path="/insights" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
             <Route path="/shop" element={<ProtectedRoute><Shop /></ProtectedRoute>} />
+            <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
             <Route path="/audience" element={<ProtectedRoute><Audience /></ProtectedRoute>} />
             <Route path="/earnings" element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
             <Route path="/design" element={<ProtectedRoute><Design /></ProtectedRoute>} />
