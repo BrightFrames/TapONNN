@@ -220,8 +220,18 @@ const LinktreeMarketplace = () => {
                                                 {app.icon}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 flex-wrap">
                                                     <h3 className="font-semibold text-gray-900 truncate">{app.name}</h3>
+                                                    {app.category.includes("Featured") && (
+                                                        <Badge variant="secondary" className="bg-amber-100 text-amber-700 text-xs gap-1">
+                                                            <Star className="w-3 h-3" /> Featured
+                                                        </Badge>
+                                                    )}
+                                                    {app.isPremium && (
+                                                        <Badge variant="secondary" className="bg-gradient-to-r from-violet-500 to-purple-600 text-white text-xs gap-1">
+                                                            <Crown className="w-3 h-3" /> Pro
+                                                        </Badge>
+                                                    )}
                                                     {app.isNative && (
                                                         <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
                                                             Native
