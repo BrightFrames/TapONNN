@@ -8,12 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Instagram, Twitter, Mail, Loader2, Link2, Sparkles, Share2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import ShareModal from "@/components/ShareModal";
+import ProductInteractionModal from "@/components/ProductInteractionModal";
 
 const PublicProfile = () => {
     const { username } = useParams();
     const { user: authUser, selectedTheme: authTheme, links: authLinks } = useAuth();
 
     const [shareOpen, setShareOpen] = useState(false);
+
+    // Modal State
+    const [selectedProduct, setSelectedProduct] = useState<any>(null);
+    const [modalStep, setModalStep] = useState<'selection' | 'contact_enquiry' | 'contact_buy'>('selection');
 
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState<any>(null);
@@ -92,7 +97,8 @@ const PublicProfile = () => {
                     avatar: userProfile.avatar_url,
                     bio: userProfile.bio,
                     selectedTheme: userProfile.selected_theme,
-                    id: userProfile.id // Ensure we store ID
+                    id: userProfile.id, // Ensure we store ID
+                    payment_instructions: userProfile.payment_instructions
                 });
 
                 // Fetch Public Links from Backend
@@ -260,9 +266,29 @@ const PublicProfile = () => {
                                         <p className="text-sm text-gray-500 line-clamp-1">{product.description}</p>
                                         <div className="flex justify-between items-center mt-1">
                                             <span className="font-bold text-primary">${product.price}</span>
-                                            <Button size="sm" className="h-7 text-xs rounded-full bg-black text-white hover:bg-black/80">
-                                                Buy
-                                            </Button>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-7 text-xs rounded-full border-gray-300 hover:bg-gray-100"
+                                                    onClick={() => {
+                                                        setModalStep('contact_enquiry');
+                                                        setSelectedProduct(product);
+                                                    }}
+                                                >
+                                                    Enquiry
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    className="h-7 text-xs rounded-full bg-black text-white hover:bg-black/80"
+                                                    onClick={() => {
+                                                        setModalStep('contact_buy');
+                                                        setSelectedProduct(product);
+                                                    }}
+                                                >
+                                                    Buy
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -281,12 +307,21 @@ const PublicProfile = () => {
             </div>
 
             {profile && (
-                <ShareModal
-                    open={shareOpen}
-                    onOpenChange={setShareOpen}
-                    username={profile.username}
-                    url={window.location.href}
-                />
+                <>
+                    <ProductInteractionModal
+                        open={!!selectedProduct}
+                        onOpenChange={(open) => !open && setSelectedProduct(null)}
+                        product={selectedProduct}
+                        seller={profile}
+                        initialStep={modalStep}
+                    />
+                    <ShareModal
+                        open={shareOpen}
+                        onOpenChange={setShareOpen}
+                        username={profile.username}
+                        url={window.location.href}
+                    />
+                </>
             )}
         </div>
     );

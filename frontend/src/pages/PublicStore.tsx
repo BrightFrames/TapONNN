@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Store, Share2, ShoppingBag } from "lucide-react";
 import ShareModal from "@/components/ShareModal";
+import ProductInteractionModal from "@/components/ProductInteractionModal";
 
 interface Product {
     _id: string;
@@ -23,6 +24,7 @@ interface StoreProfile {
     avatar_url?: string;
     selected_theme: string;
     products: Product[];
+    payment_instructions?: string;
 }
 
 const PublicStore = () => {
@@ -31,6 +33,10 @@ const PublicStore = () => {
     const [loading, setLoading] = useState(true);
     const [store, setStore] = useState<StoreProfile | null>(null);
     const [notFound, setNotFound] = useState(false);
+
+    // Modal State
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [modalStep, setModalStep] = useState<'selection' | 'contact_enquiry' | 'contact_buy'>('selection');
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -161,7 +167,11 @@ const PublicStore = () => {
                                 )}
                                 <div className="flex justify-between items-center mt-2">
                                     <span className="font-bold text-lg text-primary">${product.price}</span>
-                                    <Button size="sm" className="rounded-full bg-black text-white hover:bg-black/80">
+                                    <Button
+                                        size="sm"
+                                        className="rounded-full bg-black text-white hover:bg-black/80"
+                                        onClick={() => setSelectedProduct(product)}
+                                    >
                                         Buy Now
                                     </Button>
                                 </div>
@@ -187,13 +197,22 @@ const PublicStore = () => {
             </div>
 
             {store && (
-                <ShareModal
-                    open={shareOpen}
-                    onOpenChange={setShareOpen}
-                    username={store.username}
-                    url={storeUrl}
-                    type="store"
-                />
+                <>
+                    <ProductInteractionModal
+                        open={!!selectedProduct}
+                        onOpenChange={(open) => !open && setSelectedProduct(null)}
+                        product={selectedProduct}
+                        seller={store}
+                        initialStep={modalStep}
+                    />
+                    <ShareModal
+                        open={shareOpen}
+                        onOpenChange={setShareOpen}
+                        username={store.username}
+                        url={storeUrl}
+                        type="store"
+                    />
+                </>
             )}
         </div>
     );

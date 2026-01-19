@@ -14,8 +14,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, MessageSquare, Check, X, Clock, CreditCard } from "lucide-react";
 import { getIconForThumbnail } from "@/utils/socialIcons";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 interface Product {
     id: string;
@@ -28,10 +30,25 @@ interface Product {
     is_active: boolean;
 }
 
+interface Order {
+    _id: string;
+    buyer_name: string;
+    buyer_email: string;
+    buyer_phone: string;
+    amount: number;
+    status: 'pending' | 'paid' | 'completed' | 'failed';
+    type: 'product_sale' | 'enquiry';
+    transaction_details?: string;
+    product_id: string;
+    created_at: string;
+}
+
 const Shop = () => {
     const { user, links: authLinks, isLoading, selectedTheme } = useAuth();
     const [products, setProducts] = useState<Product[]>([]);
+    const [orders, setOrders] = useState<Order[]>([]);
     const [loadingProducts, setLoadingProducts] = useState(true);
+    const [loadingOrders, setLoadingOrders] = useState(false);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -69,6 +86,55 @@ const Shop = () => {
             console.error("Failed to fetch products", error);
         } finally {
             setLoadingProducts(false);
+        }
+    };
+
+    const fetchOrders = async () => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        setLoadingOrders(true);
+
+        try {
+            const res = await fetch(`${API_URL}/orders`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setOrders(data.orders || []);
+            }
+        } catch (error) {
+            console.error("Failed to fetch orders", error);
+        } finally {
+            setLoadingOrders(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchOrders();
+    }, []);
+
+    const handleUpdateStatus = async (orderId: string, status: string) => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        try {
+            const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status })
+            });
+
+            if (res.ok) {
+                setOrders(orders.map(o => o._id === orderId ? { ...o, status: status as any } : o));
+                toast.success(`Order marked as ${status}`);
+            } else {
+                toast.error("Failed to update status");
+            }
+        } catch (error) {
+            toast.error("Error updating status");
         }
     };
 
@@ -168,6 +234,12 @@ const Shop = () => {
                                     className="bg-transparent p-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:text-black text-gray-500 font-medium data-[state=active]:shadow-none transition-none"
                                 >
                                     My Products
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="orders"
+                                    className="bg-transparent p-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:text-black text-gray-500 font-medium data-[state=active]:shadow-none transition-none"
+                                >
+                                    Orders & Enquiries
                                 </TabsTrigger>
                             </TabsList>
                         </div>
@@ -294,6 +366,79 @@ const Shop = () => {
                                         </div>
                                     </div>
                                     <Switch />
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="orders">
+                                <div className="space-y-4">
+                                    {loadingOrders ? (
+                                        <div className="flex justify-center py-10"><Loader2 className="animate-spin" /></div>
+                                    ) : orders.length > 0 ? (
+                                        orders.map((order) => (
+                                            <Card key={order._id} className="overflow-hidden">
+                                                <div className="p-4 flex flex-col md:flex-row gap-4 justify-between">
+                                                    <div className="flex gap-4">
+                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${order.type === 'enquiry' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+                                                            }`}>
+                                                            {order.type === 'enquiry' ? <MessageSquare className="w-5 h-5" /> : <CreditCard className="w-5 h-5" />}
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <h3 className="font-bold text-sm">{order.buyer_name || "Anonymous"}</h3>
+                                                                <Badge variant={order.status === 'completed' ? 'default' : order.status === 'pending' ? 'secondary' : 'outline'}>
+                                                                    {order.status}
+                                                                </Badge>
+                                                                {order.type === 'enquiry' && <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">Enquiry</Badge>}
+                                                            </div>
+                                                            <div className="text-sm text-gray-500 mt-1 space-y-0.5">
+                                                                <p>{order.buyer_email} • {order.buyer_phone}</p>
+                                                                <p className="font-mono text-xs text-gray-400">{new Date(order.created_at).toLocaleString()}</p>
+                                                            </div>
+
+                                                            {/* Transaction Details / Message */}
+                                                            {order.transaction_details && (
+                                                                <div className="mt-3 bg-gray-50 p-3 rounded-lg text-sm border border-gray-100">
+                                                                    <span className="font-semibold text-xs text-gray-500 uppercase block mb-1">
+                                                                        {order.type === 'enquiry' ? 'Message' : 'Transaction Ref'}
+                                                                    </span>
+                                                                    {order.transaction_details}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex flex-col items-end gap-2">
+                                                        <div className="font-bold text-lg">${order.amount}</div>
+
+                                                        {/* Actions */}
+                                                        {order.status !== 'completed' && order.status !== 'failed' && (
+                                                            <div className="flex gap-2 mt-auto">
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                                                    onClick={() => handleUpdateStatus(order._id, 'failed')}
+                                                                >
+                                                                    <X className="w-4 h-4 mr-1" /> Reject
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                                                    onClick={() => handleUpdateStatus(order._id, 'completed')}
+                                                                >
+                                                                    <Check className="w-4 h-4 mr-1" /> {order.type === 'enquiry' ? 'Mark Done' : 'Verify'}
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </Card>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-16 opacity-60">
+                                            <p>No orders or enquiries yet.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </TabsContent>
 
@@ -504,8 +649,8 @@ const Shop = () => {
                                                                 <div className="flex items-center justify-between">
                                                                     <span className="font-bold text-gray-900 text-sm">${product.price}</span>
                                                                     {/* If file_url exists, it's a link */}
-                                                                    <button className="bg-black text-white p-1.5 rounded-full">
-                                                                        <ExternalLink className="w-3 h-3" />
+                                                                    <button className="h-7 px-3 text-[10px] font-bold rounded-full bg-black text-white hover:bg-black/80">
+                                                                        Buy
                                                                     </button>
                                                                 </div>
                                                             </div>

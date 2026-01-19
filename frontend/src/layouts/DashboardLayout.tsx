@@ -18,7 +18,8 @@ import {
     Coins,
     ChevronDown,
     ChevronRight,
-    Trophy
+    Trophy,
+    Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -134,16 +135,18 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
                         active={location.pathname === "/dashboard"}
                     />
                     <SidebarItem
-                        icon={Coins}
-                        label="Earn"
+                        icon={Building2}
+                        label="Business Profile"
+                        to="/dashboard/business"
+                        active={location.pathname === "/dashboard/business" || location.pathname.includes("/dashboard/business")}
                         subItems={[
-                            { label: "Overview", to: "/dashboard/earn" },
-                            { label: "Earnings", to: "/dashboard/earn/history", badge: "$0.00" }
+                            { label: "Integrations", to: "/dashboard/business?tab=integrations" },
+                            { label: "My Shop", to: "/dashboard/business?tab=shop" },
+                            { label: "Earn", to: "/dashboard/business?tab=earn" },
                         ]}
                     />
                     <SidebarItem icon={CreditCard} label="Business Cards" />
                     <SidebarItem icon={ShoppingCart} label="Order NFC Card" />
-                    <SidebarItem icon={ShoppingBag} label="My Orders" />
                     <SidebarItem icon={NFCCard} label="My NFC Cards" />
                     <SidebarItem icon={Share2} label="Referral" />
                     <SidebarItem icon={Image} label="Media" />

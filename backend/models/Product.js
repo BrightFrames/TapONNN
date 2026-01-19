@@ -44,6 +44,14 @@ const orderSchema = new mongoose.Schema({
         type: String,
         default: 'anonymous'
     },
+    buyer_name: {
+        type: String,
+        default: ''
+    },
+    buyer_phone: {
+        type: String,
+        default: ''
+    },
     product_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product'
@@ -52,14 +60,22 @@ const orderSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    currency: {
+        type: String,
+        default: 'USD'
+    },
     status: {
         type: String,
-        enum: ['pending', 'completed', 'failed', 'refunded'],
-        default: 'completed'
+        enum: ['pending', 'paid', 'completed', 'failed', 'refunded'],
+        default: 'pending'
+    },
+    transaction_details: {
+        type: String,
+        default: ''
     },
     type: {
         type: String,
-        enum: ['product_sale', 'donation', 'tip'],
+        enum: ['product_sale', 'donation', 'tip', 'enquiry'],
         default: 'product_sale'
     },
     created_at: {

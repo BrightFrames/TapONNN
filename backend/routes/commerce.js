@@ -23,4 +23,7 @@ router.post('/orders', commerceController.createOrder);
 // GET /api/orders (Authenticated)
 router.get('/orders', authMiddleware, commerceController.getOrders);
 
+// PUT /api/orders/:orderId/status (Authenticated - Seller only)
+router.put('/orders/:orderId/status', authMiddleware, commerceController.updateOrderStatus);
+
 module.exports = router;

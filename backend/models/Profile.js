@@ -56,6 +56,10 @@ const profileSchema = new mongoose.Schema({
     store_published: {
         type: Boolean,
         default: false
+    },
+    payment_instructions: {
+        type: String,
+        default: ''
     }
 }, {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
