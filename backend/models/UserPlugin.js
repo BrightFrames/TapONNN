@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+ const mongoose = require('mongoose');
 
 const userPluginSchema = new mongoose.Schema({
     user_id: {

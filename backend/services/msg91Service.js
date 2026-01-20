@@ -18,8 +18,15 @@ const sendOTP = async (phoneNumber) => {
             return { success: false, message: 'OTP service not configured' };
         }
 
+        if (!MSG91_TEMPLATE_ID) {
+            console.error('MSG91_TEMPLATE_ID not configured');
+            return { success: false, message: 'OTP template not configured' };
+        }
+
         // Ensure phone number is in correct format (remove + if present)
         const formattedPhone = phoneNumber.replace(/^\+/, '');
+
+        console.log('Sending OTP to:', formattedPhone);
 
         const response = await axios.post(
             'https://control.msg91.com/api/v5/otp',
@@ -32,10 +39,13 @@ const sendOTP = async (phoneNumber) => {
             {
                 headers: {
                     'authkey': MSG91_AUTH_KEY,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 }
             }
         );
+
+        console.log('MSG91 Response:', response.data);
 
         if (response.data && response.data.type === 'success') {
             return {

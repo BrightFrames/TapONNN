@@ -1,4 +1,4 @@
-const Plugin = require('../models/Plugin');
+  const Plugin = require('../models/Plugin');
 const UserPlugin = require('../models/UserPlugin');
 
 // Get all available plugins
