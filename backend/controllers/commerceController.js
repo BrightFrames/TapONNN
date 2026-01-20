@@ -130,6 +130,39 @@ const getOrders = async (req, res) => {
     }
 };
 
+// Update order status (seller only)
+const updateOrderStatus = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { orderId } = req.params;
+        const { status } = req.body;
+
+        if (!status) {
+            return res.status(400).json({ error: 'Status is required' });
+        }
+
+        const validStatuses = ['pending', 'completed', 'cancelled', 'refunded'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ error: 'Invalid status value' });
+        }
+
+        const order = await Order.findOneAndUpdate(
+            { _id: orderId, seller_id: userId },
+            { status },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found or unauthorized' });
+        }
+
+        res.json(order);
+    } catch (err) {
+        console.error('Error updating order status:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 module.exports = {
     getProducts,
     getPublicProducts,

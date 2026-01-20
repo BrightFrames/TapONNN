@@ -76,6 +76,24 @@ const updateProfile = async (req, res) => {
         const userId = req.user.id;
         const updateData = req.body;
 
+        console.log('Profile update request for user:', userId, 'Data:', updateData);
+
+        // If username is being updated, check for duplicates
+        if (updateData.username) {
+            const normalizedUsername = updateData.username.toLowerCase().trim();
+            const existingProfile = await Profile.findOne({
+                username: normalizedUsername,
+                user_id: { $ne: userId } // Exclude current user
+            });
+
+            if (existingProfile) {
+                return res.status(400).json({ error: 'Username is already taken' });
+            }
+
+            // Normalize username
+            updateData.username = normalizedUsername;
+        }
+
         // Find and update profile
         const profile = await Profile.findOneAndUpdate(
             { user_id: userId },
@@ -89,12 +107,18 @@ const updateProfile = async (req, res) => {
         );
 
         if (!profile) {
+            console.log('Profile not found for user:', userId);
             return res.status(404).json({ error: 'Profile not found' });
         }
 
+        console.log('Profile updated successfully:', profile.username);
         res.json({ success: true, profile });
     } catch (err) {
         console.error('Error updating profile:', err);
+        // Handle MongoDB duplicate key error
+        if (err.code === 11000) {
+            return res.status(400).json({ error: 'Username is already taken' });
+        }
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
