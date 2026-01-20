@@ -1,5 +1,6 @@
-  const Plugin = require('../models/Plugin');
+const Plugin = require('../models/Plugin');
 const UserPlugin = require('../models/UserPlugin');
+const Intent = require('../models/Intent');
 
 // Get all available plugins
 const getAllPlugins = async (req, res) => {
@@ -44,6 +45,7 @@ const installPlugin = async (req, res) => {
     try {
         const userId = req.user.id;
         const { id: pluginId } = req.params;
+        const { intent_id } = req.body; // Optional intent tracking
 
         // Check if plugin exists
         const plugin = await Plugin.findById(pluginId);
@@ -73,6 +75,15 @@ const installPlugin = async (req, res) => {
 
         // Increment install count
         await Plugin.findByIdAndUpdate(pluginId, { $inc: { install_count: 1 } });
+
+        // Update Intent if provided
+        if (intent_id) {
+            await Intent.findByIdAndUpdate(intent_id, {
+                status: 'completed',
+                linked_plugin_install_id: userPlugin._id,
+                completed_at: new Date()
+            });
+        }
 
         // Return populated plugin
         const populated = await UserPlugin.findById(userPlugin._id).populate('plugin_id');

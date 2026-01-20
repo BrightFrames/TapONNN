@@ -1,6 +1,7 @@
 const Profile = require('../models/Profile');
 const Link = require('../models/Link');
 const { Product } = require('../models/Product');
+const User = require('../models/User');
 
 // Get public profile by username
 const getPublicProfile = async (req, res) => {
@@ -92,6 +93,13 @@ const updateProfile = async (req, res) => {
 
             // Normalize username
             updateData.username = normalizedUsername;
+        }
+
+        // Handle Language Update (User model)
+        if (updateData.language) {
+            await User.findByIdAndUpdate(userId, { language: updateData.language });
+            // Remove from profile update data as it's not in Profile schema
+            delete updateData.language;
         }
 
         // Find and update profile

@@ -24,6 +24,9 @@ import PublicStore from "./pages/PublicStore";
 import BusinessProfile from "./pages/BusinessProfile";
 import LinktreeMarketplace from "./pages/LinktreeMarketplace";
 import MyApps from "./pages/MyApps";
+import Enquiries from "./pages/Enquiries";
+import Media from "./pages/Media";
+import NFCCards from "./pages/NFCCards";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -55,9 +58,12 @@ const App = () => (
             <Route path="/earnings" element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
             <Route path="/design" element={<ProtectedRoute><Design /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/enquiries" element={<ProtectedRoute><Enquiries /></ProtectedRoute>} />
             <Route path="/dashboard/business" element={<ProtectedRoute><BusinessProfile /></ProtectedRoute>} />
             <Route path="/marketplace" element={<ProtectedRoute><LinktreeMarketplace /></ProtectedRoute>} />
             <Route path="/my-apps" element={<ProtectedRoute><MyApps /></ProtectedRoute>} />
+            <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
+            <Route path="/nfc-cards" element={<ProtectedRoute><NFCCards /></ProtectedRoute>} />
 
             {/* Earn Routes */}
             <Route path="/dashboard/earn" element={<ProtectedRoute><EarnOverview /></ProtectedRoute>} />

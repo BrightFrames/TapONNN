@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import SortableLinkCard from "@/components/SortableLinkCard";
+import BlockEditorModal from "@/components/BlockEditorModal"; // Import BlockEditor
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,9 +54,10 @@ interface Link {
 }
 
 const Dashboard = () => {
-    const { user, links: authLinks, addLink, updateLinks, deleteLink: deleteLinkFromApi, selectedTheme, refreshProfile, updateProfile } = useAuth();
-    const [links, setLinks] = useState<Link[]>(authLinks);
-    const [isAddingLink, setIsAddingLink] = useState(false);
+    const { user, blocks, addBlock, updateBlock, deleteBlock, reorderBlocks, selectedTheme, updateProfile } = useAuth(); // Use blocks instead of links
+    // Removed local links state to rely on context or separate local state if needed (using context for now)
+    const [isAddingBlock, setIsAddingBlock] = useState(false);
+    const [editingBlock, setEditingBlock] = useState<any>(null); // For editing
     const [socialPreview, setSocialPreview] = useState<Record<string, string> | null>(null);
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -73,9 +75,15 @@ const Dashboard = () => {
     );
 
     // Sync with AuthContext
+    // Sync with AuthContext - Blocks are managed there
+    // No need for local links useEffect syncing if we use blocks directly from context, 
+    // but dnd-kit might want a local state for smooth dragging.
+    // Let's create a local state for blocks to handle drag smoothly
+    const [localBlocks, setLocalBlocks] = useState(blocks);
+
     useEffect(() => {
-        setLinks(authLinks);
-    }, [authLinks]);
+        setLocalBlocks(blocks);
+    }, [blocks]);
 
     const userName = user?.name || "Creator";
     const username = user?.username || "user";
@@ -89,103 +97,41 @@ const Dashboard = () => {
         ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
         : {};
 
-    // Add a single new link - with debounce protection
-    const handleAddLink = async () => {
-        if (isAddingLink) return; // Prevent double-clicks
-        setIsAddingLink(true);
-
-        try {
-            // Use the dedicated addLink API that creates a single link
-            // AuthContext's addLink updates its state, useEffect syncs to local state
-            await addLink();
-        } catch (err) {
-            console.error("Error adding link:", err);
-        } finally {
-            setIsAddingLink(false);
-        }
-    };
-
-    const updateLink = (id: string, field: keyof Link, value: any) => {
-        let newLinks = links.map(l => {
-            if (l.id === id) {
-                const updatedLink = { ...l, [field]: value };
-
-                // Auto-detect thumbnail from URL
-                if (field === 'url' && !l.thumbnail && typeof value === 'string') {
-                    const url = value.toLowerCase();
-                    if (url.includes('instagram.com')) updatedLink.thumbnail = 'instagram';
-                    else if (url.includes('facebook.com')) updatedLink.thumbnail = 'facebook';
-                    else if (url.includes('twitter.com') || url.includes('x.com')) updatedLink.thumbnail = 'twitter';
-                    else if (url.includes('linkedin.com')) updatedLink.thumbnail = 'linkedin';
-                    else if (url.includes('youtube.com')) updatedLink.thumbnail = 'youtube';
-                    else if (url.includes('github.com')) updatedLink.thumbnail = 'github';
-                    else if (url.includes('tiktok.com')) updatedLink.thumbnail = 'tiktok';
-                    else if (url.includes('mailto:')) updatedLink.thumbnail = 'mail';
-                }
-
-                return updatedLink;
-            }
-            return l;
-        });
-        setLinks(newLinks);
-        updateLinks(newLinks);
-    };
-
-    const deleteLink = async (id: string) => {
-        // Use the API-based delete for existing links (UUID format)
-        if (id.length > 30) {
-            await deleteLinkFromApi(id);
+    const handleSaveBlock = async (blockData: any) => {
+        if (blockData._id) {
+            await updateBlock(blockData._id, blockData);
         } else {
-            // For temporary local links that haven't been saved yet
-            const newLinks = links.filter(l => l.id !== id);
-            setLinks(newLinks);
+            await addBlock(blockData);
         }
+        setIsAddingBlock(false);
+        setEditingBlock(null);
     };
 
-    const handleDragEnd = async (event: DragEndEvent) => {
+    const handleDeleteBlock = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this block?")) return;
+        await deleteBlock(id);
+    };
+
+    // Adapt Update for SortableLinkCard
+    const handleUpdateBlockField = (id: string, field: string, value: any) => {
+        // Map legacy fields if necessary
+        updateBlock(id, { [field]: value });
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
 
         if (over && active.id !== over.id) {
-            setLinks((items) => {
-                const oldIndex = items.findIndex((item) => item.id === active.id);
-                const newIndex = items.findIndex((item) => item.id === over.id);
-
+            setLocalBlocks((items) => {
+                const oldIndex = items.findIndex((item) => item._id === active.id);
+                const newIndex = items.findIndex((item) => item._id === over.id);
                 const newItems = arrayMove(items, oldIndex, newIndex);
 
-                // Update positions
-                const itemsWithPositions = newItems.map((item, index) => ({
-                    ...item,
-                    position: index
-                }));
+                // Trigger context update
+                reorderBlocks(newItems);
 
-                // Persist to backend
-                persistReorder(itemsWithPositions);
-
-                return itemsWithPositions;
+                return newItems;
             });
-        }
-    };
-
-    const persistReorder = async (reorderedLinks: Link[]) => {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-
-        if (!token) return;
-
-        try {
-            await fetch(`${API_URL}/links/reorder`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    links: reorderedLinks.map(l => ({ id: l.id, position: l.position }))
-                })
-            });
-        } catch (err) {
-            console.error("Error persisting reorder:", err);
-            toast.error("Failed to save link order");
         }
     };
 
@@ -212,16 +158,10 @@ const Dashboard = () => {
     };
 
     const handleClearAll = async () => {
-        if (!confirm("Are you sure you want to delete ALL links? This action cannot be undone.")) return;
-
-        // Delete all links sequentially
-        for (const link of links) {
-            if (link.id.length > 30) {
-                // Determine if it's a real backend ID (long string) vs generated temporary ID
-                await deleteLinkFromApi(link.id);
-            }
+        if (!confirm("Are you sure you want to delete ALL blocks?")) return;
+        for (const block of blocks) {
+            await deleteBlock(block._id);
         }
-        setLinks([]);
     };
 
     return (
@@ -299,11 +239,10 @@ const Dashboard = () => {
                         {/* Add Link Button & Clear All */}
                         <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8">
                             <Button
-                                onClick={handleAddLink}
-                                disabled={isAddingLink}
+                                onClick={() => setIsAddingBlock(true)}
                                 className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-purple-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
                             >
-                                <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> Add New Link
+                                <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> Add Content
                             </Button>
                             <Button
                                 onClick={handleClearAll}
@@ -317,15 +256,15 @@ const Dashboard = () => {
 
                         {/* Links List with Drag and Drop */}
                         <div className="space-y-3 sm:space-y-4 pb-6">
-                            {links.filter(l => !l.isArchived).length === 0 && (
+                            {localBlocks.filter(b => b.is_active).length === 0 && (
                                 <div className="text-center py-10 sm:py-16 bg-gradient-to-br from-gray-50 to-white rounded-xl sm:rounded-2xl border-2 border-dashed border-gray-200 px-4">
                                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
                                         <Link2 className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
                                     </div>
                                     <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">No links yet</h3>
-                                    <p className="text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6">Add your first link to get started</p>
-                                    <Button onClick={handleAddLink} disabled={isAddingLink} variant="outline" className="rounded-full gap-2 text-sm">
-                                        <Plus className="w-4 h-4" /> Add your first link
+                                    <p className="text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6">Add your first block to get started</p>
+                                    <Button onClick={() => setIsAddingBlock(true)} variant="outline" className="rounded-full gap-2 text-sm">
+                                        <Plus className="w-4 h-4" /> Add your first block
                                     </Button>
                                 </div>
                             )}
@@ -336,15 +275,26 @@ const Dashboard = () => {
                                 onDragEnd={handleDragEnd}
                             >
                                 <SortableContext
-                                    items={links.filter(l => !l.isArchived).map(l => l.id)}
+                                    items={localBlocks.filter(b => b.is_active).map(b => b._id)}
                                     strategy={verticalListSortingStrategy}
                                 >
-                                    {links.filter(l => !l.isArchived).map(link => (
+                                    {localBlocks.filter(b => b.is_active).map(block => (
                                         <SortableLinkCard
-                                            key={link.id}
-                                            link={link}
-                                            onUpdate={updateLink}
-                                            onDelete={deleteLink}
+                                            key={block._id}
+                                            // Adapter to make Block look like Link for the component
+                                            link={{
+                                                id: block._id,
+                                                title: block.title,
+                                                url: block.content.url || block.content.price || '', // Fallback
+                                                isActive: block.is_active,
+                                                clicks: 0, // TODO: Add tracking
+                                                thumbnail: block.thumbnail,
+                                                // Add missing properties that SortableLinkCard expects
+                                            }}
+                                            onUpdate={handleUpdateBlockField}
+                                            onDelete={handleDeleteBlock}
+                                            // Pass real block for editing if we enhance component
+                                            onEdit={() => setEditingBlock(block)}
                                         />
                                     ))}
                                 </SortableContext>
@@ -352,25 +302,7 @@ const Dashboard = () => {
                         </div>
 
                         {/* Archived Links Section */}
-                        {links.filter(l => l.isArchived).length > 0 && (
-                            <div className="mt-6 mb-20">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="h-px flex-1 bg-gray-200" />
-                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Archived ({links.filter(l => l.isArchived).length})</span>
-                                    <div className="h-px flex-1 bg-gray-200" />
-                                </div>
-                                <div className="space-y-3 opacity-70">
-                                    {links.filter(l => l.isArchived).map(link => (
-                                        <SortableLinkCard
-                                            key={link.id}
-                                            link={link}
-                                            onUpdate={updateLink}
-                                            onDelete={deleteLink}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        {/* Archived/Inactive blocks would go here */}
                     </div>
                 </div>
 
@@ -446,30 +378,25 @@ const Dashboard = () => {
                                 </div>
 
                                 <div className="mt-8 space-y-3 relative z-10 w-full px-6">
-                                    {links.filter(l => l.isActive && !l.isArchived).map((link) => {
-                                        const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
-                                        const isFeatured = link.isFeatured;
-                                        const isPriority = link.isPriority;
+                                    {localBlocks.filter(b => b.is_active).map((block) => {
+                                        const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
+                                        // Simple preview for now
                                         return (
                                             <a
-                                                key={link.id}
-                                                href={link.url ? (link.url.startsWith('http') ? link.url : `https://${link.url}`) : '#'}
+                                                key={block._id}
+                                                href={block.content.url || '#'}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className={`block w-full flex items-center justify-center relative ${currentTemplate.buttonStyle} ${isFeatured ? 'scale-105 ring-2 ring-amber-300/50 shadow-lg' : ''} ${isPriority ? 'animate-pulse ring-2 ring-purple-400/50' : ''}`}
-                                                style={isFeatured ? { minHeight: '60px' } : {}}
+                                                className={`block w-full flex items-center justify-center relative ${currentTemplate.buttonStyle}`}
                                             >
                                                 {Icon && (
                                                     <Icon className="absolute left-4 w-5 h-5 opacity-90" />
                                                 )}
-                                                <span className="truncate max-w-[200px]">{link.title}</span>
-                                                {isFeatured && (
-                                                    <span className="absolute right-3 text-[8px] bg-amber-400/30 text-amber-100 px-1.5 py-0.5 rounded-full">⭐</span>
-                                                )}
+                                                <span className="truncate max-w-[200px]">{block.title}</span>
                                             </a>
                                         );
                                     })}
-                                    {links.filter(l => l.isActive && !l.isArchived).length === 0 && (
+                                    {localBlocks.filter(b => b.is_active).length === 0 && (
                                         <div className={`text-center text-sm py-8 ${currentTemplate.textColor} opacity-60`}>
                                             Add links to see them here
                                         </div>
@@ -495,6 +422,18 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
+
+            <BlockEditorModal
+                open={isAddingBlock || !!editingBlock}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setIsAddingBlock(false);
+                        setEditingBlock(null);
+                    }
+                }}
+                block={editingBlock}
+                onSave={handleSaveBlock}
+            />
         </LinktreeLayout >
     );
 };

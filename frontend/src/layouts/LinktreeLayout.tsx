@@ -18,7 +18,11 @@ import {
     DollarSign,
     Building2,
     Package,
-    Sparkles
+    Sparkles,
+    MessageCircle,
+    Image,
+    Smartphone,
+    Languages
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +38,7 @@ import {
 } from "@/components/ui/sheet";
 import ShareModal from "@/components/ShareModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { LanguageSelectorDialog } from "@/components/LanguageSelectorDialog";
 
 const NavItem = ({ icon: Icon, label, active = false, badge, onClick }: { icon: any, label: string, active?: boolean, badge?: string, onClick?: () => void }) => (
     <Button
@@ -49,88 +54,74 @@ const NavItem = ({ icon: Icon, label, active = false, badge, onClick }: { icon: 
 
 // Sidebar content component for reuse in desktop and mobile
 const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { navigate: (path: string) => void, location: { pathname: string }, onClose?: () => void, onShare: () => void, onLogout: () => void }) => {
+    const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+
     const handleNav = (path: string) => {
         navigate(path);
         onClose?.();
     };
 
+    const { user } = useAuth(); // Enhanced to get user details for switcher
+
     return (
-        <div className="flex flex-col py-6 px-4 h-full bg-sidebar/50 text-sidebar-foreground">
-            {/* Logo */}
-            <div className="flex items-center gap-3 mb-8 px-2 cursor-pointer" onClick={() => handleNav('/')}>
-                <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold">
-                    T2
+        <div className="flex flex-col h-full bg-sidebar/50 text-sidebar-foreground">
+            {/* Profile Switcher (Mock) */}
+            <div className="p-4 border-b border-sidebar-border/50">
+                <Button variant="ghost" className="w-full justify-between px-2 h-auto py-2 hover:bg-sidebar-accent group">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
+                            {user?.username?.[0]?.toUpperCase() || 'T'}
+                        </div>
+                        <div className="text-left">
+                            <div className="text-sm font-semibold leading-none">{user?.username || 'My Profile'}</div>
+                            <div className="text-xs text-muted-foreground mt-1">Free Plan</div>
+                        </div>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-muted-foreground opacity-50 group-hover:opacity-100" />
+                </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+
+                {/* 1. Manage Group */}
+                <div className="space-y-1">
+                    <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Manage</h4>
+                    <NavItem icon={List} label="Links & Blocks" active={location.pathname === '/dashboard'} onClick={() => handleNav('/dashboard')} />
+                    <NavItem icon={Palette} label="Design & Themes" active={location.pathname === '/design'} onClick={() => handleNav('/design')} />
+                    <NavItem icon={Store} label="Store & Products" active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')} onClick={() => handleNav('/dashboard/business?tab=shop')} />
+                    <NavItem icon={Image} label="Media Library" active={location.pathname === '/media'} onClick={() => handleNav('/media')} />
                 </div>
-                <span className="font-bold text-lg tracking-tight">Tap2</span>
+
+                {/* 2. Growth Group */}
+                <div className="space-y-1">
+                    <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Growth</h4>
+                    <NavItem icon={BarChart3} label="Analytics" active={location.pathname === '/analytics'} onClick={() => handleNav('/analytics')} />
+                    <NavItem icon={MessageCircle} label="Enquiries" active={location.pathname === '/enquiries'} onClick={() => handleNav('/enquiries')} />
+                    <NavItem icon={Smartphone} label="NFC Cards" active={location.pathname === '/nfc-cards'} onClick={() => handleNav('/nfc-cards')} />
+                    <NavItem icon={Sparkles} label="Marketplace" active={location.pathname === '/marketplace'} onClick={() => handleNav('/marketplace')} />
+                </div>
+
+                {/* 3. System Group */}
+                <div className="space-y-1">
+                    <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">System</h4>
+                    <NavItem icon={Settings} label="Settings" active={location.pathname === '/settings'} onClick={() => handleNav('/settings')} />
+                    <NavItem icon={Languages} label="Language" active={false} onClick={() => setIsLanguageOpen(true)} />
+                </div>
             </div>
 
-            {/* Menu Group 1 - Collapsible */}
-            <Collapsible defaultOpen className="mb-6 space-y-1">
-                <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors group">
-                    <div className="flex items-center gap-2">
-                        <LayoutGrid className="w-4 h-4" />
-                        <span>My Tap2</span>
-                    </div>
-                    <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180 opacity-50" />
-                </CollapsibleTrigger>
+            {/* Language Dialog */}
+            <LanguageSelectorDialog open={isLanguageOpen} onOpenChange={setIsLanguageOpen} />
 
-                <CollapsibleContent className="space-y-1 pt-2 pl-2">
-                    <NavItem icon={List} label="Links" active={location.pathname === '/dashboard'} onClick={() => handleNav('/dashboard')} />
-                    <NavItem icon={Palette} label="Design" active={location.pathname === '/design'} onClick={() => handleNav('/design')} />
-                </CollapsibleContent>
-            </Collapsible>
-
-            {/* Business Profile Group - Collapsible */}
-            <Collapsible className="mb-6 space-y-1">
-                <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors group">
-                    <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4" />
-                        <span>Business Profile</span>
-                    </div>
-                    <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180 opacity-50" />
-                </CollapsibleTrigger>
-
-                <CollapsibleContent className="space-y-1 pt-2 pl-2">
-                    <NavItem icon={LayoutGrid} label="Integrations" active={location.pathname === '/dashboard/business' && !location.search.includes('tab=')} onClick={() => handleNav('/dashboard/business')} />
-                    <NavItem icon={Store} label="My Shop" active={location.search.includes('tab=shop')} onClick={() => handleNav('/dashboard/business?tab=shop')} />
-                    <NavItem icon={Coins} label="Earn" active={location.search.includes('tab=earn')} onClick={() => handleNav('/dashboard/business?tab=earn')} />
-                </CollapsibleContent>
-            </Collapsible>
-
-            {/* Marketplace Group - Collapsible */}
-            <Collapsible className="mb-6 space-y-1">
-                <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors group">
-                    <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        <span>Marketplace</span>
-                    </div>
-                    <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180 opacity-50" />
-                </CollapsibleTrigger>
-
-                <CollapsibleContent className="space-y-1 pt-2 pl-2">
-                    <NavItem icon={Sparkles} label="Browse Apps" active={location.pathname === '/marketplace'} onClick={() => handleNav('/marketplace')} />
-                    <NavItem icon={Package} label="My Apps" active={location.pathname === '/my-apps'} onClick={() => handleNav('/my-apps')} />
-                </CollapsibleContent>
-            </Collapsible>
-
-            <div className="space-y-1 mb-6 px-2">
-                <NavItem
-                    icon={Users}
-                    label="Join community"
-                    onClick={() => window.open('https://t.me/tap2community', '_blank')}
-                />
-            </div>
-
-            {/* Menu Group 2 */}
-            <div className="space-y-1 mb-6 px-2">
-                <NavItem icon={LayoutGrid} label="Overview" active={location.pathname === '/overview'} onClick={() => handleNav('/overview')} />
-                <NavItem icon={BarChart3} label="Analytics" active={location.pathname === '/analytics'} onClick={() => handleNav('/analytics')} />
-                <NavItem icon={Coins} label="Earnings" active={location.pathname === '/earnings'} onClick={() => handleNav('/earnings')} />
-                <NavItem icon={Settings} label="Settings" active={location.pathname === '/settings'} onClick={() => handleNav('/settings')} />
-            </div>
-
-            {/* Logout Button */}
-            <div className="px-2 mb-4">
+            {/* Bottom Actions */}
+            <div className="p-4 border-t border-sidebar-border/50 space-y-2">
+                <Button
+                    variant="ghost"
+                    onClick={() => window.open(`/${user?.username}`, '_blank')}
+                    className="w-full justify-start gap-3"
+                >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>View Profile</span>
+                </Button>
                 <Button
                     variant="ghost"
                     onClick={onLogout}
@@ -139,25 +130,6 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                     <LogOut className="w-4 h-4" />
                     <span>Logout</span>
                 </Button>
-            </div>
-
-            {/* Bottom Status */}
-            <div className="mt-auto px-1">
-                <div className="p-4 bg-muted/50 rounded-xl border border-border">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent flex items-center justify-center text-[10px] font-bold text-primary animate-spin-slow" style={{ animationDuration: '3s' }}>
-                            50%
-                        </div>
-                        <span className="text-xs text-muted-foreground">3/6</span>
-                    </div>
-                    <h4 className="font-semibold text-sm mb-1">Setup Progress</h4>
-                    <p className="text-xs text-muted-foreground mb-3">Complete your profile to go live.</p>
-                    <Button size="sm" className="w-full text-xs" variant="default">Finish setup</Button>
-                </div>
-                <div className="flex gap-2 mt-4 text-muted-foreground">
-                    <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full ml-auto" onClick={() => handleNav('/settings')}><Settings className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full" onClick={onShare}><Megaphone className="w-4 h-4" /></Button>
-                </div>
             </div>
         </div>
     );

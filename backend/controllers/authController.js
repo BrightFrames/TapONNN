@@ -116,7 +116,9 @@ const login = async (req, res) => {
                 email: user.email,
                 username: profile?.username,
                 full_name: profile?.full_name,
-                avatar: profile?.avatar_url
+                full_name: profile?.full_name,
+                avatar: profile?.avatar_url,
+                language: user.language
             }
         });
 
@@ -130,6 +132,9 @@ const login = async (req, res) => {
 const me = async (req, res) => {
     try {
         const userId = req.user.id;
+
+        // Fetch user for language
+        const user = await User.findById(userId);
 
         // Fetch profile
         const profile = await Profile.findOne({ user_id: userId });
@@ -151,7 +156,8 @@ const me = async (req, res) => {
             phone_number: profileObj.phone_number,
             selected_theme: profileObj.selected_theme,
             social_links: profileObj.social_links instanceof Map ? Object.fromEntries(profileObj.social_links) : profileObj.social_links,
-            design_config: profileObj.design_config
+            design_config: profileObj.design_config,
+            language: user?.language || 'en'
         });
     } catch (err) {
         console.error("Me Error:", err);

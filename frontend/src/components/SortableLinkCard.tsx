@@ -62,7 +62,9 @@ interface Link {
 interface SortableLinkCardProps {
     link: Link;
     onUpdate: (id: string, field: keyof Link, value: any) => void;
+    onUpdate: (id: string, field: keyof Link, value: any) => void;
     onDelete: (id: string) => void;
+    onEdit?: () => void;
 }
 
 const iconMap: any = {
@@ -264,6 +266,11 @@ const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) =
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-40">
+                                {onEdit && (
+                                    <DropdownMenuItem onClick={onEdit}>
+                                        <PenLine className="w-4 h-4 mr-2" /> Edit Block
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem onClick={copyUrl}>
                                     <Copy className="w-4 h-4 mr-2" /> Copy URL
                                 </DropdownMenuItem>

@@ -229,16 +229,16 @@ const Settings = () => {
     return (
         <>
             <LinktreeLayout>
-                <div className="flex-1 py-8 px-6 md:px-10 overflow-y-auto">
+                <div className="flex-1 py-4 sm:py-8 px-4 sm:px-6 md:px-10 overflow-y-auto">
                     <div className="max-w-3xl mx-auto">
                         {/* Header */}
-                        <div className="mb-8">
-                            <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-                            <p className="text-gray-500 text-sm mt-1">Manage your account and preferences</p>
+                        <div className="mb-4 sm:mb-8">
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Settings</h1>
+                            <p className="text-gray-500 text-xs sm:text-sm mt-1">Manage your account and preferences</p>
                         </div>
 
-                        <Tabs defaultValue="profile" className="space-y-6">
-                            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-4 h-auto gap-2 bg-transparent p-0">
+                        <Tabs defaultValue="profile" className="space-y-4 sm:space-y-6">
+                            <TabsList className="grid w-full grid-cols-4 h-auto gap-1 sm:gap-2 bg-transparent p-0">
                                 <TabsTrigger
                                     value="profile"
                                     className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 rounded-xl py-3 px-4 gap-2"
@@ -270,13 +270,13 @@ const Settings = () => {
                             </TabsList>
 
                             {/* Profile Tab */}
-                            <TabsContent value="profile" className="space-y-6">
+                            <TabsContent value="profile" className="space-y-4 sm:space-y-6">
                                 <Card className="border-0 shadow-sm">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">Profile Information</CardTitle>
-                                        <CardDescription>Update your profile details and public information</CardDescription>
+                                    <CardHeader className="p-4 sm:p-6">
+                                        <CardTitle className="text-base sm:text-lg">Profile Information</CardTitle>
+                                        <CardDescription className="text-xs sm:text-sm">Update your profile details and public information</CardDescription>
                                     </CardHeader>
-                                    <CardContent className="space-y-6">
+                                    <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0 sm:pt-0">
                                         {/* Avatar Upload */}
                                         <AvatarUpload
                                             currentAvatarUrl={avatarUrl}

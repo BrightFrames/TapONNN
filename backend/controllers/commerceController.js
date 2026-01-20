@@ -1,4 +1,6 @@
-const { Product, Order } = require('../models/Product');
+const { Product } = require('../models/Product');
+const Order = require('../models/Order');
+const Intent = require('../models/Intent');
 
 // Get user's products
 const getProducts = async (req, res) => {
@@ -39,7 +41,7 @@ const getPublicProducts = async (req, res) => {
 const createProduct = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { title, description, price, image_url } = req.body;
+        const { title, description, price, image_url, product_type } = req.body;
 
         if (!title || price === undefined) {
             return res.status(400).json({ error: 'Title and price are required' });
@@ -51,6 +53,7 @@ const createProduct = async (req, res) => {
             description: description || '',
             price,
             image_url: image_url || '',
+            product_type: product_type || 'physical_product',
             is_active: true
         });
 
@@ -81,25 +84,40 @@ const deleteProduct = async (req, res) => {
     }
 };
 
-// Create an order
+// Create an order (Intent-Aware)
 const createOrder = async (req, res) => {
     try {
-        const { seller_id, buyer_email, product_id, amount, type } = req.body;
+        const { seller_id, buyer_email, product_id, amount, type, intent_id, transaction } = req.body;
+        const buyer_id = req.user ? req.user.id : null;
 
-        if (!seller_id || !amount) {
-            return res.status(400).json({ error: 'Seller ID and amount are required' });
+        if (!seller_id || !amount || !intent_id) {
+            return res.status(400).json({ error: 'Seller ID, amount, and intent_id are required' });
         }
 
         const newOrder = new Order({
+            buyer_id,
             seller_id,
+            profile_id: seller_id, // Assuming profile matches seller user
             buyer_email: buyer_email || 'anonymous',
             product_id: product_id || null,
+            intent_id,
             amount,
-            status: 'completed',
-            type: type || 'product_sale'
+            status: 'completed', // Mock success
+            type: type || 'product_sale',
+            transaction: transaction || {},
+            payment_method: transaction?.method || 'unknown'
         });
 
         await newOrder.save();
+
+        // Update Intent
+        await Intent.findByIdAndUpdate(intent_id, {
+            status: 'completed',
+            linked_order_id: newOrder._id,
+            transaction: transaction,
+            completed_at: new Date()
+        });
+
         res.json(newOrder);
     } catch (err) {
         console.error('Error creating order:', err);

@@ -18,6 +18,7 @@ import { Loader2, Trash2, MessageSquare, Check, X, Clock, CreditCard } from "luc
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ImageUpload } from "@/components/ImageUpload";
 
 interface Product {
     id: string;
@@ -26,7 +27,7 @@ interface Product {
     price: number;
     image_url?: string;
     file_url?: string; // Used for "Product URL"
-    type: 'physical' | 'digital';
+    type: 'digital_product' | 'physical_product' | 'physical_service' | 'digital_service';
     is_active: boolean;
 }
 
@@ -59,7 +60,7 @@ const Shop = () => {
         title: "",
         price: "",
         description: "",
-        type: "physical",
+        type: "physical_product",
         image_url: "",
         file_url: ""
     });
@@ -152,7 +153,8 @@ const Shop = () => {
                 },
                 body: JSON.stringify({
                     ...newProduct,
-                    price: parseFloat(newProduct.price)
+                    price: parseFloat(newProduct.price),
+                    product_type: newProduct.type
                 })
             });
 
@@ -314,8 +316,10 @@ const Shop = () => {
                                                             <SelectValue placeholder="Select type" />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="physical">Physical</SelectItem>
-                                                            <SelectItem value="digital">Digital (Link)</SelectItem>
+                                                            <SelectItem value="digital_product">Digital Product</SelectItem>
+                                                            <SelectItem value="physical_product">Physical Product</SelectItem>
+                                                            <SelectItem value="physical_service">Physical Service</SelectItem>
+                                                            <SelectItem value="digital_service">Digital Service</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </div>
@@ -338,12 +342,10 @@ const Shop = () => {
                                                 />
                                             </div>
                                             <div className="grid gap-2">
-                                                <Label htmlFor="image">Image URL</Label>
-                                                <Input
-                                                    id="image"
-                                                    placeholder="https://..."
+                                                <Label>Product Image</Label>
+                                                <ImageUpload
                                                     value={newProduct.image_url}
-                                                    onChange={(e) => setNewProduct({ ...newProduct, image_url: e.target.value })}
+                                                    onChange={(url) => setNewProduct({ ...newProduct, image_url: url })}
                                                 />
                                             </div>
                                             <DialogFooter>

@@ -124,15 +124,37 @@ html {
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Sora', sans-serif;
+    /* Safe area for notched phones */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Sora', sans-serif;
+  }
+
+  /* Touch-friendly target sizes */
+  button, a, input, select, textarea {
+    min-height: 44px;
+  }
+
+  /* Smaller touch targets for inline elements */
+  a.inline-link, button.inline-btn {
+    min-height: auto;
   }
 }
 
@@ -184,4 +206,124 @@ html {
   .card-stack:hover {
     transform: translateY(-8px);
   }
+
+  /* Mobile-first responsive utilities */
+  .mobile-padding {
+    @apply px-4 sm:px-6 md:px-8 lg:px-10;
+  }
+
+  .mobile-container {
+    @apply w-full max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto;
+  }
+
+  /* Prevent text overflow on mobile */
+  .text-truncate-mobile {
+    @apply truncate max-w-[200px] sm:max-w-none;
+  }
+
+  /* Full width buttons on mobile */
+  .btn-mobile-full {
+    @apply w-full sm:w-auto;
+  }
+
+  /* Stack columns on mobile */
+  .mobile-stack {
+    @apply flex flex-col sm:flex-row;
+  }
+
+  /* Hide on mobile */
+  .hide-mobile {
+    @apply hidden sm:block;
+  }
+
+  /* Show only on mobile */
+  .show-mobile {
+    @apply block sm:hidden;
+  }
+
+  /* Safe area padding for bottom navigation */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+
+  /* Responsive text sizing */
+  .text-responsive-sm {
+    @apply text-xs sm:text-sm;
+  }
+
+  .text-responsive-base {
+    @apply text-sm sm:text-base;
+  }
+
+  .text-responsive-lg {
+    @apply text-base sm:text-lg md:text-xl;
+  }
+
+  .text-responsive-xl {
+    @apply text-lg sm:text-xl md:text-2xl;
+  }
+
+  .text-responsive-2xl {
+    @apply text-xl sm:text-2xl md:text-3xl;
+  }
+
+  /* Responsive gap utilities */
+  .gap-responsive {
+    @apply gap-2 sm:gap-4 md:gap-6;
+  }
+
+  /* Card responsive padding */
+  .card-padding-responsive {
+    @apply p-4 sm:p-6;
+  }
 }
+
+/* Mobile-specific media query styles */
+@media (max-width: 640px) {
+  /* Reduce padding on very small screens */
+  .mobile-compact {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  /* Make cards full width on mobile */
+  .card {
+    border-radius: 0.75rem;
+  }
+
+  /* Ensure inputs don't zoom on iOS */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Reduce spacing in forms */
+  .space-y-6 {
+    --tw-space-y-reverse: 0;
+    margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+    margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+  }
+}
+
+/* Extra small phones (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 1.5rem !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* Landscape mode optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+  .mobile-header {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}
+

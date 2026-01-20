@@ -20,6 +20,7 @@ const corsOptions = {
     origin: [
         'http://localhost:5173',
         'http://localhost:3000',
+        'http://localhost:8080',
         'https://tap-onnn.vercel.app',
         'https://taponn.vercel.app'
     ],
@@ -36,6 +37,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Initialize database connection (runs on import)
 require('./config/db');
 
+// Serve static uploads
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Import Routes
 const authRoutes = require('./routes/auth');
 const linksRoutes = require('./routes/links');
@@ -44,6 +49,10 @@ const analyticsRoutes = require('./routes/analytics');
 const commerceRoutes = require('./routes/commerce');
 const subscriptionRoutes = require('./routes/subscription');
 const marketplaceRoutes = require('./routes/marketplace');
+const blocksRoutes = require('./routes/blocks');
+const enquiriesRoutes = require('./routes/enquiries');
+const intentsRoutes = require('./routes/intents');
+const uploadRoutes = require('./routes/upload');
 
 // --- Routes ---
 
@@ -60,6 +69,10 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api', commerceRoutes); // Products, orders, public/products
 app.use('/api/payments', subscriptionRoutes); // Subscription & payments
 app.use('/api/marketplace', marketplaceRoutes); // Marketplace plugins
+app.use('/api/blocks', blocksRoutes); // Blocks system
+app.use('/api/enquiries', enquiriesRoutes); // Enquiries/CTA tracking
+app.use('/api/intents', intentsRoutes); // Core intent tracking
+app.use('/api/upload', uploadRoutes); // File upload
 
 // Legacy route support - /api/my-links is now under /api/links/my-links
 // But since it was originally at /api/my-links, we add an alias

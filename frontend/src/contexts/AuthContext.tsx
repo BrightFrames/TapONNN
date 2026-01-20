@@ -23,6 +23,20 @@ interface Link {
     thumbnail?: string;
 }
 
+export interface Block {
+    _id: string; // Backend uses _id
+    block_type: string;
+    title: string;
+    content: any;
+    cta_type?: string;
+    cta_label?: string;
+    cta_requires_login?: boolean;
+    is_active: boolean;
+    position: number;
+    thumbnail?: string;
+    user_id?: string;
+}
+
 interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
@@ -39,6 +53,12 @@ interface AuthContextType {
     updateTheme: (themeId: string) => Promise<void>;
     updateProfile: (data: Partial<User>) => Promise<void>;
     refreshProfile: () => Promise<void>;
+    // Block methods
+    blocks: Block[];
+    addBlock: (blockData: Partial<Block>) => Promise<Block | null>;
+    updateBlock: (blockId: string, updates: Partial<Block>) => Promise<void>;
+    deleteBlock: (blockId: string) => Promise<void>;
+    reorderBlocks: (blocks: Block[]) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [user, setUser] = useState<User | null>(null);
     const [links, setLinks] = useState<Link[]>([]);
+    const [blocks, setBlocks] = useState<Block[]>([]);
     const [selectedTheme, setSelectedTheme] = useState<string>("artemis");
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -421,6 +442,107 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await fetchUserData();
     };
 
+    // --- Block Methods ---
+
+    const addBlock = async (blockData: Partial<Block>): Promise<Block | null> => {
+        const token = getToken();
+        if (!token) return null;
+
+        try {
+            const res = await fetch(`${API_URL}/blocks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(blockData)
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                toast.error(error.message || "Failed to create block");
+                return null;
+            }
+
+            const newBlock = await res.json();
+            setBlocks(prev => [newBlock, ...prev]);
+            toast.success("Block added successfully");
+            return newBlock;
+        } catch (err) {
+            console.error("Error adding block:", err);
+            toast.error("Failed to add block");
+            return null;
+        }
+    };
+
+    const updateBlock = async (blockId: string, updates: Partial<Block>) => {
+        // Optimistic update
+        setBlocks(prev => prev.map(b => b._id === blockId ? { ...b, ...updates } : b));
+
+        const token = getToken();
+        if (!token) return;
+
+        try {
+            await fetch(`${API_URL}/blocks/${blockId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(updates)
+            });
+        } catch (err) {
+            console.error("Error updating block:", err);
+            toast.error("Failed to save changes");
+            await fetchUserData(); // Revert
+        }
+    };
+
+    const deleteBlock = async (blockId: string) => {
+        // Optimistic
+        const prevBlocks = blocks;
+        setBlocks(prev => prev.filter(b => b._id !== blockId));
+
+        const token = getToken();
+        if (!token) return;
+
+        try {
+            const res = await fetch(`${API_URL}/blocks/${blockId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!res.ok) throw new Error("Failed to delete");
+            toast.success("Block deleted");
+        } catch (err) {
+            console.error("Error deleting block:", err);
+            toast.error("Failed to delete block");
+            setBlocks(prevBlocks); // Revert
+        }
+    };
+
+    const reorderBlocks = async (reorderedBlocks: Block[]) => {
+        setBlocks(reorderedBlocks); // Optimistic
+
+        const token = getToken();
+        if (!token) return;
+
+        try {
+            await fetch(`${API_URL}/blocks/reorder`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    blocks: reorderedBlocks.map((b, i) => ({ id: b._id, position: i }))
+                })
+            });
+        } catch (err) {
+            console.error("Error reordering blocks:", err);
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             isAuthenticated,
@@ -437,7 +559,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             deleteLink,
             updateTheme,
             updateProfile,
-            refreshProfile
+            updateProfile,
+            refreshProfile,
+            blocks,
+            addBlock,
+            updateBlock,
+            deleteBlock,
+            reorderBlocks
         }}>
             {children}
         </AuthContext.Provider>

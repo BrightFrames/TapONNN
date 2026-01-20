@@ -26,6 +26,11 @@ const productSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    product_type: {
+        type: String,
+        enum: ['digital_product', 'physical_product', 'physical_service', 'digital_service'],
+        default: 'physical_product'
+    },
     created_at: {
         type: Date,
         default: Date.now
@@ -34,59 +39,6 @@ const productSchema = new mongoose.Schema({
 
 productSchema.index({ user_id: 1 });
 
-const orderSchema = new mongoose.Schema({
-    seller_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    buyer_email: {
-        type: String,
-        default: 'anonymous'
-    },
-    buyer_name: {
-        type: String,
-        default: ''
-    },
-    buyer_phone: {
-        type: String,
-        default: ''
-    },
-    product_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product'
-    },
-    amount: {
-        type: Number,
-        required: true
-    },
-    currency: {
-        type: String,
-        default: 'USD'
-    },
-    status: {
-        type: String,
-        enum: ['pending', 'paid', 'completed', 'failed', 'refunded'],
-        default: 'pending'
-    },
-    transaction_details: {
-        type: String,
-        default: ''
-    },
-    type: {
-        type: String,
-        enum: ['product_sale', 'donation', 'tip', 'enquiry'],
-        default: 'product_sale'
-    },
-    created_at: {
-        type: Date,
-        default: Date.now
-    }
-});
-
-orderSchema.index({ seller_id: 1 });
-
 const Product = mongoose.model('Product', productSchema);
-const Order = mongoose.model('Order', orderSchema);
 
-module.exports = { Product, Order };
+module.exports = { Product };
