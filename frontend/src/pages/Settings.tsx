@@ -216,6 +216,8 @@ const Settings = () => {
         // Requires backend SMTP integration
     };
 
+    const [deleting, setDeleting] = useState(false);
+
     const handleDeleteAccount = async () => {
         const confirmed = window.confirm(
             "Are you sure you want to delete your account? This action cannot be undone."
@@ -223,7 +225,51 @@ const Settings = () => {
 
         if (!confirmed) return;
 
-        toast.error("Account deletion is not yet implemented for safety. Contact support.");
+        // Double confirmation for safety
+        const doubleConfirmed = window.confirm(
+            "This will permanently delete:\n\n• Your profile and all links\n• All analytics and click data\n• All products and orders\n• Your username (may be claimed by others)\n\nType 'DELETE' in the next prompt to confirm."
+        );
+
+        if (!doubleConfirmed) return;
+
+        const finalConfirm = window.prompt("Type DELETE to confirm account deletion:");
+        if (finalConfirm !== "DELETE") {
+            toast.info("Account deletion cancelled.");
+            return;
+        }
+
+        setDeleting(true);
+        const token = localStorage.getItem('auth_token');
+
+        try {
+            const response = await fetch(`${API_URL}/auth/delete-account`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                toast.error(data.error || "Failed to delete account");
+                return;
+            }
+
+            toast.success("Account deleted successfully. Goodbye!");
+
+            // Clear local storage and redirect to home
+            localStorage.removeItem('auth_token');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1500);
+
+        } catch (err) {
+            console.error("Error deleting account:", err);
+            toast.error("Failed to delete account. Please try again or contact support.");
+        } finally {
+            setDeleting(false);
+        }
     };
 
     return (
@@ -544,10 +590,15 @@ const Settings = () => {
                                         <Button
                                             variant="destructive"
                                             onClick={handleDeleteAccount}
+                                            disabled={deleting}
                                             className="rounded-xl gap-2"
                                         >
-                                            <Trash2 className="w-4 h-4" />
-                                            Delete My Account
+                                            {deleting ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Trash2 className="w-4 h-4" />
+                                            )}
+                                            {deleting ? "Deleting..." : "Delete My Account"}
                                         </Button>
                                     </CardContent>
                                 </Card>

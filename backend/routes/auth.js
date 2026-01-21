@@ -27,4 +27,7 @@ router.post('/forgot-password/reset', authController.resetPassword);
 // POST /api/auth/forgot-password/resend-otp
 router.post('/forgot-password/resend-otp', authController.resendOTP);
 
+// DELETE /api/auth/delete-account (Authenticated)
+router.delete('/delete-account', authMiddleware, authController.deleteAccount);
+
 module.exports = router;

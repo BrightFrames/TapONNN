@@ -5,7 +5,7 @@ import { templates } from "@/data/templates";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Instagram, Twitter, Sparkles, Share2, Link2 } from "lucide-react";
+import { Instagram, Twitter, Sparkles, Share2, Link2, Facebook, Linkedin, Youtube, Github } from "lucide-react";
 import PublicBlockCard from "@/components/PublicBlockCard";
 import EnquiryModal from "@/components/EnquiryModal";
 import PaymentModal from "@/components/PaymentModal";
@@ -82,7 +82,9 @@ const PublicProfile = () => {
                 avatar: userProfile.avatar_url,
                 bio: userProfile.bio,
                 selectedTheme: userProfile.selected_theme,
-                payment_instructions: userProfile.payment_instructions
+                selectedTheme: userProfile.selected_theme,
+                payment_instructions: userProfile.payment_instructions,
+                social_links: userProfile.social_links || {}
             });
 
             // 2. Fetch Blocks
@@ -139,7 +141,11 @@ const PublicProfile = () => {
         // Redirects
         if (intent.flow_type === 'redirect') {
             if (block.content.url) {
-                window.open(block.content.url, '_blank');
+                let url = block.content.url;
+                if (!/^https?:\/\//i.test(url)) {
+                    url = 'https://' + url;
+                }
+                window.open(url, '_blank');
             }
             return;
         }
@@ -262,11 +268,37 @@ const PublicProfile = () => {
                     {profile.bio && <p className={`text-sm opacity-90 ${template.textColor}`}>{profile.bio}</p>}
                 </div>
 
-                {/* Social Placeholder */}
-                <div className={`flex gap-4 mb-8 justify-center ${template.textColor}`}>
-                    <div className="hover:opacity-80 cursor-pointer p-2 rounded-full bg-white/10 backdrop-blur-sm"><Instagram size={20} /></div>
-                    <div className="hover:opacity-80 cursor-pointer p-2 rounded-full bg-white/10 backdrop-blur-sm"><Twitter size={20} /></div>
-                </div>
+                {/* Social Links */}
+                {profile.social_links && Object.keys(profile.social_links).length > 0 && (
+                    <div className={`flex gap-4 mb-8 justify-center flex-wrap ${template.textColor}`}>
+                        {Object.entries(profile.social_links).map(([platform, url]: [string, any]) => {
+                            if (!url) return null;
+                            const p = platform.toLowerCase();
+                            let Icon = Link2;
+                            if (p.includes('instagram')) Icon = Instagram;
+                            else if (p.includes('twitter') || p.includes('x.com')) Icon = Twitter;
+                            else if (p.includes('facebook')) Icon = Facebook;
+                            else if (p.includes('linkedin')) Icon = Linkedin;
+                            else if (p.includes('youtube')) Icon = Youtube;
+                            else if (p.includes('github')) Icon = Github;
+
+                            // Ensure URL has protocol
+                            const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+
+                            return (
+                                <a
+                                    key={platform}
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:opacity-80 hover:scale-110 transition-transform cursor-pointer p-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/10"
+                                >
+                                    <Icon size={20} />
+                                </a>
+                            );
+                        })}
+                    </div>
+                )}
 
                 {/* Blocks List */}
                 <div className="w-full space-y-4">

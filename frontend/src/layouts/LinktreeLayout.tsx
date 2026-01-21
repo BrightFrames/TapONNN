@@ -63,6 +63,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
     };
 
     const { user } = useAuth(); // Enhanced to get user details for switcher
+    const isStoreMode = user?.active_profile_mode === 'store';
 
     return (
         <div className="flex flex-col h-full bg-sidebar/50 text-sidebar-foreground">
@@ -74,13 +75,21 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                 {/* 1. Manage Group */}
                 <div className="space-y-1">
                     <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Manage</h4>
-                    <NavItem icon={List} label="Links & Blocks" active={location.pathname === '/dashboard'} onClick={() => handleNav('/dashboard')} />
-                    <NavItem icon={Palette} label="Design & Themes" active={location.pathname === '/design'} onClick={() => handleNav('/design')} />
-                    {/* Only show Store for Super Users */}
-                    {user?.role === 'super' && (
-                        <NavItem icon={Store} label="Store & Products" active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')} onClick={() => handleNav('/dashboard/business?tab=shop')} />
+                    {!isStoreMode && (
+                        <>
+                            <NavItem icon={List} label="Links & Blocks" active={location.pathname === '/dashboard'} onClick={() => handleNav('/dashboard')} />
+                            <NavItem icon={Palette} label="Design & Themes" active={location.pathname === '/design'} onClick={() => handleNav('/design')} />
+                        </>
                     )}
-                    <NavItem icon={Image} label="Media Library" active={location.pathname === '/media'} onClick={() => handleNav('/media')} />
+                    {isStoreMode && (
+                        <>
+                            <NavItem icon={Store} label="Store & Products" active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')} onClick={() => handleNav('/dashboard/business?tab=shop')} />
+                            <NavItem icon={DollarSign} label="Earnings" active={location.pathname === '/earnings'} onClick={() => handleNav('/earnings')} />
+                        </>
+                    )}
+                    {!isStoreMode && (
+                        <NavItem icon={Image} label="Media Library" active={location.pathname === '/media'} onClick={() => handleNav('/media')} />
+                    )}
                 </div>
 
                 {/* 2. Growth Group */}
@@ -88,7 +97,9 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                     <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Growth</h4>
                     <NavItem icon={BarChart3} label="Analytics" active={location.pathname === '/analytics'} onClick={() => handleNav('/analytics')} />
                     <NavItem icon={MessageCircle} label="Enquiries" active={location.pathname === '/enquiries'} onClick={() => handleNav('/enquiries')} />
-                    <NavItem icon={Smartphone} label="NFC Cards" active={location.pathname === '/nfc-cards'} onClick={() => handleNav('/nfc-cards')} />
+                    {!isStoreMode && (
+                        <NavItem icon={Smartphone} label="NFC Cards" active={location.pathname === '/nfc-cards'} onClick={() => handleNav('/nfc-cards')} />
+                    )}
                     <NavItem icon={Sparkles} label="Marketplace" active={location.pathname === '/marketplace'} onClick={() => handleNav('/marketplace')} />
                 </div>
 

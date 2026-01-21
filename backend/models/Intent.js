@@ -61,7 +61,7 @@ const intentSchema = new mongoose.Schema({
     // CTA details
     cta_type: {
         type: String,
-        enum: ['buy', 'enquiry', 'install', 'redirect', 'contact', 'download', 'book', 'donate', 'custom'],
+        enum: ['buy', 'enquiry', 'install', 'redirect', 'contact', 'download', 'book', 'donate', 'custom', 'none', 'visit', 'buy_now'],
         required: true
     },
     cta_label: {

@@ -145,23 +145,29 @@ const me = async (req, res) => {
         }
 
         // Convert to plain object and format for frontend
+        // Convert to plain object and format for frontend
         const profileObj = profile.toObject();
+        const mode = profileObj.active_profile_mode || 'personal';
+        const isStore = mode === 'store';
+
         res.json({
             id: profileObj.user_id,
-            username: profileObj.username,
-            full_name: profileObj.full_name,
+            // Context-Aware Fields: Return store data if in store mode
+            username: (isStore && profileObj.store_username) ? profileObj.store_username : profileObj.username,
+            full_name: (isStore && profileObj.store_name) ? profileObj.store_name : profileObj.full_name,
+            bio: (isStore && profileObj.store_bio) ? profileObj.store_bio : profileObj.bio,
+            avatar_url: (isStore && profileObj.store_avatar_url) ? profileObj.store_avatar_url : profileObj.avatar_url,
+            selected_theme: (isStore && profileObj.store_selected_theme) ? profileObj.store_selected_theme : profileObj.selected_theme,
+            design_config: (isStore && profileObj.store_design_config) ? profileObj.store_design_config : profileObj.design_config,
+
             email: profileObj.email,
-            bio: profileObj.bio,
-            avatar_url: profileObj.avatar_url,
             phone_number: profileObj.phone_number,
-            selected_theme: profileObj.selected_theme,
             social_links: profileObj.social_links instanceof Map ? Object.fromEntries(profileObj.social_links) : profileObj.social_links,
-            design_config: profileObj.design_config,
             language: user?.language || 'en',
             // New fields for role-based profile handling
             role: profileObj.role || 'super',
             has_store: profileObj.has_store || false,
-            active_profile_mode: profileObj.active_profile_mode || 'personal'
+            active_profile_mode: mode
         });
     } catch (err) {
         console.error("Me Error:", err);
@@ -375,6 +381,92 @@ const resendOTP = async (req, res) => {
     }
 };
 
+// DELETE ACCOUNT
+const deleteAccount = async (req, res) => {
+    const userId = req.user.id;
+
+    try {
+        // Import all models that have user data
+        const Link = require('../models/Link');
+        const Block = require('../models/Block');
+        let Product = require('../models/Product');
+        if (Product.Product) Product = Product.Product; // Handle named export
+
+        if (!Product || typeof Product.deleteMany !== 'function') {
+            console.error("CRITICAL: Failed to load Product model:", Product);
+            // Fallback: try to get it from mongoose connection
+            const mongoose = require('mongoose');
+            Product = mongoose.models.Product;
+        }
+
+        const Order = require('../models/Order');
+        const Enquiry = require('../models/Enquiry');
+        const Intent = require('../models/Intent');
+        const UserPlugin = require('../models/UserPlugin');
+
+        console.log(`Deleting account for user: ${userId}`);
+
+        // Get user's profile first for profile_id based deletions
+        const userProfile = await Profile.findOne({ user_id: userId });
+        const profileId = userProfile?._id;
+
+        // Delete all related data in parallel for efficiency
+        const deletionPromises = [
+            // Delete user's links
+            Link.deleteMany({ user_id: userId }),
+            // Delete user's blocks
+            Block.deleteMany({ user_id: userId }),
+            // Delete user's products
+            Product.deleteMany({ user_id: userId }),
+            // Delete user's orders (as buyer or seller)
+            Order.deleteMany({ $or: [{ buyer_id: userId }, { seller_id: userId }] }),
+            // Delete enquiries where user is seller
+            Enquiry.deleteMany({ seller_id: userId }),
+            // Delete user's installed plugins
+            UserPlugin.deleteMany({ user_id: userId }),
+            // Delete password reset tokens
+            PasswordResetToken.deleteMany({ user_id: userId })
+        ];
+
+        // Add profile-based deletions if profile exists
+        if (profileId) {
+            deletionPromises.push(
+                // Delete intents for user's profile
+                Intent.deleteMany({ profile_id: profileId }),
+                // Delete intents where user is actor
+                Intent.deleteMany({ actor_id: userId })
+            );
+        }
+
+        // Execute all deletions
+        const deletionResults = await Promise.allSettled(deletionPromises);
+
+        // Log any failed deletions (but don't fail the entire operation)
+        deletionResults.forEach((result, index) => {
+            if (result.status === 'rejected') {
+                console.error(`Deletion step ${index} failed:`, result.reason);
+            }
+        });
+
+        // Now delete profile and user (these must succeed)
+        if (userProfile) {
+            await Profile.deleteOne({ user_id: userId });
+        }
+        await User.findByIdAndDelete(userId);
+
+        console.log(`Account deleted successfully for user: ${userId}`);
+
+        res.json({
+            success: true,
+            message: "Account and all associated data deleted successfully"
+        });
+
+    } catch (err) {
+        console.error("Delete Account Error:", err);
+        res.status(500).json({ error: "Failed to delete account. Please try again or contact support." });
+    }
+};
+
 module.exports = {
     signup,
     login,
@@ -383,5 +475,6 @@ module.exports = {
     forgotPasswordSendOTP,
     forgotPasswordVerifyOTP,
     resetPassword,
-    resendOTP
+    resendOTP,
+    deleteAccount
 };

@@ -185,10 +185,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         } catch (error) {
             console.error("Error fetching user data:", error);
-            // Clear auth state on any error
-            setIsAuthenticated(false);
-            setUser(null);
-            setLinks([]);
+            // Don't clear auth state on network error - could be temporary
+            // Just stop loading
+            // setIsAuthenticated(false);
+            // setUser(null);
+            // setLinks([]);
         } finally {
             setIsLoading(false);
         }
@@ -558,11 +559,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const token = getToken();
         if (!token || !user) return;
 
-        // Check if user is super
-        if (user.role !== 'super') {
-            toast.error('Only Super Users can switch profile modes');
-            return;
-        }
+
+
+        // Allow all users to switch if logic permits (e.g. has_store)
+        // Check removed to allow store owners who are not 'super' to switch
 
         // Optimistic update
         setUser(prev => prev ? { ...prev, active_profile_mode: mode } : null);

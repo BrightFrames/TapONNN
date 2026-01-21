@@ -57,6 +57,30 @@ const profileSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    // Store-Specific Identity
+    store_username: {
+        type: String,
+        unique: true,
+        sparse: true,
+        lowercase: true,
+        trim: true
+    },
+    store_name: {
+        type: String,
+        trim: true
+    },
+    store_bio: {
+        type: String,
+        default: ''
+    },
+    store_avatar_url: {
+        type: String,
+        default: ''
+    },
+    store_selected_theme: {
+        type: String,
+        default: 'clean'
+    },
     // Role: 'super' (can have personal + store profiles) or 'personal' (single profile only)
     role: {
         type: String,

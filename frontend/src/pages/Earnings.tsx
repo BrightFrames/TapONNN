@@ -22,7 +22,14 @@ const Earnings = () => {
                 const orderRes = await fetch(`${API_URL}/orders`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const orders = await orderRes.json();
+                const orderData = await orderRes.json();
+
+                // Compatibility check: backend returns { orders: [], totalEarnings: number }
+                // but if it returned an array, handle that too (just in case)
+                const orders = Array.isArray(orderData) ? orderData : (orderData.orders || []);
+                const lifetime = orderData.totalEarnings !== undefined
+                    ? orderData.totalEarnings
+                    : orders.reduce((sum: number, o: any) => sum + parseFloat(o.amount || 0), 0);
 
                 // Fetch Products for count
                 const prodRes = await fetch(`${API_URL}/products`, {
@@ -30,13 +37,10 @@ const Earnings = () => {
                 });
                 const products = await prodRes.json();
 
-                // Calculate Stats
-                const lifetime = orders.reduce((sum: number, o: any) => sum + parseFloat(o.amount), 0);
-
                 setStats({
                     lifetime,
-                    pending: 0, // In real app, check order.status === 'pending'
-                    activeProducts: products.length
+                    pending: 0, // Pending logic not yet implemented in backend
+                    activeProducts: Array.isArray(products) ? products.length : 0
                 });
 
             } catch (error) {

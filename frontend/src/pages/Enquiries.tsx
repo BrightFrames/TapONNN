@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import {
     Search,
     Filter,
@@ -93,7 +94,7 @@ interface JourneyStep {
 }
 
 interface Lead {
-    id: number;
+    id: any; // Changed from number to support MongoDB ID
     name: string;
     role: 'visitor' | 'user';
     source: string;
@@ -120,125 +121,15 @@ interface Lead {
     lastSeen: string;
     utm: { source: string; medium: string; campaign: string; term: string };
     messages: Message[];
+    messages: Message[];
     journey: JourneyStep[];
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 // --- Mock Data ---
-const MOCK_LEADS: Lead[] = [
-    {
-        id: 1,
-        name: "Rahul Verma",
-        role: "visitor",
-        source: "IndiaMart",
-        email: "rahul@export.com",
-        phone: "+919876543210",
-        truecaller: "Rahul Textiles Pvt Ltd",
-        isSpam: false,
-        avatar: "https://api.dicebear.com/9.x/avataaars/svg?seed=Rahul",
-        status: "unread",
-        crmStatus: "New",
-        internalNotes: [],
-        labels: [],
-        score: 85,
-        scoreFactors: ["High Intent Source", "Catalogue Download", "Verified Number"],
-        preview: "Enquiry for 500 units cotton sheets...",
-        time: "10:42 AM",
-        location: "Mumbai, IN",
-        duration: "4m 12s",
-        device: "Android 13",
-        os: "Android 13.0",
-        resolution: "393x851",
-        network: "4G Jio",
-        visits: 1,
-        lastSeen: "Just now",
-        utm: { source: "indiamart", medium: "cpc", campaign: "bulk_sheets_q1", term: "cotton sheets bulk" },
-        messages: [
-            { id: 101, from: 'sys', text: '⚡ Algorithm Analysis: High Intent Detected (IndiaMart)', time: '10:40 AM' },
-            { id: 102, from: 'them', text: 'Hi, I saw your listing on IndiaMart. I am interested in bulk purchasing cotton sheets.', time: '10:42 AM' },
-            { id: 103, from: 'them', text: 'What is your best price for 500 units?', time: '10:43 AM' }
-        ],
-        journey: [
-            { text: 'Arrived via IndiaMart', sub: 'Referral Link', icon: Share2, time: '0s' },
-            { text: 'Viewed Catalogue', sub: 'Engagement', icon: FileText, time: '2m 10s' },
-            { text: 'Goal: Lead Form', sub: 'Conversion', icon: CheckCircle, time: '4m 12s', color: 'text-green-500' }
-        ]
-    },
-    {
-        id: 2,
-        name: "Sarah Jenkins",
-        role: "user",
-        source: "Platform",
-        email: "sarah@design.com",
-        phone: "+15550001234",
-        truecaller: "Unknown",
-        isSpam: false,
-        avatar: "https://api.dicebear.com/9.x/avataaars/svg?seed=Sarah",
-        status: "read",
-        crmStatus: "Contacted",
-        labels: [],
-        internalNotes: [{ text: "User is experiencing a bug on the stats page.", date: "Yesterday" }],
-        score: 45,
-        scoreFactors: ["Registered User", "Recurring Visit", "Support Query"],
-        preview: "Can you help me with the analytics setup?",
-        time: "Yesterday",
-        location: "New York, USA",
-        duration: "12m 30s",
-        device: "MacBook Pro",
-        os: "macOS 13.4",
-        resolution: "2560x1600",
-        network: "WiFi",
-        visits: 5,
-        lastSeen: "Yesterday",
-        utm: { source: "direct", medium: "none", campaign: "-", term: "-" },
-        messages: [
-            { id: 201, from: 'them', text: 'Hi support, I need help.', time: 'Yesterday' },
-            { id: 202, from: 'me', text: 'Hello Sarah! What seems to be the issue?', time: 'Yesterday' },
-            { id: 203, from: 'them', text: 'I cannot see the analytics for my new link.', time: 'Yesterday' }
-        ],
-        journey: [
-            { text: 'User Logged In', sub: 'Session', icon: User, time: '0s' },
-            { text: 'Visited Settings', sub: 'Navigation', icon: Settings, time: '1m 20s' },
-            { text: 'Encountered 404', sub: 'Error Event', icon: AlertTriangle, time: '2m 05s', color: 'text-red-500' },
-            { text: 'Started Chat', sub: 'Support', icon: MessageSquare, time: '3m 00s' }
-        ]
-    },
-    {
-        id: 3,
-        name: "Unknown Caller",
-        role: "visitor",
-        source: "Instagram",
-        email: "-",
-        phone: "+919999900000",
-        truecaller: "Potential Spam",
-        isSpam: true,
-        avatar: "https://api.dicebear.com/9.x/avataaars/svg?seed=Spam",
-        status: "read",
-        crmStatus: "Lost",
-        internalNotes: [],
-        labels: [],
-        score: 10,
-        scoreFactors: ["Low Engagement", "Spam Pattern"],
-        preview: "Loan offer...",
-        time: "Mon",
-        location: "Delhi, IN",
-        duration: "10s",
-        device: "Unknown Android",
-        os: "Android 9",
-        resolution: "360x640",
-        network: "3G",
-        visits: 1,
-        lastSeen: "Mon",
-        utm: { source: "instagram", medium: "bio_link", campaign: "winter_sale", term: "-" },
-        messages: [
-            { id: 301, from: 'sys', text: '⚡ Algorithm Analysis: Low Intent / Potential Spam', time: 'Mon' },
-            { id: 302, from: 'them', text: 'Sir do you need personal loan?', time: 'Mon' }
-        ],
-        journey: [
-            { text: 'Clicked Link in Bio', sub: 'Instagram', icon: Share2, time: '0s' },
-            { text: 'Bounce', sub: 'Exited', icon: ArrowLeft, time: '10s' }
-        ]
-    }
-];
+// --- Mock Data Removed ---
+const MOCK_LEADS: Lead[] = [];
 
 import { User, Settings } from 'lucide-react'; // Late import for mock usage
 
@@ -246,13 +137,101 @@ const Enquiries = () => {
     const { user } = useAuth();
 
     // State
-    const [leads, setLeads] = useState<Lead[]>(MOCK_LEADS);
-    const [activeId, setActiveId] = useState<number | null>(null);
+    const [leads, setLeads] = useState<Lead[]>([]);
+    const [stats, setStats] = useState({ total: 0, new: 0, recent: 0, avgResponse: '-' }); // Add Stats State
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Fetch Enquiries
+    useEffect(() => {
+        const fetchEnquiries = async () => {
+            if (!user) return;
+            try {
+                setIsLoading(true);
+                const token = localStorage.getItem('token');
+                if (!token) return;
+
+                const res = await axios.get(`${API_URL}/enquiries`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                // Fetch Stats
+                const statsRes = await axios.get(`${API_URL}/enquiries/stats`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+
+                if (res.data && res.data.enquiries) {
+                    const mappedLeads: Lead[] = res.data.enquiries.map((e: any) => ({
+                        id: e._id,
+                        name: e.visitor_name || e.visitor_email.split('@')[0] || "Guest",
+                        role: e.visitor_id ? 'user' : 'visitor',
+                        source: e.metadata?.source || 'Profile',
+                        email: e.visitor_email,
+                        phone: e.visitor_phone || "",
+                        truecaller: "Verified", // Placeholder
+                        isSpam: false,
+                        avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${e.visitor_email}`,
+                        status: e.status === 'new' ? 'unread' : 'read',
+                        crmStatus: e.status === 'new' ? 'New' : 'Contacted',
+                        internalNotes: [],
+                        labels: [],
+                        score: 50,
+                        scoreFactors: [],
+                        preview: e.message || 'No message content',
+                        time: new Date(e.created_at).toLocaleDateString(),
+                        location: "Unknown",
+                        duration: "0s",
+                        device: e.metadata?.device || "Unknown",
+                        os: "-",
+                        resolution: "-",
+                        network: "-",
+                        visits: 1,
+                        lastSeen: new Date(e.created_at).toLocaleTimeString(),
+                        utm: { source: "-", medium: "-", campaign: "-", term: "-" },
+                        messages: [
+                            {
+                                id: Date.parse(e.created_at),
+                                from: 'them',
+                                text: e.message || '(No message part)',
+                                time: new Date(e.created_at).toLocaleTimeString()
+                            },
+                            ...(e.seller_response ? [{
+                                id: Date.parse(e.responded_at || new Date().toISOString()),
+                                from: 'me',
+                                text: e.seller_response,
+                                time: new Date(e.responded_at || new Date()).toLocaleTimeString()
+                            }] : [])
+                        ],
+                        journey: []
+                    }));
+                    setLeads(mappedLeads);
+                }
+
+                if (statsRes.data) {
+                    setStats({
+                        total: statsRes.data.total || 0,
+                        new: statsRes.data.new || 0,
+                        recent: statsRes.data.recent || 0,
+                        avgResponse: '12m' // Placeholder until backend tracks response time
+                    });
+                }
+
+            } catch (error) {
+                console.error("Error fetching enquiries:", error);
+                toast.error("Failed to load enquiries");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchEnquiries();
+    }, [user]);
+    const [activeId, setActiveId] = useState<any | null>(null);
     const [isInfoPanelOpen, setIsInfoPanelOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [chatInput, setChatInput] = useState('');
     const [isBulkMode, setIsBulkMode] = useState(false);
-    const [selectedLeads, setSelectedLeads] = useState<Set<number>>(new Set());
+    const [selectedLeads, setSelectedLeads] = useState<Set<any>>(new Set());
     const [activeTab, setActiveTab] = useState<'info' | 'crm'>('info');
     const [quoteModalOpen, setQuoteModalOpen] = useState(false);
     const [quoteData, setQuoteData] = useState({ item: '', amount: '' });
@@ -294,7 +273,7 @@ const Enquiries = () => {
         setChatInput('');
     };
 
-    const handleCRMUpdate = (leadId: number, status?: string, note?: string) => {
+    const handleCRMUpdate = (leadId: any, status?: string, note?: string) => {
         const updatedLeads = leads.map(l => {
             if (l.id === leadId) {
                 return {
@@ -309,7 +288,7 @@ const Enquiries = () => {
         toast.success("CRM Updated Successfully");
     };
 
-    const toggleSelect = (id: number) => {
+    const toggleSelect = (id: any) => {
         const newSelected = new Set(selectedLeads);
         if (newSelected.has(id)) newSelected.delete(id);
         else newSelected.add(id);
@@ -376,60 +355,89 @@ const Enquiries = () => {
 
                     {/* Leads List */}
                     <ScrollArea className="flex-1 bg-white">
-                        {filteredLeads.map(lead => (
-                            <div
-                                key={lead.id}
-                                onClick={() => isBulkMode ? toggleSelect(lead.id) : setActiveId(lead.id)}
-                                className={`
-                                    flex items-center gap-3 p-3 cursor-pointer border-b border-border/50 transition-colors
-                                    ${activeId === lead.id && !isBulkMode ? 'bg-primary/5' : 'hover:bg-zinc-50'}
-                                `}
-                            >
-                                {isBulkMode ? (
-                                    <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedLeads.has(lead.id)}
-                                            readOnly
-                                            className="w-4 h-4 accent-primary"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="relative w-12 h-12 shrink-0">
-                                        <Avatar className="w-full h-full border-2 border-white shadow-sm">
-                                            <AvatarImage src={lead.avatar} />
-                                            <AvatarFallback>{lead.name[0]}</AvatarFallback>
-                                        </Avatar>
-                                        {lead.role === 'user' && (
-                                            <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5 border-2 border-white">
-                                                <Check className="w-2 h-2 text-white" />
-                                            </div>
-                                        )}
-                                        {lead.status === 'unread' && (
-                                            <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-baseline mb-0.5">
-                                        <span className="font-medium text-sm text-zinc-900 truncate">{lead.name}</span>
-                                        <span className="text-[10px] text-zinc-400">{lead.time}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center mb-1 gap-2">
-                                        <p className="text-xs text-zinc-500 truncate">{lead.preview}</p>
-                                        <Badge variant="secondary" className="text-[9px] px-1 h-4">{lead.source}</Badge>
-                                    </div>
-                                    <div className="flex gap-1 flex-wrap">
-                                        {lead.labels.map((lbl, idx) => (
-                                            <span key={idx} className={`text-[9px] px-1.5 py-0.5 rounded ${lbl.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                {lbl.text}
-                                            </span>
-                                        ))}
+                        {isLoading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <div key={i} className="flex items-center gap-3 p-4 border-b border-border/40 animate-pulse">
+                                    <div className="w-10 h-10 rounded-full bg-zinc-100 shrink-0" />
+                                    <div className="flex-1 space-y-2 min-w-0">
+                                        <div className="flex justify-between">
+                                            <div className="h-3.5 bg-zinc-100 rounded w-24" />
+                                            <div className="h-3 bg-zinc-100 rounded w-12" />
+                                        </div>
+                                        <div className="h-3 bg-zinc-100 rounded w-full" />
                                     </div>
                                 </div>
+                            ))
+                        ) : filteredLeads.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-[60vh] text-center px-6">
+                                <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4">
+                                    <MessageSquare className="w-7 h-7 text-zinc-300" />
+                                </div>
+                                <h3 className="text-sm font-semibold text-zinc-900">No messages yet</h3>
+                                <p className="text-xs text-muted-foreground mt-2 max-w-[200px] leading-relaxed">
+                                    Share your profile link to start receiving enquiries from visitors.
+                                </p>
                             </div>
-                        ))}
+                        ) : (
+                            filteredLeads.map(lead => (
+                                <div
+                                    key={lead.id}
+                                    onClick={() => isBulkMode ? toggleSelect(lead.id) : setActiveId(lead.id)}
+                                    className={`
+                                        group flex items-start gap-3 p-4 cursor-pointer border-b border-border/40 transition-all duration-200
+                                        ${activeId === lead.id && !isBulkMode ? 'bg-[#FDFDFD] border-l-2 border-l-primary shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)]' : 'hover:bg-zinc-50/80 border-l-2 border-l-transparent'}
+                                    `}
+                                >
+                                    {isBulkMode ? (
+                                        <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedLeads.has(lead.id)}
+                                                readOnly
+                                                className="w-4 h-4 accent-primary rounded cursor-pointer"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="relative w-10 h-10 shrink-0 mt-0.5">
+                                            <Avatar className="w-full h-full border border-border/50 shadow-sm group-hover:shadow-md transition-shadow">
+                                                <AvatarImage src={lead.avatar} />
+                                                <AvatarFallback className="bg-primary/5 text-primary text-xs font-medium">{lead.name[0]}</AvatarFallback>
+                                            </Avatar>
+                                            {lead.role === 'user' && (
+                                                <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-[2px] border-2 border-white" title="Registered User">
+                                                    <Check className="w-2 h-2 text-white" />
+                                                </div>
+                                            )}
+                                            {lead.status === 'unread' && (
+                                                <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-sm animate-in zoom-in"></div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className={`text-sm truncate ${lead.status === 'unread' ? 'font-semibold text-zinc-900' : 'font-medium text-zinc-700'}`}>
+                                                {lead.name}
+                                            </span>
+                                            <span className="text-[10px] text-zinc-400 tabular-nums shrink-0 ml-2">{lead.time}</span>
+                                        </div>
+                                        <p className={`text-xs truncate mb-2 ${lead.status === 'unread' ? 'text-zinc-600 font-medium' : 'text-zinc-500'}`}>
+                                            {lead.preview}
+                                        </p>
+                                        <div className="flex gap-1.5 flex-wrap">
+                                            <Badge variant="secondary" className="text-[9px] px-1.5 h-4 font-normal bg-zinc-100 text-zinc-600 border-zinc-200">
+                                                {lead.source}
+                                            </Badge>
+                                            {lead.labels.map((lbl, idx) => (
+                                                <span key={idx} className={`text-[9px] px-1.5 py-0.5 rounded-full flex items-center gap-1 ${lbl.color === 'yellow' ? 'bg-yellow-50 text-yellow-700 border border-yellow-100' : 'bg-blue-50 text-blue-700 border border-blue-100'}`}>
+                                                    {lbl.text}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </ScrollArea>
 
                     {/* Bulk Action Bar */}
@@ -491,8 +499,8 @@ const Enquiries = () => {
                                         ) : (
                                             <div className="max-w-[75%] group relative">
                                                 <div className={`px-3 py-2 text-sm shadow-sm ${msg.from === 'me'
-                                                        ? 'bg-zinc-900 text-white rounded-[12px_12px_0px_12px]'
-                                                        : 'bg-white border border-zinc-100 rounded-[12px_12px_12px_0px]'
+                                                    ? 'bg-zinc-900 text-white rounded-[12px_12px_0px_12px]'
+                                                    : 'bg-white border border-zinc-100 rounded-[12px_12px_12px_0px]'
                                                     }`}>
                                                     {msg.type === 'product' ? (
                                                         <div className="w-[200px] bg-white text-black rounded-md overflow-hidden border border-zinc-100">
@@ -595,9 +603,9 @@ const Enquiries = () => {
 
                         <div className="grid grid-cols-3 gap-6 mt-12 w-full max-w-2xl">
                             {[
-                                { label: 'Active Leads', val: '24', icon: ArrowUp, color: 'text-green-600', sub: '12% vs yesterday' },
-                                { label: 'Hot Prospects', val: '5', icon: Zap, color: 'text-red-500', sub: 'High Intent' },
-                                { label: 'Avg Response', val: '12m', icon: Clock, color: 'text-blue-500', sub: 'Target: < 15m' }
+                                { label: 'Active Leads', val: stats.total, icon: ArrowUp, color: 'text-green-600', sub: `${stats.recent} new this week` },
+                                { label: 'Unread', val: stats.new, icon: Zap, color: 'text-red-500', sub: 'Action Required' },
+                                { label: 'Avg Response', val: stats.avgResponse, icon: Clock, color: 'text-blue-500', sub: 'Target: < 15m' }
                             ].map((stat, i) => (
                                 <div key={i} className="bg-white p-5 rounded-lg border border-border shadow-sm">
                                     <div className="text-xs font-semibold text-muted-foreground uppercase">{stat.label}</div>

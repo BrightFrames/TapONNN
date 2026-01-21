@@ -109,6 +109,7 @@ export const useIntent = (): UseIntentReturn => {
 
             if (!response.ok) {
                 const err = await response.json();
+                if (err.details) console.error('Intent creation backend error details:', err.details);
                 throw new Error(err.error || 'Failed to create intent');
             }
 

@@ -85,7 +85,7 @@ const iconMap: any = {
     calendar: Calendar
 };
 
-const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) => {
+const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCardProps) => {
     const {
         attributes,
         listeners,
@@ -274,7 +274,15 @@ const SortableLinkCard = ({ link, onUpdate, onDelete }: SortableLinkCardProps) =
                                 <DropdownMenuItem onClick={copyUrl}>
                                     <Copy className="w-4 h-4 mr-2" /> Copy URL
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => link.url && window.open(link.url, '_blank')}>
+                                <DropdownMenuItem onClick={() => {
+                                    if (link.url) {
+                                        let url = link.url;
+                                        if (!/^https?:\/\//i.test(url)) {
+                                            url = 'https://' + url;
+                                        }
+                                        window.open(url, '_blank');
+                                    }
+                                }}>
                                     <ExternalLink className="w-4 h-4 mr-2" /> Open link
                                 </DropdownMenuItem>
                                 <DropdownMenuItem

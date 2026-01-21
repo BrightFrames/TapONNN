@@ -101,9 +101,12 @@ const createIntent = async (req, res) => {
             // Return content needed for next step
             block_content: block.content
         });
+        console.log('Creating intent for block:', block);
+        // ... (rest of function)
     } catch (err) {
         console.error('Error creating intent:', err);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error('Error stack:', err.stack);
+        res.status(500).json({ error: 'Internal Server Error', details: err.message });
     }
 };
 
