@@ -149,10 +149,46 @@ const updateTheme = async (req, res) => {
     }
 };
 
+// Switch active profile mode (for Super Users)
+const switchProfileMode = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { mode } = req.body;
+
+        if (!['personal', 'store'].includes(mode)) {
+            return res.status(400).json({ error: 'Invalid mode. Must be "personal" or "store"' });
+        }
+
+        const profile = await Profile.findOneAndUpdate(
+            { user_id: userId },
+            { active_profile_mode: mode, updated_at: new Date() },
+            { new: true }
+        );
+
+        if (!profile) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        // Check if user is super
+        if (profile.role !== 'super') {
+            return res.status(403).json({ error: 'Only Super Users can switch profile modes' });
+        }
+
+        res.json({
+            success: true,
+            active_profile_mode: profile.active_profile_mode
+        });
+    } catch (err) {
+        console.error('Error switching profile mode:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 module.exports = {
     getPublicProfile,
     getPublicStoreProfile,
     updateProfile,
-    updateTheme
+    updateTheme,
+    switchProfileMode
 };
 

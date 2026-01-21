@@ -25,7 +25,9 @@ import {
     UserPlus,
     Instagram,
     Lock,
-    Loader2
+    Loader2,
+    Store,
+    User
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -63,6 +65,9 @@ const Analytics = () => {
     const [dateRange, setDateRange] = useState("Last 7 days");
     const [loading, setLoading] = useState(true);
     const [analyticsData, setAnalyticsData] = useState<AnalyticsSummary | null>(null);
+    // Profile mode for Super Users
+    const [profileMode, setProfileMode] = useState<'personal' | 'store'>('personal');
+    const isSuperUser = user?.role === 'super';
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -178,9 +183,32 @@ const Analytics = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Insights</h1>
-                        <p className="text-gray-500 mt-1">Overall performance of your links and profile.</p>
+                        <p className="text-gray-500 mt-1">
+                            {profileMode === 'store' ? 'Performance of your store and products.' : 'Overall performance of your links and profile.'}
+                        </p>
                     </div>
                     <div className="flex items-center gap-3">
+                        {/* Profile Mode Toggle (Super Users Only) */}
+                        {isSuperUser && (
+                            <div className="flex p-1 bg-gray-100 rounded-full">
+                                <Button
+                                    size="sm"
+                                    variant={profileMode === 'personal' ? 'default' : 'ghost'}
+                                    className={`rounded-full gap-2 ${profileMode === 'personal' ? '' : 'text-gray-500'}`}
+                                    onClick={() => setProfileMode('personal')}
+                                >
+                                    <User className="w-4 h-4" /> Personal
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant={profileMode === 'store' ? 'default' : 'ghost'}
+                                    className={`rounded-full gap-2 ${profileMode === 'store' ? '' : 'text-gray-500'}`}
+                                    onClick={() => setProfileMode('store')}
+                                >
+                                    <Store className="w-4 h-4" /> Store
+                                </Button>
+                            </div>
+                        )}
                         <Select value={timeRange} onValueChange={setTimeRange}>
                             <SelectTrigger className="w-[160px] rounded-full bg-white border-gray-200">
                                 <SelectValue placeholder="Select range" />

@@ -10,6 +10,10 @@ interface User {
     email_confirmed_at?: string;
     social_links?: Record<string, string>;
     design_config?: any;
+    // Role-based profile handling
+    role?: 'super' | 'personal';
+    has_store?: boolean;
+    active_profile_mode?: 'personal' | 'store';
 }
 
 interface Link {
@@ -59,6 +63,8 @@ interface AuthContextType {
     updateBlock: (blockId: string, updates: Partial<Block>) => Promise<void>;
     deleteBlock: (blockId: string) => Promise<void>;
     reorderBlocks: (blocks: Block[]) => Promise<void>;
+    // Profile mode switching (Super Users)
+    switchProfileMode: (mode: 'personal' | 'store') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -148,7 +154,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 email: profile.email,
                 social_links: profile.social_links || {},
                 design_config: profile.design_config || {},
-                email_confirmed_at: new Date().toISOString() // Assuming confirmed if logged in
+                email_confirmed_at: new Date().toISOString(), // Assuming confirmed if logged in
+                // Role-based profile handling
+                role: profile.role || 'super',
+                has_store: profile.has_store || false,
+                active_profile_mode: profile.active_profile_mode || 'personal'
             });
             setSelectedTheme(profile.selected_theme || "artemis");
             setIsAuthenticated(true);
@@ -543,6 +553,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    // Switch profile mode (for Super Users)
+    const switchProfileMode = async (mode: 'personal' | 'store') => {
+        const token = getToken();
+        if (!token || !user) return;
+
+        // Check if user is super
+        if (user.role !== 'super') {
+            toast.error('Only Super Users can switch profile modes');
+            return;
+        }
+
+        // Optimistic update
+        setUser(prev => prev ? { ...prev, active_profile_mode: mode } : null);
+
+        try {
+            const res = await fetch(`${API_URL}/profile/switch-mode`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ mode })
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                toast.error(error.error || 'Failed to switch profile mode');
+                await fetchUserData(); // Revert
+            } else {
+                toast.success(`Switched to ${mode === 'personal' ? 'Personal Profile' : 'Store Profile'}`);
+            }
+        } catch (err) {
+            console.error('Error switching profile mode:', err);
+            toast.error('Failed to switch profile mode');
+            await fetchUserData(); // Revert
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             isAuthenticated,
@@ -565,7 +613,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             addBlock,
             updateBlock,
             deleteBlock,
-            reorderBlocks
+            reorderBlocks,
+            switchProfileMode
         }}>
             {children}
         </AuthContext.Provider>

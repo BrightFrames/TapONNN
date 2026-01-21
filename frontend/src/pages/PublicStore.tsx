@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { templates } from "@/data/templates";
+import { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Store, Share2, ShoppingBag } from "lucide-react";
+import { Store, Share2, ShoppingBag, X, ChevronDown, ChevronUp, MessageCircle, ArrowLeft } from "lucide-react";
 import ShareModal from "@/components/ShareModal";
 import ProductInteractionModal from "@/components/ProductInteractionModal";
 
@@ -29,14 +28,16 @@ interface StoreProfile {
 
 const PublicStore = () => {
     const { username } = useParams();
+    const navigate = useNavigate();
     const [shareOpen, setShareOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [store, setStore] = useState<StoreProfile | null>(null);
     const [notFound, setNotFound] = useState(false);
+    const [currentProductIndex, setCurrentProductIndex] = useState(0);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     // Modal State
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-    const [modalStep, setModalStep] = useState<'selection' | 'contact_enquiry' | 'contact_buy'>('selection');
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -65,18 +66,30 @@ const PublicStore = () => {
         fetchStore();
     }, [username]);
 
+    // Handle scroll to update current product index
+    const handleScroll = () => {
+        if (!scrollContainerRef.current) return;
+        const scrollTop = scrollContainerRef.current.scrollTop;
+        const height = window.innerHeight;
+        const newIndex = Math.round(scrollTop / height);
+        setCurrentProductIndex(newIndex);
+    };
+
+    // Scroll to specific product
+    const scrollToProduct = (index: number) => {
+        if (!scrollContainerRef.current) return;
+        scrollContainerRef.current.scrollTo({
+            top: index * window.innerHeight,
+            behavior: 'smooth'
+        });
+    };
+
     if (loading) {
         return (
-            <div className="min-h-screen w-full flex flex-col items-center py-16 px-6 bg-background space-y-8">
+            <div className="fixed inset-0 bg-black flex items-center justify-center">
                 <div className="flex flex-col items-center space-y-4">
-                    <Skeleton className="h-24 w-24 rounded-full" />
-                    <Skeleton className="h-8 w-48" />
-                    <Skeleton className="h-4 w-64" />
-                </div>
-                <div className="w-full max-w-2xl grid grid-cols-2 gap-4">
-                    {[1, 2, 3, 4].map((i) => (
-                        <Skeleton key={i} className="h-48 w-full rounded-xl" />
-                    ))}
+                    <div className="w-16 h-16 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                    <p className="text-white/60 text-sm">Loading store...</p>
                 </div>
             </div>
         );
@@ -84,118 +97,205 @@ const PublicStore = () => {
 
     if (notFound || !store) {
         return (
-            <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background text-center px-4">
-                <div className="bg-muted p-4 rounded-full mb-4">
-                    <Store className="w-8 h-8 text-muted-foreground" />
+            <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-center px-4">
+                <div className="bg-white/10 p-4 rounded-full mb-4">
+                    <Store className="w-8 h-8 text-white/60" />
                 </div>
-                <h2 className="text-2xl font-bold tracking-tight mb-2">Store not found</h2>
-                <p className="text-muted-foreground mb-6">This store doesn't exist or isn't published yet.</p>
-                <Button variant="default" onClick={() => window.location.href = '/'}>Go Home</Button>
+                <h2 className="text-2xl font-bold tracking-tight mb-2 text-white">Store not found</h2>
+                <p className="text-white/60 mb-6">This store doesn't exist or isn't published yet.</p>
+                <Button
+                    variant="outline"
+                    className="border-white/20 text-white hover:bg-white/10"
+                    onClick={() => navigate('/')}
+                >
+                    Go Home
+                </Button>
             </div>
         );
     }
 
-    // Determine Theme
-    const template = templates.find(t => t.id === store.selected_theme) || templates[0];
-
-    const bgStyle = template.bgImage
-        ? { backgroundImage: `url(${template.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-        : {};
-
     const storeUrl = `${window.location.origin}/${store.username}/store`;
+    const hasProducts = store.products.length > 0;
 
     return (
-        <div
-            className={`min-h-screen w-full flex flex-col items-center py-16 px-6 transition-colors duration-500 ${template.bgClass || 'bg-gray-100'}`}
-            style={bgStyle}
-        >
-            {/* Overlay if image background */}
-            {template.bgImage && <div className="absolute inset-0 bg-black/30 fixed pointer-events-none" />}
-
-            {/* Share Button (Floating) */}
-            <div className="fixed top-6 right-6 z-50">
+        <div className="fixed inset-0 bg-black">
+            {/* Floating Header */}
+            <div className="fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent">
+                {/* Back Button */}
                 <Button
                     size="icon"
-                    variant="secondary"
-                    className="rounded-full shadow-lg bg-white/20 backdrop-blur-md border border-white/20 hover:bg-white/40 text-current"
-                    onClick={() => setShareOpen(true)}
+                    variant="ghost"
+                    className="text-white hover:bg-white/10 rounded-full"
+                    onClick={() => navigate(`/${store.username}`)}
                 >
-                    <Share2 className="w-4 h-4" />
+                    <ArrowLeft className="w-5 h-5" />
                 </Button>
-            </div>
 
-            <div className="z-10 w-full max-w-2xl mx-auto flex flex-col items-center">
-                {/* Store Header */}
-                <div className="flex flex-col items-center mb-8 text-center">
-                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl mb-4">
+                {/* Store Info */}
+                <div className="flex items-center gap-2">
+                    <Avatar className="w-8 h-8 border border-white/20">
                         <AvatarImage src={store.avatar_url} />
-                        <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
+                        <AvatarFallback className="bg-white/10 text-white text-xs">
                             {store.full_name?.[0]?.toUpperCase() || "S"}
                         </AvatarFallback>
                     </Avatar>
-
-                    <div className="flex items-center gap-2 mb-2">
-                        <ShoppingBag className={`w-5 h-5 ${template.textColor}`} />
-                        <h1 className={`text-2xl font-bold tracking-tight ${template.textColor}`}>
-                            @{store.username}'s Store
-                        </h1>
+                    <div className="text-left">
+                        <div className="text-white text-sm font-semibold">{store.full_name}</div>
+                        <div className="text-white/60 text-xs">@{store.username}</div>
                     </div>
-                    {store.bio && (
-                        <p className={`text-sm opacity-90 max-w-sm ${template.textColor}`}>
-                            {store.bio}
-                        </p>
-                    )}
                 </div>
 
-                {/* Products Grid */}
-                {store.products.length > 0 ? (
-                    <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {store.products.map((product) => (
-                            <div key={product._id} className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-md hover:shadow-lg transition-all hover:scale-[1.02]">
-                                <div className="w-full h-40 bg-gray-100 rounded-lg overflow-hidden mb-3">
+                {/* Share Button */}
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    className="text-white hover:bg-white/10 rounded-full"
+                    onClick={() => setShareOpen(true)}
+                >
+                    <Share2 className="w-5 h-5" />
+                </Button>
+            </div>
+
+            {/* Products - Snap Scroll Container */}
+            {hasProducts ? (
+                <>
+                    <div
+                        ref={scrollContainerRef}
+                        onScroll={handleScroll}
+                        className="h-full w-full overflow-y-auto snap-y snap-mandatory scroll-smooth"
+                        style={{ scrollSnapType: 'y mandatory' }}
+                    >
+                        {store.products.map((product, index) => (
+                            <div
+                                key={product._id}
+                                className="h-screen w-full snap-start snap-always relative flex flex-col"
+                                style={{ scrollSnapAlign: 'start' }}
+                            >
+                                {/* Product Image - Full Screen Background */}
+                                <div className="absolute inset-0">
                                     {product.image_url ? (
-                                        <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
+                                        <img
+                                            src={product.image_url}
+                                            alt={product.title}
+                                            className="w-full h-full object-cover"
+                                        />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-purple-100 to-pink-100">
-                                            🛍️
+                                        <div className="w-full h-full bg-gradient-to-br from-purple-900 via-gray-900 to-black flex items-center justify-center">
+                                            <ShoppingBag className="w-24 h-24 text-white/20" />
                                         </div>
                                     )}
+                                    {/* Dark Gradient Overlay */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                                 </div>
-                                <h4 className="font-semibold text-gray-900 truncate">{product.title}</h4>
-                                {product.description && (
-                                    <p className="text-sm text-gray-500 line-clamp-2 mb-2">{product.description}</p>
+
+                                {/* Product Info - Bottom Overlay */}
+                                <div className="absolute bottom-0 left-0 right-0 p-6 pb-24 z-10">
+                                    <div className="max-w-lg mx-auto">
+                                        {/* Price Badge */}
+                                        <div className="inline-block bg-white text-black text-lg font-bold px-4 py-1 rounded-full mb-3">
+                                            ${product.price}
+                                        </div>
+
+                                        {/* Title */}
+                                        <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                                            {product.title}
+                                        </h2>
+
+                                        {/* Description */}
+                                        {product.description && (
+                                            <p className="text-white/80 text-sm md:text-base line-clamp-3 mb-4">
+                                                {product.description}
+                                            </p>
+                                        )}
+
+                                        {/* CTA Buttons */}
+                                        <div className="flex gap-3">
+                                            <Button
+                                                size="lg"
+                                                className="flex-1 bg-white text-black hover:bg-white/90 font-bold rounded-full"
+                                                onClick={() => setSelectedProduct(product)}
+                                            >
+                                                Buy Now
+                                            </Button>
+                                            <Button
+                                                size="lg"
+                                                variant="outline"
+                                                className="border-white/30 text-white hover:bg-white/10 rounded-full"
+                                                onClick={() => setSelectedProduct(product)}
+                                            >
+                                                <MessageCircle className="w-5 h-5" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Scroll Hint (only on first product) */}
+                                {index === 0 && store.products.length > 1 && (
+                                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 animate-bounce">
+                                        <ChevronDown className="w-6 h-6 text-white/60" />
+                                    </div>
                                 )}
-                                <div className="flex justify-between items-center mt-2">
-                                    <span className="font-bold text-lg text-primary">${product.price}</span>
-                                    <Button
-                                        size="sm"
-                                        className="rounded-full bg-black text-white hover:bg-black/80"
-                                        onClick={() => setSelectedProduct(product)}
-                                    >
-                                        Buy Now
-                                    </Button>
-                                </div>
                             </div>
                         ))}
                     </div>
-                ) : (
-                    <div className={`text-center py-16 opacity-70 ${template.textColor}`}>
-                        <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                        <p className="text-lg">No products available yet.</p>
+
+                    {/* Product Indicators */}
+                    {store.products.length > 1 && (
+                        <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2">
+                            {store.products.map((_, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => scrollToProduct(index)}
+                                    className={`w-2 h-2 rounded-full transition-all ${currentProductIndex === index
+                                            ? 'bg-white scale-125'
+                                            : 'bg-white/30 hover:bg-white/60'
+                                        }`}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Navigation Arrows */}
+                    <div className="fixed right-4 bottom-6 z-50 flex flex-col gap-2">
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-white/60 hover:text-white hover:bg-white/10 rounded-full"
+                            disabled={currentProductIndex === 0}
+                            onClick={() => scrollToProduct(currentProductIndex - 1)}
+                        >
+                            <ChevronUp className="w-5 h-5" />
+                        </Button>
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-white/60 hover:text-white hover:bg-white/10 rounded-full"
+                            disabled={currentProductIndex === store.products.length - 1}
+                            onClick={() => scrollToProduct(currentProductIndex + 1)}
+                        >
+                            <ChevronDown className="w-5 h-5" />
+                        </Button>
                     </div>
-                )}
-
-                {/* Back to Profile Link */}
-                <div className="mt-12 text-center">
-                    <a
-                        href={`/${store.username}`}
-                        className={`text-sm underline underline-offset-4 hover:opacity-80 transition-opacity ${template.textColor}`}
+                </>
+            ) : (
+                /* No Products State */
+                <div className="h-full flex flex-col items-center justify-center text-center px-4">
+                    <ShoppingBag className="w-16 h-16 text-white/20 mb-4" />
+                    <h3 className="text-xl font-semibold text-white mb-2">No products yet</h3>
+                    <p className="text-white/60 max-w-xs">
+                        This store doesn't have any products available at the moment.
+                    </p>
+                    <Button
+                        variant="outline"
+                        className="mt-6 border-white/20 text-white hover:bg-white/10"
+                        onClick={() => navigate(`/${store.username}`)}
                     >
-                        ← View full profile
-                    </a>
+                        View Profile
+                    </Button>
                 </div>
-            </div>
+            )}
 
+            {/* Modals */}
             {store && (
                 <>
                     <ProductInteractionModal
@@ -203,7 +303,7 @@ const PublicStore = () => {
                         onOpenChange={(open) => !open && setSelectedProduct(null)}
                         product={selectedProduct}
                         seller={store}
-                        initialStep={modalStep}
+                        initialStep="selection"
                     />
                     <ShareModal
                         open={shareOpen}

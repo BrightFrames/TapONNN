@@ -204,7 +204,7 @@ const Shop = () => {
         : {};
 
     const filteredProducts = products.filter(p =>
-        p.title.toLowerCase().includes(searchQuery.toLowerCase())
+        p && p.title && p.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
@@ -628,11 +628,11 @@ const Shop = () => {
                                             </div>
 
                                             {/* Product Grid */}
-                                            {products.length > 0 ? (
+                                            {products.filter(p => p && p.id).length > 0 ? (
                                                 <div className="grid gap-3">
-                                                    {products.map(product => (
+                                                    {products.filter(p => p && p.id).map((product, index) => (
                                                         <a
-                                                            key={product.id}
+                                                            key={product.id || `product-${index}`}
                                                             href={product.file_url ? (product.file_url.startsWith('http') ? product.file_url : `https://${product.file_url}`) : '#'}
                                                             target="_blank"
                                                             rel="noopener noreferrer"

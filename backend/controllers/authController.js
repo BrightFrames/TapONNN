@@ -157,7 +157,11 @@ const me = async (req, res) => {
             selected_theme: profileObj.selected_theme,
             social_links: profileObj.social_links instanceof Map ? Object.fromEntries(profileObj.social_links) : profileObj.social_links,
             design_config: profileObj.design_config,
-            language: user?.language || 'en'
+            language: user?.language || 'en',
+            // New fields for role-based profile handling
+            role: profileObj.role || 'super',
+            has_store: profileObj.has_store || false,
+            active_profile_mode: profileObj.active_profile_mode || 'personal'
         });
     } catch (err) {
         console.error("Me Error:", err);

@@ -57,6 +57,18 @@ const profileSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    // Role: 'super' (can have personal + store profiles) or 'personal' (single profile only)
+    role: {
+        type: String,
+        enum: ['super', 'personal'],
+        default: 'super'
+    },
+    // Active profile mode for Super Users
+    active_profile_mode: {
+        type: String,
+        enum: ['personal', 'store'],
+        default: 'personal'
+    },
     payment_instructions: {
         type: String,
         default: ''

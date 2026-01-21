@@ -12,6 +12,9 @@ router.put('/', authMiddleware, profileController.updateProfile);
 // POST /api/profile/theme (Authenticated)
 router.post('/theme', authMiddleware, profileController.updateTheme);
 
+// POST /api/profile/switch-mode (Authenticated) - Switch between personal/store mode
+router.post('/switch-mode', authMiddleware, profileController.switchProfileMode);
+
 // GET /api/profile/store/:username (Public) - Get store profile
 router.get('/store/:username', profileController.getPublicStoreProfile);
 

@@ -39,6 +39,7 @@ import {
 import ShareModal from "@/components/ShareModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { LanguageSelectorDialog } from "@/components/LanguageSelectorDialog";
+import ProfileSwitcher from "@/components/ProfileSwitcher";
 
 const NavItem = ({ icon: Icon, label, active = false, badge, onClick }: { icon: any, label: string, active?: boolean, badge?: string, onClick?: () => void }) => (
     <Button
@@ -65,21 +66,8 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
 
     return (
         <div className="flex flex-col h-full bg-sidebar/50 text-sidebar-foreground">
-            {/* Profile Switcher (Mock) */}
-            <div className="p-4 border-b border-sidebar-border/50">
-                <Button variant="ghost" className="w-full justify-between px-2 h-auto py-2 hover:bg-sidebar-accent group">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-                            {user?.username?.[0]?.toUpperCase() || 'T'}
-                        </div>
-                        <div className="text-left">
-                            <div className="text-sm font-semibold leading-none">{user?.username || 'My Profile'}</div>
-                            <div className="text-xs text-muted-foreground mt-1">Free Plan</div>
-                        </div>
-                    </div>
-                    <ChevronDown className="w-4 h-4 text-muted-foreground opacity-50 group-hover:opacity-100" />
-                </Button>
-            </div>
+            {/* Profile Switcher */}
+            <ProfileSwitcher />
 
             <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
 
@@ -88,7 +76,10 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                     <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Manage</h4>
                     <NavItem icon={List} label="Links & Blocks" active={location.pathname === '/dashboard'} onClick={() => handleNav('/dashboard')} />
                     <NavItem icon={Palette} label="Design & Themes" active={location.pathname === '/design'} onClick={() => handleNav('/design')} />
-                    <NavItem icon={Store} label="Store & Products" active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')} onClick={() => handleNav('/dashboard/business?tab=shop')} />
+                    {/* Only show Store for Super Users */}
+                    {user?.role === 'super' && (
+                        <NavItem icon={Store} label="Store & Products" active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')} onClick={() => handleNav('/dashboard/business?tab=shop')} />
+                    )}
                     <NavItem icon={Image} label="Media Library" active={location.pathname === '/media'} onClick={() => handleNav('/media')} />
                 </div>
 
