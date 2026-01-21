@@ -79,18 +79,39 @@ const PublicBlockCard = ({ block, onInteract, template }: PublicBlockCardProps) 
         );
     }
 
-    // Default Link/Content Block
+    // Default Link/Content Block - Redesigned as Premium Card
     return (
         <a
             onClick={(e) => {
                 e.preventDefault();
                 onInteract(block);
             }}
-            className={`w-full block text-center px-6 py-4 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${template.buttonStyle} flex items-center justify-between group`}
+            className="block group w-full"
         >
-            <div className="w-5" /> {/* Spacer for centering */}
-            <span className="font-medium truncate px-2">{block.title}</span>
-            <Icon className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" />
+            <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 bg-card border border-border">
+                <CardContent className="p-4 flex items-center justify-between gap-4">
+                    {block.thumbnail ? (
+                        <div className="w-12 h-12 rounded-md bg-muted overflow-hidden shrink-0">
+                            <img src={block.thumbnail} alt="" className="w-full h-full object-cover" />
+                        </div>
+                    ) : (
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                            <Icon className="w-5 h-5" />
+                        </div>
+                    )}
+
+                    <div className="flex-1 min-w-0 text-left">
+                        <h3 className="font-semibold text-foreground truncate text-sm sm:text-base">{block.title}</h3>
+                        {block.content.description && (
+                            <p className="text-xs text-muted-foreground truncate">{block.content.description}</p>
+                        )}
+                    </div>
+
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-300">
+                        <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                </CardContent>
+            </Card>
         </a>
     );
 };

@@ -255,77 +255,93 @@ const PublicProfile = () => {
                 </Button>
             </div>
 
-            <div className="z-10 w-full max-w-lg mx-auto flex flex-col items-center">
-                {/* Profile Header */}
-                <div className="flex flex-col items-center mb-8 text-center">
-                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl mb-4">
-                        <AvatarImage src={profile.avatar} />
-                        <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
+            {/* Premium Profile Header */}
+            <div className="z-10 w-full max-w-4xl mx-auto flex flex-col items-center mb-12">
+                <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full opacity-30 group-hover:opacity-75 blur transition duration-500"></div>
+                    <Avatar className="relative w-32 h-32 border-4 border-background shadow-xl">
+                        <AvatarImage src={profile.avatar} className="object-cover" />
+                        <AvatarFallback className="text-4xl font-bold bg-muted text-foreground">
                             {profile.name?.[0]?.toUpperCase() || "U"}
                         </AvatarFallback>
                     </Avatar>
-                    <h1 className={`text-2xl font-bold mb-2 ${template.textColor}`}>@{profile.username}</h1>
-                    {profile.bio && <p className={`text-sm opacity-90 ${template.textColor}`}>{profile.bio}</p>}
                 </div>
 
-                {/* Social Links */}
-                {profile.social_links && Object.keys(profile.social_links).length > 0 && (
-                    <div className={`flex gap-4 mb-8 justify-center flex-wrap ${template.textColor}`}>
-                        {Object.entries(profile.social_links).map(([platform, url]: [string, any]) => {
-                            if (!url) return null;
-                            const p = platform.toLowerCase();
-                            let Icon = Link2;
-                            if (p.includes('instagram')) Icon = Instagram;
-                            else if (p.includes('twitter') || p.includes('x.com')) Icon = Twitter;
-                            else if (p.includes('facebook')) Icon = Facebook;
-                            else if (p.includes('linkedin')) Icon = Linkedin;
-                            else if (p.includes('youtube')) Icon = Youtube;
-                            else if (p.includes('github')) Icon = Github;
+                <h1 className="text-3xl sm:text-4xl font-extrabold mt-6 tracking-tight text-foreground">{profile.name || profile.username}</h1>
+                <p className="text-sm font-medium text-muted-foreground mt-1">@{profile.username}</p>
 
-                            // Ensure URL has protocol
-                            const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+                {profile.bio && (
+                    <p className="mt-4 text-base text-muted-foreground max-w-lg text-center leading-relaxed">
+                        {profile.bio}
+                    </p>
+                )}
+            </div>
 
-                            return (
-                                <a
-                                    key={platform}
-                                    href={href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hover:opacity-80 hover:scale-110 transition-transform cursor-pointer p-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/10"
-                                >
-                                    <Icon size={20} />
-                                </a>
-                            );
-                        })}
+            {/* Social Links - Minimal Row */}
+            {profile.social_links && Object.keys(profile.social_links).length > 0 && (
+                <div className="flex gap-3 mb-12 justify-center flex-wrap">
+                    {Object.entries(profile.social_links).map(([platform, url]: [string, any]) => {
+                        if (!url) return null;
+                        const p = platform.toLowerCase();
+                        let Icon = Link2;
+                        if (p.includes('instagram')) Icon = Instagram;
+                        else if (p.includes('twitter') || p.includes('x.com')) Icon = Twitter;
+                        else if (p.includes('facebook')) Icon = Facebook;
+                        else if (p.includes('linkedin')) Icon = Linkedin;
+                        else if (p.includes('youtube')) Icon = Youtube;
+                        else if (p.includes('github')) Icon = Github;
+
+                        const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+
+                        return (
+                            <a
+                                key={platform}
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2.5 rounded-full bg-background border border-border text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-all duration-300 hover:scale-110"
+                            >
+                                <Icon size={18} />
+                            </a>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Bento Grid Layout */}
+            <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 auto-rows-fr">
+                {blocks.length > 0 ? (
+                    blocks.map((block: any, index: number) => {
+                        // Determine span based on index or type logic (Mock logic: every 3rd item spans full width)
+                        const isFeatured = index === 0 || block.block_type === 'product';
+                        const colSpan = isFeatured ? 'sm:col-span-2' : 'sm:col-span-1';
+
+                        return (
+                            <div key={block._id} className={`${colSpan} flex`}>
+                                <PublicBlockCard
+                                    block={block}
+                                    onInteract={handleBlockInteract}
+                                    template={template}
+                                />
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div className="col-span-full py-12 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
+                        <p className="text-muted-foreground font-medium">No content blocks yet.</p>
                     </div>
                 )}
-
-                {/* Blocks List */}
-                <div className="w-full space-y-4">
-                    {blocks.length > 0 ? (
-                        blocks.map((block: any) => (
-                            <PublicBlockCard
-                                key={block._id}
-                                block={block}
-                                onInteract={handleBlockInteract}
-                                template={template}
-                            />
-                        ))
-                    ) : (
-                        <div className={`text-center py-8 opacity-70 ${template.textColor}`}>
-                            <p>No active blocks.</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div className="mt-16 text-center">
-                    <a href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-background/20 backdrop-blur-md border border-white/10 rounded-full text-xs font-semibold hover:bg-background/30 transition-all text-white hover:scale-105">
-                        <Sparkles className="w-3 h-3 text-primary" />
-                        <span>Create your own Tap2</span>
-                    </a>
-                </div>
             </div>
+
+            {/* Footer */}
+            <div className="mt-16 text-center">
+                <a href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-background/20 backdrop-blur-md border border-white/10 rounded-full text-xs font-semibold hover:bg-background/30 transition-all text-white hover:scale-105">
+                    <Sparkles className="w-3 h-3 text-primary" />
+                    <span>Create your own Tap2</span>
+                </a>
+            </div>
+
+
 
             {/* Modals */}
             <LoginToContinueModal
