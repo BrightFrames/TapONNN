@@ -1,10 +1,30 @@
 const axios = require('axios');
+const nodemailer = require('nodemailer');
 
 const MSG91_AUTH_KEY = process.env.MSG91_AUTH_KEY;
 const MSG91_TEMPLATE_ID = process.env.MSG91_TEMPLATE_ID;
-const MSG91_EMAIL_DOMAIN = process.env.MSG91_EMAIL_DOMAIN || 'tap2.me';
 const MSG91_WELCOME_TEMPLATE_ID = process.env.MSG91_WELCOME_EMAIL_TEMPLATE_ID;
 const MSG91_SUBSCRIPTION_TEMPLATE_ID = process.env.MSG91_SUBSCRIPTION_EMAIL_TEMPLATE_ID;
+
+/**
+ * Create Nodemailer SMTP transporter for sending emails
+ */
+const createEmailTransporter = () => {
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        console.error('SMTP not configured. Please set SMTP_HOST, SMTP_USER, SMTP_PASS in .env');
+        return null;
+    }
+
+    return nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+        },
+    });
+};
 
 /**
  * Send OTP to a mobile number using MSG91
@@ -275,65 +295,76 @@ const generateOTP = () => {
 };
 
 /**
- * Send OTP to email using MSG91 transactional email
+ * Send OTP to email using Nodemailer SMTP
  * @param {string} email - Email address to send OTP
  * @returns {Promise<{success: boolean, message: string}>}
  */
 const sendEmailOTP = async (email) => {
     try {
+        // Create SMTP transporter
+        const transporter = createEmailTransporter();
+
+        if (!transporter) {
+            return { success: false, message: 'Email service not configured. Please set SMTP credentials in .env' };
+        }
+
         // Generate OTP
         const otp = generateOTP();
         const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
 
-        // Store OTP
+        // Store OTP for verification
         emailOTPStore.set(email.toLowerCase(), { otp, expiresAt });
 
         console.log(`Generated OTP for ${email}: ${otp}`); // For debugging
 
-        // Send via MSG91 transactional email
-        if (MSG91_AUTH_KEY) {
-            try {
-                const response = await axios.post(
-                    'https://control.msg91.com/api/v5/email/send',
-                    {
-                        to: [{ email: email }],
-                        from: { email: `noreply@${MSG91_EMAIL_DOMAIN}`, name: 'TapONN' },
-                        domain: MSG91_EMAIL_DOMAIN,
-                        subject: 'Your Verification Code - TapONN',
-                        body: `
-                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                                <h2 style="color: #333;">Verify Your Email</h2>
-                                <p>Your verification code is:</p>
-                                <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-                                    ${otp}
-                                </div>
-                                <p style="color: #666;">This code expires in 5 minutes.</p>
-                                <p style="color: #999; font-size: 12px;">If you didn't request this code, please ignore this email.</p>
-                            </div>
-                        `
-                    },
-                    {
-                        headers: {
-                            'authkey': MSG91_AUTH_KEY,
-                            'Content-Type': 'application/json'
-                        }
-                    }
-                );
+        // Email configuration
+        const fromName = process.env.EMAIL_FROM_NAME || 'TapONN';
+        const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER;
 
-                console.log('MSG91 Email Response:', response.data);
-                return { success: true, message: 'OTP sent to email successfully' };
-            } catch (emailError) {
-                console.error('MSG91 Email Error:', emailError.response?.data || emailError.message);
-            }
-        }
+        const mailOptions = {
+            from: `"${fromName}" <${fromEmail}>`,
+            to: email,
+            subject: 'Your Verification Code - TapONN',
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #ffffff;">
+                    <div style="text-align: center; margin-bottom: 40px;">
+                        <div style="display: inline-block; width: 60px; height: 60px; background: linear-gradient(135deg, #7C3AED, #9333EA); border-radius: 16px; line-height: 60px; color: white; font-size: 24px; font-weight: bold;">T</div>
+                    </div>
+                    
+                    <h1 style="color: #1F2937; font-size: 28px; margin-bottom: 20px; text-align: center;">Verify Your Email</h1>
+                    
+                    <p style="color: #4B5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px; text-align: center;">
+                        Your verification code is:
+                    </p>
+                    
+                    <div style="background: linear-gradient(135deg, #7C3AED, #9333EA); padding: 25px; text-align: center; font-size: 36px; font-weight: bold; letter-spacing: 8px; margin: 30px 0; border-radius: 12px; color: white;">
+                        ${otp}
+                    </div>
+                    
+                    <p style="color: #9CA3AF; font-size: 14px; text-align: center; margin-bottom: 20px;">
+                        This code expires in 5 minutes.
+                    </p>
+                    
+                    <p style="color: #9CA3AF; font-size: 12px; text-align: center; border-top: 1px solid #E5E7EB; padding-top: 20px;">
+                        If you didn't request this code, please ignore this email.
+                    </p>
+                </div>
+            `
+        };
 
-        // For development: OTP is stored, verification will work
-        console.log(`DEV MODE: OTP for ${email} is ${otp}`);
+        console.log('Sending OTP email via Nodemailer to:', email);
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('OTP Email sent successfully:', info.messageId);
+
         return { success: true, message: 'OTP sent to email successfully' };
 
     } catch (error) {
-        console.error('Send Email OTP Exception:', error.message);
-        return { success: false, message: 'Failed to send verification code' };
+        console.error('Nodemailer Email Error:', error.message);
+        return {
+            success: false,
+            message: error.message || 'Failed to send verification code'
+        };
     }
 };
 
