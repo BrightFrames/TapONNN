@@ -6,6 +6,12 @@ const authController = require('../controllers/authController');
 // POST /api/auth/signup
 router.post('/signup', authController.signup);
 
+// POST /api/auth/signup/send-otp - Step 1: Validate and send OTP
+router.post('/signup/send-otp', authController.signupSendOTP);
+
+// POST /api/auth/signup/verify - Step 2: Verify OTP and complete signup
+router.post('/signup/verify', authController.signupVerifyOTP);
+
 // POST /api/auth/login
 router.post('/login', authController.login);
 

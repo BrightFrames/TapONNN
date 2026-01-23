@@ -14,6 +14,9 @@ interface User {
     role?: 'super' | 'personal';
     has_store?: boolean;
     active_profile_mode?: 'personal' | 'store';
+    // Gender for avatar generation
+    gender?: 'male' | 'female' | 'other';
+    phone_verified?: boolean;
 }
 
 interface Link {
@@ -49,7 +52,9 @@ interface AuthContextType {
     selectedTheme: string;
     login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
     loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
-    signUp: (email: string, pass: string, username: string, name: string) => Promise<{ success: boolean; error?: string }>;
+    signUp: (email: string, pass: string, username: string, name: string, gender?: string, phone_number?: string) => Promise<{ success: boolean; error?: string }>;
+    sendSignupOTP: (email: string, username: string) => Promise<{ success: boolean; error?: string; maskedEmail?: string }>;
+    verifySignupOTP: (email: string, pass: string, username: string, name: string, gender: string, phone_number: string, otp: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => Promise<void>;
     addLink: () => Promise<Link | null>;
     updateLinks: (links: Link[]) => Promise<void>;
@@ -243,12 +248,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { success: false, error: "Not implemented" };
     };
 
-    const signUp = async (email: string, pass: string, username: string, name: string) => {
+    const signUp = async (email: string, pass: string, username: string, name: string, gender?: string, phone_number?: string) => {
         try {
             const res = await fetch(`${API_URL}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password: pass, username, full_name: name })
+                body: JSON.stringify({
+                    email,
+                    password: pass,
+                    username,
+                    full_name: name,
+                    gender: gender || 'other',
+                    phone_number: phone_number || ''
+                })
             });
 
             const data = await res.json();
@@ -266,6 +278,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 name: data.user.full_name,
                 username: data.user.username,
                 email: data.user.email,
+                avatar: data.user.avatar,
+                gender: data.user.gender,
                 email_confirmed_at: new Date().toISOString()
             });
             setIsAuthenticated(true);
@@ -273,6 +287,74 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             return { success: true };
         } catch (err: any) {
             console.error("Signup unexpected error:", err);
+            return { success: false, error: "Network error" };
+        }
+    };
+
+    // Send OTP to email for signup verification
+    const sendSignupOTP = async (email: string, username: string) => {
+        try {
+            const res = await fetch(`${API_URL}/auth/signup/send-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, username })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                return { success: false, error: data.error };
+            }
+
+            return { success: true, maskedEmail: data.maskedEmail };
+        } catch (err: any) {
+            console.error("Send signup OTP error:", err);
+            return { success: false, error: "Network error" };
+        }
+    };
+
+    // Verify OTP and complete signup
+    const verifySignupOTP = async (email: string, pass: string, username: string, name: string, gender: string, phone_number: string, otp: string) => {
+        try {
+            const res = await fetch(`${API_URL}/auth/signup/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email,
+                    password: pass,
+                    username,
+                    full_name: name,
+                    gender,
+                    phone_number,
+                    otp
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                return { success: false, error: data.error };
+            }
+
+            // Save token
+            localStorage.setItem('auth_token', data.token);
+
+            // Set state
+            setUser({
+                id: data.user.id,
+                name: data.user.full_name,
+                username: data.user.username,
+                email: data.user.email,
+                avatar: data.user.avatar,
+                gender: data.user.gender,
+                phone_verified: data.user.phone_verified,
+                email_confirmed_at: new Date().toISOString()
+            });
+            setIsAuthenticated(true);
+
+            return { success: true };
+        } catch (err: any) {
+            console.error("Verify signup OTP error:", err);
             return { success: false, error: "Network error" };
         }
     };
@@ -601,12 +683,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             login,
             loginWithGoogle,
             signUp,
+            sendSignupOTP,
+            verifySignupOTP,
             logout,
             addLink,
             updateLinks,
             deleteLink,
             updateTheme,
-            updateProfile,
             updateProfile,
             refreshProfile,
             blocks,

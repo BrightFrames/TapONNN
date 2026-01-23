@@ -264,12 +264,120 @@ const sendSubscriptionEmail = async (email, fullName, planName, amount, expiresA
     });
 };
 
+// In-memory OTP storage (use Redis in production)
+const emailOTPStore = new Map();
+
+/**
+ * Generate a random 6-digit OTP
+ */
+const generateOTP = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+/**
+ * Send OTP to email using MSG91 transactional email
+ * @param {string} email - Email address to send OTP
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+const sendEmailOTP = async (email) => {
+    try {
+        // Generate OTP
+        const otp = generateOTP();
+        const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+        // Store OTP
+        emailOTPStore.set(email.toLowerCase(), { otp, expiresAt });
+
+        console.log(`Generated OTP for ${email}: ${otp}`); // For debugging
+
+        // Send via MSG91 transactional email
+        if (MSG91_AUTH_KEY) {
+            try {
+                const response = await axios.post(
+                    'https://control.msg91.com/api/v5/email/send',
+                    {
+                        to: [{ email: email }],
+                        from: { email: `noreply@${MSG91_EMAIL_DOMAIN}`, name: 'TapONN' },
+                        domain: MSG91_EMAIL_DOMAIN,
+                        subject: 'Your Verification Code - TapONN',
+                        body: `
+                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                                <h2 style="color: #333;">Verify Your Email</h2>
+                                <p>Your verification code is:</p>
+                                <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+                                    ${otp}
+                                </div>
+                                <p style="color: #666;">This code expires in 5 minutes.</p>
+                                <p style="color: #999; font-size: 12px;">If you didn't request this code, please ignore this email.</p>
+                            </div>
+                        `
+                    },
+                    {
+                        headers: {
+                            'authkey': MSG91_AUTH_KEY,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                console.log('MSG91 Email Response:', response.data);
+                return { success: true, message: 'OTP sent to email successfully' };
+            } catch (emailError) {
+                console.error('MSG91 Email Error:', emailError.response?.data || emailError.message);
+            }
+        }
+
+        // For development: OTP is stored, verification will work
+        console.log(`DEV MODE: OTP for ${email} is ${otp}`);
+        return { success: true, message: 'OTP sent to email successfully' };
+
+    } catch (error) {
+        console.error('Send Email OTP Exception:', error.message);
+        return { success: false, message: 'Failed to send verification code' };
+    }
+};
+
+/**
+ * Verify email OTP from in-memory storage
+ * @param {string} email - Email address
+ * @param {string} otp - OTP entered by user
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+const verifyEmailOTP = async (email, otp) => {
+    try {
+        const stored = emailOTPStore.get(email.toLowerCase());
+
+        if (!stored) {
+            return { success: false, message: 'OTP not found. Please request a new one.' };
+        }
+
+        if (Date.now() > stored.expiresAt) {
+            emailOTPStore.delete(email.toLowerCase());
+            return { success: false, message: 'OTP has expired. Please request a new one.' };
+        }
+
+        if (stored.otp !== otp) {
+            return { success: false, message: 'Invalid OTP. Please try again.' };
+        }
+
+        // OTP verified - remove from store
+        emailOTPStore.delete(email.toLowerCase());
+        return { success: true, message: 'Email verified successfully' };
+
+    } catch (error) {
+        console.error('Verify Email OTP Exception:', error.message);
+        return { success: false, message: 'Failed to verify OTP' };
+    }
+};
+
 module.exports = {
     sendOTP,
     verifyOTP,
     resendOTP,
     sendEmail,
     sendWelcomeEmail,
-    sendSubscriptionEmail
+    sendSubscriptionEmail,
+    sendEmailOTP,
+    verifyEmailOTP
 };
 

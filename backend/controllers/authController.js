@@ -5,13 +5,65 @@ const Profile = require('../models/Profile');
 const { PasswordResetToken } = require('../models/Subscription');
 const { sendWelcomeEmail } = require('../services/msg91Service');
 
-// SIGNUP
+// DiceBear Avatar Generation
+const { createAvatar } = require('@dicebear/core');
+const { initials, avataaars, lorelei, notionists } = require('@dicebear/collection');
+
+/**
+ * Generate a DiceBear avatar URL based on user's name and gender
+ * @param {string} seed - The seed value (usually full_name or username)
+ * @param {string} [gender] - Gender ('male', 'female', or 'other' for neutral)
+ * @returns {string} - Data URI of the generated avatar
+ */
+const generateDiceBearAvatar = (seed, gender) => {
+    let avatar;
+
+    switch (gender) {
+        case 'male':
+            // Masculine avatar style
+            avatar = createAvatar(avataaars, {
+                seed: seed,
+                size: 128,
+                backgroundColor: ['b6e3f4', 'c0aede', 'd1d4f9'],
+                accessories: ['prescription01', 'prescription02', 'round'],
+                accessoriesColor: ['262e33', '65c9ff'],
+                facialHair: ['beardLight', 'beardMajestic', 'moustacheFancy'],
+                facialHairColor: ['2c1b18', '4a312c', '724133']
+            });
+            break;
+        case 'female':
+            // Feminine avatar style
+            avatar = createAvatar(lorelei, {
+                seed: seed,
+                size: 128,
+                backgroundColor: ['ffd5dc', 'ffdfbf', 'd1d4f9', 'c0aede']
+            });
+            break;
+        default:
+            // Neutral/Other - use initials style
+            avatar = createAvatar(initials, {
+                seed: seed,
+                size: 128,
+                backgroundColor: ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf'],
+                fontWeight: 500,
+                fontSize: 42
+            });
+    }
+
+    return avatar.toDataUri();
+};
+
+// SIGNUP - Now includes gender and phone_number
 const signup = async (req, res) => {
-    const { email, password, username, full_name } = req.body;
+    const { email, password, username, full_name, gender, phone_number } = req.body;
 
     if (!email || !password || !username || !full_name) {
         return res.status(400).json({ error: "Missing required fields" });
     }
+
+    // Validate gender if provided
+    const validGenders = ['male', 'female', 'other'];
+    const userGender = validGenders.includes(gender) ? gender : 'other';
 
     try {
         // 1. Check if user already exists
@@ -25,6 +77,14 @@ const signup = async (req, res) => {
             return res.status(400).json({ error: "Username already taken" });
         }
 
+        // Check if phone number is already in use (if provided)
+        if (phone_number) {
+            const existingPhone = await Profile.findOne({ phone_number });
+            if (existingPhone) {
+                return res.status(400).json({ error: "Phone number already registered" });
+            }
+        }
+
         // 2. Hash password
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
@@ -36,24 +96,31 @@ const signup = async (req, res) => {
         });
         await newUser.save();
 
-        // 4. Create Profile
+        // 4. Generate DiceBear avatar based on gender
+        const avatarDataUri = generateDiceBearAvatar(full_name, userGender);
+
+        // 5. Create Profile with auto-generated avatar
         const newProfile = new Profile({
             user_id: newUser._id,
             username: username.toLowerCase(),
             full_name,
             email,
+            avatar_url: avatarDataUri,
+            gender: userGender,
+            phone_number: phone_number || '',
+            phone_verified: false,
             selected_theme: 'artemis'
         });
         await newProfile.save();
 
-        // 5. Generate Token
+        // 6. Generate Token
         const token = jwt.sign(
             { id: newUser._id.toString(), email: newUser.email },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
-        // 6. Send Welcome Email (async, don't wait)
+        // 7. Send Welcome Email (async, don't wait)
         sendWelcomeEmail(email, username, full_name).catch(err => {
             console.error('Failed to send welcome email:', err);
         });
@@ -64,7 +131,9 @@ const signup = async (req, res) => {
                 id: newUser._id,
                 email: newUser.email,
                 username: newProfile.username,
-                full_name: newProfile.full_name
+                full_name: newProfile.full_name,
+                gender: newProfile.gender,
+                avatar: avatarDataUri
             }
         });
 
@@ -467,8 +536,143 @@ const deleteAccount = async (req, res) => {
     }
 };
 
+// SIGNUP SEND OTP - Step 1: Validate data and send OTP to email
+const signupSendOTP = async (req, res) => {
+    const { email, username } = req.body;
+
+    if (!email || !username) {
+        return res.status(400).json({ error: "Email and username are required" });
+    }
+
+    try {
+        // Check if email already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: "User already exists with this email" });
+        }
+
+        // Check if username is taken
+        const existingProfile = await Profile.findOne({ username: username.toLowerCase() });
+        if (existingProfile) {
+            return res.status(400).json({ error: "Username already taken" });
+        }
+
+        // Send OTP to email via MSG91
+        const msg91Service = require('../services/msg91Service');
+        const result = await msg91Service.sendEmailOTP(email);
+
+        if (result.success) {
+            // Mask email for display
+            const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, '$1****$3');
+            res.json({
+                success: true,
+                message: "OTP sent to your email",
+                maskedEmail
+            });
+        } else {
+            res.status(500).json({ error: result.message || "Failed to send OTP" });
+        }
+    } catch (err) {
+        console.error("Signup Send OTP Error:", err);
+        res.status(500).json({ error: "Failed to send verification code" });
+    }
+};
+
+// SIGNUP VERIFY OTP - Step 2: Verify email OTP and complete registration
+const signupVerifyOTP = async (req, res) => {
+    const { email, password, username, full_name, gender, phone_number, otp } = req.body;
+
+    if (!email || !password || !username || !full_name || !otp) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
+
+    try {
+        // Verify email OTP via MSG91
+        const msg91Service = require('../services/msg91Service');
+        const otpResult = await msg91Service.verifyEmailOTP(email, otp);
+
+        if (!otpResult.success) {
+            return res.status(400).json({ error: otpResult.message || "Invalid OTP" });
+        }
+
+        // Double-check email and username availability (in case of race conditions)
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: "User already exists with this email" });
+        }
+
+        const existingProfile = await Profile.findOne({ username: username.toLowerCase() });
+        if (existingProfile) {
+            return res.status(400).json({ error: "Username already taken" });
+        }
+
+        // Validate gender
+        const validGenders = ['male', 'female', 'other'];
+        const userGender = validGenders.includes(gender) ? gender : 'other';
+
+        // Hash password
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(password, salt);
+
+        // Create User
+        const newUser = new User({
+            email,
+            password_hash: passwordHash
+        });
+        await newUser.save();
+
+        // Generate DiceBear avatar based on gender
+        const avatarDataUri = generateDiceBearAvatar(full_name, userGender);
+
+        // Create Profile with verified email
+        const newProfile = new Profile({
+            user_id: newUser._id,
+            username: username.toLowerCase(),
+            full_name,
+            email,
+            avatar_url: avatarDataUri,
+            gender: userGender,
+            phone_number: phone_number || '',
+            phone_verified: false,
+            selected_theme: 'artemis'
+        });
+        await newProfile.save();
+
+        // Generate Token
+        const token = jwt.sign(
+            { id: newUser._id.toString(), email: newUser.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        // Send Welcome Email (async, don't wait)
+        sendWelcomeEmail(email, username, full_name).catch(err => {
+            console.error('Failed to send welcome email:', err);
+        });
+
+        res.json({
+            token,
+            user: {
+                id: newUser._id,
+                email: newUser.email,
+                username: newProfile.username,
+                full_name: newProfile.full_name,
+                gender: newProfile.gender,
+                avatar: avatarDataUri,
+                phone_verified: true
+            }
+        });
+
+    } catch (err) {
+        console.error("Signup Verify OTP Error:", err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
 module.exports = {
     signup,
+    signupSendOTP,
+    signupVerifyOTP,
     login,
     me,
     changePassword,

@@ -36,6 +36,15 @@ const profileSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    phone_verified: {
+        type: Boolean,
+        default: false
+    },
+    gender: {
+        type: String,
+        enum: ['male', 'female', 'other'],
+        default: 'other'
+    },
     selected_theme: {
         type: String,
         default: 'artemis'
