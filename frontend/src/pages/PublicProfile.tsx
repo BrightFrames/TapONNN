@@ -5,7 +5,7 @@ import { templates } from "@/data/templates";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Instagram, Twitter, Sparkles, Share2, Link2, Facebook, Linkedin, Youtube, Github } from "lucide-react";
+import { Instagram, Twitter, Sparkles, Share2, Link2, Facebook, Linkedin, Youtube, Github, Heart, X, Share, MessageCircle, Search } from "lucide-react";
 import PublicBlockCard from "@/components/PublicBlockCard";
 import EnquiryModal from "@/components/EnquiryModal";
 import PaymentModal from "@/components/PaymentModal";
@@ -26,6 +26,9 @@ const PublicProfile = () => {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState<any>(null);
     const [blocks, setBlocks] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<'links' | 'offerings'>('links');
+    const [searchQuery, setSearchQuery] = useState('');
     const [notFound, setNotFound] = useState(false);
 
     // Modals State
@@ -82,7 +85,6 @@ const PublicProfile = () => {
                 avatar: userProfile.avatar_url,
                 bio: userProfile.bio,
                 selectedTheme: userProfile.selected_theme,
-                selectedTheme: userProfile.selected_theme,
                 payment_instructions: userProfile.payment_instructions,
                 social_links: userProfile.social_links || {}
             });
@@ -92,7 +94,14 @@ const PublicProfile = () => {
             const publicBlocks = await blocksRes.json();
             setBlocks(publicBlocks || []);
 
-            // 3. Track View (Fire & Forget)
+            // 3. Fetch Products
+            const productsRes = await fetch(`${API_URL}/public/products/${userProfile.username}`);
+            if (productsRes.ok) {
+                const publicProducts = await productsRes.json();
+                setProducts(publicProducts.products || publicProducts || []);
+            }
+
+            // 4. Track View (Fire & Forget)
             fetch(`${API_URL}/profile/${userProfile.id}/view`, { method: 'POST' }).catch(() => { });
 
         } catch (error) {
@@ -201,7 +210,8 @@ const PublicProfile = () => {
                     blockId: block._id,
                     blockTitle: block.title,
                     price: block.content.price || 0,
-                    intentId: intentId
+                    intentId: intentId,
+                    sellerId: profile?.id || ''
                 });
             } else {
                 setEnquiryModal({
@@ -308,33 +318,136 @@ const PublicProfile = () => {
                 </div>
             )}
 
-            {/* Bento Grid Layout */}
-            <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 auto-rows-fr">
-                {blocks.length > 0 ? (
-                    blocks.map((block: any, index: number) => {
-                        // Determine span based on index or type logic (Mock logic: every 3rd item spans full width)
-                        const isFeatured = index === 0 || block.block_type === 'product';
-                        const colSpan = isFeatured ? 'sm:col-span-2' : 'sm:col-span-1';
-
-                        return (
-                            <div key={block._id} className={`${colSpan} flex`}>
-                                <PublicBlockCard
-                                    block={block}
-                                    onInteract={handleBlockInteract}
-                                    template={template}
-                                />
-                            </div>
-                        );
-                    })
-                ) : (
-                    <div className="col-span-full py-12 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
-                        <p className="text-muted-foreground font-medium">No content blocks yet.</p>
-                    </div>
-                )}
+            {/* Tab Switcher */}
+            <div className="w-full max-w-4xl flex justify-center mb-8">
+                <div className="inline-flex bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/20">
+                    <button
+                        onClick={() => setActiveTab('links')}
+                        className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'links' ? 'bg-white text-black shadow-md' : 'text-white/80 hover:text-white'}`}
+                    >
+                        Links
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('offerings')}
+                        className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'offerings' ? 'bg-white text-black shadow-md' : 'text-white/80 hover:text-white'}`}
+                    >
+                        Offerings
+                    </button>
+                </div>
             </div>
 
+            {/* Links Tab (Bento Grid Layout) */}
+            {activeTab === 'links' && (
+                <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 auto-rows-fr">
+                    {blocks.length > 0 ? (
+                        blocks.map((block: any, index: number) => {
+                            const isFeatured = index === 0 || block.block_type === 'product';
+                            const colSpan = isFeatured ? 'sm:col-span-2' : 'sm:col-span-1';
+
+                            return (
+                                <div key={block._id} className={`${colSpan} flex`}>
+                                    <PublicBlockCard
+                                        block={block}
+                                        onInteract={handleBlockInteract}
+                                        template={template}
+                                    />
+                                </div>
+                            );
+                        })
+                    ) : (
+                        <div className="col-span-full py-12 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
+                            <p className="text-muted-foreground font-medium">No links yet.</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Offerings Tab (Connect Card Design) */}
+            {activeTab === 'offerings' && (
+                <div className="w-full max-w-4xl">
+                    {/* Search Bar */}
+                    <div className="relative mb-6">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
+                        <input
+                            type="text"
+                            placeholder="Search offerings..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-full pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30"
+                        />
+                    </div>
+
+                    {/* Product Grid */}
+                    {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).map((product, index) => (
+                                <div
+                                    key={product._id || `product-${index}`}
+                                    className="relative aspect-square w-full rounded-2xl overflow-hidden group shadow-md"
+                                >
+                                    {/* Background Image */}
+                                    {product.image_url ? (
+                                        <img src={product.image_url} alt={product.title} className="absolute inset-0 w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-black w-full h-full flex items-center justify-center">
+                                            <div className="text-4xl opacity-20">✨</div>
+                                        </div>
+                                    )}
+
+                                    {/* Overlay */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                                    {/* Bottom Content */}
+                                    <div className="absolute bottom-0 left-0 right-0 p-3 z-20 text-white">
+                                        {/* Badge / Pill */}
+                                        <div className="inline-flex items-center gap-1 bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-full text-[8px] font-medium mb-2 border border-white/10">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                            <span>{profile?.name || "User"}</span>
+                                        </div>
+
+                                        <h3 className="text-sm font-bold leading-tight mb-1 text-white">{product.title}</h3>
+                                        <p className="text-[10px] text-gray-300 line-clamp-1 mb-2 font-light">{product.description}</p>
+
+                                        {/* Action Row */}
+                                        <div className="flex items-center gap-2">
+                                            <a
+                                                href={product.file_url ? (product.file_url.startsWith('http') ? product.file_url : `https://${product.file_url}`) : '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 bg-white text-black h-8 rounded-full font-bold text-xs flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                            >
+                                                Connect
+                                            </a>
+                                            <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
+                                                <Heart className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
+                                                <Share className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="py-12 text-center border-2 border-dashed border-white/20 rounded-xl bg-white/5">
+                            <p className="text-white/60 font-medium">No offerings yet.</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Footer */}
-            <div className="mt-16 text-center">
+            <div className="fixed bottom-6 left-0 right-0 flex justify-center z-40 px-4">
+                <div className="w-full max-w-md">
+                    <button className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100">
+                        <span>Connect</span>
+                        <MessageCircle className="w-5 h-5 text-gray-600" />
+                    </button>
+                </div>
+            </div>
+
+            <div className="mt-16 mb-20 text-center">
                 <a href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-background/20 backdrop-blur-md border border-white/10 rounded-full text-xs font-semibold hover:bg-background/30 transition-all text-white hover:scale-105">
                     <Sparkles className="w-3 h-3 text-primary" />
                     <span>Create your own Tap2</span>

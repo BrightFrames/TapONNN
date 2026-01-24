@@ -1,6 +1,7 @@
 const { Product } = require('../models/Product');
 const Order = require('../models/Order');
 const Intent = require('../models/Intent');
+const Profile = require('../models/Profile');
 
 // Get user's products
 const getProducts = async (req, res) => {
@@ -18,13 +19,19 @@ const getProducts = async (req, res) => {
     }
 };
 
-// Get public products for a user
+// Get public products for a user by username
 const getPublicProducts = async (req, res) => {
     try {
-        const { userId } = req.params;
+        const { username } = req.params;
+
+        // Look up profile by username first
+        const profile = await Profile.findOne({ username: username.toLowerCase() });
+        if (!profile) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
         const products = await Product.find({
-            user_id: userId,
+            user_id: profile.user_id,
             is_active: true
         })
             .sort({ created_at: -1 })
@@ -41,7 +48,7 @@ const getPublicProducts = async (req, res) => {
 const createProduct = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { title, description, price, image_url, product_type } = req.body;
+        const { title, description, price, image_url, product_type, file_url } = req.body;
 
         if (!title || price === undefined) {
             return res.status(400).json({ error: 'Title and price are required' });
@@ -53,12 +60,13 @@ const createProduct = async (req, res) => {
             description: description || '',
             price,
             image_url: image_url || '',
+            file_url: file_url || '',
             product_type: product_type || 'physical_product',
             is_active: true
         });
 
         await newProduct.save();
-        res.json(newProduct);
+        res.json({ product: newProduct });
     } catch (err) {
         console.error('Error creating product:', err);
         res.status(500).json({ error: 'Internal Server Error' });
