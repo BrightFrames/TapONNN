@@ -83,8 +83,8 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                     )}
                     {isStoreMode && (
                         <>
-                            <NavItem icon={Store} label="Store & Products" active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')} onClick={() => handleNav('/dashboard/business?tab=shop')} />
-                            <NavItem icon={DollarSign} label="Earnings" active={location.pathname === '/earnings'} onClick={() => handleNav('/earnings')} />
+                            <NavItem icon={Store} label="Offerings" active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')} onClick={() => handleNav('/dashboard/business?tab=shop')} />
+                            <NavItem icon={DollarSign} label="Vault" active={location.pathname === '/earnings'} onClick={() => handleNav('/earnings')} />
                         </>
                     )}
                     {!isStoreMode && (
@@ -95,12 +95,12 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                 {/* 2. Growth Group */}
                 <div className="space-y-1">
                     <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Growth</h4>
-                    <NavItem icon={BarChart3} label="Analytics" active={location.pathname === '/analytics'} onClick={() => handleNav('/analytics')} />
-                    <NavItem icon={MessageCircle} label="Enquiries" active={location.pathname === '/enquiries'} onClick={() => handleNav('/enquiries')} />
+                    <NavItem icon={BarChart3} label="Growth Insights" active={location.pathname === '/analytics'} onClick={() => handleNav('/analytics')} />
+                    <NavItem icon={MessageCircle} label="Lead" active={location.pathname === '/enquiries'} onClick={() => handleNav('/enquiries')} />
                     {!isStoreMode && (
                         <NavItem icon={Smartphone} label="NFC Cards" active={location.pathname === '/nfc-cards'} onClick={() => handleNav('/nfc-cards')} />
                     )}
-                    <NavItem icon={Sparkles} label="Marketplace" active={location.pathname === '/marketplace'} onClick={() => handleNav('/marketplace')} />
+                    <NavItem icon={Sparkles} label="Discover" active={location.pathname === '/marketplace'} onClick={() => handleNav('/marketplace')} />
                 </div>
 
                 {/* 3. System Group */}

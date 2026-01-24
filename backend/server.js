@@ -53,6 +53,7 @@ const blocksRoutes = require('./routes/blocks');
 const enquiriesRoutes = require('./routes/enquiries');
 const intentsRoutes = require('./routes/intents');
 const uploadRoutes = require('./routes/upload');
+const exploreRoutes = require('./routes/explore');
 
 // --- Routes ---
 
@@ -73,6 +74,7 @@ app.use('/api/blocks', blocksRoutes); // Blocks system
 app.use('/api/enquiries', enquiriesRoutes); // Enquiries/CTA tracking
 app.use('/api/intents', intentsRoutes); // Core intent tracking
 app.use('/api/upload', uploadRoutes); // File upload
+app.use('/api/explore', exploreRoutes);
 
 // Legacy route support - /api/my-links is now under /api/links/my-links
 // But since it was originally at /api/my-links, we add an alias

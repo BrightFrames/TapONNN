@@ -332,15 +332,17 @@ const Shop = () => {
                                                     onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                                                 />
                                             </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="url">Product URL / Buy Link</Label>
-                                                <Input
-                                                    id="url"
-                                                    placeholder="https://..."
-                                                    value={newProduct.file_url}
-                                                    onChange={(e) => setNewProduct({ ...newProduct, file_url: e.target.value })}
-                                                />
-                                            </div>
+                                            {newProduct.type === 'digital_product' && (
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="url">Product URL </Label>
+                                                    <Input
+                                                        id="url"
+                                                        placeholder="https://..."
+                                                        value={newProduct.file_url}
+                                                        onChange={(e) => setNewProduct({ ...newProduct, file_url: e.target.value })}
+                                                    />
+                                                </div>
+                                            )}
                                             <div className="grid gap-2">
                                                 <Label>Product Image</Label>
                                                 <ImageUpload

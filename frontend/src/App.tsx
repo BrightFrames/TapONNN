@@ -27,6 +27,7 @@ import MyApps from "./pages/MyApps";
 import Enquiries from "./pages/Enquiries";
 import Media from "./pages/Media";
 import NFCCards from "./pages/NFCCards";
+import Explore from "./pages/Explore";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/templates" element={<Template />} />
             <Route path="/template-marketplace" element={<TemplateMarketplace />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/explore" element={<Explore />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
 

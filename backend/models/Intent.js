@@ -154,12 +154,12 @@ const intentSchema = new mongoose.Schema({
 });
 
 // Indexes for efficient queries (internal dashboard only)
-intentSchema.index({ profile_id: 1, created_at: -1 });
-intentSchema.index({ profile_id: 1, flow_type: 1 });
-intentSchema.index({ profile_id: 1, status: 1 });
-intentSchema.index({ block_id: 1, created_at: -1 });
-intentSchema.index({ actor_id: 1, created_at: -1 });
-intentSchema.index({ visitor_fingerprint: 1 });
+// intentSchema.index({ profile_id: 1, created_at: -1 });
+// intentSchema.index({ profile_id: 1, flow_type: 1 });
+// intentSchema.index({ profile_id: 1, status: 1 });
+// intentSchema.index({ block_id: 1, created_at: -1 });
+// intentSchema.index({ actor_id: 1, created_at: -1 });
+// intentSchema.index({ visitor_fingerprint: 1 });
 
 const Intent = mongoose.model('Intent', intentSchema);
 
