@@ -4,7 +4,7 @@ import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Settings, Share, Plus, EyeOff, ExternalLink, Instagram, Globe, Search, GripVertical } from "lucide-react";
+import { Settings, Share, Plus, EyeOff, ExternalLink, Instagram, Globe, Search, GripVertical, Heart, MessageCircle } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -21,13 +21,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ImageUpload } from "@/components/ImageUpload";
 
 interface Product {
-    id: string;
+    _id: string;
     title: string;
     description?: string;
     price: number;
     image_url?: string;
     file_url?: string; // Used for "Product URL"
     type: 'digital_product' | 'physical_product' | 'physical_service' | 'digital_service';
+    product_type?: 'digital_product' | 'physical_product' | 'physical_service' | 'digital_service';
     is_active: boolean;
 }
 
@@ -181,7 +182,7 @@ const Shop = () => {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            setProducts(products.filter(p => p.id !== id));
+            setProducts(products.filter(p => p._id !== id));
             toast.success("Product deleted");
         } catch (error) {
             toast.error("Failed to delete");
@@ -480,7 +481,7 @@ const Shop = () => {
                                 ) : filteredProducts.length > 0 ? (
                                     <div className="grid gap-4">
                                         {filteredProducts.map((product) => (
-                                            <div key={product.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between group">
+                                            <div key={product._id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between group">
                                                 <div className="flex items-center gap-4">
                                                     <div className="text-gray-400 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <GripVertical className="w-5 h-5" />
@@ -501,7 +502,7 @@ const Shop = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500" onClick={() => handleDeleteProduct(product.id)}>
+                                                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500" onClick={() => handleDeleteProduct(product._id)}>
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
                                             </div>
@@ -630,35 +631,62 @@ const Shop = () => {
                                             </div>
 
                                             {/* Product Grid */}
-                                            {products.filter(p => p && p.id).length > 0 ? (
+                                            {products.filter(p => p && p._id).length > 0 ? (
                                                 <div className="grid gap-3">
-                                                    {products.filter(p => p && p.id).map((product, index) => (
-                                                        <a
-                                                            key={product.id || `product-${index}`}
-                                                            href={product.file_url ? (product.file_url.startsWith('http') ? product.file_url : `https://${product.file_url}`) : '#'}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow block"
+                                                    {products.filter(p => p && p._id).map((product, index) => (
+                                                        <div
+                                                            key={product._id || `product-${index}`}
+                                                            className="relative aspect-square w-full rounded-2xl overflow-hidden group shadow-md"
                                                         >
-                                                            <div className="aspect-[4/3] bg-gray-100 relative">
-                                                                {product.image_url ? (
-                                                                    <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <div className="w-full h-full flex items-center justify-center text-2xl">🛍️</div>
-                                                                )}
+                                                            {/* Background Image */}
+                                                            {product.image_url ? (
+                                                                <img src={product.image_url} alt={product.title} className="absolute inset-0 w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-black w-full h-full flex items-center justify-center">
+                                                                    <div className="text-4xl opacity-20">✨</div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Overlay */}
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                                                            {/* Top Actions */}
+                                                            <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10">
+                                                                <button className="w-6 h-6 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors">
+                                                                    <X className="w-3 h-3" />
+                                                                </button>
                                                             </div>
-                                                            <div className="p-3">
-                                                                <h3 className="font-bold text-gray-900 text-sm leading-tight mb-1">{product.title}</h3>
-                                                                <p className="text-[10px] text-gray-500 line-clamp-2 mb-2">{product.description}</p>
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="font-bold text-gray-900 text-sm">${product.price}</span>
-                                                                    {/* If file_url exists, it's a link */}
-                                                                    <button className="h-7 px-3 text-[10px] font-bold rounded-full bg-black text-white hover:bg-black/80">
-                                                                        Buy
+
+                                                            {/* Bottom Content */}
+                                                            <div className="absolute bottom-0 left-0 right-0 p-3 z-20 text-white">
+                                                                {/* Badge / Pill */}
+                                                                <div className="inline-flex items-center gap-1 bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-full text-[8px] font-medium mb-2 border border-white/10">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                                                    <span>{user?.name || "User"}</span>
+                                                                </div>
+
+                                                                <h3 className="text-sm font-bold leading-tight mb-1 text-white">{product.title}</h3>
+                                                                <p className="text-[10px] text-gray-300 line-clamp-1 mb-2 font-light">{product.description}</p>
+
+                                                                {/* Action Row */}
+                                                                <div className="flex items-center gap-2">
+                                                                    <a
+                                                                        href={product.file_url ? (product.file_url.startsWith('http') ? product.file_url : `https://${product.file_url}`) : '#'}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="flex-1 bg-white text-black h-8 rounded-full font-bold text-xs flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                                                    >
+                                                                        Connect
+                                                                    </a>
+                                                                    <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
+                                                                        <Heart className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                    <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
+                                                                        <Share className="w-3.5 h-3.5" />
                                                                     </button>
                                                                 </div>
                                                             </div>
-                                                        </a>
+                                                        </div>
                                                     ))}
                                                 </div>
                                             ) : (
@@ -671,9 +699,12 @@ const Shop = () => {
 
                                 </div>
 
-                                {/* Linktree Footer */}
-                                <div className="mt-8 mb-4 flex justify-center w-full relative z-10">
-                                    <span className="text-[10px] font-bold opacity-60">Linktree*</span>
+                                {/* Footer - Connect Button */}
+                                <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-30">
+                                    <button className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100">
+                                        <span>Connect</span>
+                                        <MessageCircle className="w-5 h-5 text-gray-600" />
+                                    </button>
                                 </div>
                             </div>
                         </div>

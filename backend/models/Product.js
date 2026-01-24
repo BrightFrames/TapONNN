@@ -31,6 +31,10 @@ const productSchema = new mongoose.Schema({
         enum: ['digital_product', 'physical_product', 'physical_service', 'digital_service'],
         default: 'physical_product'
     },
+    file_url: {
+        type: String,
+        default: ''
+    },
     created_at: {
         type: Date,
         default: Date.now
