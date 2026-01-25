@@ -18,7 +18,9 @@ import { Loader2, Trash2, MessageSquare, Check, X, Clock, CreditCard } from "luc
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ImageUpload } from "@/components/ImageUpload";
+import { ChevronRight } from "lucide-react";
 import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 
 interface Product {
@@ -43,7 +45,11 @@ interface Order {
     type: 'product_sale' | 'enquiry';
     transaction_details?: string;
     product_id: string;
+    product_name?: string; // Snapshot
     created_at: string;
+    invoice_id?: string;
+    payment_id?: string;
+    paid_at?: string;
 }
 
 const Shop = () => {
@@ -115,6 +121,9 @@ const Shop = () => {
 
     useEffect(() => {
         fetchOrders();
+        // Auto-refresh orders every 10 seconds for real-time feel
+        const interval = setInterval(fetchOrders, 10000);
+        return () => clearInterval(interval);
     }, []);
 
     const handleUpdateStatus = async (orderId: string, status: string) => {
@@ -238,7 +247,7 @@ const Shop = () => {
                                     value="products"
                                     className="bg-transparent p-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:text-black text-gray-500 font-medium data-[state=active]:shadow-none transition-none"
                                 >
-                                    My Products
+                                    Products
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="orders"

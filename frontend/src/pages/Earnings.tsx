@@ -1,134 +1,162 @@
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { Button } from "@/components/ui/button";
-import { DollarSign, TrendingUp, CreditCard, ArrowRight, HelpCircle } from "lucide-react";
+import { ChevronRight, Home } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Loader2 } from "lucide-react";
+
+interface Order {
+    _id: string;
+    payment_id?: string;
+    invoice_id?: string;
+    product_name?: string;
+    buyer_name?: string;
+    paid_at?: string;
+    created_at: string;
+    amount: number;
+    status: string;
+}
 
 const Earnings = () => {
-    const [stats, setStats] = useState({
-        lifetime: 0,
-        pending: 0,
-        activeProducts: 0
-    });
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loading, setLoading] = useState(true);
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
+    const fetchEarnings = async () => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        try {
+            const orderRes = await fetch(`${API_URL}/orders`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const orderData = await orderRes.json();
+            const ordersList = Array.isArray(orderData) ? orderData : (orderData.orders || []);
+            setOrders(ordersList);
+            setLoading(false);
+        } catch (error) {
+            console.error("Error loading earnings:", error);
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchEarnings = async () => {
-            const token = localStorage.getItem('auth_token');
-            if (!token) return;
-
-            try {
-                // Fetch Orders
-                const orderRes = await fetch(`${API_URL}/orders`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const orderData = await orderRes.json();
-
-                // Compatibility check: backend returns { orders: [], totalEarnings: number }
-                // but if it returned an array, handle that too (just in case)
-                const orders = Array.isArray(orderData) ? orderData : (orderData.orders || []);
-                const lifetime = orderData.totalEarnings !== undefined
-                    ? orderData.totalEarnings
-                    : orders.reduce((sum: number, o: any) => sum + parseFloat(o.amount || 0), 0);
-
-                // Fetch Products for count
-                const prodRes = await fetch(`${API_URL}/products`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const products = await prodRes.json();
-
-                setStats({
-                    lifetime,
-                    pending: 0, // Pending logic not yet implemented in backend
-                    activeProducts: Array.isArray(products) ? products.length : 0
-                });
-
-            } catch (error) {
-                console.error("Error loading earnings:", error);
-            }
-        };
-
         fetchEarnings();
+        const interval = setInterval(fetchEarnings, 10000); // Polling every 10s
+        return () => clearInterval(interval);
     }, []);
+
     return (
         <LinktreeLayout>
-            <div className="p-8 max-w-6xl mx-auto font-sans">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 mb-1">Earnings</h1>
-                        <p className="text-gray-500 text-sm">Track your revenue and payouts</p>
-                    </div>
-                    <Button variant="outline" className="rounded-full gap-2">
-                        <HelpCircle className="w-4 h-4" />
-                        Help & Support
-                    </Button>
+            <div className="p-8 max-w-6xl mx-auto font-sans bg-gray-50/50 min-h-screen">
+                {/* Header / Breadcrumb */}
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+                    <h1 className="text-xl font-bold text-gray-900 mr-2">Payment History</h1>
+                    <Home className="w-4 h-4" />
+                    <span>- Billing - Payment History - Paid</span>
                 </div>
 
-                {/* Main Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    {/* Lifetime Earnings */}
-                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between h-48">
-                        <div className="flex items-start justify-between">
-                            <div className="p-3 bg-green-50 rounded-2xl">
-                                <DollarSign className="w-6 h-6 text-green-600" />
-                            </div>
-                            <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-1 rounded-full">+12% vs last month</span>
-                        </div>
-                        <div>
-                            <p className="text-gray-500 font-medium text-sm mb-1">Lifetime Earnings</p>
-                            <h2 className="text-4xl font-extrabold text-gray-900">${stats.lifetime.toFixed(2)}</h2>
-                        </div>
-                    </div>
+                {/* Tabs */}
+                <Tabs defaultValue="payment_history" className="w-full">
+                    <TabsList className="bg-transparent p-0 border-b w-full justify-start rounded-none h-auto mb-6">
+                        <TabsTrigger
+                            value="payment_history"
+                            className="bg-transparent border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:text-purple-600 rounded-none px-4 py-2 font-medium"
+                        >
+                            Payment history
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="refund_history"
+                            className="bg-transparent border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:text-purple-600 rounded-none px-4 py-2 font-medium text-gray-500"
+                        >
+                            Refund history
+                        </TabsTrigger>
+                    </TabsList>
 
-                    {/* Pending Payouts */}
-                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between h-48">
-                        <div className="flex items-start justify-between">
-                            <div className="p-3 bg-purple-50 rounded-2xl">
-                                <CreditCard className="w-6 h-6 text-purple-600" />
+                    <TabsContent value="payment_history">
+                        {loading ? (
+                            <div className="flex justify-center py-20"><Loader2 className="animate-spin text-purple-600" /></div>
+                        ) : (
+                            <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+                                <Table>
+                                    <TableHeader className="bg-gray-50/50">
+                                        <TableRow>
+                                            <TableHead className="w-[50px]">
+                                                <input type="checkbox" className="rounded border-gray-300 ml-2" />
+                                            </TableHead>
+                                            <TableHead className="font-medium text-gray-500">Payment ID</TableHead>
+                                            <TableHead className="font-medium text-gray-500">Invoice ID</TableHead>
+                                            <TableHead className="font-medium text-gray-500">Service</TableHead>
+                                            <TableHead className="font-medium text-gray-500">Title</TableHead>
+                                            <TableHead className="font-medium text-gray-500">Paid at</TableHead>
+                                            <TableHead className="font-medium text-gray-500">Amount</TableHead>
+                                            <TableHead className="w-[50px]"></TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {orders.length > 0 ? (
+                                            orders.map((order) => (
+                                                <TableRow key={order._id} className="hover:bg-gray-50/50">
+                                                    <TableCell>
+                                                        <input type="checkbox" className="rounded border-gray-300 ml-2" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs font-mono font-medium">
+                                                            {order.payment_id || `H_${order._id.substr(-8).toUpperCase()}`}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className="font-bold text-xs text-gray-700">
+                                                            {order.invoice_id || `HSG-${order._id.substr(-6).toUpperCase()}`}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs inline-block font-medium truncate max-w-[150px]">
+                                                            {order.product_name || "Digital Service"}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs inline-block font-medium truncate max-w-[200px]">
+                                                            {order.buyer_name || "Anonymous User"}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs inline-block font-medium">
+                                                            {order.paid_at ? new Date(order.paid_at).toISOString().split('T')[0] : new Date(order.created_at).toISOString().split('T')[0]}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs inline-block font-bold">
+                                                            ${order.amount?.toFixed(2)}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <ChevronRight className="w-4 h-4 text-purple-600" />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={8} className="h-32 text-center text-gray-500">
+                                                    No Payment History Found
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
                             </div>
-                        </div>
-                        <div>
-                            <p className="text-gray-500 font-medium text-sm mb-1">Pending Payout</p>
-                            <h2 className="text-4xl font-extrabold text-gray-900">$0.00</h2>
-                        </div>
-                    </div>
+                        )}
+                    </TabsContent>
 
-                    {/* Active Products */}
-                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between h-48">
-                        <div className="flex items-start justify-between">
-                            <div className="p-3 bg-blue-50 rounded-2xl">
-                                <TrendingUp className="w-6 h-6 text-blue-600" />
-                            </div>
+                    <TabsContent value="refund_history">
+                        <div className="text-center py-20 text-gray-500 bg-white rounded-lg border border-dashed">
+                            No Refunds
                         </div>
-                        <div>
-                            <p className="text-gray-500 font-medium text-sm mb-1">Active Products</p>
-                            <h2 className="text-4xl font-extrabold text-gray-900">{stats.activeProducts}</h2>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Call to Action Banner */}
-                <div className="bg-gradient-to-r from-[#1e293b] to-[#334155] rounded-3xl p-8 text-white flex items-center justify-between shadow-lg">
-                    <div className="max-w-xl">
-                        <h3 className="text-2xl font-bold mb-2">Start monetizing your audience today</h3>
-                        <p className="text-gray-300 mb-6">Connect a payment provider to start accepting payments, tips, and selling digital products directly from your Tap2.</p>
-                        <Button className="bg-[#7535f5] hover:bg-[#6025d5] text-white rounded-full px-6 py-6 h-auto text-base font-semibold">
-                            Add Payment Provider <ArrowRight className="w-5 h-5 ml-2" />
-                        </Button>
-                    </div>
-                    {/* Decorative visual (css only) */}
-                    <div className="hidden lg:block relative w-64 h-48">
-                        <div className="absolute right-0 bottom-0 w-48 h-32 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 p-4 transform rotate-6 hover:rotate-0 transition-all duration-500">
-                            <div className="h-2 w-24 bg-white/20 rounded-full mb-3" />
-                            <div className="h-2 w-32 bg-white/20 rounded-full mb-6" />
-                            <div className="flex gap-2">
-                                <div className="h-8 w-8 rounded-full bg-green-400/80" />
-                                <div className="h-8 w-8 rounded-full bg-purple-400/80" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    </TabsContent>
+                </Tabs>
             </div>
         </LinktreeLayout>
     );
