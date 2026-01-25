@@ -19,6 +19,7 @@ import { getIconForThumbnail } from "@/utils/socialIcons";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ImageUpload } from "@/components/ImageUpload";
+import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 
 interface Product {
     _id: string;
@@ -55,6 +56,7 @@ const Shop = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [previewTab, setPreviewTab] = useState<'links' | 'shop'>('shop');
+    const [connectModal, setConnectModal] = useState<{ open: boolean; product: any; seller: any }>({ open: false, product: null, seller: null });
 
     // New Product State
     const [newProduct, setNewProduct] = useState({
@@ -621,6 +623,7 @@ const Shop = () => {
                                     {previewTab === 'shop' && (
                                         <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
                                             {/* Search Bar */}
+                                            {/* Search Bar */}
                                             <div className="relative w-full">
                                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-50 text-current" />
                                                 <input
@@ -630,6 +633,7 @@ const Shop = () => {
                                                 />
                                             </div>
 
+                                            {/* Product Grid */}
                                             {/* Product Grid */}
                                             {products.filter(p => p && p._id).length > 0 ? (
                                                 <div className="grid gap-3">
@@ -670,14 +674,16 @@ const Shop = () => {
 
                                                                 {/* Action Row */}
                                                                 <div className="flex items-center gap-2">
-                                                                    <a
-                                                                        href={product.file_url ? (product.file_url.startsWith('http') ? product.file_url : `https://${product.file_url}`) : '#'}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
+                                                                    <button
+                                                                        onClick={() => setConnectModal({
+                                                                            open: true,
+                                                                            product: product,
+                                                                            seller: { id: user?.id || '', name: user?.name || '' }
+                                                                        })}
                                                                         className="flex-1 bg-white text-black h-8 rounded-full font-bold text-xs flex items-center justify-center hover:bg-gray-100 transition-colors"
                                                                     >
                                                                         Connect
-                                                                    </a>
+                                                                    </button>
                                                                     <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
                                                                         <Heart className="w-3.5 h-3.5" />
                                                                     </button>
@@ -701,7 +707,14 @@ const Shop = () => {
 
                                 {/* Footer - Connect Button */}
                                 <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-30">
-                                    <button className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100">
+                                    <button
+                                        onClick={() => setConnectModal({
+                                            open: true,
+                                            product: null,
+                                            seller: { id: user?.id || '', name: user?.name || '' }
+                                        })}
+                                        className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100"
+                                    >
                                         <span>Connect</span>
                                         <MessageCircle className="w-5 h-5 text-gray-600" />
                                     </button>
@@ -719,6 +732,16 @@ const Shop = () => {
                     </div>
                 </div>
             </div>
+
+            <ConnectWithSupplierModal
+                open={connectModal.open}
+                onOpenChange={(open) => setConnectModal(prev => ({ ...prev, open }))}
+                product={connectModal.product}
+                seller={connectModal.seller}
+                onSuccess={(newUser) => {
+                    toast.success(`Welcome, ${newUser.full_name}! You are now connected.`);
+                }}
+            />
         </LinktreeLayout >
     );
 };

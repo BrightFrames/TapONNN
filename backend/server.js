@@ -54,6 +54,7 @@ const enquiriesRoutes = require('./routes/enquiries');
 const intentsRoutes = require('./routes/intents');
 const uploadRoutes = require('./routes/upload');
 const exploreRoutes = require('./routes/explore');
+const connectRoutes = require('./routes/connect');
 
 // --- Routes ---
 
@@ -75,6 +76,7 @@ app.use('/api/enquiries', enquiriesRoutes); // Enquiries/CTA tracking
 app.use('/api/intents', intentsRoutes); // Core intent tracking
 app.use('/api/upload', uploadRoutes); // File upload
 app.use('/api/explore', exploreRoutes);
+app.use('/api/connect', connectRoutes); // Connect registration flow
 
 // Legacy route support - /api/my-links is now under /api/links/my-links
 // But since it was originally at /api/my-links, we add an alias
