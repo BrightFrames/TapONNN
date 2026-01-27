@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowRight, X, Loader2, QrCode, CheckCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 interface PlanData {
@@ -28,6 +28,16 @@ const PricingSection = () => {
 
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Check for tab query param
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const tab = searchParams.get('tab');
+        if (tab === 'store') {
+            setActiveTab('store');
+        }
+    }, [location.search]);
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -125,13 +135,41 @@ const PricingSection = () => {
     };
 
     const handlePlanSelect = async (plan: PlanData) => {
-        // Free plan - just redirect to signup/dashboard
+        // Free plan
         if (plan.priceValue === 0) {
-            if (isAuthenticated) {
-                navigate('/dashboard');
-            } else {
+            if (!isAuthenticated) {
                 navigate('/login');
+                return;
             }
+
+            // If selecting Free Store plan, enable store mode
+            if (activeTab === "store" && plan.id === "free") {
+                try {
+                    const token = localStorage.getItem('auth_token');
+                    const res = await fetch(`${API_URL}/payments/store-upgrade`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (res.ok) {
+                        toast.success("Store successfully activated!");
+                        // Force validation of new role
+                        window.location.href = '/dashboard';
+                    } else {
+                        toast.error("Failed to activate store.");
+                    }
+                } catch (error) {
+                    console.error("Store activation error:", error);
+                    toast.error("Something went wrong.");
+                }
+                return;
+            }
+
+            // Regular Profile Free plan -> Dashboard
+            navigate('/dashboard');
             return;
         }
 

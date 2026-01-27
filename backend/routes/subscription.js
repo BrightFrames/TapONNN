@@ -12,6 +12,9 @@ router.get('/subscription', authMiddleware, subscriptionController.getSubscripti
 // Check order status (requires auth)
 router.get('/orders/:orderId/status', authMiddleware, subscriptionController.checkOrderStatus);
 
+// Enable Store Mode (Free Upgrade)
+router.post('/store-upgrade', authMiddleware, subscriptionController.enableStoreMode);
+
 // Zero Gateway Webhook (public endpoint - no auth, but verified by signature)
 router.post('/webhook/zerogateway', subscriptionController.handleWebhook);
 

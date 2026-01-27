@@ -1,0 +1,77 @@
+All USERS in database:
+
+Email: johndoe@example.com
+Created: Sat Jan 24 2026 22:08:02 GMT+0530 (India Standard Time)
+ID: 6974f56a1794e64f86b0cf46
+---
+Email: sarah_design@example.com
+Created: Sat Jan 24 2026 22:08:03 GMT+0530 (India Standard Time)
+ID: 6974f56b1794e64f86b0cf4e
+---
+Email: mike_tech@example.com
+Created: Sat Jan 24 2026 22:08:03 GMT+0530 (India Standard Time)
+ID: 6974f56b1794e64f86b0cf52
+---
+Email: wanderlust_amy@example.com
+Created: Sat Jan 24 2026 22:08:03 GMT+0530 (India Standard Time)
+ID: 6974f56b1794e64f86b0cf56
+---
+Email: fitness_jack@example.com
+Created: Sat Jan 24 2026 22:08:03 GMT+0530 (India Standard Time)
+ID: 6974f56b1794e64f86b0cf5a
+---
+Email: vivek@example.com
+Created: Tue Jan 27 2026 22:31:02 GMT+0530 (India Standard Time)
+ID: 6978ef4e2ff3f5a35a37e222
+---
+
+Total users: 6
+
+========================================
+
+All PROFILES in database:
+
+Username: johndoe
+User ID: 6974f56a1794e64f86b0cf46
+Full Name: John's Coffee
+has_store: false
+store_username: johndoe
+store_published: true
+---
+Username: sarah_design
+User ID: 6974f56b1794e64f86b0cf4e
+Full Name: Sarah Design Studio
+has_store: false
+store_username: sarah_design
+store_published: true
+---
+Username: mike_tech
+User ID: 6974f56b1794e64f86b0cf52
+Full Name: Mike Tech Reviews
+has_store: false
+store_username: mike_tech
+store_published: true
+---
+Username: wanderlust_amy
+User ID: 6974f56b1794e64f86b0cf56
+Full Name: Amy Travels
+has_store: false
+store_username: wanderlust_amy
+store_published: true
+---
+Username: fitness_jack
+User ID: 6974f56b1794e64f86b0cf5a
+Full Name: Jack Fitness
+has_store: false
+store_username: fitness_jack
+store_published: true
+---
+Username: vivek
+User ID: 6978ef4e2ff3f5a35a37e222
+Full Name: Vivek
+has_store: true
+store_username: vivek
+store_published: true
+---
+
+Total profiles: 6

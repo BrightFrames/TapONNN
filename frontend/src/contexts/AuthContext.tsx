@@ -646,7 +646,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Allow all users to switch if logic permits (e.g. has_store)
         // Check removed to allow store owners who are not 'super' to switch
 
-        // Optimistic update
+        // Optimistic update for mode only
         setUser(prev => prev ? { ...prev, active_profile_mode: mode } : null);
 
         try {
@@ -665,6 +665,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 await fetchUserData(); // Revert
             } else {
                 toast.success(`Switched to ${mode === 'personal' ? 'Personal Profile' : 'Store Profile'}`);
+                // Fetch updated user data to get correct username, avatar, etc. for the new mode
+                await fetchUserData();
             }
         } catch (err) {
             console.error('Error switching profile mode:', err);

@@ -1,0 +1,29 @@
+All profiles in database:
+
+Username: johndoe
+Full Name: John's Coffee
+has_store: false
+store_username: johndoe
+---
+Username: sarah_design
+Full Name: Sarah Design Studio
+has_store: false
+store_username: sarah_design
+---
+Username: mike_tech
+Full Name: Mike Tech Reviews
+has_store: false
+store_username: mike_tech
+---
+Username: wanderlust_amy
+Full Name: Amy Travels
+has_store: false
+store_username: wanderlust_amy
+---
+Username: fitness_jack
+Full Name: Jack Fitness
+has_store: false
+store_username: fitness_jack
+---
+
+Total profiles: 5

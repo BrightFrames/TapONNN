@@ -72,6 +72,7 @@ const App = () => (
             <Route path="/dashboard/earn/history" element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
 
             {/* Public Store - Must be before username catch-all */}
+            <Route path="/s/:username" element={<PublicProfile />} />
             <Route path="/:username/store" element={<PublicStore />} />
 
             {/* Public Profile - Must be last to avoid catching other routes */}

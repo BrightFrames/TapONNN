@@ -113,7 +113,11 @@ const createOrder = async (req, res) => {
             status: 'completed', // Mock success
             type: type || 'product_sale',
             transaction: transaction || {},
-            payment_method: transaction?.method || 'unknown'
+            payment_method: transaction?.method || 'unknown',
+            // Generate IDs
+            invoice_id: `HSG-${Math.floor(1000000 + Math.random() * 9000000)}`,
+            payment_id: `H_${Math.floor(10000000 + Math.random() * 90000000)}`,
+            paid_at: new Date()
         });
 
         await newOrder.save();

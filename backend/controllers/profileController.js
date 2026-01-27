@@ -67,33 +67,44 @@ const getPublicProfile = async (req, res) => {
 const getPublicStoreProfile = async (req, res) => {
     try {
         const { username } = req.params;
+        const normalizedUsername = username.toLowerCase();
 
-        const profile = await Profile.findOne({ username: username.toLowerCase() });
+        // Find profile by store_username OR by regular username (for users without separate store username)
+        let profile = await Profile.findOne({ store_username: normalizedUsername });
+
+        // If not found by store_username, try regular username for users with has_store enabled
+        if (!profile) {
+            profile = await Profile.findOne({
+                username: normalizedUsername,
+                has_store: true
+            });
+        }
+
+        // Final fallback: just find by username (for users who haven't explicitly enabled store)
+        if (!profile) {
+            profile = await Profile.findOne({ username: normalizedUsername });
+        }
 
         if (!profile) {
             return res.status(404).json({ error: 'Store not found' });
         }
 
-        // Check if store is published
-        if (!profile.store_published) {
-            return res.status(404).json({ error: 'Store not available' });
-        }
-
-        // Get user's products
-        const products = await Product.find({
-            user_id: profile.user_id,
-            is_active: true
-        }).sort({ created_at: -1 }).lean();
-
         const profileObj = profile.toObject();
+        const hasStoreUsername = !!profileObj.store_username;
+
+        // Return store-specific data (fallback to personal data if store-specific not set)
         res.json({
             id: profileObj.user_id,
-            username: profileObj.username,
-            full_name: profileObj.full_name,
-            bio: profileObj.bio,
-            avatar_url: profileObj.avatar_url,
-            selected_theme: profileObj.selected_theme,
-            products: products
+            username: hasStoreUsername ? profileObj.store_username : profileObj.username,
+            full_name: profileObj.store_name || profileObj.full_name,
+            bio: profileObj.store_bio || profileObj.bio || '',
+            avatar_url: profileObj.store_avatar_url || profileObj.avatar_url,
+            selected_theme: profileObj.store_selected_theme || profileObj.selected_theme || 'clean',
+            social_links: profileObj.social_links instanceof Map ? Object.fromEntries(profileObj.social_links) : profileObj.social_links,
+            design_config: profileObj.store_design_config || profileObj.design_config || {},
+            has_store: true,
+            store_published: profileObj.store_published,
+            is_store_identity: true
         });
     } catch (err) {
         console.error('Error fetching public store:', err);

@@ -94,7 +94,7 @@ const profileSchema = new mongoose.Schema({
     role: {
         type: String,
         enum: ['super', 'personal'],
-        default: 'super'
+        default: 'personal'
     },
     // Active profile mode for Super Users
     active_profile_mode: {

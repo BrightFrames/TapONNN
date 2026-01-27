@@ -181,9 +181,39 @@ const checkOrderStatus = async (req, res) => {
     }
 };
 
+// Upgrade to Store (Free) - Enables store capabilities for personal accounts
+const enableStoreMode = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const profile = await Profile.findOne({ user_id: userId });
+        if (!profile) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        // Update profile to enable store
+        profile.role = 'super'; // Super role allows store
+        profile.has_store = true;
+        profile.active_profile_mode = 'store';
+
+        // Initialize store fields if missing
+        if (!profile.store_username) profile.store_username = profile.username;
+        if (!profile.store_name) profile.store_name = profile.full_name;
+        if (!profile.store_published) profile.store_published = true; // Auto-publish for convenience
+
+        await profile.save();
+
+        res.json({ success: true, message: 'Store mode enabled successfully' });
+    } catch (error) {
+        console.error('Error enabling store mode:', error);
+        res.status(500).json({ error: 'Failed to enable store mode' });
+    }
+};
+
 module.exports = {
     createOrder,
     handleWebhook,
     getSubscription,
-    checkOrderStatus
+    checkOrderStatus,
+    enableStoreMode
 };

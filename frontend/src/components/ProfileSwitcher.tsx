@@ -9,7 +9,7 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, User, Store, Check, Sparkles } from "lucide-react";
+import { ChevronDown, User, Store, Check, Sparkles, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const ProfileSwitcher = () => {
@@ -94,23 +94,46 @@ const ProfileSwitcher = () => {
                     </DropdownMenuItem>
 
                     {/* Store Profile Option */}
-                    <DropdownMenuItem
-                        onClick={() => handleSwitch('store')}
-                        className="flex items-center justify-between cursor-pointer"
-                    >
-                        <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-orange-500/10 flex items-center justify-center">
-                                <Store className="w-3 h-3 text-orange-500" />
-                            </div>
-                            <div>
-                                <div className="text-sm font-medium">{user.username}'s Store</div>
-                                <div className="text-[10px] text-muted-foreground">
-                                    Digital Store
+                    {/* Store Profile Option - Conditional */}
+                    {hasStore ? (
+                        <DropdownMenuItem
+                            onClick={() => handleSwitch('store')}
+                            className="flex items-center justify-between cursor-pointer"
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-orange-500/10 flex items-center justify-center">
+                                    <Store className="w-3 h-3 text-orange-500" />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-medium">{user.username}'s Store</div>
+                                    <div className="text-[10px] text-muted-foreground">
+                                        Digital Store
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        {currentMode === 'store' && <Check className="w-4 h-4 text-green-500" />}
-                    </DropdownMenuItem>
+                            {currentMode === 'store' && <Check className="w-4 h-4 text-green-500" />}
+                        </DropdownMenuItem>
+                    ) : (
+                        <DropdownMenuItem
+                            onClick={() => navigate('/pricing?tab=store')}
+                            className="flex items-center justify-between cursor-pointer opacity-75 hover:opacity-100"
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                                    <Lock className="w-3 h-3 text-gray-500" />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-medium">Upgrade for Store</div>
+                                    <div className="text-[10px] text-muted-foreground">
+                                        Unlock Store Features
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gradient-to-r from-orange-400 to-pink-500 text-white shadow-sm">
+                                NEW
+                            </div>
+                        </DropdownMenuItem>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu >
         </div >

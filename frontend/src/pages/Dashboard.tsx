@@ -175,7 +175,8 @@ const Dashboard = () => {
     };
 
     const copyProfileLink = () => {
-        const url = `${window.location.origin}/${username}`;
+        const profilePath = user?.active_profile_mode === 'store' ? `/s/${username}` : `/${username}`;
+        const url = `${window.location.origin}${profilePath}`;
         navigator.clipboard.writeText(url);
         toast.success("Profile link copied to clipboard!");
     };
@@ -240,10 +241,10 @@ const Dashboard = () => {
                                     {/* Profile Link - Mobile responsive */}
                                     <div className="relative group w-full sm:w-auto">
                                         <div
-                                            onClick={() => window.open(`/${username}`, '_blank')}
+                                            onClick={() => window.open(user?.active_profile_mode === 'store' ? `/s/${username}` : `/${username}`, '_blank')}
                                             className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 pr-10 border border-gray-200 cursor-pointer truncate"
                                         >
-                                            tap2.me/{username}
+                                            tap2.me/{user?.active_profile_mode === 'store' ? `s/${username}` : username}
                                         </div>
                                         <Button
                                             size="icon"
@@ -415,7 +416,7 @@ const Dashboard = () => {
                                         )}
                                     </div>
 
-                                    {/* Preview Tabs (Links | Shop) */}
+                                    {/* Preview Tabs (Links | Shop) - Offerings only for store profile */}
                                     <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
                                         <button
                                             onClick={() => setPreviewTab('links')}
@@ -423,12 +424,14 @@ const Dashboard = () => {
                                         >
                                             Links
                                         </button>
-                                        <button
-                                            onClick={() => setPreviewTab('shop')}
-                                            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
-                                        >
-                                            Offerings
-                                        </button>
+                                        {user?.active_profile_mode === 'store' && (
+                                            <button
+                                                onClick={() => setPreviewTab('shop')}
+                                                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
+                                            >
+                                                Offerings
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
@@ -461,8 +464,8 @@ const Dashboard = () => {
                                     </div>
                                 )}
 
-                                {/* Shop / Offerings View */}
-                                {previewTab === 'shop' && (
+                                {/* Shop / Offerings View - Only for store profile */}
+                                {previewTab === 'shop' && user?.active_profile_mode === 'store' && (
                                     <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300 px-6 mt-4">
                                         {/* Search Bar */}
                                         <div className="relative w-full">

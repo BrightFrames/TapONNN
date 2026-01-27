@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { templates } from "@/data/templates";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Instagram, Twitter, Sparkles, Share2, Link2, Facebook, Linkedin, Youtube, Github, Heart, X, Share, MessageCircle, Search } from "lucide-react";
-import PublicBlockCard from "@/components/PublicBlockCard";
+import { Instagram, Twitter, Sparkles, Share2, Link2, Facebook, Linkedin, Youtube, Github, Heart, X, Share, MessageCircle, Search, ExternalLink } from "lucide-react";
 import EnquiryModal from "@/components/EnquiryModal";
 import PaymentModal from "@/components/PaymentModal";
 import LoginToContinueModal from "@/components/LoginToContinueModal";
@@ -14,11 +13,16 @@ import ShareModal from "@/components/ShareModal";
 import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 import useIntent, { getPendingIntent, clearPendingIntent } from "@/hooks/useIntent";
 import { toast } from "sonner";
+import { getIconForThumbnail } from "@/utils/socialIcons";
 
 const PublicProfile = () => {
     const { username } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { user: authUser, selectedTheme: authTheme } = useAuth();
+
+    // Check if this is a store route (/s/:username)
+    const isStoreRoute = location.pathname.startsWith('/s/');
 
     // Intent Hook
     const { createIntent, resumeIntent, loading: intentLoading } = useIntent();
@@ -44,7 +48,7 @@ const PublicProfile = () => {
     // Initialize Profile & Blocks
     useEffect(() => {
         fetchPublicProfile();
-    }, [username]);
+    }, [username, isStoreRoute]);
 
     // Check for pending intent after login
     useEffect(() => {
@@ -72,8 +76,14 @@ const PublicProfile = () => {
         if (!username) return;
 
         try {
-            // 1. Fetch Profile
-            const profileRes = await fetch(`${API_URL}/profile/${username}`);
+            // 1. Fetch Profile - Use store endpoint for /s/:username route
+            const profileEndpoint = isStoreRoute
+                ? `${API_URL}/profile/store/${username}`
+                : `${API_URL}/profile/${username}`;
+
+            console.log('Fetching profile:', { isStoreRoute, username, profileEndpoint });
+
+            const profileRes = await fetch(profileEndpoint);
             if (!profileRes.ok) {
                 setNotFound(true);
                 return;
@@ -88,7 +98,8 @@ const PublicProfile = () => {
                 bio: userProfile.bio,
                 selectedTheme: userProfile.selected_theme,
                 payment_instructions: userProfile.payment_instructions,
-                social_links: userProfile.social_links || {}
+                social_links: userProfile.social_links || {},
+                is_store_identity: userProfile.is_store_identity
             });
 
             // 2. Fetch Blocks
@@ -251,198 +262,209 @@ const PublicProfile = () => {
         );
     }
 
-    // Determine Theme
+    // Determine Theme - Match Dashboard phone preview logic
     const themeId = authUser && authUser.username === username ? authTheme : (profile.selectedTheme || "artemis");
-    const template = templates.find(t => t.id === themeId) || templates[0];
-    const bgStyle = template.bgImage ? { backgroundImage: `url(${template.bgImage})`, backgroundSize: 'cover' } : {};
+    const currentTemplate = templates.find(t => t.id === themeId) || templates[0];
+
+    // Background style - Match Dashboard phone preview
+    const bgStyle = currentTemplate.bgImage
+        ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+        : {};
+
+    const userInitial = (profile.name?.[0] || profile.username?.[0] || "U").toUpperCase();
 
     return (
-        <div className={`min-h-screen w-full flex flex-col items-center py-16 px-6 transition-colors duration-500 ${template.bgClass || 'bg-gray-100'}`} style={bgStyle}>
-            {template.bgImage && <div className="absolute inset-0 bg-black/30 fixed pointer-events-none" />}
+        <div
+            className={`min-h-screen w-full ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor || ''} relative`}
+            style={bgStyle}
+        >
+            {/* Overlay for readability */}
+            {currentTemplate.bgImage && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
 
-            {/* Share Button */}
+            {/* Share Button - Top Right */}
             <div className="fixed top-6 right-6 z-50">
-                <Button size="icon" variant="secondary" className="rounded-full shadow-lg bg-white/20 backdrop-blur-md border border-white/20 hover:bg-white/40 text-current" onClick={() => setShareOpen(true)}>
-                    <Share2 className="w-4 h-4" />
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors"
+                    onClick={() => setShareOpen(true)}
+                >
+                    <ExternalLink className={`w-5 h-5 ${currentTemplate.textColor ? 'opacity-80' : 'text-gray-700'}`} />
                 </Button>
             </div>
 
-            {/* Premium Profile Header */}
-            <div className="z-10 w-full max-w-4xl mx-auto flex flex-col items-center mb-12">
-                <div className="relative group">
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full opacity-30 group-hover:opacity-75 blur transition duration-500"></div>
-                    <Avatar className="relative w-32 h-32 border-4 border-background shadow-xl">
+            {/* Main Content - Matches Phone Preview Layout */}
+            <div className="relative z-10 max-w-md mx-auto px-6 pt-12 pb-32">
+
+                {/* Profile Header - Matches Phone Preview */}
+                <div className="flex flex-col items-center space-y-3">
+                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
                         <AvatarImage src={profile.avatar} className="object-cover" />
-                        <AvatarFallback className="text-4xl font-bold bg-muted text-foreground">
-                            {profile.name?.[0]?.toUpperCase() || "U"}
+                        <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
+                            {userInitial}
                         </AvatarFallback>
                     </Avatar>
+                    <h2 className="text-xl font-bold tracking-tight">@{profile.username}</h2>
+
+                    {/* Bio - if present */}
+                    {profile.bio && (
+                        <p className="text-sm text-center opacity-80 max-w-xs">{profile.bio}</p>
+                    )}
+
+                    {/* Social Links - Match Phone Preview Design */}
+                    {profile.social_links && Object.keys(profile.social_links).length > 0 && (
+                        <div className="flex gap-3 flex-wrap justify-center px-4 mt-2">
+                            {Object.entries(profile.social_links).map(([platform, url]: [string, any]) => {
+                                if (!url) return null;
+                                const Icon = getIconForThumbnail(platform);
+                                const href = url.startsWith('http') ? url : `https://${url}`;
+                                return Icon ? (
+                                    <a
+                                        key={platform}
+                                        href={href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer backdrop-blur-sm"
+                                    >
+                                        <Icon className="w-5 h-5" />
+                                    </a>
+                                ) : null;
+                            })}
+                        </div>
+                    )}
+
+                    {/* Tab Switcher - Match Phone Preview Design */}
+                    <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
+                        <button
+                            onClick={() => setActiveTab('links')}
+                            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
+                        >
+                            Links
+                        </button>
+                        {profile?.is_store_identity && (
+                            <button
+                                onClick={() => setActiveTab('offerings')}
+                                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'offerings' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
+                            >
+                                Offerings
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                <h1 className="text-3xl sm:text-4xl font-extrabold mt-6 tracking-tight text-foreground">{profile.name || profile.username}</h1>
-                <p className="text-sm font-medium text-muted-foreground mt-1">@{profile.username}</p>
+                {/* Links View - Match Phone Preview Design */}
+                {activeTab === 'links' && (
+                    <div className="mt-8 space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        {blocks.filter(b => b.is_active).map((block) => {
+                            const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
+                            return (
+                                <button
+                                    key={block._id}
+                                    onClick={() => handleBlockInteract(block)}
+                                    className={`block w-full flex items-center justify-center relative ${currentTemplate.buttonStyle}`}
+                                >
+                                    {Icon && (
+                                        <Icon className="absolute left-4 w-5 h-5 opacity-90" />
+                                    )}
+                                    <span className="truncate max-w-[200px]">{block.title}</span>
+                                </button>
+                            );
+                        })}
+                        {blocks.filter(b => b.is_active).length === 0 && (
+                            <div className={`text-center text-sm py-8 ${currentTemplate.textColor} opacity-60`}>
+                                No links yet
+                            </div>
+                        )}
+                    </div>
+                )}
 
-                {profile.bio && (
-                    <p className="mt-4 text-base text-muted-foreground max-w-lg text-center leading-relaxed">
-                        {profile.bio}
-                    </p>
+                {/* Offerings View - Match Phone Preview Connect Card Design */}
+                {activeTab === 'offerings' && profile?.is_store_identity && (
+                    <div className="mt-6 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        {/* Search Bar - Match Phone Preview */}
+                        <div className="relative w-full">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50 text-current" />
+                            <input
+                                type="text"
+                                placeholder={`Search ${profile.username}'s products`}
+                                className="w-full pl-10 pr-4 py-3 rounded-xl text-sm bg-white/10 backdrop-blur-md border border-white/10 placeholder:text-current/50 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all font-medium"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Product Grid - Match Phone Preview Connect Card Design */}
+                        {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
+                            <div className="grid gap-4">
+                                {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).map((product, index) => (
+                                    <div
+                                        key={product._id || `product-${index}`}
+                                        className="relative aspect-square w-full rounded-2xl overflow-hidden group shadow-md"
+                                    >
+                                        {/* Background Image */}
+                                        {product.image_url ? (
+                                            <img src={product.image_url} alt={product.title} className="absolute inset-0 w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-black w-full h-full flex items-center justify-center">
+                                                <div className="text-4xl opacity-20">✨</div>
+                                            </div>
+                                        )}
+
+                                        {/* Overlay */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                                        {/* Top Actions */}
+                                        <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10">
+                                            <button className="w-8 h-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors">
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        {/* Bottom Content */}
+                                        <div className="absolute bottom-0 left-0 right-0 p-4 z-20 text-white">
+                                            {/* Badge / Pill */}
+                                            <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-medium mb-2 border border-white/10">
+                                                <div className="w-2 h-2 rounded-full bg-blue-400" />
+                                                <span>{profile?.name || "User"}</span>
+                                            </div>
+
+                                            <h3 className="text-base font-bold leading-tight mb-1 text-white">{product.title}</h3>
+                                            <p className="text-xs text-gray-300 line-clamp-1 mb-3 font-light">{product.description}</p>
+
+                                            {/* Action Row */}
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => setConnectModal({
+                                                        open: true,
+                                                        product: product,
+                                                        seller: { id: profile.id, name: profile.name }
+                                                    })}
+                                                    className="flex-1 bg-white text-black h-10 rounded-full font-bold text-sm flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                                >
+                                                    Connect
+                                                </button>
+                                                <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
+                                                    <Heart className="w-4 h-4" />
+                                                </button>
+                                                <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
+                                                    <Share className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-10 opacity-60">
+                                <p className="text-sm font-medium">No products yet</p>
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
 
-            {/* Social Links - Minimal Row */}
-            {profile.social_links && Object.keys(profile.social_links).length > 0 && (
-                <div className="flex gap-3 mb-12 justify-center flex-wrap">
-                    {Object.entries(profile.social_links).map(([platform, url]: [string, any]) => {
-                        if (!url) return null;
-                        const p = platform.toLowerCase();
-                        let Icon = Link2;
-                        if (p.includes('instagram')) Icon = Instagram;
-                        else if (p.includes('twitter') || p.includes('x.com')) Icon = Twitter;
-                        else if (p.includes('facebook')) Icon = Facebook;
-                        else if (p.includes('linkedin')) Icon = Linkedin;
-                        else if (p.includes('youtube')) Icon = Youtube;
-                        else if (p.includes('github')) Icon = Github;
-
-                        const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
-
-                        return (
-                            <a
-                                key={platform}
-                                href={href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-2.5 rounded-full bg-background border border-border text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-all duration-300 hover:scale-110"
-                            >
-                                <Icon size={18} />
-                            </a>
-                        );
-                    })}
-                </div>
-            )}
-
-            {/* Tab Switcher */}
-            <div className="w-full max-w-4xl flex justify-center mb-8">
-                <div className="inline-flex bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/20">
-                    <button
-                        onClick={() => setActiveTab('links')}
-                        className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'links' ? 'bg-white text-black shadow-md' : 'text-white/80 hover:text-white'}`}
-                    >
-                        Links
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('offerings')}
-                        className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'offerings' ? 'bg-white text-black shadow-md' : 'text-white/80 hover:text-white'}`}
-                    >
-                        Offerings
-                    </button>
-                </div>
-            </div>
-
-            {/* Links Tab (Bento Grid Layout) */}
-            {activeTab === 'links' && (
-                <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 auto-rows-fr">
-                    {blocks.length > 0 ? (
-                        blocks.map((block: any, index: number) => {
-                            const isFeatured = index === 0 || block.block_type === 'product';
-                            const colSpan = isFeatured ? 'sm:col-span-2' : 'sm:col-span-1';
-
-                            return (
-                                <div key={block._id} className={`${colSpan} flex`}>
-                                    <PublicBlockCard
-                                        block={block}
-                                        onInteract={handleBlockInteract}
-                                        template={template}
-                                    />
-                                </div>
-                            );
-                        })
-                    ) : (
-                        <div className="col-span-full py-12 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
-                            <p className="text-muted-foreground font-medium">No links yet.</p>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Offerings Tab (Connect Card Design) */}
-            {activeTab === 'offerings' && (
-                <div className="w-full max-w-4xl">
-                    {/* Search Bar */}
-                    <div className="relative mb-6">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
-                        <input
-                            type="text"
-                            placeholder="Search offerings..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-full pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30"
-                        />
-                    </div>
-
-                    {/* Product Grid */}
-                    {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).map((product, index) => (
-                                <div
-                                    key={product._id || `product-${index}`}
-                                    className="relative aspect-square w-full rounded-2xl overflow-hidden group shadow-md"
-                                >
-                                    {/* Background Image */}
-                                    {product.image_url ? (
-                                        <img src={product.image_url} alt={product.title} className="absolute inset-0 w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-black w-full h-full flex items-center justify-center">
-                                            <div className="text-4xl opacity-20">✨</div>
-                                        </div>
-                                    )}
-
-                                    {/* Overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
-                                    {/* Bottom Content */}
-                                    <div className="absolute bottom-0 left-0 right-0 p-3 z-20 text-white">
-                                        {/* Badge / Pill */}
-                                        <div className="inline-flex items-center gap-1 bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-full text-[8px] font-medium mb-2 border border-white/10">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                                            <span>{profile?.name || "User"}</span>
-                                        </div>
-
-                                        <h3 className="text-sm font-bold leading-tight mb-1 text-white">{product.title}</h3>
-                                        <p className="text-[10px] text-gray-300 line-clamp-1 mb-2 font-light">{product.description}</p>
-
-                                        {/* Action Row */}
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => setConnectModal({
-                                                    open: true,
-                                                    product: product,
-                                                    seller: { id: profile.id, name: profile.name }
-                                                })}
-                                                className="flex-1 bg-white text-black h-8 rounded-full font-bold text-xs flex items-center justify-center hover:bg-gray-100 transition-colors"
-                                            >
-                                                Connect
-                                            </button>
-                                            <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
-                                                <Heart className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
-                                                <Share className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="py-12 text-center border-2 border-dashed border-white/20 rounded-xl bg-white/5">
-                            <p className="text-white/60 font-medium">No offerings yet.</p>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Footer */}
-            <div className="fixed bottom-6 left-0 right-0 flex justify-center z-40 px-4">
+            {/* Footer - Connect Button - Match Phone Preview */}
+            <div className="fixed bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-40">
                 <div className="w-full max-w-md">
                     <button
                         onClick={() => setConnectModal({
@@ -450,22 +472,19 @@ const PublicProfile = () => {
                             product: null,
                             seller: { id: profile.id, name: profile.name }
                         })}
-                        className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100"
+                        className="w-full bg-white text-black h-14 rounded-full font-bold text-base flex items-center justify-between px-6 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100"
                     >
                         <span>Connect</span>
                         <MessageCircle className="w-5 h-5 text-gray-600" />
                     </button>
                 </div>
-            </div>
 
-            <div className="mt-16 mb-20 text-center">
-                <a href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-background/20 backdrop-blur-md border border-white/10 rounded-full text-xs font-semibold hover:bg-background/30 transition-all text-white hover:scale-105">
+                {/* Tap2 Branding */}
+                <a href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-background/20 backdrop-blur-md border border-white/10 rounded-full text-xs font-semibold hover:bg-background/30 transition-all hover:scale-105 mt-2">
                     <Sparkles className="w-3 h-3 text-primary" />
                     <span>Create your own Tap2</span>
                 </a>
             </div>
-
-
 
             {/* Modals */}
             <LoginToContinueModal

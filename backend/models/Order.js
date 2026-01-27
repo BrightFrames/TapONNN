@@ -56,8 +56,11 @@ const orderSchema = new mongoose.Schema({
         default: 'pending'
     },
     payment_method: String,
+    payment_id: String, // Unique Payment ID (e.g. H_XXXX)
+    invoice_id: String, // Invoice ID (e.g. HSG-XXXX)
     transaction_id: String, // Gateway ID
     gateway_order_id: String,
+    paid_at: Date, // Date of payment
 
     // Delivery (for physical/service)
     customer_details: {
