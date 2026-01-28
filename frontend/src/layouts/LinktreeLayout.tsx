@@ -103,7 +103,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                     {!isStoreMode && (
                         <NavItem icon={Smartphone} label={t('nav.nfcCards')} active={location.pathname === '/nfc-cards'} onClick={() => handleNav('/nfc-cards')} />
                     )}
-                    <NavItem icon={Sparkles} label={t('nav.discover')} active={location.pathname === '/marketplace'} onClick={() => handleNav('/marketplace')} />
+                    <NavItem icon={Sparkles} label={t('nav.marketplace')} active={location.pathname === '/marketplace'} onClick={() => handleNav('/marketplace')} />
                 </div>
 
                 {/* 3. System Group */}

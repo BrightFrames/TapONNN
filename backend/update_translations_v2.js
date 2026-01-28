@@ -5,6 +5,9 @@ const localesDir = path.join(__dirname, '../frontend/src/locales');
 const languages = ['hi', 'mr', 'gu', 'bn', 'ta', 'te', 'kn', 'ml', 'pa'];
 
 const newTranslations = {
+    nav: {
+        marketplace: { hi: "बाज़ार", mr: "बाजार", default: "Marketplace" }
+    },
     shop: {
         title: { hi: "मेरी दुकान", mr: "माझे दुकान", default: "My Shop" },
         manage: { hi: "प्रबंधन", mr: "व्यवस्थापन", default: "Manage" },
