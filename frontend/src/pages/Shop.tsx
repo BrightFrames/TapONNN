@@ -22,6 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ImageUpload } from "@/components/ImageUpload";
 import { ChevronRight } from "lucide-react";
 import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
+import { useTranslation } from "react-i18next";
 
 interface Product {
     _id: string;
@@ -54,6 +55,7 @@ interface Order {
 
 const Shop = () => {
     const { user, links: authLinks, isLoading, selectedTheme } = useAuth();
+    const { t } = useTranslation();
     const [products, setProducts] = useState<Product[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingProducts, setLoadingProducts] = useState(true);
@@ -227,7 +229,7 @@ const Shop = () => {
 
                     {/* Header */}
                     <div className="flex justify-between items-center mb-8">
-                        <h1 className="text-2xl font-bold">My Shop</h1>
+                        <h1 className="text-2xl font-bold">{t('shop.title')}</h1>
                         <Button variant="ghost" size="icon" className="rounded-full">
                             <Settings className="w-5 h-5 text-gray-500" />
                         </Button>
@@ -241,19 +243,19 @@ const Shop = () => {
                                     value="manage"
                                     className="bg-transparent p-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:text-black text-gray-500 font-medium data-[state=active]:shadow-none transition-none"
                                 >
-                                    Manage
+                                    {t('shop.manage')}
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="products"
                                     className="bg-transparent p-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:text-black text-gray-500 font-medium data-[state=active]:shadow-none transition-none"
                                 >
-                                    Products
+                                    {t('shop.products')}
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="orders"
                                     className="bg-transparent p-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:text-black text-gray-500 font-medium data-[state=active]:shadow-none transition-none"
                                 >
-                                    Orders & Enquiries
+                                    {t('shop.orders')}
                                 </TabsTrigger>
                             </TabsList>
                         </div>
@@ -271,7 +273,7 @@ const Shop = () => {
                                     </Avatar>
                                     <div className="flex-1">
                                         <h2 className="text-xl font-bold mb-1">@{user?.username || "user"}</h2>
-                                        <button className="text-gray-400 text-sm hover:underline mb-2">Add bio</button>
+                                        <button className="text-gray-400 text-sm hover:underline mb-2">{t('shop.addBio')}</button>
                                         <div className="flex gap-2">
                                             {/* Placeholder social icons as per screenshot */}
                                             <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full"><Instagram className="w-4 h-4" /></Button>
@@ -286,19 +288,19 @@ const Shop = () => {
                                         <Button
                                             className="w-full bg-[#7535f5] hover:bg-[#6025d5] text-white rounded-full h-12 text-base font-bold mb-10 shadow-md shadow-purple-200 transition-all hover:scale-[1.01]"
                                         >
-                                            <Plus className="w-5 h-5 mr-2" /> Add
+                                            <Plus className="w-5 h-5 mr-2" /> {t('shop.add')}
                                         </Button>
                                     </DialogTrigger>
                                     <DialogContent className="sm:max-w-[425px]">
                                         <DialogHeader>
-                                            <DialogTitle>Add New Product</DialogTitle>
+                                            <DialogTitle>{t('shop.addNewProduct')}</DialogTitle>
                                             <DialogDescription>
-                                                Add a product or link to your shop.
+                                                {t('shop.addProductDesc')}
                                             </DialogDescription>
                                         </DialogHeader>
                                         <form onSubmit={handleCreateProduct} className="grid gap-4 py-4">
                                             <div className="grid gap-2">
-                                                <Label htmlFor="title">Product Name</Label>
+                                                <Label htmlFor="title">{t('shop.productName')}</Label>
                                                 <Input
                                                     id="title"
                                                     value={newProduct.title}
@@ -308,7 +310,7 @@ const Shop = () => {
                                             </div>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="grid gap-2">
-                                                    <Label htmlFor="price">Price ($)</Label>
+                                                    <Label htmlFor="price">{t('shop.price')}</Label>
                                                     <Input
                                                         id="price"
                                                         type="number"
@@ -319,7 +321,7 @@ const Shop = () => {
                                                     />
                                                 </div>
                                                 <div className="grid gap-2">
-                                                    <Label htmlFor="type">Type</Label>
+                                                    <Label htmlFor="type">{t('shop.type')}</Label>
                                                     <Select
                                                         value={newProduct.type}
                                                         onValueChange={(val: any) => setNewProduct({ ...newProduct, type: val })}
@@ -377,8 +379,8 @@ const Shop = () => {
                                     <div className="flex items-center gap-3">
                                         <EyeOff className="w-5 h-5 text-gray-800" />
                                         <div>
-                                            <h3 className="font-bold text-gray-900">Publish your Shop</h3>
-                                            <p className="text-sm text-gray-600">Your Shop is currently hidden.</p>
+                                            <h3 className="font-bold text-gray-900">{t('shop.publishTitle')}</h3>
+                                            <p className="text-sm text-gray-600">{t('shop.publishDesc')}</p>
                                         </div>
                                     </div>
                                     <Switch />
@@ -452,7 +454,7 @@ const Shop = () => {
                                         ))
                                     ) : (
                                         <div className="text-center py-16 opacity-60">
-                                            <p>No orders or enquiries yet.</p>
+                                            <p>{t('shop.noOrders')}</p>
                                         </div>
                                     )}
                                 </div>
@@ -464,7 +466,7 @@ const Shop = () => {
                                     <div className="relative flex-1">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                         <Input
-                                            placeholder="Search or paste product URL"
+                                            placeholder={t('shop.searchPlaceholder')}
                                             className="pl-9 h-12 bg-white rounded-xl border-gray-200"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -523,8 +525,8 @@ const Shop = () => {
                                     /* Empty State Card */
                                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center bg-opacity-50">
                                         <div className="flex justify-center mb-4 text-4xl">🛍️</div>
-                                        <h3 className="text-lg font-bold text-gray-900 mb-1">Add your first product</h3>
-                                        <p className="text-gray-500 mb-6 font-medium">Sell physical or digital goods directly to your audience.</p>
+                                        <h3 className="text-lg font-bold text-gray-900 mb-1">{t('shop.addFirstProduct')}</h3>
+                                        <p className="text-gray-500 mb-6 font-medium">{t('shop.sellDesc')}</p>
                                     </div>
                                 )}
                             </TabsContent>
@@ -584,13 +586,13 @@ const Shop = () => {
                                                 onClick={() => setPreviewTab('links')}
                                                 className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
                                             >
-                                                Links
+                                                {t('shop.links')}
                                             </button>
                                             <button
                                                 onClick={() => setPreviewTab('shop')}
                                                 className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
                                             >
-                                                Shop
+                                                {t('shop.title')}
                                             </button>
                                         </div>
                                     </div>
@@ -724,7 +726,7 @@ const Shop = () => {
                                         })}
                                         className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100"
                                     >
-                                        <span>Connect</span>
+                                        <span>{t('shop.connect')}</span>
                                         <MessageCircle className="w-5 h-5 text-gray-600" />
                                     </button>
                                 </div>
@@ -734,9 +736,9 @@ const Shop = () => {
                         {/* Preview Label */}
                         <div className="text-center mt-6">
                             <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
-                                <Share className="w-4 h-4" /> Live Preview
+                                <Share className="w-4 h-4" /> {t('shop.livePreview')}
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">Reflects your current theme</p>
+                            <p className="text-xs text-gray-400 mt-1">{t('shop.previewDesc')}</p>
                         </div>
                     </div>
                 </div>

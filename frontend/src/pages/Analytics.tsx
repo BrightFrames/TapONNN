@@ -17,6 +17,7 @@ import {
     Zap
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 // Chart config
 const chartConfig = {
@@ -32,6 +33,7 @@ const chartConfig = {
 
 const Analytics = () => {
     const { user } = useAuth();
+    const { t } = useTranslation();
     const [period, setPeriod] = useState("30d");
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<any>(null);
@@ -125,7 +127,7 @@ const Analytics = () => {
                         ))}
                     </div>
                 ) : (
-                    <div className="p-8 text-center text-xs text-gray-400">No data available</div>
+                    <div className="p-8 text-center text-xs text-gray-400">{t('common.noDataAvailable')}</div>
                 )}
             </CardContent>
         </Card>
@@ -141,21 +143,21 @@ const Analytics = () => {
                     </div>
 
                     <div className="space-y-4 max-w-2xl">
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Unlock Growth Insights</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">{t('analytics.unlockTitle')}</h1>
                         <p className="text-gray-500 text-lg leading-relaxed">
-                            Deep analytics, real-time visitor tracking, and performance breakdowns are exclusive to <span className="font-semibold text-gray-900">Store Accounts</span>.
-                            <br />Upgrade your profile to get the full picture.
+                            {t('analytics.unlockDesc')} <span className="font-semibold text-gray-900">{t('analytics.storeAccounts')}</span>.
+                            <br />{t('analytics.upgradeProfile')}
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
                         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center hover:shadow-md transition-shadow">
-                            <span className="text-3xl font-bold text-gray-900 mb-1">Live</span>
-                            <span className="text-sm font-medium text-gray-500">Real-time Visitor Count</span>
+                            <span className="text-3xl font-bold text-gray-900 mb-1">{t('common.live')}</span>
+                            <span className="text-sm font-medium text-gray-500">{t('analytics.realtimeVisitor')}</span>
                         </div>
                         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center hover:shadow-md transition-shadow">
-                            <span className="text-3xl font-bold text-gray-900 mb-1">Deep</span>
-                            <span className="text-sm font-medium text-gray-500">Location & Device Data</span>
+                            <span className="text-3xl font-bold text-gray-900 mb-1">{t('common.deep')}</span>
+                            <span className="text-sm font-medium text-gray-500">{t('analytics.locationDeviceData')}</span>
                         </div>
                     </div>
 
@@ -164,7 +166,7 @@ const Analytics = () => {
                         className="rounded-full px-10 py-6 text-lg font-bold bg-gray-900 hover:bg-gray-800 text-white shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all mt-6"
                         onClick={() => window.location.href = '/pricing?tab=store'}
                     >
-                        Upgrade to Store <ArrowUpRight className="w-5 h-5 ml-2" />
+                        {t('analytics.upgradeToStore')} <ArrowUpRight className="w-5 h-5 ml-2" />
                     </Button>
                 </div>
             </LinktreeLayout>
@@ -182,14 +184,14 @@ const Analytics = () => {
                             <Zap className="w-5 h-5 text-indigo-600 fill-indigo-100" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Growth Insights</h1>
+                            <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('analytics.title')}</h1>
                             <div className="flex items-center gap-2 text-sm mt-0.5">
                                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-medium animate-pulse">
                                     <span className="relative flex h-2 w-2">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                                     </span>
-                                    {overview.activeVisitors} current visitors
+                                    {overview.activeVisitors} {t('analytics.currentVisitors')}
                                 </div>
                             </div>
                         </div>
@@ -202,9 +204,9 @@ const Analytics = () => {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="24h">Last 24 Hours</SelectItem>
-                                <SelectItem value="7d">Last 7 Days</SelectItem>
-                                <SelectItem value="30d">Last 30 Days</SelectItem>
+                                <SelectItem value="24h">{t('analytics.last24Hours')}</SelectItem>
+                                <SelectItem value="7d">{t('analytics.last7Days')}</SelectItem>
+                                <SelectItem value="30d">{t('analytics.last30Days')}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -220,28 +222,28 @@ const Analytics = () => {
                         <Card className="border-gray-200 shadow-sm bg-white overflow-hidden">
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-x divide-y md:divide-y-0 divide-gray-100">
                                 <MetricsCard
-                                    title="Unique Visitors"
+                                    title={t('analytics.uniqueVisitors')}
                                     value={overview.uniqueVisitors.toLocaleString()}
-                                    subtext={<span className="text-xs text-green-600 ml-1 font-medium">Unique</span>}
+                                    subtext={<span className="text-xs text-green-600 ml-1 font-medium">{t('analytics.unique')}</span>}
                                 />
                                 <MetricsCard
-                                    title="Total Visits"
+                                    title={t('analytics.totalVisits')}
                                     value={overview.totalVisits.toLocaleString()}
                                 />
                                 <MetricsCard
-                                    title="Total Pageviews"
+                                    title={t('analytics.totalPageviews')}
                                     value={overview.pageviews.toLocaleString()}
                                 />
                                 <MetricsCard
-                                    title="Views / Visit"
+                                    title={t('analytics.viewsPerVisit')}
                                     value={overview.viewsPerVisit}
                                 />
                                 <MetricsCard
-                                    title="Bounce Rate"
+                                    title={t('analytics.bounceRate')}
                                     value={`${overview.bounceRate}%`}
                                 />
                                 <MetricsCard
-                                    title="Visit Duration"
+                                    title={t('analytics.visitDuration')}
                                     value={formatDuration(overview.avgVisitDuration)}
                                 />
                             </div>
@@ -281,7 +283,7 @@ const Analytics = () => {
                                             <Area
                                                 type="monotone"
                                                 dataKey="visitors"
-                                                name="Visitors"
+                                                name={t('analytics.visitors')}
                                                 stroke="#6366f1"
                                                 strokeWidth={2}
                                                 fillOpacity={1}
@@ -290,7 +292,7 @@ const Analytics = () => {
                                             <Area
                                                 type="monotone"
                                                 dataKey="pageviews"
-                                                name="Pageviews"
+                                                name={t('analytics.pageviews')}
                                                 stroke="#8b5cf6"
                                                 strokeWidth={2}
                                                 fillOpacity={1}
@@ -305,22 +307,22 @@ const Analytics = () => {
                         {/* Breakdowns Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <BreakdownTable
-                                title="Top Pages"
+                                title={t('analytics.topPages')}
                                 data={data?.breakdowns?.pages}
                                 icon={Monitor}
                             />
                             <BreakdownTable
-                                title="Top Sources"
+                                title={t('analytics.topSources')}
                                 data={data?.breakdowns?.referrers}
                                 icon={Globe}
                             />
                             <BreakdownTable
-                                title="Devices"
+                                title={t('analytics.devices')}
                                 data={data?.breakdowns?.devices}
                                 icon={Smartphone}
                             />
                             <BreakdownTable
-                                title="Countries"
+                                title={t('analytics.countries')}
                                 data={data?.breakdowns?.countries}
                                 icon={Globe}
                             />

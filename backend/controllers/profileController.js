@@ -132,6 +132,28 @@ const updateProfile = async (req, res) => {
         // Prepare the actual update object
         let updateData = {};
 
+        // Check if username change is being attempted for personal profile
+        // Username is immutable once set during registration
+        if (!isStore && rawUpdateData.username) {
+            const requestedUsername = rawUpdateData.username.toLowerCase().trim();
+            if (currentProfile.username && currentProfile.username !== requestedUsername) {
+                return res.status(400).json({
+                    error: 'Username cannot be changed after account creation. Your username is permanent.'
+                });
+            }
+        }
+
+        // Check if store_username change is being attempted for store profile
+        // Store username is also immutable once set
+        if (isStore && rawUpdateData.username) {
+            const requestedStoreUsername = rawUpdateData.username.toLowerCase().trim();
+            if (currentProfile.store_username && currentProfile.store_username !== requestedStoreUsername) {
+                return res.status(400).json({
+                    error: 'Store username cannot be changed after being set. Your store username is permanent.'
+                });
+            }
+        }
+
         // Map fields based on mode
         if (isStore) {
             if (rawUpdateData.username) updateData.store_username = rawUpdateData.username.toLowerCase().trim();

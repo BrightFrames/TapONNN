@@ -17,7 +17,10 @@ interface User {
     // Gender for avatar generation
     gender?: 'male' | 'female' | 'other';
     phone_verified?: boolean;
+    // Language preference for i18n
+    language?: string;
 }
+
 
 interface Link {
     id: string;

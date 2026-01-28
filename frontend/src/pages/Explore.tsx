@@ -21,7 +21,10 @@ interface Business {
     store_selected_theme?: string;
 }
 
+import { useTranslation } from "react-i18next";
+
 const Explore = () => {
+    const { t } = useTranslation();
     const [businesses, setBusinesses] = useState<Business[]>([]);
     const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([]);
     const [loading, setLoading] = useState(true);
@@ -76,14 +79,14 @@ const Explore = () => {
             <div className="container mx-auto max-w-[1600px] mb-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Explore</h1>
-                        <p className="text-gray-500">Discover creators and businesses on Tap2</p>
+                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{t('explore.title')}</h1>
+                        <p className="text-gray-500">{t('explore.desc')}</p>
                     </div>
                     <div className="relative w-full md:w-96">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <Input
                             type="text"
-                            placeholder="Search username..."
+                            placeholder={t('explore.search')}
                             className="pl-10 bg-white border-gray-200 focus:bg-white"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -150,7 +153,7 @@ const Explore = () => {
                                     {/* "Join/View" Button (always visible but highlighted on hover) */}
                                     <div className="absolute bottom-6 w-full px-4">
                                         <div className="w-full py-2 bg-white/20 backdrop-blur-md border border-white/40 text-white text-xs font-bold rounded-full transition-all duration-300 group-hover:bg-white group-hover:text-black">
-                                            View Profile
+                                            {t('explore.viewProfile')}
                                         </div>
                                     </div>
                                 </div>
@@ -163,7 +166,7 @@ const Explore = () => {
             {filteredBusinesses.length === 0 && !loading && (
                 <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                     <Search className="w-12 h-12 mb-4 opacity-20" />
-                    <p>No creators found matching "{searchQuery}".</p>
+                    <p>{t('explore.noResults')} "{searchQuery}".</p>
                 </div>
             )}
         </div>

@@ -17,9 +17,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 const Design = () => {
     const { user, selectedTheme, updateTheme, updateProfile, links: authLinks } = useAuth();
+    const { t } = useTranslation();
 
     // Local state for configuration to allow debounced updates (optional) or direct updates
     // For now, we sync directly with user.design_config
@@ -73,25 +75,25 @@ const Design = () => {
                 <div className="flex-1 overflow-y-auto border-r border-gray-200 bg-white">
                     <div className="p-8 pb-32 max-w-2xl mx-auto">
                         <div className="flex items-center justify-between mb-8">
-                            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Design</h1>
+                            <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t('design.title')}</h1>
                             <Button variant="outline" className="gap-2">
-                                <Sparkles className="w-4 h-4" /> Enhance
+                                <Sparkles className="w-4 h-4" /> {t('design.enhance')}
                             </Button>
                         </div>
 
                         <Tabs defaultValue="header" className="w-full">
                             <TabsList className="flex flex-wrap h-auto gap-2 bg-transparent justify-start mb-8 p-0">
                                 <TabsTrigger value="header" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-full px-4 py-2 border border-gray-200">
-                                    <UserCircle className="w-4 h-4 mr-2" /> Header
+                                    <UserCircle className="w-4 h-4 mr-2" /> {t('design.header')}
                                 </TabsTrigger>
                                 <TabsTrigger value="theme" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-full px-4 py-2 border border-gray-200">
-                                    <Layout className="w-4 h-4 mr-2" /> Theme
+                                    <Layout className="w-4 h-4 mr-2" /> {t('design.theme')}
                                 </TabsTrigger>
                                 <TabsTrigger value="wallpaper" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-full px-4 py-2 border border-gray-200">
-                                    <ImageIcon className="w-4 h-4 mr-2" /> Wallpaper
+                                    <ImageIcon className="w-4 h-4 mr-2" /> {t('design.wallpaper')}
                                 </TabsTrigger>
                                 <TabsTrigger value="text" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-full px-4 py-2 border border-gray-200">
-                                    <Type className="w-4 h-4 mr-2" /> Text
+                                    <Type className="w-4 h-4 mr-2" /> {t('design.text')}
                                 </TabsTrigger>
                             </TabsList>
 
@@ -108,7 +110,7 @@ const Design = () => {
                                                 {(user?.name || "U")[0].toUpperCase()}
                                             </div>
                                         )}
-                                        <Button className="ml-6 bg-black text-white hover:bg-gray-800 rounded-full px-6">+ Add</Button>
+                                        <Button className="ml-6 bg-black text-white hover:bg-gray-800 rounded-full px-6">+ {t('common.add')}</Button>
                                     </div>
                                 </div>
 
@@ -153,26 +155,26 @@ const Design = () => {
                                             className={`p-6 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 transition-all ${config.titleStyle === 'logo' ? 'border-black bg-gray-50' : 'border-gray-200 bg-white'}`}
                                         >
                                             <ImageIcon className="w-6 h-6" />
-                                            <span className="text-xs font-medium mt-1">Logo</span>
+                                            <span className="text-xs font-medium mt-1">{t('design.logo')}</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* Size */}
                                 <div className="space-y-4">
-                                    <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Size</h2>
+                                    <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('design.size')}</h2>
                                     <div className="grid grid-cols-2 gap-4">
                                         <button
                                             onClick={() => handleConfigChange('profileSize', 'small')}
                                             className={`py-3 px-4 border-2 rounded-full font-medium text-sm transition-all ${config.profileSize === 'small' ? 'border-black bg-gray-50' : 'border-gray-200 bg-white'}`}
                                         >
-                                            Small
+                                            {t('design.small')}
                                         </button>
                                         <button
                                             onClick={() => handleConfigChange('profileSize', 'large')}
                                             className={`py-3 px-4 border-2 rounded-full font-medium text-sm transition-all ${config.profileSize === 'large' ? 'border-black bg-gray-50' : 'border-gray-200 bg-white'}`}
                                         >
-                                            Large
+                                            {t('design.large')}
                                         </button>
                                     </div>
                                 </div>
@@ -181,14 +183,14 @@ const Design = () => {
                             {/* THEME TAB */}
                             <TabsContent value="theme">
                                 <div className="space-y-6">
-                                    <h2 className="text-lg font-semibold">Themes</h2>
+                                    <h2 className="text-lg font-semibold">{t('design.themes')}</h2>
 
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                         <div
                                             className="aspect-[4/5] rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-500 hover:border-gray-400 hover:bg-gray-50 cursor-pointer transition-colors"
                                         >
                                             <Sparkles className="w-6 h-6 mb-2" />
-                                            <span className="text-xs font-medium">Custom</span>
+                                            <span className="text-xs font-medium">{t('common.custom')}</span>
                                         </div>
 
                                         {templates.map((t) => (
@@ -282,7 +284,7 @@ const Design = () => {
 
                                     {/* Custom Image URL */}
                                     <div className="space-y-4">
-                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Custom Image URL</h3>
+                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('design.customImageUrl')}</h3>
                                         <input
                                             type="url"
                                             placeholder="https://example.com/image.jpg"
@@ -322,7 +324,7 @@ const Design = () => {
 
                                     {/* Text Color */}
                                     <div className="space-y-4">
-                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Text Color</h3>
+                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('design.textColor')}</h3>
                                         <div className="grid grid-cols-6 gap-3">
                                             {['#111827', '#374151', '#6B7280', '#FFFFFF', '#7C3AED', '#059669'].map(color => (
                                                 <button

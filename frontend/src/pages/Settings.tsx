@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 import {
     User,
     Lock,
@@ -30,6 +31,7 @@ import {
 
 const Settings = () => {
     const { user, isAuthenticated, refreshProfile } = useAuth();
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -147,7 +149,6 @@ const Settings = () => {
                 },
                 body: JSON.stringify({
                     full_name: fullName,
-                    username,
                     bio,
                     avatar_url: avatarUrl
                 })
@@ -279,8 +280,8 @@ const Settings = () => {
                     <div className="max-w-3xl mx-auto">
                         {/* Header */}
                         <div className="mb-4 sm:mb-8">
-                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Settings</h1>
-                            <p className="text-gray-500 text-xs sm:text-sm mt-1">Manage your account and preferences</p>
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('settings.title')}</h1>
+                            <p className="text-gray-500 text-xs sm:text-sm mt-1">{t('settings.subtitle')}</p>
                         </div>
 
                         <Tabs defaultValue="profile" className="space-y-4 sm:space-y-6">
@@ -290,28 +291,28 @@ const Settings = () => {
                                     className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 rounded-xl py-3 px-4 gap-2"
                                 >
                                     <User className="w-4 h-4" />
-                                    <span className="hidden sm:inline">Profile</span>
+                                    <span className="hidden sm:inline">{t('settings.profile')}</span>
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="security"
                                     className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 rounded-xl py-3 px-4 gap-2"
                                 >
                                     <Lock className="w-4 h-4" />
-                                    <span className="hidden sm:inline">Security</span>
+                                    <span className="hidden sm:inline">{t('settings.security')}</span>
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="notifications"
                                     className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 rounded-xl py-3 px-4 gap-2"
                                 >
                                     <Bell className="w-4 h-4" />
-                                    <span className="hidden sm:inline">Notifications</span>
+                                    <span className="hidden sm:inline">{t('settings.notifications')}</span>
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="danger"
                                     className="data-[state=active]:bg-red-100 data-[state=active]:text-red-700 rounded-xl py-3 px-4 gap-2"
                                 >
                                     <Shield className="w-4 h-4" />
-                                    <span className="hidden sm:inline">Danger Zone</span>
+                                    <span className="hidden sm:inline">{t('settings.dangerZone')}</span>
                                 </TabsTrigger>
                             </TabsList>
 
@@ -319,8 +320,8 @@ const Settings = () => {
                             <TabsContent value="profile" className="space-y-4 sm:space-y-6">
                                 <Card className="border-0 shadow-sm">
                                     <CardHeader className="p-4 sm:p-6">
-                                        <CardTitle className="text-base sm:text-lg">Profile Information</CardTitle>
-                                        <CardDescription className="text-xs sm:text-sm">Update your profile details and public information</CardDescription>
+                                        <CardTitle className="text-base sm:text-lg">{t('settings.profileInfo')}</CardTitle>
+                                        <CardDescription className="text-xs sm:text-sm">{t('settings.profileDesc')}</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0 sm:pt-0">
                                         {/* Avatar Upload */}
@@ -335,35 +336,35 @@ const Settings = () => {
                                             <div className="space-y-2">
                                                 <Label htmlFor="fullName" className="flex items-center gap-2">
                                                     <User className="w-4 h-4 text-gray-400" />
-                                                    Full Name
+                                                    {t('settings.fullName')}
                                                 </Label>
                                                 <Input
                                                     id="fullName"
                                                     value={fullName}
                                                     onChange={(e) => setFullName(e.target.value)}
-                                                    placeholder="Your full name"
+                                                    placeholder={t('settings.fullName')}
                                                     className="rounded-xl"
                                                 />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="username" className="flex items-center gap-2">
                                                     <AtSign className="w-4 h-4 text-gray-400" />
-                                                    Username
+                                                    {t('settings.username')}
                                                 </Label>
                                                 <Input
                                                     id="username"
                                                     value={username}
-                                                    onChange={(e) => setUsername(e.target.value)}
-                                                    placeholder="your-username"
-                                                    className="rounded-xl"
+                                                    disabled
+                                                    className="rounded-xl bg-gray-50"
                                                 />
+                                                <p className="text-xs text-gray-500">{t('settings.usernameImmutable')}</p>
                                             </div>
                                         </div>
 
                                         <div className="space-y-2">
                                             <Label htmlFor="email" className="flex items-center gap-2">
                                                 <Mail className="w-4 h-4 text-gray-400" />
-                                                Email
+                                                {t('settings.email')}
                                             </Label>
                                             <Input
                                                 id="email"
@@ -371,19 +372,19 @@ const Settings = () => {
                                                 disabled
                                                 className="rounded-xl bg-gray-50"
                                             />
-                                            <p className="text-xs text-gray-500">Email cannot be changed directly. Contact support.</p>
+                                            <p className="text-xs text-gray-500">{t('settings.emailNote')}</p>
                                         </div>
 
                                         <div className="space-y-2">
                                             <Label htmlFor="bio" className="flex items-center gap-2">
                                                 <FileText className="w-4 h-4 text-gray-400" />
-                                                Bio
+                                                {t('settings.bio')}
                                             </Label>
                                             <Textarea
                                                 id="bio"
                                                 value={bio}
                                                 onChange={(e) => setBio(e.target.value)}
-                                                placeholder="Tell visitors about yourself..."
+                                                placeholder={t('settings.bioPlaceholder')}
                                                 className="rounded-xl resize-none min-h-[100px]"
                                                 maxLength={200}
                                             />
@@ -400,7 +401,7 @@ const Settings = () => {
                                             ) : (
                                                 <Save className="w-4 h-4" />
                                             )}
-                                            Save Changes
+                                            {t('settings.saveChanges')}
                                         </Button>
                                     </CardContent>
                                 </Card>
@@ -408,8 +409,8 @@ const Settings = () => {
                                 {/* Social Links Card */}
                                 <Card className="border-0 shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg">Social Links</CardTitle>
-                                        <CardDescription>Add links to your social media profiles</CardDescription>
+                                        <CardTitle className="text-lg">{t('settings.socialLinks')}</CardTitle>
+                                        <CardDescription>{t('settings.socialLinksDesc')}</CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         <SocialLinksManager
@@ -428,15 +429,15 @@ const Settings = () => {
                                         <CardHeader>
                                             <CardTitle className="text-lg flex items-center gap-2">
                                                 <ShoppingBag className="w-5 h-5 text-purple-600" />
-                                                Store Profile
+                                                {t('settings.storeProfile')}
                                             </CardTitle>
-                                            <CardDescription>Share your store separately from your main profile</CardDescription>
+                                            <CardDescription>{t('settings.storeProfileDesc')}</CardDescription>
                                         </CardHeader>
                                         <CardContent className="space-y-4">
                                             <div className="flex items-center justify-between">
                                                 <div>
-                                                    <p className="font-medium">Publish Store</p>
-                                                    <p className="text-sm text-gray-500">Make your store visible at /{username}/store</p>
+                                                    <p className="font-medium">{t('settings.publishStore')}</p>
+                                                    <p className="text-sm text-gray-500">{t('settings.publishStoreDesc')} /{username}/store</p>
                                                 </div>
                                                 <Switch
                                                     checked={storePublished}
@@ -447,13 +448,13 @@ const Settings = () => {
 
                                             {storePublished && (
                                                 <div className="pt-2 border-t">
-                                                    <p className="text-sm text-gray-600 mb-3">Your store is live! Share it with your audience.</p>
+                                                    <p className="text-sm text-gray-600 mb-3">{t('settings.storeLive')}</p>
                                                     <Button
                                                         onClick={() => setStoreShareOpen(true)}
                                                         className="gap-2 bg-purple-600 hover:bg-purple-700 rounded-xl"
                                                     >
                                                         <Share2 className="w-4 h-4" />
-                                                        Share Store
+                                                        {t('settings.shareStore')}
                                                     </Button>
                                                 </div>
                                             )}
@@ -472,29 +473,29 @@ const Settings = () => {
 
                                 <Card className="border-0 shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg">Change Password</CardTitle>
-                                        <CardDescription>Update your password to keep your account secure</CardDescription>
+                                        <CardTitle className="text-lg">{t('settings.changePassword')}</CardTitle>
+                                        <CardDescription>{t('settings.changePasswordDesc')}</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="newPassword">New Password</Label>
+                                            <Label htmlFor="newPassword">{t('settings.newPassword')}</Label>
                                             <Input
                                                 id="newPassword"
                                                 type="password"
                                                 value={newPassword}
                                                 onChange={(e) => setNewPassword(e.target.value)}
-                                                placeholder="Enter new password"
+                                                placeholder={t('settings.newPassword')}
                                                 className="rounded-xl"
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                                            <Label htmlFor="confirmPassword">{t('settings.confirmPassword')}</Label>
                                             <Input
                                                 id="confirmPassword"
                                                 type="password"
                                                 value={confirmPassword}
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                                placeholder="Confirm new password"
+                                                placeholder={t('settings.confirmPassword')}
                                                 className="rounded-xl"
                                             />
                                         </div>
@@ -505,14 +506,14 @@ const Settings = () => {
                                                 className="rounded-xl gap-2"
                                             >
                                                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                                                Update Password
+                                                {t('settings.updatePassword')}
                                             </Button>
                                             <Button
                                                 variant="outline"
                                                 onClick={handleResetPassword}
                                                 className="rounded-xl"
                                             >
-                                                Send Reset Email
+                                                {t('settings.sendResetEmail')}
                                             </Button>
                                         </div>
                                     </CardContent>
@@ -520,18 +521,18 @@ const Settings = () => {
 
                                 <Card className="border-0 shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg">Two-Factor Authentication</CardTitle>
-                                        <CardDescription>Add an extra layer of security to your account</CardDescription>
+                                        <CardTitle className="text-lg">{t('settings.twoFactor')}</CardTitle>
+                                        <CardDescription>{t('settings.twoFactorDesc')}</CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="font-medium">Enable 2FA</p>
-                                                <p className="text-sm text-gray-500">Require a code when signing in</p>
+                                                <p className="font-medium">{t('settings.enable2FA')}</p>
+                                                <p className="text-sm text-gray-500">{t('settings.enable2FADesc')}</p>
                                             </div>
                                             <Switch disabled />
                                         </div>
-                                        <p className="text-xs text-gray-400 mt-2">Coming soon</p>
+                                        <p className="text-xs text-gray-400 mt-2">{t('settings.comingSoon')}</p>
                                     </CardContent>
                                 </Card>
                             </TabsContent>
@@ -540,28 +541,28 @@ const Settings = () => {
                             <TabsContent value="notifications" className="space-y-6">
                                 <Card className="border-0 shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg">Email Notifications</CardTitle>
-                                        <CardDescription>Choose what emails you receive</CardDescription>
+                                        <CardTitle className="text-lg">{t('settings.emailNotifications')}</CardTitle>
+                                        <CardDescription>{t('settings.emailNotificationsDesc')}</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="font-medium">Weekly Analytics</p>
-                                                <p className="text-sm text-gray-500">Get a weekly summary of your profile performance</p>
+                                                <p className="font-medium">{t('settings.weeklyAnalytics')}</p>
+                                                <p className="text-sm text-gray-500">{t('settings.weeklyAnalyticsDesc')}</p>
                                             </div>
                                             <Switch defaultChecked />
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="font-medium">New Features</p>
-                                                <p className="text-sm text-gray-500">Be the first to know about new features</p>
+                                                <p className="font-medium">{t('settings.newFeatures')}</p>
+                                                <p className="text-sm text-gray-500">{t('settings.newFeaturesDesc')}</p>
                                             </div>
                                             <Switch defaultChecked />
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="font-medium">Marketing Emails</p>
-                                                <p className="text-sm text-gray-500">Tips, offers, and promotional content</p>
+                                                <p className="font-medium">{t('settings.marketingEmails')}</p>
+                                                <p className="text-sm text-gray-500">{t('settings.marketingEmailsDesc')}</p>
                                             </div>
                                             <Switch />
                                         </div>
@@ -573,19 +574,19 @@ const Settings = () => {
                             <TabsContent value="danger" className="space-y-6">
                                 <Card className="border-0 shadow-sm border-red-200 bg-red-50/50">
                                     <CardHeader>
-                                        <CardTitle className="text-lg text-red-700">Delete Account</CardTitle>
+                                        <CardTitle className="text-lg text-red-700">{t('settings.deleteAccount')}</CardTitle>
                                         <CardDescription className="text-red-600">
-                                            Permanently delete your account and all associated data
+                                            {t('settings.deleteAccountDesc')}
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         <p className="text-sm text-gray-600 mb-4">
-                                            Once you delete your account, there is no going back. This will permanently delete:
+                                            {t('settings.deleteWarning')}
                                         </p>
                                         <ul className="list-disc list-inside text-sm text-gray-600 mb-6 space-y-1">
-                                            <li>Your profile and all links</li>
-                                            <li>All analytics and click data</li>
-                                            <li>Your username (may be claimed by others)</li>
+                                            <li>{t('settings.deleteItem1')}</li>
+                                            <li>{t('settings.deleteItem2')}</li>
+                                            <li>{t('settings.deleteItem3')}</li>
                                         </ul>
                                         <Button
                                             variant="destructive"
@@ -598,7 +599,7 @@ const Settings = () => {
                                             ) : (
                                                 <Trash2 className="w-4 h-4" />
                                             )}
-                                            {deleting ? "Deleting..." : "Delete My Account"}
+                                            {deleting ? t('settings.deleting') : t('settings.deleteButton')}
                                         </Button>
                                     </CardContent>
                                 </Card>

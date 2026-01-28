@@ -42,6 +42,7 @@ import {
 
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { SocialLinksDialog } from "@/components/SocialLinksDialog";
+import { useTranslation } from "react-i18next";
 
 interface Link {
     id: string;
@@ -73,6 +74,7 @@ interface Product {
 const Dashboard = () => {
     const { user, blocks, addBlock, updateBlock, deleteBlock, reorderBlocks, selectedTheme, updateProfile } = useAuth(); // Use blocks instead of links
     // Removed local links state to rely on context or separate local state if needed (using context for now)
+    const { t } = useTranslation();
     const [isAddingBlock, setIsAddingBlock] = useState(false);
     const [editingBlock, setEditingBlock] = useState<any>(null); // For editing
     const [socialPreview, setSocialPreview] = useState<Record<string, string> | null>(null);
@@ -218,8 +220,8 @@ const Dashboard = () => {
                             {/* Title Row */}
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                 <div>
-                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Links</h1>
-                                    <p className="text-gray-500 text-xs sm:text-sm mt-1 hidden sm:block">Manage your profile links • Drag to reorder</p>
+                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('dashboard.title')}</h1>
+                                    <p className="text-gray-500 text-xs sm:text-sm mt-1 hidden sm:block">{t('dashboard.subtitle')} • {t('dashboard.addLinksHere')}</p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="hidden sm:flex items-center gap-3">
@@ -230,11 +232,11 @@ const Dashboard = () => {
                                             onOpenChange={(isOpen) => !isOpen && setSocialPreview(null)}
                                         >
                                             <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50">
-                                                <Instagram className="w-4 h-4" /> Socials
+                                                <Instagram className="w-4 h-4" /> {t('dashboard.socials')}
                                             </Button>
                                         </SocialLinksDialog>
                                         <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50">
-                                            <Sparkles className="w-4 h-4" /> Enhance
+                                            <Sparkles className="w-4 h-4" /> {t('dashboard.enhance')}
                                         </Button>
                                     </div>
 
@@ -267,11 +269,11 @@ const Dashboard = () => {
                                     onOpenChange={(isOpen) => !isOpen && setSocialPreview(null)}
                                 >
                                     <Button variant="outline" className="rounded-full gap-1.5 sm:gap-2 h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50 whitespace-nowrap flex-shrink-0">
-                                        <Instagram className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Socials
+                                        <Instagram className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t('dashboard.socials')}
                                     </Button>
                                 </SocialLinksDialog>
                                 <Button variant="outline" className="rounded-full gap-1.5 sm:gap-2 h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50 whitespace-nowrap flex-shrink-0">
-                                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Enhance
+                                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t('dashboard.enhance')}
                                 </Button>
                             </div>
                         </div>
@@ -282,7 +284,7 @@ const Dashboard = () => {
                                 onClick={() => setIsAddingBlock(true)}
                                 className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-purple-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
                             >
-                                <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> Add Content
+                                <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> {t('dashboard.addContent')}
                             </Button>
                             <Button
                                 onClick={handleClearAll}
@@ -290,7 +292,7 @@ const Dashboard = () => {
                                 className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 font-medium"
                             >
                                 <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                                <span className="hidden sm:inline ml-2">Clear All</span>
+                                <span className="hidden sm:inline ml-2">{t('dashboard.clearAll')}</span>
                             </Button>
                         </div>
 
@@ -301,10 +303,10 @@ const Dashboard = () => {
                                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
                                         <Link2 className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
                                     </div>
-                                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">No links yet</h3>
-                                    <p className="text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6">Add your first block to get started</p>
+                                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">{t('dashboard.noLinks')}</h3>
+                                    <p className="text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6">{t('dashboard.noLinksDesc')}</p>
                                     <Button onClick={() => setIsAddingBlock(true)} variant="outline" className="rounded-full gap-2 text-sm">
-                                        <Plus className="w-4 h-4" /> Add your first block
+                                        <Plus className="w-4 h-4" /> {t('dashboard.addFirstBlock')}
                                     </Button>
                                 </div>
                             )}
@@ -422,14 +424,14 @@ const Dashboard = () => {
                                             onClick={() => setPreviewTab('links')}
                                             className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
                                         >
-                                            Links
+                                            {t('dashboard.links')}
                                         </button>
                                         {user?.active_profile_mode === 'store' && (
                                             <button
                                                 onClick={() => setPreviewTab('shop')}
                                                 className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
                                             >
-                                                Offerings
+                                                {t('dashboard.offerings')}
                                             </button>
                                         )}
                                     </div>
@@ -458,7 +460,7 @@ const Dashboard = () => {
                                         })}
                                         {localBlocks.filter(b => b.is_active).length === 0 && (
                                             <div className={`text-center text-sm py-8 ${currentTemplate.textColor} opacity-60`}>
-                                                Add links to see them here
+                                                {t('dashboard.addLinksHere')}
                                             </div>
                                         )}
                                     </div>
@@ -540,7 +542,7 @@ const Dashboard = () => {
                                             </div>
                                         ) : (
                                             <div className="text-center py-10 opacity-60">
-                                                <p className="text-sm font-medium">No products yet</p>
+                                                <p className="text-sm font-medium">{t('empty.noProducts')}</p>
                                             </div>
                                         )}
                                     </div>
@@ -549,7 +551,7 @@ const Dashboard = () => {
                                 {/* Footer - Connect Button */}
                                 <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-30">
                                     <button className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100">
-                                        <span>Connect</span>
+                                        <span>{t('common.connect')}</span>
                                         <MessageCircle className="w-5 h-5 text-gray-600" />
                                     </button>
                                 </div>
@@ -559,9 +561,9 @@ const Dashboard = () => {
                         {/* Preview Label */}
                         <div className="text-center mt-6">
                             <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
-                                <Smartphone className="w-4 h-4" /> Live Preview
+                                <Smartphone className="w-4 h-4" /> {t('dashboard.livePreview')}
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">Reflects your current theme</p>
+                            <p className="text-xs text-gray-400 mt-1">{t('dashboard.previewDesc')}</p>
                         </div>
                     </div>
                 </div>

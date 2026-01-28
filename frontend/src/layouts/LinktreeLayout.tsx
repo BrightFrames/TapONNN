@@ -40,6 +40,8 @@ import ShareModal from "@/components/ShareModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { LanguageSelectorDialog } from "@/components/LanguageSelectorDialog";
 import ProfileSwitcher from "@/components/ProfileSwitcher";
+import { useTranslation } from "react-i18next";
+
 
 const NavItem = ({ icon: Icon, label, active = false, badge, onClick }: { icon: any, label: string, active?: boolean, badge?: string, onClick?: () => void }) => (
     <Button
@@ -56,6 +58,7 @@ const NavItem = ({ icon: Icon, label, active = false, badge, onClick }: { icon: 
 // Sidebar content component for reuse in desktop and mobile
 const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { navigate: (path: string) => void, location: { pathname: string }, onClose?: () => void, onShare: () => void, onLogout: () => void }) => {
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+    const { t } = useTranslation();
 
     const handleNav = (path: string) => {
         navigate(path);
@@ -74,40 +77,40 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
 
                 {/* 1. Manage Group */}
                 <div className="space-y-1">
-                    <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Manage</h4>
+                    <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">{t('nav.manage')}</h4>
                     {!isStoreMode && (
                         <>
-                            <NavItem icon={List} label="Links & Blocks" active={location.pathname === '/dashboard'} onClick={() => handleNav('/dashboard')} />
-                            <NavItem icon={Palette} label="Design & Themes" active={location.pathname === '/design'} onClick={() => handleNav('/design')} />
+                            <NavItem icon={List} label={t('nav.links')} active={location.pathname === '/dashboard'} onClick={() => handleNav('/dashboard')} />
+                            <NavItem icon={Palette} label={t('nav.design')} active={location.pathname === '/design'} onClick={() => handleNav('/design')} />
                         </>
                     )}
                     {isStoreMode && (
                         <>
-                            <NavItem icon={Store} label="Offerings" active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')} onClick={() => handleNav('/dashboard/business?tab=shop')} />
-                            <NavItem icon={DollarSign} label="Vault" active={location.pathname === '/earnings'} onClick={() => handleNav('/earnings')} />
+                            <NavItem icon={Store} label={t('nav.offerings')} active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')} onClick={() => handleNav('/dashboard/business?tab=shop')} />
+                            <NavItem icon={DollarSign} label={t('nav.vault')} active={location.pathname === '/earnings'} onClick={() => handleNav('/earnings')} />
                         </>
                     )}
                     {!isStoreMode && (
-                        <NavItem icon={Image} label="Media Library" active={location.pathname === '/media'} onClick={() => handleNav('/media')} />
+                        <NavItem icon={Image} label={t('nav.media')} active={location.pathname === '/media'} onClick={() => handleNav('/media')} />
                     )}
                 </div>
 
                 {/* 2. Growth Group */}
                 <div className="space-y-1">
-                    <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Growth</h4>
-                    <NavItem icon={BarChart3} label="Growth Insights" active={location.pathname === '/analytics'} onClick={() => handleNav('/analytics')} />
-                    <NavItem icon={MessageCircle} label="Lead" active={location.pathname === '/enquiries'} onClick={() => handleNav('/enquiries')} />
+                    <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">{t('nav.growth')}</h4>
+                    <NavItem icon={BarChart3} label={t('nav.analytics')} active={location.pathname === '/analytics'} onClick={() => handleNav('/analytics')} />
+                    <NavItem icon={MessageCircle} label={isStoreMode ? t('nav.lead') : t('nav.message')} active={location.pathname === '/enquiries'} onClick={() => handleNav('/enquiries')} />
                     {!isStoreMode && (
-                        <NavItem icon={Smartphone} label="NFC Cards" active={location.pathname === '/nfc-cards'} onClick={() => handleNav('/nfc-cards')} />
+                        <NavItem icon={Smartphone} label={t('nav.nfcCards')} active={location.pathname === '/nfc-cards'} onClick={() => handleNav('/nfc-cards')} />
                     )}
-                    <NavItem icon={Sparkles} label="Discover" active={location.pathname === '/marketplace'} onClick={() => handleNav('/marketplace')} />
+                    <NavItem icon={Sparkles} label={t('nav.discover')} active={location.pathname === '/marketplace'} onClick={() => handleNav('/marketplace')} />
                 </div>
 
                 {/* 3. System Group */}
                 <div className="space-y-1">
-                    <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">System</h4>
-                    <NavItem icon={Settings} label="Settings" active={location.pathname === '/settings'} onClick={() => handleNav('/settings')} />
-                    <NavItem icon={Languages} label="Language" active={false} onClick={() => setIsLanguageOpen(true)} />
+                    <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">{t('nav.system')}</h4>
+                    <NavItem icon={Settings} label={t('nav.settings')} active={location.pathname === '/settings'} onClick={() => handleNav('/settings')} />
+                    <NavItem icon={Languages} label={t('nav.language')} active={false} onClick={() => setIsLanguageOpen(true)} />
                 </div>
             </div>
 
@@ -122,7 +125,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                     className="w-full justify-start gap-3"
                 >
                     <ExternalLink className="w-4 h-4" />
-                    <span>View Profile</span>
+                    <span>{t('nav.viewProfile')}</span>
                 </Button>
                 <Button
                     variant="ghost"
@@ -130,7 +133,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                     className="w-full justify-start gap-3 text-red-500 hover:text-red-600 hover:bg-red-50"
                 >
                     <LogOut className="w-4 h-4" />
-                    <span>Logout</span>
+                    <span>{t('nav.logout')}</span>
                 </Button>
             </div>
         </div>
@@ -143,6 +146,7 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
     const { user, logout } = useAuth();
+    const { t } = useTranslation();
 
     const shareUrl = `${window.location.origin}/${user?.username}`;
 
@@ -160,12 +164,13 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
         <div className="min-h-screen bg-background flex flex-col font-sans">
             {/* Top Banner */}
             <div className="bg-primary text-primary-foreground py-2 px-4 text-center text-xs font-medium flex justify-center items-center gap-4">
-                <span className="hidden sm:inline">Unlock more tools to grow your audience faster.</span>
-                <span className="sm:hidden">Upgrade to unlock more tools.</span>
+                <span className="hidden sm:inline">{t('banner.upgradeText')}</span>
+                <span className="sm:hidden">{t('banner.upgradeTextMobile')}</span>
                 <Button size="sm" variant="secondary" className="h-7 px-3 text-xs rounded-full gap-1" onClick={() => navigate('/pricing')}>
-                    <Zap className="w-3 h-3 fill-current" /> Upgrade
+                    <Zap className="w-3 h-3 fill-current" /> {t('common.upgrade')}
                 </Button>
             </div>
+
 
             <div className="flex flex-1 overflow-hidden">
 
