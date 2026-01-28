@@ -3,7 +3,10 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const analyticsController = require('../controllers/analyticsController');
 
-// GET /api/analytics/summary (Authenticated)
-router.get('/summary', authMiddleware, analyticsController.getAnalytics);
+// POST /api/analytics/track (Public - tracked from public profiles)
+router.post('/track', analyticsController.trackEvent);
+
+// GET /api/analytics/stats (Authenticated - for dashboard)
+router.get('/stats', authMiddleware, analyticsController.getStats);
 
 module.exports = router;

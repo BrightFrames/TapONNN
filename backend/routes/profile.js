@@ -24,7 +24,7 @@ router.get('/store/:username', profileController.getPublicStoreProfile);
 router.get('/:username', profileController.getPublicProfile);
 
 // POST /api/profile/:profileId/view (Public) - Track view
-router.post('/:profileId/view', analyticsController.trackProfileView);
+
 
 module.exports = router;
 

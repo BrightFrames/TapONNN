@@ -43,7 +43,7 @@ const subscriptionOrderSchema = new mongoose.Schema({
 });
 
 subscriptionOrderSchema.index({ user_id: 1 });
-subscriptionOrderSchema.index({ order_id: 1 });
+
 
 const userSubscriptionSchema = new mongoose.Schema({
     user_id: {

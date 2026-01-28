@@ -14,6 +14,7 @@ import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 import useIntent, { getPendingIntent, clearPendingIntent } from "@/hooks/useIntent";
 import { toast } from "sonner";
 import { getIconForThumbnail } from "@/utils/socialIcons";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 const PublicProfile = () => {
     const { username } = useParams();
@@ -44,6 +45,9 @@ const PublicProfile = () => {
     const [connectModal, setConnectModal] = useState<{ open: boolean; product: any; seller: any }>({ open: false, product: null, seller: null });
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+    // Analytics Tracking - tracks pageviews automatically when profile ID is available
+    const { trackClick } = useAnalytics(profile?.id);
 
     // Initialize Profile & Blocks
     useEffect(() => {

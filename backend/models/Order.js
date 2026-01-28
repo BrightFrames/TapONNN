@@ -83,7 +83,6 @@ const orderSchema = new mongoose.Schema({
 // Indexes
 orderSchema.index({ seller_id: 1, created_at: -1 });
 orderSchema.index({ buyer_id: 1, created_at: -1 });
-orderSchema.index({ intent_id: 1 });
 
 const Order = mongoose.model('Order', orderSchema);
 

@@ -1,446 +1,329 @@
 import { useState, useEffect } from "react";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import {
     ArrowUpRight,
     ArrowDownRight,
-    MousePointerClick,
-    Eye,
-    Users,
     Clock,
     Globe,
     Smartphone,
-    ExternalLink,
-    Percent,
-    DollarSign,
-    Info,
-    ChevronRight,
+    Monitor,
     ChevronDown,
-    UserPlus,
-    Instagram,
-    Lock,
     Loader2,
-    Store,
-    User
+    Zap
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 // Chart config
 const chartConfig = {
-    views: {
-        label: "Views",
-        color: "#8884d8",
+    visitors: {
+        label: "Visitors",
+        color: "#6366f1", // Indigo
     },
-    clicks: {
-        label: "Clicks",
-        color: "#82ca9d",
+    pageviews: {
+        label: "Pageviews",
+        color: "#8b5cf6", // Purple
     },
 };
 
-interface AnalyticsSummary {
-    totalClicks: number;
-    linkCount: number;
-    topLinks: { id: string; title: string; url: string; clicks: number }[];
-    totalViews: number;
-    subscribers: number;
-    chartData: { date: string; views: string; clicks: string }[];
-}
-
 const Analytics = () => {
-    const { user, links } = useAuth();
-    const [timeRange, setTimeRange] = useState("7d");
-    const [dateRange, setDateRange] = useState("Last 7 days");
+    const { user } = useAuth();
+    const [period, setPeriod] = useState("30d");
     const [loading, setLoading] = useState(true);
-    const [analyticsData, setAnalyticsData] = useState<AnalyticsSummary | null>(null);
-    // Profile mode for Super Users
-    const [profileMode, setProfileMode] = useState<'personal' | 'store'>('personal');
-    const isSuperUser = user?.role === 'super';
+    const [data, setData] = useState<any>(null);
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-    // Fetch real analytics from backend
     useEffect(() => {
-        const fetchAnalytics = async () => {
+        const fetchStats = async () => {
+            setLoading(true);
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
-
             if (!token) {
                 setLoading(false);
                 return;
             }
 
             try {
-                const response = await fetch(`${API_URL}/analytics/summary`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                const res = await fetch(`${API_URL}/analytics/stats?period=${period}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setAnalyticsData(data);
+                if (res.ok) {
+                    const json = await res.json();
+                    setData(json);
                 }
             } catch (err) {
-                console.error("Error fetching analytics:", err);
+                console.error("Failed to fetch stats", err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchAnalytics();
-    }, []);
+        fetchStats();
+        // Poll for active visitors every 60s
+        const interval = setInterval(fetchStats, 60000);
+        return () => clearInterval(interval);
+    }, [period]);
 
-    // Helper to fill missing dates for the last 7 days (or selected range)
-    const fillChartData = (backendData: { date: string; views: string; clicks: string }[] | undefined) => {
-        const filledData = [];
-        const today = new Date();
-        const daysToMap = 7; // Default 7 days
-
-        // Create map of existing data
-        const dataMap = new Map();
-        if (backendData) {
-            backendData.forEach(item => {
-                dataMap.set(item.date, {
-                    views: parseInt(item.views),
-                    clicks: parseInt(item.clicks)
-                });
-            });
-        }
-
-        // Iterate backwards from today
-        for (let i = daysToMap - 1; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(today.getDate() - i);
-            // Format: 'Jan 01' (matches Postgres TO_CHAR(..., 'Mon DD'))
-            const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
-
-            const existing = dataMap.get(dateStr);
-            filledData.push({
-                date: dateStr,
-                views: existing ? existing.views : 0,
-                clicks: existing ? existing.clicks : 0
-            });
-        }
-        return filledData;
+    const overview = data?.overview || {
+        uniqueVisitors: 0,
+        totalVisits: 0,
+        pageviews: 0,
+        viewsPerVisit: 0,
+        bounceRate: 0,
+        avgVisitDuration: 0,
+        activeVisitors: 0
     };
 
-    // Calculate stats - prefer backend data
-    const totalClicks = analyticsData?.totalClicks ?? links.reduce((sum, link) => sum + (link.clicks || 0), 0);
-    const totalViews = analyticsData?.totalViews ?? 0;
-    const subscribers = analyticsData?.subscribers ?? 0;
+    const formatDuration = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}m ${s}s`;
+    };
 
-    // Derived stats
-    const ctr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : "0.0";
-    const clickRate = ctr; // same thing
-    const earnings = 0; // Not implemented yet
+    const MetricsCard = ({ title, value, subtext }: { title: string, value: string | number, subtext?: React.ReactNode }) => (
+        <div className="flex flex-col p-4">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{title}</span>
+            <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-gray-900">{value}</span>
+                {subtext}
+            </div>
+        </div>
+    );
 
-    // Sort links by clicks - use backend data if available
-    const topLinks = analyticsData?.topLinks?.length
-        ? analyticsData.topLinks
-        : [...links].sort((a, b) => (b.clicks || 0) - (a.clicks || 0)).slice(0, 5);
-
-    // Process chart data
-    const chartData = fillChartData(analyticsData?.chartData);
-
-    // Empty mock links
-    const mockTopLinks: any[] = [];
-
-    const dateOptions = [
-        { label: "Last 7 days", locked: false },
-        { label: "Last 28 days", locked: false },
-        { label: "Last 90 days", locked: true },
-        { label: "Last 365 days", locked: true },
-        { label: "Custom range", locked: false },
-    ];
-
-    // Lifetime stats
-    const lifetimeStats = [
-        { icon: Eye, value: totalViews.toLocaleString(), label: "Views" },
-        { icon: MousePointerClick, value: totalClicks.toLocaleString(), label: "Clicks" },
-        { icon: Percent, value: `${clickRate}%`, label: "Click rate" },
-        { icon: Users, value: subscribers.toString(), label: "Subscribers" },
-        { icon: DollarSign, value: `$${earnings.toFixed(2)}`, label: "Earnings" },
-    ];
-
-    return (
-        <LinktreeLayout>
-            <div className="p-6 md:p-8 max-w-7xl mx-auto font-sans space-y-8">
-
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Insights</h1>
-                        <p className="text-gray-500 mt-1">
-                            {profileMode === 'store' ? 'Performance of your store and products.' : 'Overall performance of your links and profile.'}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        {/* Profile Mode Toggle (Super Users Only) */}
-                        {isSuperUser && (
-                            <div className="flex p-1 bg-gray-100 rounded-full">
-                                <Button
-                                    size="sm"
-                                    variant={profileMode === 'personal' ? 'default' : 'ghost'}
-                                    className={`rounded-full gap-2 ${profileMode === 'personal' ? '' : 'text-gray-500'}`}
-                                    onClick={() => setProfileMode('personal')}
-                                >
-                                    <User className="w-4 h-4" /> Personal
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant={profileMode === 'store' ? 'default' : 'ghost'}
-                                    className={`rounded-full gap-2 ${profileMode === 'store' ? '' : 'text-gray-500'}`}
-                                    onClick={() => setProfileMode('store')}
-                                >
-                                    <Store className="w-4 h-4" /> Store
-                                </Button>
-                            </div>
-                        )}
-                        <Select value={timeRange} onValueChange={setTimeRange}>
-                            <SelectTrigger className="w-[160px] rounded-full bg-white border-gray-200">
-                                <SelectValue placeholder="Select range" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="24h">Last 24 hours</SelectItem>
-                                <SelectItem value="7d">Last 7 days</SelectItem>
-                                <SelectItem value="30d">Last 30 days</SelectItem>
-                                <SelectItem value="90d">Last 3 months</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline" className="rounded-full gap-2 hidden sm:flex">
-                            <ExternalLink className="w-4 h-4" /> Export Data
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Lifetime Totals */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-6">Lifetime totals</h2>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                        {lifetimeStats.map((stat) => (
-                            <div key={stat.label} className="bg-gray-50 rounded-xl p-4">
-                                <stat.icon className="w-5 h-5 text-gray-400 mb-3" />
-                                <div className="text-2xl font-bold text-gray-900">{stat.label === "Earnings" ? stat.value : stat.value}</div>
-                                <div className="text-sm text-gray-500">{stat.label}</div>
+    const BreakdownTable = ({ title, data, icon: Icon }: { title: string, data: any[], icon: any }) => (
+        <Card className="border-gray-100 shadow-sm h-full">
+            <CardHeader className="pb-2 border-b border-gray-50">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-700">
+                    <Icon className="w-4 h-4 text-gray-400" /> {title}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+                {data && data.length > 0 ? (
+                    <div className="divide-y divide-gray-50">
+                        {data.map((item, i) => (
+                            <div key={i} className="flex items-center justify-between px-4 py-3 text-sm">
+                                <span className="truncate max-w-[200px] text-gray-700" title={item._id}>{item._id || 'Unknown'}</span>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-indigo-500 rounded-full"
+                                            style={{ width: `${(item.count / Math.max(...data.map((d: any) => d.count))) * 100}%` }}
+                                        />
+                                    </div>
+                                    <span className="font-medium w-8 text-right text-gray-600">{item.count}</span>
+                                </div>
                             </div>
                         ))}
                     </div>
+                ) : (
+                    <div className="p-8 text-center text-xs text-gray-400">No data available</div>
+                )}
+            </CardContent>
+        </Card>
+    );
+
+    // Restrict access to Store Accounts only
+    if (user && !user.has_store) {
+        return (
+            <LinktreeLayout>
+                <div className="flex flex-col items-center justify-center min-h-[80vh] p-6 text-center space-y-8 animate-in fade-in zoom-in duration-500">
+                    <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl mb-4">
+                        <Zap className="w-10 h-10 text-white" />
+                    </div>
+
+                    <div className="space-y-4 max-w-2xl">
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Unlock Growth Insights</h1>
+                        <p className="text-gray-500 text-lg leading-relaxed">
+                            Deep analytics, real-time visitor tracking, and performance breakdowns are exclusive to <span className="font-semibold text-gray-900">Store Accounts</span>.
+                            <br />Upgrade your profile to get the full picture.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
+                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center hover:shadow-md transition-shadow">
+                            <span className="text-3xl font-bold text-gray-900 mb-1">Live</span>
+                            <span className="text-sm font-medium text-gray-500">Real-time Visitor Count</span>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center hover:shadow-md transition-shadow">
+                            <span className="text-3xl font-bold text-gray-900 mb-1">Deep</span>
+                            <span className="text-sm font-medium text-gray-500">Location & Device Data</span>
+                        </div>
+                    </div>
+
+                    <Button
+                        size="lg"
+                        className="rounded-full px-10 py-6 text-lg font-bold bg-gray-900 hover:bg-gray-800 text-white shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all mt-6"
+                        onClick={() => window.location.href = '/pricing?tab=store'}
+                    >
+                        Upgrade to Store <ArrowUpRight className="w-5 h-5 ml-2" />
+                    </Button>
+                </div>
+            </LinktreeLayout>
+        );
+    }
+
+    return (
+        <LinktreeLayout>
+            <div className="p-6 md:p-10 max-w-7xl mx-auto font-sans text-gray-900 bg-gray-50/50 min-h-full">
+
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm">
+                            <Zap className="w-5 h-5 text-indigo-600 fill-indigo-100" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Growth Insights</h1>
+                            <div className="flex items-center gap-2 text-sm mt-0.5">
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-medium animate-pulse">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                    </span>
+                                    {overview.activeVisitors} current visitors
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Select value={period} onValueChange={setPeriod}>
+                            <SelectTrigger className="w-[140px] bg-white border-gray-200 shadow-sm font-medium">
+                                <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="24h">Last 24 Hours</SelectItem>
+                                <SelectItem value="7d">Last 7 Days</SelectItem>
+                                <SelectItem value="30d">Last 30 Days</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
-                {/* Main Dashboard Tabs */}
-                <Tabs defaultValue="overview" className="w-full">
-                    <TabsList className="bg-transparent p-0 border-b border-gray-200 w-full justify-start rounded-none h-auto mb-8">
-                        <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-900 data-[state=active]:bg-transparent px-4 py-3 text-gray-500 data-[state=active]:text-gray-900 font-medium transition-all">Overview</TabsTrigger>
-                        <TabsTrigger value="audience" className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-900 data-[state=active]:bg-transparent px-4 py-3 text-gray-500 data-[state=active]:text-gray-900 font-medium transition-all">Audience</TabsTrigger>
-                        <TabsTrigger value="content" className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-900 data-[state=active]:bg-transparent px-4 py-3 text-gray-500 data-[state=active]:text-gray-900 font-medium transition-all">Content</TabsTrigger>
-                    </TabsList>
+                {loading && !data ? (
+                    <div className="flex items-center justify-center h-64">
+                        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {/* Metrics Overview */}
+                        <Card className="border-gray-200 shadow-sm bg-white overflow-hidden">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-x divide-y md:divide-y-0 divide-gray-100">
+                                <MetricsCard
+                                    title="Unique Visitors"
+                                    value={overview.uniqueVisitors.toLocaleString()}
+                                    subtext={<span className="text-xs text-green-600 ml-1 font-medium">Unique</span>}
+                                />
+                                <MetricsCard
+                                    title="Total Visits"
+                                    value={overview.totalVisits.toLocaleString()}
+                                />
+                                <MetricsCard
+                                    title="Total Pageviews"
+                                    value={overview.pageviews.toLocaleString()}
+                                />
+                                <MetricsCard
+                                    title="Views / Visit"
+                                    value={overview.viewsPerVisit}
+                                />
+                                <MetricsCard
+                                    title="Bounce Rate"
+                                    value={`${overview.bounceRate}%`}
+                                />
+                                <MetricsCard
+                                    title="Visit Duration"
+                                    value={formatDuration(overview.avgVisitDuration)}
+                                />
+                            </div>
 
-                    <TabsContent value="overview" className="space-y-6">
-                        {/* KPI Cards Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <Card className="shadow-sm border-gray-100 bg-white">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium text-gray-500">Total Views</CardTitle>
-                                    <Eye className="h-4 w-4 text-gray-400" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold text-gray-900">{totalViews.toLocaleString()}</div>
-                                    <p className="text-xs text-green-600 flex items-center mt-1 font-medium">
-                                        <ArrowUpRight className="w-3 h-3 mr-1" /> +20.1% <span className="text-gray-400 ml-1 font-normal">from last month</span>
-                                    </p>
-                                </CardContent>
-                            </Card>
-                            <Card className="shadow-sm border-gray-100 bg-white">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium text-gray-500">Total Clicks</CardTitle>
-                                    <MousePointerClick className="h-4 w-4 text-gray-400" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold text-gray-900">{totalClicks.toLocaleString()}</div>
-                                    <p className="text-xs text-green-600 flex items-center mt-1 font-medium">
-                                        <ArrowUpRight className="w-3 h-3 mr-1" /> +15.2% <span className="text-gray-400 ml-1 font-normal">from last month</span>
-                                    </p>
-                                </CardContent>
-                            </Card>
-                            <Card className="shadow-sm border-gray-100 bg-white">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium text-gray-500">Click Rate (CTR)</CardTitle>
-                                    <Users className="h-4 w-4 text-gray-400" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold text-gray-900">{ctr}%</div>
-                                    <p className="text-xs text-red-500 flex items-center mt-1 font-medium">
-                                        <ArrowDownRight className="w-3 h-3 mr-1" /> -1.2% <span className="text-gray-400 ml-1 font-normal">from last month</span>
-                                    </p>
-                                </CardContent>
-                            </Card>
-                            <Card className="shadow-sm border-gray-100 bg-white">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium text-gray-500">Avg. Time</CardTitle>
-                                    <Clock className="h-4 w-4 text-gray-400" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold text-gray-900">1m 24s</div>
-                                    <p className="text-xs text-gray-400 mt-1">
-                                        +0s from last month
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* Chart Section */}
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="text-lg font-semibold text-gray-900">Activity Growth</CardTitle>
-                                <CardDescription>Visualizing your profile views and link clicks trends.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="h-[350px] w-full pt-4">
-                                <ChartContainer config={chartConfig} className="h-full w-full">
-                                    <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.1} />
-                                                <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
-                                            </linearGradient>
-                                            <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.1} />
-                                                <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-                                        <ChartTooltip content={<ChartTooltipContent />} />
-                                        <Area type="monotone" dataKey="views" stroke="#8884d8" strokeWidth={2} fillOpacity={1} fill="url(#colorViews)" />
-                                        <Area type="monotone" dataKey="clicks" stroke="#82ca9d" strokeWidth={2} fillOpacity={1} fill="url(#colorClicks)" />
-                                    </AreaChart>
-                                </ChartContainer>
-                            </CardContent>
+                            {/* Main Chart */}
+                            <div className="p-6 border-t border-gray-100 bg-white">
+                                <div className="h-[350px] w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={data?.chart || []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1} />
+                                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="colorPageviews" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1} />
+                                                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                                            <XAxis
+                                                dataKey="date"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fontSize: 12, fill: '#6b7280' }}
+                                                dy={10}
+                                            />
+                                            <YAxis
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fontSize: 12, fill: '#6b7280' }}
+                                            />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                                itemStyle={{ fontSize: '12px', fontWeight: 500 }}
+                                            />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="visitors"
+                                                name="Visitors"
+                                                stroke="#6366f1"
+                                                strokeWidth={2}
+                                                fillOpacity={1}
+                                                fill="url(#colorVisitors)"
+                                            />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="pageviews"
+                                                name="Pageviews"
+                                                stroke="#8b5cf6"
+                                                strokeWidth={2}
+                                                fillOpacity={1}
+                                                fill="url(#colorPageviews)"
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
                         </Card>
 
-                        {/* Bottom Grid */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                            {/* Top Links */}
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardHeader className="flex flex-row items-center justify-between">
-                                    <div>
-                                        <CardTitle className="text-lg font-semibold text-gray-900">Top Performing Links</CardTitle>
-                                        <CardDescription>Your most clicked destinations</CardDescription>
-                                    </div>
-                                    <Button variant="ghost" size="sm" className="text-purple-600">View All</Button>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    {(topLinks.length > 0 ? topLinks : mockTopLinks).map((link, idx) => (
-                                        <div key={idx} className="space-y-2">
-                                            <div className="flex items-center justify-between text-sm">
-                                                <div className="font-medium text-gray-900">{link.title}</div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-bold text-gray-900">{(link.clicks || 0).toLocaleString()}</span>
-                                                    {link.change && <span className={`text-xs ${link.change.startsWith('+') ? 'text-green-600' : 'text-red-500'}`}>{link.change}</span>}
-                                                </div>
-                                            </div>
-                                            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-purple-500 rounded-full"
-                                                    style={{ width: `${((link.clicks || 0) / 1500) * 100}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {topLinks.length === 0 && (
-                                        <div className="text-center py-6 text-gray-500 text-sm">
-                                            No link data yet.
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-
-                            {/* Device & Location */}
-                            <div className="space-y-6">
-                                <Card className="border-gray-100 shadow-sm flex-1">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg font-semibold text-gray-900">Top Locations</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-4 text-center py-4 text-gray-500 text-sm">
-                                            No location data available yet
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                <Card className="border-gray-100 shadow-sm flex-1">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg font-semibold text-gray-900">Device Analytics</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="text-center py-4 text-gray-500 text-sm">
-                                            No device data available yet
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
+                        {/* Breakdowns Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <BreakdownTable
+                                title="Top Pages"
+                                data={data?.breakdowns?.pages}
+                                icon={Monitor}
+                            />
+                            <BreakdownTable
+                                title="Top Sources"
+                                data={data?.breakdowns?.referrers}
+                                icon={Globe}
+                            />
+                            <BreakdownTable
+                                title="Devices"
+                                data={data?.breakdowns?.devices}
+                                icon={Smartphone}
+                            />
+                            <BreakdownTable
+                                title="Countries"
+                                data={data?.breakdowns?.countries}
+                                icon={Globe}
+                            />
                         </div>
-
-                    </TabsContent>
-
-                    <TabsContent value="audience" className="space-y-6">
-                        {/* Audience Section */}
-                        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <h3 className="font-semibold text-gray-900">Audience</h3>
-                                </div>
-                                <ChevronRight className="w-5 h-5 text-gray-400" />
-                            </div>
-
-                            <div className="text-center py-8 text-gray-500">
-                                Collect more data to unlock audience insights.
-                            </div>
-                        </div>
-
-                        {/* Visitors */}
-                        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <h3 className="font-semibold text-gray-900">Visitors</h3>
-                                </div>
-                                <ChevronRight className="w-5 h-5 text-gray-400" />
-                            </div>
-
-                            <div className="text-gray-600 text-sm leading-relaxed text-center py-8">
-                                No visitor data recorded yet.
-                            </div>
-                        </div>
-                    </TabsContent>
-
-                    <TabsContent value="content" className="min-h-[300px] flex items-center justify-center text-gray-500">
-                        Content performance details go here.
-                    </TabsContent>
-                </Tabs>
-
-                {/* Feedback */}
-                <div className="text-center py-4">
-                    <p className="text-sm text-gray-600">
-                        <span className="font-semibold">Got ideas?</span> We're listening!
-                        <a href="#" className="text-purple-600 hover:underline ml-1">Share feedback</a>
-                    </p>
-                </div>
-
+                    </div>
+                )}
             </div>
         </LinktreeLayout>
     );
