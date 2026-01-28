@@ -17,7 +17,6 @@ import {
     Zap
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
 
 // Chart config
 const chartConfig = {
@@ -42,8 +41,7 @@ const Analytics = () => {
     useEffect(() => {
         const fetchStats = async () => {
             setLoading(true);
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const token = localStorage.getItem('auth_token');
             if (!token) {
                 setLoading(false);
                 return;
@@ -53,9 +51,14 @@ const Analytics = () => {
                 const res = await fetch(`${API_URL}/analytics/stats?period=${period}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                console.log('Analytics API response status:', res.status);
                 if (res.ok) {
                     const json = await res.json();
+                    console.log('Analytics data:', json);
                     setData(json);
+                } else {
+                    const errorData = await res.json();
+                    console.error('Analytics API error:', res.status, errorData);
                 }
             } catch (err) {
                 console.error("Failed to fetch stats", err);

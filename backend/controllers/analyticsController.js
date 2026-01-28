@@ -52,11 +52,13 @@ const trackEvent = async (req, res) => {
 const getStats = async (req, res) => {
     try {
         const userId = req.user.id;
-        // Find profile for this user
-        // Assuming single profile for now or pass profile_id in query
-        const profile = await Profile.findOne({ user_id: userId });
+        // Find profile for this user - convert to ObjectId for proper lookup
+        const mongoose = require('mongoose');
+        const userObjectId = new mongoose.Types.ObjectId(userId);
+        const profile = await Profile.findOne({ user_id: userObjectId });
 
         if (!profile) {
+            console.log('Analytics: Profile not found for user_id:', userId);
             return res.status(404).json({ error: 'Profile not found' });
         }
 
