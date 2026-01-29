@@ -23,6 +23,8 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { ChevronRight } from "lucide-react";
 import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 import { useTranslation } from "react-i18next";
+import { SocialLinksDialog } from "@/components/SocialLinksDialog";
+import { Copy, Sparkles } from "lucide-react";
 
 interface Product {
     _id: string;
@@ -228,310 +230,205 @@ const Shop = () => {
                 <div className="flex-1 max-w-3xl mx-auto py-10 px-4 md:px-8 overflow-y-auto">
 
                     {/* Header */}
-                    <div className="flex justify-between items-center mb-8">
-                        <h1 className="text-2xl font-bold">{t('shop.title')}</h1>
-                        <Button variant="ghost" size="icon" className="rounded-full">
-                            <Settings className="w-5 h-5 text-gray-500" />
-                        </Button>
-                    </div>
-
-                    {/* Tabs */}
-                    <Tabs defaultValue="manage" className="w-full mb-8">
-                        <div className="border-b border-gray-200">
-                            <TabsList className="bg-transparent p-0 h-auto gap-6 transition-none">
-                                <TabsTrigger
-                                    value="manage"
-                                    className="bg-transparent p-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:text-black text-gray-500 font-medium data-[state=active]:shadow-none transition-none"
-                                >
-                                    {t('shop.manage')}
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="products"
-                                    className="bg-transparent p-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:text-black text-gray-500 font-medium data-[state=active]:shadow-none transition-none"
-                                >
-                                    {t('shop.products')}
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="orders"
-                                    className="bg-transparent p-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:text-black text-gray-500 font-medium data-[state=active]:shadow-none transition-none"
-                                >
-                                    {t('shop.orders')}
-                                </TabsTrigger>
-                            </TabsList>
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 mt-6">
-                            <TabsContent value="manage" className="m-0">
-                                {/* Profile Section */}
-                                <div className="flex items-start gap-4 mb-8">
-                                    <Avatar className="w-20 h-20 border border-gray-100">
-                                        <AvatarImage src="" />
-                                        <AvatarFallback className="bg-gray-200 text-gray-400">
-                                            <svg className="w-10 h-10 fill-current" viewBox="0 0 24 24"><path d="M12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0 2c2.67 0 8 1.34 8 4v2H4v-2c0-2.66 5.33-4 8-4z" /></svg>
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1">
-                                        <h2 className="text-xl font-bold mb-1">@{user?.username || "user"}</h2>
-                                        <button className="text-gray-400 text-sm hover:underline mb-2">{t('shop.addBio')}</button>
-                                        <div className="flex gap-2">
-                                            {/* Placeholder social icons as per screenshot */}
-                                            <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full"><Instagram className="w-4 h-4" /></Button>
-                                            <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full"><Plus className="w-4 h-4" /></Button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Add Button (Primary Action) */}
-                                <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button
-                                            className="w-full bg-[#7535f5] hover:bg-[#6025d5] text-white rounded-full h-12 text-base font-bold mb-10 shadow-md shadow-purple-200 transition-all hover:scale-[1.01]"
-                                        >
-                                            <Plus className="w-5 h-5 mr-2" /> {t('shop.add')}
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-[425px]">
-                                        <DialogHeader>
-                                            <DialogTitle>{t('shop.addNewProduct')}</DialogTitle>
-                                            <DialogDescription>
-                                                {t('shop.addProductDesc')}
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <form onSubmit={handleCreateProduct} className="grid gap-4 py-4">
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="title">{t('shop.productName')}</Label>
-                                                <Input
-                                                    id="title"
-                                                    value={newProduct.title}
-                                                    onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="price">{t('shop.price')}</Label>
-                                                    <Input
-                                                        id="price"
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={newProduct.price}
-                                                        onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="type">{t('shop.type')}</Label>
-                                                    <Select
-                                                        value={newProduct.type}
-                                                        onValueChange={(val: any) => setNewProduct({ ...newProduct, type: val })}
-                                                    >
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select type" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="digital_product">Digital Product</SelectItem>
-                                                            <SelectItem value="physical_product">Physical Product</SelectItem>
-                                                            <SelectItem value="physical_service">Physical Service</SelectItem>
-                                                            <SelectItem value="digital_service">Digital Service</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="desc">Description</Label>
-                                                <Textarea
-                                                    id="desc"
-                                                    value={newProduct.description}
-                                                    onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                                                />
-                                            </div>
-                                            {newProduct.type === 'digital_product' && (
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="url">Product URL </Label>
-                                                    <Input
-                                                        id="url"
-                                                        placeholder="https://..."
-                                                        value={newProduct.file_url}
-                                                        onChange={(e) => setNewProduct({ ...newProduct, file_url: e.target.value })}
-                                                    />
-                                                </div>
-                                            )}
-                                            <div className="grid gap-2">
-                                                <Label>Product Image</Label>
-                                                <ImageUpload
-                                                    value={newProduct.image_url}
-                                                    onChange={(url) => setNewProduct({ ...newProduct, image_url: url })}
-                                                />
-                                            </div>
-                                            <DialogFooter>
-                                                <Button type="submit" disabled={isSubmitting}>
-                                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                    Save Product
-                                                </Button>
-                                            </DialogFooter>
-                                        </form>
-                                    </DialogContent>
-                                </Dialog>
-
-                                {/* Publish Banner */}
-                                <div className="bg-[#EAEAE8] rounded-xl p-6 flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 mb-8 text-center md:text-left">
-                                    <div className="flex items-center gap-3">
-                                        <EyeOff className="w-5 h-5 text-gray-800" />
-                                        <div>
-                                            <h3 className="font-bold text-gray-900">{t('shop.publishTitle')}</h3>
-                                            <p className="text-sm text-gray-600">{t('shop.publishDesc')}</p>
-                                        </div>
-                                    </div>
-                                    <Switch />
-                                </div>
-                            </TabsContent>
-
-                            <TabsContent value="orders">
-                                <div className="space-y-4">
-                                    {loadingOrders ? (
-                                        <div className="flex justify-center py-10"><Loader2 className="animate-spin" /></div>
-                                    ) : orders.length > 0 ? (
-                                        orders.map((order) => (
-                                            <Card key={order._id} className="overflow-hidden">
-                                                <div className="p-4 flex flex-col md:flex-row gap-4 justify-between">
-                                                    <div className="flex gap-4">
-                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${order.type === 'enquiry' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
-                                                            }`}>
-                                                            {order.type === 'enquiry' ? <MessageSquare className="w-5 h-5" /> : <CreditCard className="w-5 h-5" />}
-                                                        </div>
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <h3 className="font-bold text-sm">{order.buyer_name || "Anonymous"}</h3>
-                                                                <Badge variant={order.status === 'completed' ? 'default' : order.status === 'pending' ? 'secondary' : 'outline'}>
-                                                                    {order.status}
-                                                                </Badge>
-                                                                {order.type === 'enquiry' && <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">Enquiry</Badge>}
-                                                            </div>
-                                                            <div className="text-sm text-gray-500 mt-1 space-y-0.5">
-                                                                <p>{order.buyer_email} • {order.buyer_phone}</p>
-                                                                <p className="font-mono text-xs text-gray-400">{new Date(order.created_at).toLocaleString()}</p>
-                                                            </div>
-
-                                                            {/* Transaction Details / Message */}
-                                                            {order.transaction_details && (
-                                                                <div className="mt-3 bg-gray-50 p-3 rounded-lg text-sm border border-gray-100">
-                                                                    <span className="font-semibold text-xs text-gray-500 uppercase block mb-1">
-                                                                        {order.type === 'enquiry' ? 'Message' : 'Transaction Ref'}
-                                                                    </span>
-                                                                    {order.transaction_details}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex flex-col items-end gap-2">
-                                                        <div className="font-bold text-lg">${order.amount}</div>
-
-                                                        {/* Actions */}
-                                                        {order.status !== 'completed' && order.status !== 'failed' && (
-                                                            <div className="flex gap-2 mt-auto">
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                                                                    onClick={() => handleUpdateStatus(order._id, 'failed')}
-                                                                >
-                                                                    <X className="w-4 h-4 mr-1" /> Reject
-                                                                </Button>
-                                                                <Button
-                                                                    size="sm"
-                                                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                                                    onClick={() => handleUpdateStatus(order._id, 'completed')}
-                                                                >
-                                                                    <Check className="w-4 h-4 mr-1" /> {order.type === 'enquiry' ? 'Mark Done' : 'Verify'}
-                                                                </Button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </Card>
-                                        ))
-                                    ) : (
-                                        <div className="text-center py-16 opacity-60">
-                                            <p>{t('shop.noOrders')}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </TabsContent>
-
-                            <TabsContent value="products">
-                                {/* Search and Add Row */}
-                                <div className="flex gap-3 mb-8">
-                                    <div className="relative flex-1">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                        <Input
-                                            placeholder={t('shop.searchPlaceholder')}
-                                            className="pl-9 h-12 bg-white rounded-xl border-gray-200"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                        />
-                                    </div>
-
-                                    {/* Add Button with Dialog */}
-                                    <Button
-                                        onClick={() => {
-                                            if (searchQuery.startsWith('http')) {
-                                                setNewProduct(prev => ({ ...prev, file_url: searchQuery }));
-                                                setSearchQuery('');
-                                            }
-                                            setIsAddOpen(true);
-                                        }}
-                                        className="bg-[#7535f5] hover:bg-[#6025d5] text-white rounded-full h-12 px-6 text-base font-semibold shadow-lg shadow-purple-200 transition-all hover:scale-[1.01]"
+                    <div className="flex flex-col gap-4 mb-6">
+                        {/* Title Row */}
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div>
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Offerings</h1>
+                                <p className="text-gray-500 text-xs sm:text-sm mt-1 hidden sm:block">Manage your offerings • Add products or services to see them here</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="hidden sm:flex items-center gap-3">
+                                    <SocialLinksDialog
+                                        initialLinks={user?.social_links || {}}
+                                        onSave={async () => { }} // Read-only or separate save logic if needed, or implement correct save
+                                        onLinksChange={() => { }}
+                                        onOpenChange={() => { }}
                                     >
-                                        Add
+                                        <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50">
+                                            <Instagram className="w-4 h-4" /> {t('dashboard.socials')}
+                                        </Button>
+                                    </SocialLinksDialog>
+                                    <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50">
+                                        <Sparkles className="w-4 h-4" /> {t('dashboard.enhance')}
                                     </Button>
                                 </div>
 
-                                {/* Products Grid */}
-                                {loadingProducts ? (
-                                    <div className="flex justify-center py-10"><Loader2 className="animate-spin text-muted-foreground" /></div>
-                                ) : filteredProducts.length > 0 ? (
-                                    <div className="grid gap-4">
-                                        {filteredProducts.map((product) => (
-                                            <div key={product._id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between group">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="text-gray-400 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <GripVertical className="w-5 h-5" />
-                                                    </div>
-                                                    <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
-                                                        {product.image_url ? (
-                                                            <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-xl">🛍️</div>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="font-semibold text-gray-900">{product.title}</h3>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className="font-bold text-gray-900">${product.price}</span>
-                                                            <span className="text-gray-300">•</span>
-                                                            <span className="text-sm text-gray-500 capitalize">{product.type}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500" onClick={() => handleDeleteProduct(product._id)}>
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        ))}
+                                {/* Profile Link - Mobile responsive */}
+                                <div className="relative group w-full sm:w-auto">
+                                    <div
+                                        onClick={() => window.open(user?.active_profile_mode === 'store' ? `/s/${username}` : `/${username}`, '_blank')}
+                                        className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 pr-10 border border-gray-200 cursor-pointer truncate"
+                                    >
+                                        tap2.me/{user?.active_profile_mode === 'store' ? `s/${username}` : username}
                                     </div>
-                                ) : (
-                                    /* Empty State Card */
-                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center bg-opacity-50">
-                                        <div className="flex justify-center mb-4 text-4xl">🛍️</div>
-                                        <h3 className="text-lg font-bold text-gray-900 mb-1">{t('shop.addFirstProduct')}</h3>
-                                        <p className="text-gray-500 mb-6 font-medium">{t('shop.sellDesc')}</p>
-                                    </div>
-                                )}
-                            </TabsContent>
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 rounded-full hover:bg-gray-300"
+                                        onClick={() => {
+                                            const profilePath = user?.active_profile_mode === 'store' ? `/s/${username}` : `/${username}`;
+                                            const url = `${window.location.origin}${profilePath}`;
+                                            navigator.clipboard.writeText(url);
+                                            toast.success("Profile link copied!");
+                                        }}
+                                    >
+                                        <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
-                    </Tabs>
+                    </div>
+
+                    {/* Add Button & Clear All */}
+                    <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8">
+                        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                            <DialogTrigger asChild>
+                                <Button
+                                    className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-purple-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
+                                >
+                                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> Add Content
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader>
+                                    <DialogTitle>{t('shop.addNewProduct')}</DialogTitle>
+                                    <DialogDescription>
+                                        {t('shop.addProductDesc')}
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={handleCreateProduct} className="grid gap-4 py-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="title">{t('shop.productName')}</Label>
+                                        <Input
+                                            id="title"
+                                            value={newProduct.title}
+                                            onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="price">{t('shop.price')}</Label>
+                                            <Input
+                                                id="price"
+                                                type="number"
+                                                step="0.01"
+                                                value={newProduct.price}
+                                                onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="type">{t('shop.type')}</Label>
+                                            <Select
+                                                value={newProduct.type}
+                                                onValueChange={(val: any) => setNewProduct({ ...newProduct, type: val })}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select type" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="digital_product">Digital Product</SelectItem>
+                                                    <SelectItem value="physical_product">Physical Product</SelectItem>
+                                                    <SelectItem value="physical_service">Physical Service</SelectItem>
+                                                    <SelectItem value="digital_service">Digital Service</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="desc">Description</Label>
+                                        <Textarea
+                                            id="desc"
+                                            value={newProduct.description}
+                                            onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                                        />
+                                    </div>
+                                    {newProduct.type === 'digital_product' && (
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="url">Product URL </Label>
+                                            <Input
+                                                id="url"
+                                                placeholder="https://..."
+                                                value={newProduct.file_url}
+                                                onChange={(e) => setNewProduct({ ...newProduct, file_url: e.target.value })}
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="grid gap-2">
+                                        <Label>Product Image</Label>
+                                        <ImageUpload
+                                            value={newProduct.image_url}
+                                            onChange={(url) => setNewProduct({ ...newProduct, image_url: url })}
+                                        />
+                                    </div>
+                                    <DialogFooter>
+                                        <Button type="submit" disabled={isSubmitting}>
+                                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Save Product
+                                        </Button>
+                                    </DialogFooter>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                        <Button
+                            variant="outline"
+                            className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 font-medium"
+                            onClick={() => toast.info("Clear All functionality to be implemented")}
+                        >
+                            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <span className="hidden sm:inline ml-2">{t('dashboard.clearAll')}</span>
+                        </Button>
+                    </div>
+
+                    {/* Products List (Directly rendered, no tabs) */}
+                    <div className="space-y-4">
+                        {loadingProducts ? (
+                            <div className="flex justify-center py-10"><Loader2 className="animate-spin text-muted-foreground" /></div>
+                        ) : filteredProducts.length > 0 ? (
+                            <div className="space-y-3">
+                                {filteredProducts.map((product) => (
+                                    <div key={product._id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-purple-200 transition-colors">
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-gray-400 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <GripVertical className="w-5 h-5" />
+                                            </div>
+                                            <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+                                                {product.image_url ? (
+                                                    <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-xl bg-gray-50">🛍️</div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-gray-900">{product.title}</h3>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <Badge variant="secondary" className="font-bold border-gray-100 bg-gray-50 text-gray-700">${product.price}</Badge>
+                                                    <span className="text-gray-300">•</span>
+                                                    <span className="text-xs text-gray-500 capitalize">{product.type?.replace('_', ' ')}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full" onClick={() => handleDeleteProduct(product._id)}>
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            /* Empty State Card */
+                            <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center">
+                                <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">🛍️</div>
+                                <h3 className="text-lg font-bold text-gray-900 mb-1">{t('shop.addFirstProduct')}</h3>
+                                <p className="text-gray-500 mb-6 font-medium max-w-sm mx-auto">{t('shop.sellDesc')}</p>
+                            </div>
+                        )}
+                    </div>
+
+
+
+
                 </div>
                 {/* Phone Preview - Right Side */}
                 <div className="w-[400px] border-l border-gray-100 hidden xl:flex items-center justify-center bg-gray-50/50 relative p-8">

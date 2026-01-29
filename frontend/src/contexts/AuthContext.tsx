@@ -19,6 +19,25 @@ interface User {
     phone_verified?: boolean;
     // Language preference for i18n
     language?: string;
+    // Optimistic UI Data
+    identities?: {
+        personal: {
+            username: string;
+            full_name: string;
+            bio: string;
+            avatar_url: string;
+            selected_theme: string;
+            design_config: any;
+        };
+        store: {
+            username: string;
+            full_name: string;
+            bio: string;
+            avatar_url: string;
+            selected_theme: string;
+            design_config: any;
+        };
+    };
 }
 
 
@@ -644,13 +663,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const token = getToken();
         if (!token || !user) return;
 
+        // --- OPTIMISTIC UPDATE START ---
 
+        const previousUser = user; // Backup for revert
 
-        // Allow all users to switch if logic permits (e.g. has_store)
-        // Check removed to allow store owners who are not 'super' to switch
+        // 1. Check if we have cached identity data to switch INSTANTLY
+        if (user.identities && user.identities[mode]) {
+            const nextIdentity = user.identities[mode];
+            const nextUser: User = {
+                ...user,
+                // Update identity fields
+                username: nextIdentity.username,
+                name: nextIdentity.full_name, // Note: frontend uses 'name' backend uses 'full_name'
+                avatar: nextIdentity.avatar_url, // Note: frontend 'avatar' vs backend 'avatar_url'
+                // Update mode
+                active_profile_mode: mode,
+                // Update role-based flags (heuristic)
+                has_store: mode === 'store' ? true : user.has_store, // If switching to store, they have it
+            };
 
-        // Optimistic update for mode only
-        setUser(prev => prev ? { ...prev, active_profile_mode: mode } : null);
+            // Apply Theme immediately
+            if (nextIdentity.selected_theme) {
+                setSelectedTheme(nextIdentity.selected_theme);
+            }
+
+            // Update State INSTANTLY
+            setUser(nextUser);
+        } else {
+            // Fallback: Just update the mode flag if no full identity data (still faster than waiting)
+            setUser(prev => prev ? { ...prev, active_profile_mode: mode } : null);
+        }
+
+        // --- OPTIMISTIC UPDATE END ---
 
         try {
             const res = await fetch(`${API_URL}/profile/switch-mode`, {
@@ -665,16 +709,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!res.ok) {
                 const error = await res.json();
                 toast.error(error.error || 'Failed to switch profile mode');
-                await fetchUserData(); // Revert
+
+                // REVERT on failure
+                setUser(previousUser);
+                if (previousUser?.active_profile_mode === 'personal' && previousUser.identities?.personal?.selected_theme) {
+                    setSelectedTheme(previousUser.identities.personal.selected_theme);
+                } else if (previousUser?.active_profile_mode === 'store' && previousUser.identities?.store?.selected_theme) {
+                    setSelectedTheme(previousUser.identities.store.selected_theme);
+                }
+
+                await fetchUserData(); // Force sync
             } else {
+                const data = await res.json();
                 toast.success(`Switched to ${mode === 'personal' ? 'Personal Profile' : 'Store Profile'}`);
-                // Fetch updated user data to get correct username, avatar, etc. for the new mode
-                await fetchUserData();
+
+                // Update with server truth (eventual consistency)
+                if (data.user) {
+                    setUser(data.user);
+                    // Ensure theme matches trusted server response
+                    if (data.user.selected_theme) {
+                        setSelectedTheme(data.user.selected_theme);
+                    }
+                }
             }
         } catch (err) {
             console.error('Error switching profile mode:', err);
             toast.error('Failed to switch profile mode');
-            await fetchUserData(); // Revert
+
+            // REVERT on failure
+            setUser(previousUser);
+            await fetchUserData(); // Force sync
         }
     };
 

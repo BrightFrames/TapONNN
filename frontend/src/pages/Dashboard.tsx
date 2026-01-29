@@ -241,6 +241,7 @@ const Dashboard = () => {
                                     </div>
 
                                     {/* Profile Link - Mobile responsive */}
+                                    {/* Profile Link - Mobile responsive */}
                                     <div className="relative group w-full sm:w-auto">
                                         <div
                                             onClick={() => window.open(user?.active_profile_mode === 'store' ? `/s/${username}` : `/${username}`, '_blank')}

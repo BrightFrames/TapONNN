@@ -214,7 +214,6 @@ const me = async (req, res) => {
         }
 
         // Convert to plain object and format for frontend
-        // Convert to plain object and format for frontend
         const profileObj = profile.toObject();
         const mode = profileObj.active_profile_mode || 'personal';
         const isStore = mode === 'store';
@@ -236,7 +235,26 @@ const me = async (req, res) => {
             // New fields for role-based profile handling
             role: profileObj.role || 'super',
             has_store: profileObj.has_store || false,
-            active_profile_mode: mode
+            active_profile_mode: mode,
+            // Optimistic UI Support: Return both identities explicitly
+            identities: {
+                personal: {
+                    username: profileObj.username,
+                    full_name: profileObj.full_name,
+                    bio: profileObj.bio,
+                    avatar_url: profileObj.avatar_url,
+                    selected_theme: profileObj.selected_theme,
+                    design_config: profileObj.design_config
+                },
+                store: {
+                    username: profileObj.store_username || '',
+                    full_name: profileObj.store_name || '',
+                    bio: profileObj.store_bio || '',
+                    avatar_url: profileObj.store_avatar_url || '',
+                    selected_theme: profileObj.store_selected_theme || 'clean',
+                    design_config: profileObj.store_design_config || {}
+                }
+            }
         });
     } catch (err) {
         console.error("Me Error:", err);

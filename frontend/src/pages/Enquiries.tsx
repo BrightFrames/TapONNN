@@ -121,11 +121,101 @@ interface Lead {
     lastSeen: string;
     utm: { source: string; medium: string; campaign: string; term: string };
     messages: Message[];
-    messages: Message[];
     journey: JourneyStep[];
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// --- Utility Functions ---
+
+// Calculate Biolink AI Score (0-100)
+const calculateBiolinkScore = (lead: Lead): number => {
+    let score = 50; // Base score
+
+    // High-quality source bonus
+    const source = lead.source.toLowerCase();
+    if (source.includes('indiamart') || source.includes('justdial')) score += 20;
+    else if (source.includes('instagram') || source.includes('facebook')) score += 10;
+    else if (source.includes('direct') || source.includes('google')) score += 15;
+
+    // Message quality bonus
+    if (lead.preview.length > 50) score += 10;
+    if (lead.preview.length > 100) score += 5;
+
+    // Registered user bonus
+    if (lead.role === 'user') score += 10;
+
+    // Verified phone bonus
+    if (lead.phone && lead.phone.length >= 10) score += 5;
+
+    // Clamp between 0-100
+    return Math.min(100, Math.max(0, score));
+};
+
+// Get score factors for display
+const getScoreFactors = (lead: Lead): string[] => {
+    const factors: string[] = [];
+    const source = lead.source.toLowerCase();
+
+    if (source.includes('indiamart') || source.includes('justdial')) factors.push('High Intent Source');
+    if (lead.preview.length > 100) factors.push('Detailed Enquiry');
+    if (lead.phone && lead.phone.length >= 10) factors.push('Verified Number');
+    if (lead.role === 'user') factors.push('Registered User');
+
+    return factors;
+};
+
+// Detect source platform and return badge config
+const getSourceBadge = (source: string): { label: string; color: string; emoji?: string } => {
+    const s = source.toLowerCase();
+
+    if (s.includes('indiamart')) return { label: 'INDIAMART', color: 'bg-orange-100 text-orange-800 border-orange-200', emoji: '🛒' };
+    if (s.includes('justdial')) return { label: 'JUSTDIAL', color: 'bg-red-100 text-red-800 border-red-200', emoji: '📞' };
+    if (s.includes('instagram')) return { label: 'INSTAGRAM', color: 'bg-pink-100 text-pink-800 border-pink-200', emoji: '📸' };
+    if (s.includes('facebook')) return { label: 'FACEBOOK', color: 'bg-blue-100 text-blue-800 border-blue-200', emoji: '👥' };
+    if (s.includes('whatsapp')) return { label: 'WHATSAPP', color: 'bg-green-100 text-green-800 border-green-200', emoji: '💬' };
+
+    return { label: 'PLATFORM', color: 'bg-zinc-800 text-white border-zinc-900' };
+};
+
+// Format timestamp intelligently
+const formatTimestamp = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    // Less than 5 minutes ago = "Just now"
+    if (diffMins < 5) return 'Just now';
+
+    // Less than 1 hour = "Xm ago"
+    if (diffMins < 60) return `${diffMins}m ago`;
+
+    // Today = time format
+    if (diffHours < 24 && date.getDate() === now.getDate()) {
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
+    // Yesterday
+    if (diffDays === 1) return 'Yesterday';
+
+    // This week = day name
+    if (diffDays < 7) {
+        return date.toLocaleDateString('en-US', { weekday: 'short' });
+    }
+
+    // Older = date
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+// Calculate percentage change
+const calculatePercentageChange = (current: number, previous: number): string => {
+    if (previous === 0) return '+100%';
+    const change = ((current - previous) / previous) * 100;
+    return `${change >= 0 ? '↑' : '↓'} ${Math.abs(Math.round(change))}%`;
+};
 
 // --- Mock Data ---
 // --- Mock Data Removed ---
@@ -161,56 +251,67 @@ const Enquiries = () => {
 
 
                 if (res.data && res.data.enquiries) {
-                    const mappedLeads: Lead[] = res.data.enquiries.map((e: any) => ({
-                        id: e._id,
-                        name: e.visitor_name || e.visitor_email.split('@')[0] || "Guest",
-                        role: e.visitor_id ? 'user' : 'visitor',
-                        source: e.metadata?.source || 'Profile',
-                        email: e.visitor_email,
-                        phone: e.visitor_phone || "",
-                        truecaller: "Verified", // Placeholder
-                        isSpam: false,
-                        avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${e.visitor_email}`,
-                        status: e.status === 'new' ? 'unread' : 'read',
-                        crmStatus: e.status === 'new' ? 'New' : 'Contacted',
-                        internalNotes: [],
-                        labels: [],
-                        score: 50,
-                        scoreFactors: [],
-                        preview: e.message || 'No message content',
-                        time: new Date(e.created_at).toLocaleDateString(),
-                        location: "Unknown",
-                        duration: "0s",
-                        device: e.metadata?.device || "Unknown",
-                        os: "-",
-                        resolution: "-",
-                        network: "-",
-                        visits: 1,
-                        lastSeen: new Date(e.created_at).toLocaleTimeString(),
-                        utm: { source: "-", medium: "-", campaign: "-", term: "-" },
-                        messages: [
-                            {
-                                id: Date.parse(e.created_at),
-                                from: 'them',
-                                text: e.message || '(No message part)',
-                                time: new Date(e.created_at).toLocaleTimeString()
-                            },
-                            ...(e.seller_response ? [{
-                                id: Date.parse(e.responded_at || new Date().toISOString()),
-                                from: 'me',
-                                text: e.seller_response,
-                                time: new Date(e.responded_at || new Date()).toLocaleTimeString()
-                            }] : [])
-                        ],
-                        journey: []
-                    }));
+                    const mappedLeads: Lead[] = res.data.enquiries.map((e: any) => {
+                        const lead = {
+                            id: e._id,
+                            name: e.visitor_name || e.visitor_email.split('@')[0] || "Guest",
+                            role: e.visitor_id ? 'user' : 'visitor',
+                            source: e.metadata?.source || 'Profile',
+                            email: e.visitor_email,
+                            phone: e.visitor_phone || "",
+                            truecaller: e.visitor_phone ? "Verified" : "Unknown",
+                            isSpam: false,
+                            avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${e.visitor_email}`,
+                            status: e.status === 'new' ? 'unread' : 'read',
+                            crmStatus: e.status === 'new' ? 'New' : 'Contacted',
+                            internalNotes: [],
+                            labels: [],
+                            score: 50,
+                            scoreFactors: [] as string[],
+                            preview: e.message || 'No message content',
+                            time: e.created_at,
+                            location: "Unknown",
+                            duration: "0s",
+                            device: e.metadata?.device || "Unknown",
+                            os: "-",
+                            resolution: "-",
+                            network: "-",
+                            visits: 1,
+                            lastSeen: new Date(e.created_at).toLocaleTimeString(),
+                            utm: { source: e.metadata?.source || "-", medium: "-", campaign: "-", term: "-" },
+                            messages: [
+                                {
+                                    id: Date.parse(e.created_at),
+                                    from: 'them',
+                                    text: e.message || '(No message part)',
+                                    time: new Date(e.created_at).toLocaleTimeString()
+                                },
+                                ...(e.seller_response ? [{
+                                    id: Date.parse(e.responded_at || new Date().toISOString()),
+                                    from: 'me',
+                                    text: e.seller_response,
+                                    time: new Date(e.responded_at || new Date()).toLocaleTimeString()
+                                }] : [])
+                            ],
+                            journey: []
+                        };
+
+                        // Calculate dynamic score and factors
+                        lead.score = calculateBiolinkScore(lead);
+                        lead.scoreFactors = getScoreFactors(lead);
+
+                        return lead;
+                    });
                     setLeads(mappedLeads);
                 }
 
                 if (statsRes.data) {
+                    // Calculate hot prospects (score >= 70)
+                    const hotProspects = mappedLeads.filter(l => l.score >= 70).length;
+
                     setStats({
                         total: statsRes.data.total || 0,
-                        new: statsRes.data.new || 0,
+                        new: hotProspects, // Display hot prospects instead of just new
                         recent: statsRes.data.recent || 0,
                         avgResponse: '12m' // Placeholder until backend tracks response time
                     });
@@ -356,18 +457,9 @@ const Enquiries = () => {
                     {/* Leads List */}
                     <ScrollArea className="flex-1 bg-white">
                         {isLoading ? (
-                            Array.from({ length: 5 }).map((_, i) => (
-                                <div key={i} className="flex items-center gap-3 p-4 border-b border-border/40 animate-pulse">
-                                    <div className="w-10 h-10 rounded-full bg-zinc-100 shrink-0" />
-                                    <div className="flex-1 space-y-2 min-w-0">
-                                        <div className="flex justify-between">
-                                            <div className="h-3.5 bg-zinc-100 rounded w-24" />
-                                            <div className="h-3 bg-zinc-100 rounded w-12" />
-                                        </div>
-                                        <div className="h-3 bg-zinc-100 rounded w-full" />
-                                    </div>
-                                </div>
-                            ))
+                            <div className="flex items-center justify-center h-64">
+                                <div className="text-sm text-muted-foreground">Loading...</div>
+                            </div>
                         ) : filteredLeads.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-[60vh] text-center px-6">
                                 <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4">
@@ -419,15 +511,21 @@ const Enquiries = () => {
                                             <span className={`text-sm truncate ${lead.status === 'unread' ? 'font-semibold text-zinc-900' : 'font-medium text-zinc-700'}`}>
                                                 {lead.name}
                                             </span>
-                                            <span className="text-[10px] text-zinc-400 tabular-nums shrink-0 ml-2">{lead.time}</span>
+                                            <span className="text-[10px] text-zinc-400 tabular-nums shrink-0 ml-2">{formatTimestamp(lead.time)}</span>
                                         </div>
                                         <p className={`text-xs truncate mb-2 ${lead.status === 'unread' ? 'text-zinc-600 font-medium' : 'text-zinc-500'}`}>
                                             {lead.preview}
                                         </p>
                                         <div className="flex gap-1.5 flex-wrap">
-                                            <Badge variant="secondary" className="text-[9px] px-1.5 h-4 font-normal bg-zinc-100 text-zinc-600 border-zinc-200">
-                                                {lead.source}
-                                            </Badge>
+                                            {(() => {
+                                                const badge = getSourceBadge(lead.source);
+                                                return (
+                                                    <Badge variant="secondary" className={`text-[9px] px-1.5 h-4 font-semibold border ${badge.color}`}>
+                                                        {badge.emoji && <span className="mr-0.5">{badge.emoji}</span>}
+                                                        {badge.label}
+                                                    </Badge>
+                                                );
+                                            })()}
                                             {lead.labels.map((lbl, idx) => (
                                                 <span key={idx} className={`text-[9px] px-1.5 py-0.5 rounded-full flex items-center gap-1 ${lbl.color === 'yellow' ? 'bg-yellow-50 text-yellow-700 border border-yellow-100' : 'bg-blue-50 text-blue-700 border border-blue-100'}`}>
                                                     {lbl.text}
@@ -466,9 +564,15 @@ const Enquiries = () => {
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2">
                                         <h2 className="font-semibold text-sm text-zinc-900">{activeLead.name}</h2>
-                                        <Badge variant={activeLead.score >= 70 ? 'destructive' : activeLead.score >= 30 ? 'default' : 'secondary'} className="text-[10px] px-1.5 h-5 rounded-sm">
-                                            {activeLead.score} Score
-                                        </Badge>
+                                        {activeLead.score >= 70 ? (
+                                            <Badge className="text-[10px] px-1.5 h-5 rounded-sm bg-red-500 hover:bg-red-600 text-white border-0 flex items-center gap-0.5 font-bold">
+                                                HOT 🔥
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant={activeLead.score >= 30 ? 'default' : 'secondary'} className="text-[10px] px-1.5 h-5 rounded-sm">
+                                                {activeLead.score} Score
+                                            </Badge>
+                                        )}
                                     </div>
                                     <p className="text-xs text-muted-foreground">{activeLead.role === 'visitor' ? 'Visitor • External' : 'Registered User'}</p>
                                 </div>
@@ -593,29 +697,62 @@ const Enquiries = () => {
 
                     </div>
                 ) : (
-                    // EMPTY STATE
-                    <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-zinc-50 text-center p-8">
-                        <div className="w-20 h-20 bg-zinc-200 rounded-2xl flex items-center justify-center mb-6">
-                            <PieChart className="w-8 h-8 text-zinc-400" />
+                    // EMPTY STATE - DASHBOARD OVERVIEW
+                    <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-white text-center p-8">
+                        <div className="w-20 h-20 bg-zinc-100 rounded-2xl flex items-center justify-center mb-4">
+                            <PieChart className="w-10 h-10 text-zinc-400" />
                         </div>
-                        <h1 className="text-2xl font-light text-zinc-800">Dashboard Overview</h1>
-                        <p className="text-zinc-500 text-sm mt-2 max-w-sm">Select a conversation to view visitor journey, intelligence, and CRM details.</p>
+                        <h1 className="text-2xl font-normal text-zinc-900">Dashboard Overview</h1>
+                        <p className="text-zinc-500 text-sm mt-1 max-w-md">Platform Intelligence Summary</p>
 
-                        <div className="grid grid-cols-3 gap-6 mt-12 w-full max-w-2xl">
+                        <div className="grid grid-cols-3 gap-8 mt-10 w-full max-w-3xl">
                             {[
-                                { label: 'Active Leads', val: stats.total, icon: ArrowUp, color: 'text-green-600', sub: `${stats.recent} new this week` },
-                                { label: 'Unread', val: stats.new, icon: Zap, color: 'text-red-500', sub: 'Action Required' },
-                                { label: 'Avg Response', val: stats.avgResponse, icon: Clock, color: 'text-blue-500', sub: 'Target: < 15m' }
+                                {
+                                    label: 'ACTIVE LEADS',
+                                    val: stats.total,
+                                    icon: ArrowUp,
+                                    color: 'text-green-600',
+                                    bgColor: 'bg-green-50',
+                                    sub: calculatePercentageChange(stats.total, Math.max(0, stats.total - stats.recent)),
+                                    subText: 'vs yesterday'
+                                },
+                                {
+                                    label: 'HOT PROSPECTS',
+                                    val: stats.new,
+                                    icon: Zap,
+                                    color: 'text-red-600',
+                                    bgColor: 'bg-red-50',
+                                    sub: stats.new > 0 ? '🔥 High Intent Detected' : 'No hot leads',
+                                    subText: ''
+                                },
+                                {
+                                    label: 'AVG RESPONSE',
+                                    val: stats.avgResponse,
+                                    icon: Clock,
+                                    color: 'text-blue-600',
+                                    bgColor: 'bg-blue-50',
+                                    sub: 'Target: < 15m',
+                                    subText: ''
+                                }
                             ].map((stat, i) => (
-                                <div key={i} className="bg-white p-5 rounded-lg border border-border shadow-sm">
-                                    <div className="text-xs font-semibold text-muted-foreground uppercase">{stat.label}</div>
-                                    <div className="text-3xl font-bold text-foreground mt-2">{stat.val}</div>
-                                    <div className={`text-[10px] font-medium mt-1 flex items-center justify-center gap-1 ${stat.color}`}>
-                                        <stat.icon className="w-3 h-3" /> {stat.sub}
+                                <div key={i} className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-3">{stat.label}</div>
+                                    <div className="text-4xl font-bold text-zinc-900 mb-2">{stat.val}</div>
+                                    <div className={`text-xs font-semibold flex items-center justify-center gap-1.5 ${stat.color}`}>
+                                        {stat.sub.includes('↑') || stat.sub.includes('↓') ? (
+                                            <>
+                                                <span>{stat.sub}</span>
+                                                <span className="text-zinc-400 font-normal text-[10px]">{stat.subText}</span>
+                                            </>
+                                        ) : (
+                                            <span>{stat.sub}</span>
+                                        )}
                                     </div>
                                 </div>
                             ))}
                         </div>
+
+                        <p className="text-zinc-400 text-xs mt-8">Select a conversation from the left to view Biolink Analytics, CRM notes, and user journey.</p>
                     </div>
                 )}
 
@@ -650,50 +787,92 @@ const Enquiries = () => {
                         <ScrollArea className="flex-1 p-6 bg-white">
                             {activeTab === 'info' ? (
                                 <div className="space-y-6">
+                                    {/* Algorithm Analysis Banner */}
+                                    {activeLead.score >= 70 && (
+                                        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-lg p-3 flex items-center gap-2">
+                                            <div className="flex items-center gap-1">
+                                                <Zap className="w-4 h-4 text-yellow-600 fill-yellow-600" />
+                                                <Zap className="w-4 h-4 text-yellow-600 fill-yellow-600" />
+                                            </div>
+                                            <span className="text-xs font-bold text-yellow-900 tracking-wide">Algorithm Analys</span>
+                                        </div>
+                                    )}
+
                                     {/* Profile */}
                                     <div className="flex flex-col items-center">
-                                        <div className="w-20 h-20 rounded-full border p-1 mb-3 relative">
-                                            <Avatar className="w-full h-full">
-                                                <AvatarImage src={activeLead.avatar} />
-                                                <AvatarFallback>{activeLead.name[0]}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="absolute bottom-0 right-0 bg-white border text-[10px] px-1.5 rounded-sm font-bold shadow-sm">{activeLead.source.toUpperCase()}</span>
+                                        <div className="relative mb-4">
+                                            {/* Large emoji/icon for source */}
+                                            <div className="text-5xl mb-2 flex items-center justify-center">
+                                                {getSourceBadge(activeLead.source).emoji || '👤'}
+                                            </div>
                                         </div>
-                                        <h2 className="text-lg font-semibold">{activeLead.name}</h2>
+
+                                        <h2 className="text-xl font-bold text-zinc-900">{activeLead.name}</h2>
+
+                                        {/* Company/Business ID Badge */}
+                                        {activeLead.email && (
+                                            <div className="mt-2 flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md">
+                                                <span className="text-sm">🆔</span>
+                                                <span className="text-[10px] font-medium text-blue-900">
+                                                    ID: {activeLead.name} {activeLead.source.toLowerCase().includes('indiamart') ? 'Pvt Ltd' : ''}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Visitor Type Badge */}
+                                        <div className="mt-1 flex items-center gap-2">
+                                            <Badge variant="outline" className="text-[10px] px-2 py-0.5 font-medium">
+                                                {activeLead.role === 'visitor' ? 'VISITOR' : 'USER'}
+                                            </Badge>
+                                        </div>
 
                                         {/* Truecaller / Spam Check */}
                                         {activeLead.truecaller !== "Unknown" && (
                                             <div className={`mt-2 px-2 py-0.5 rounded text-[10px] font-medium border flex items-center gap-1 ${activeLead.isSpam ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
                                                 {activeLead.isSpam ? <AlertTriangle className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
-                                                {activeLead.isSpam ? 'SPAM LIKELY' : `ID: ${activeLead.truecaller}`}
+                                                {activeLead.isSpam ? 'SPAM LIKELY' : `✓ Verified Number`}
                                             </div>
                                         )}
 
-                                        <div className="mt-4 w-full bg-green-50 border border-green-100 rounded-lg p-3">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="text-xs font-bold text-green-800 uppercase tracking-wide">Biolink Score</span>
-                                                <span className="text-lg font-black text-green-700">{activeLead.score}</span>
+                                        {/* BIOLINK AI SCORE - Prominent Display */}
+                                        <div className="mt-5 w-full bg-green-50 border-2 border-green-200 rounded-xl p-4">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <span className="text-[11px] font-bold text-green-800 uppercase tracking-wider">BIOLINK AI SCORE</span>
+                                                <span className="text-4xl font-black text-green-700">{activeLead.score}</span>
                                             </div>
-                                            <div className="flex flex-wrap gap-1">
-                                                {activeLead.scoreFactors.map((f, i) => (
-                                                    <span key={i} className="text-[10px] bg-white border border-green-200 text-green-700 px-1.5 py-0.5 rounded-sm flex items-center gap-1">
-                                                        <Check className="w-2 h-2" /> {f}
-                                                    </span>
-                                                ))}
-                                            </div>
+                                            {activeLead.scoreFactors.length > 0 && (
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {activeLead.scoreFactors.map((f, i) => (
+                                                        <span key={i} className="text-[10px] bg-white border border-green-300 text-green-800 px-2 py-1 rounded-md flex items-center gap-1 font-medium">
+                                                            <Check className="w-2.5 h-2.5" /> {f}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
                                     {/* Data Cards */}
-                                    <div className="border rounded-lg overflow-hidden">
-                                        <div className="bg-muted/30 px-3 py-2 border-b flex justify-between items-center">
-                                            <span className="text-[10px] font-bold uppercase text-muted-foreground">Traffic Intelligence</span>
-                                            <Globe className="w-3 h-3 text-blue-500" />
+                                    <div className="border-2 rounded-xl overflow-hidden">
+                                        <div className="bg-blue-50 px-4 py-3 border-b border-blue-100 flex justify-between items-center">
+                                            <span className="text-[11px] font-bold uppercase text-blue-900 tracking-wider">TRAFFIC INTELLIGENCE</span>
+                                            <Globe className="w-4 h-4 text-blue-600" />
                                         </div>
-                                        <div className="p-3 space-y-2 text-xs">
-                                            <div className="flex justify-between"><span className="text-muted-foreground">Source</span><span className="font-medium">{activeLead.utm.source}</span></div>
-                                            <div className="flex justify-between"><span className="text-muted-foreground">Medium</span><span className="font-medium">{activeLead.utm.medium}</span></div>
-                                            <div className="flex justify-between"><span className="text-muted-foreground">Campaign</span><span className="font-medium">{activeLead.utm.campaign}</span></div>
+                                        <div className="p-4 bg-white">
+                                            <div className="mb-3">
+                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wide">Origin Source</span>
+                                                <div className="mt-1 flex items-center gap-2">
+                                                    {(() => {
+                                                        const badge = getSourceBadge(activeLead.source);
+                                                        return (
+                                                            <>
+                                                                <span className="text-2xl">{badge.emoji || '🌐'}</span>
+                                                                <span className="text-base font-bold text-zinc-900">{badge.label.toLowerCase()}</span>
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 

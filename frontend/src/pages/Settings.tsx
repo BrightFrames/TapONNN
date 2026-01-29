@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+
 import AvatarUpload from "@/components/AvatarUpload";
 import SocialLinksManager from "@/components/SocialLinksManager";
 import EmailVerification from "@/components/EmailVerification";
@@ -24,7 +24,7 @@ import {
     Loader2,
     Mail,
     AtSign,
-    FileText,
+
     ShoppingBag,
     Share2
 } from "lucide-react";
@@ -38,7 +38,6 @@ const Settings = () => {
     // Profile form state
     const [fullName, setFullName] = useState(user?.name || "");
     const [username, setUsername] = useState(user?.username || "");
-    const [bio, setBio] = useState("");
     const [avatarUrl, setAvatarUrl] = useState(user?.avatar || "");
 
     // Password form state
@@ -69,7 +68,6 @@ const Settings = () => {
                     const data = await response.json();
                     setFullName(data.full_name || data.name || "");
                     setUsername(data.username || "");
-                    setBio(data.bio || "");
                     setAvatarUrl(data.avatar_url || "");
                     setHasStore(data.has_store || false);
                     setStorePublished(data.store_published || false);
@@ -149,7 +147,6 @@ const Settings = () => {
                 },
                 body: JSON.stringify({
                     full_name: fullName,
-                    bio,
                     avatar_url: avatarUrl
                 })
             });
@@ -375,21 +372,7 @@ const Settings = () => {
                                             <p className="text-xs text-gray-500">{t('settings.emailNote')}</p>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <Label htmlFor="bio" className="flex items-center gap-2">
-                                                <FileText className="w-4 h-4 text-gray-400" />
-                                                {t('settings.bio')}
-                                            </Label>
-                                            <Textarea
-                                                id="bio"
-                                                value={bio}
-                                                onChange={(e) => setBio(e.target.value)}
-                                                placeholder={t('settings.bioPlaceholder')}
-                                                className="rounded-xl resize-none min-h-[100px]"
-                                                maxLength={200}
-                                            />
-                                            <p className="text-xs text-gray-500 text-right">{bio.length}/200</p>
-                                        </div>
+
 
                                         <Button
                                             onClick={handleSaveProfile}

@@ -25,7 +25,16 @@ const ProfileSwitcher = () => {
 
     const handleSwitch = async (mode: 'personal' | 'store') => {
         if (mode === currentMode) return;
+
         await switchProfileMode(mode);
+
+        // Navigate based on mode
+        if (mode === 'store') {
+            navigate('/dashboard/business');
+        } else {
+            navigate('/dashboard');
+        }
+
         setIsOpen(false);
     };
 
@@ -111,6 +120,7 @@ const ProfileSwitcher = () => {
                                     </div>
                                 </div>
                             </div>
+
                             {currentMode === 'store' && <Check className="w-4 h-4 text-green-500" />}
                         </DropdownMenuItem>
                     ) : (

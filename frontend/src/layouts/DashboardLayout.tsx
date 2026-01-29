@@ -135,15 +135,10 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
                         active={location.pathname === "/dashboard"}
                     />
                     <SidebarItem
-                        icon={Building2}
-                        label="Business Profile"
+                        icon={ShoppingBag}
+                        label="Offerings"
                         to="/dashboard/business"
-                        active={location.pathname === "/dashboard/business" || location.pathname.includes("/dashboard/business")}
-                        subItems={[
-                            { label: "Integrations", to: "/dashboard/business?tab=integrations" },
-                            { label: "My Shop", to: "/dashboard/business?tab=shop" },
-                            { label: "Earn", to: "/dashboard/business?tab=earn" },
-                        ]}
+                        active={location.pathname === "/dashboard/business"}
                     />
                     <SidebarItem icon={CreditCard} label="Business Cards" />
                     <SidebarItem icon={ShoppingCart} label="Order NFC Card" />

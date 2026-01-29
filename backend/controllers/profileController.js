@@ -292,12 +292,53 @@ const switchProfileMode = async (req, res) => {
             return res.status(404).json({ error: 'Profile not found' });
         }
 
-        // Check if store allows switching (Removed restriction as per request)
-        // if (mode === 'store' && !profile.has_store) { ... }
+        // Fetch User to get language (and ensure user exists)
+        const user = await User.findById(userId);
 
+        const profileObj = profile.toObject();
+        const isStore = mode === 'store';
+
+        // Return full user object appropriately mapped (same as 'me' endpoint)
         res.json({
             success: true,
-            active_profile_mode: profile.active_profile_mode
+            user: {
+                id: profileObj.user_id,
+                // Context-Aware Fields: Return store data if in store mode
+                username: (isStore && profileObj.store_username) ? profileObj.store_username : profileObj.username,
+                full_name: (isStore && profileObj.store_name) ? profileObj.store_name : profileObj.full_name,
+                bio: (isStore && profileObj.store_bio) ? profileObj.store_bio : profileObj.bio,
+                avatar_url: (isStore && profileObj.store_avatar_url) ? profileObj.store_avatar_url : profileObj.avatar_url,
+                selected_theme: (isStore && profileObj.store_selected_theme) ? profileObj.store_selected_theme : profileObj.selected_theme,
+                design_config: (isStore && profileObj.store_design_config) ? profileObj.store_design_config : profileObj.design_config,
+
+                email: profileObj.email,
+                phone_number: profileObj.phone_number,
+                social_links: profileObj.social_links instanceof Map ? Object.fromEntries(profileObj.social_links) : profileObj.social_links,
+                language: user?.language || 'en',
+                // New fields for role-based profile handling
+                role: profileObj.role || 'super',
+                has_store: profileObj.has_store || false,
+                active_profile_mode: mode,
+                // Optimistic UI Support
+                identities: {
+                    personal: {
+                        username: profileObj.username,
+                        full_name: profileObj.full_name,
+                        bio: profileObj.bio,
+                        avatar_url: profileObj.avatar_url,
+                        selected_theme: profileObj.selected_theme,
+                        design_config: profileObj.design_config
+                    },
+                    store: {
+                        username: profileObj.store_username || '',
+                        full_name: profileObj.store_name || '',
+                        bio: profileObj.store_bio || '',
+                        avatar_url: profileObj.store_avatar_url || '',
+                        selected_theme: profileObj.store_selected_theme || 'clean',
+                        design_config: profileObj.store_design_config || {}
+                    }
+                }
+            }
         });
     } catch (err) {
         console.error('Error switching profile mode:', err);

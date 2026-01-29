@@ -277,53 +277,7 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
                     {/* Content Fields (dynamic based on block_type) */}
                     {renderContentFields()}
 
-                    {/* CTA Settings */}
-                    <div className="space-y-4 pt-4 border-t">
-                        <h4 className="font-medium text-sm">Call to Action</h4>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>CTA Type</Label>
-                                <Select
-                                    value={formData.cta_type}
-                                    onValueChange={(v) => setFormData(prev => ({ ...prev, cta_type: v }))}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {ctaOptions.map(opt => (
-                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            {formData.cta_type !== 'none' && (
-                                <div className="space-y-2">
-                                    <Label>Button Label</Label>
-                                    <Input
-                                        placeholder="e.g. Learn More"
-                                        value={formData.cta_label}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, cta_label: e.target.value }))}
-                                    />
-                                </div>
-                            )}
-                        </div>
-
-                        {formData.cta_type !== 'none' && (
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium">Require Login</p>
-                                    <p className="text-xs text-muted-foreground">Visitors must login to use this CTA</p>
-                                </div>
-                                <Switch
-                                    checked={formData.cta_requires_login}
-                                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, cta_requires_login: checked }))}
-                                />
-                            </div>
-                        )}
-                    </div>
                 </div>
 
                 <DialogFooter>
