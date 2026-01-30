@@ -14,7 +14,6 @@ import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 import useIntent, { getPendingIntent, clearPendingIntent } from "@/hooks/useIntent";
 import { toast } from "sonner";
 import { getIconForThumbnail } from "@/utils/socialIcons";
-import { useAnalytics } from "@/hooks/useAnalytics";
 
 const PublicProfile = () => {
     const { username } = useParams();
@@ -45,9 +44,6 @@ const PublicProfile = () => {
     const [connectModal, setConnectModal] = useState<{ open: boolean; product: any; seller: any }>({ open: false, product: null, seller: null });
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-
-    // Analytics Tracking - tracks pageviews automatically when profile ID is available
-    const { trackClick } = useAnalytics(profile?.id);
 
     // Initialize Profile & Blocks
     useEffect(() => {
@@ -298,11 +294,11 @@ const PublicProfile = () => {
             </div>
 
             {/* Main Content - Matches Phone Preview Layout */}
-            <div className="relative z-10 w-full max-w-[360px] mx-auto px-6 pt-12 pb-32 flex flex-col items-center">
+            <div className="relative z-10 max-w-md mx-auto px-6 pt-12 pb-32">
 
                 {/* Profile Header - Matches Phone Preview */}
-                <div className="flex flex-col items-center space-y-3 w-full">
-                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl mb-3">
+                <div className="flex flex-col items-center space-y-3">
+                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
                         <AvatarImage src={profile.avatar} className="object-cover" />
                         <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
                             {userInitial}
@@ -337,36 +333,28 @@ const PublicProfile = () => {
                         </div>
                     )}
 
-                    {/* Tab Switcher - Only show on Store Route, Personal profiles show Links only */}
-                    {isStoreRoute ? (
-                        <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
-                            <button
-                                onClick={() => setActiveTab('links')}
-                                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
-                            >
-                                Links
-                            </button>
+                    {/* Tab Switcher - Match Phone Preview Design */}
+                    <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
+                        <button
+                            onClick={() => setActiveTab('links')}
+                            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
+                        >
+                            Links
+                        </button>
+                        {profile?.is_store_identity && (
                             <button
                                 onClick={() => setActiveTab('offerings')}
                                 className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'offerings' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
                             >
                                 Offerings
                             </button>
-                        </div>
-                    ) : (
-                        <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
-                            <button
-                                className="px-5 py-2 rounded-full text-sm font-semibold bg-white text-black shadow-sm"
-                            >
-                                Links
-                            </button>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
 
                 {/* Links View - Match Phone Preview Design */}
                 {activeTab === 'links' && (
-                    <div className="mt-8 space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300 w-full">
+                    <div className="mt-8 space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
                         {blocks.filter(b => b.is_active).map((block) => {
                             const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
                             return (
@@ -392,7 +380,7 @@ const PublicProfile = () => {
 
                 {/* Offerings View - Match Phone Preview Connect Card Design */}
                 {activeTab === 'offerings' && profile?.is_store_identity && (
-                    <div className="mt-6 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300 w-full">
+                    <div className="mt-6 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
                         {/* Search Bar - Match Phone Preview */}
                         <div className="relative w-full">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50 text-current" />
@@ -407,7 +395,7 @@ const PublicProfile = () => {
 
                         {/* Product Grid - Match Phone Preview Connect Card Design */}
                         {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
-                            <div className="grid gap-3">
+                            <div className="grid gap-4">
                                 {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).map((product, index) => (
                                     <div
                                         key={product._id || `product-${index}`}
@@ -426,22 +414,22 @@ const PublicProfile = () => {
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
                                         {/* Top Actions */}
-                                        <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10">
-                                            <button className="w-6 h-6 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors">
-                                                <X className="w-3 h-3" />
+                                        <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10">
+                                            <button className="w-8 h-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors">
+                                                <X className="w-4 h-4" />
                                             </button>
                                         </div>
 
                                         {/* Bottom Content */}
-                                        <div className="absolute bottom-0 left-0 right-0 p-3 z-20 text-white">
+                                        <div className="absolute bottom-0 left-0 right-0 p-4 z-20 text-white">
                                             {/* Badge / Pill */}
-                                            <div className="inline-flex items-center gap-1 bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-full text-[8px] font-medium mb-2 border border-white/10">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                            <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-medium mb-2 border border-white/10">
+                                                <div className="w-2 h-2 rounded-full bg-blue-400" />
                                                 <span>{profile?.name || "User"}</span>
                                             </div>
 
-                                            <h3 className="text-sm font-bold leading-tight mb-1 text-white">{product.title}</h3>
-                                            <p className="text-[10px] text-gray-300 line-clamp-1 mb-2 font-light">{product.description}</p>
+                                            <h3 className="text-base font-bold leading-tight mb-1 text-white">{product.title}</h3>
+                                            <p className="text-xs text-gray-300 line-clamp-1 mb-3 font-light">{product.description}</p>
 
                                             {/* Action Row */}
                                             <div className="flex items-center gap-2">
@@ -451,15 +439,15 @@ const PublicProfile = () => {
                                                         product: product,
                                                         seller: { id: profile.id, name: profile.name }
                                                     })}
-                                                    className="flex-1 bg-white text-black h-8 rounded-full font-bold text-xs flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                                    className="flex-1 bg-white text-black h-10 rounded-full font-bold text-sm flex items-center justify-center hover:bg-gray-100 transition-colors"
                                                 >
                                                     Connect
                                                 </button>
-                                                <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
-                                                    <Heart className="w-3.5 h-3.5" />
+                                                <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
+                                                    <Heart className="w-4 h-4" />
                                                 </button>
-                                                <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
-                                                    <Share className="w-3.5 h-3.5" />
+                                                <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
+                                                    <Share className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </div>
@@ -477,14 +465,14 @@ const PublicProfile = () => {
 
             {/* Footer - Connect Button - Match Phone Preview */}
             <div className="fixed bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-40">
-                <div className="w-full max-w-[360px]">
+                <div className="w-full max-w-md">
                     <button
                         onClick={() => setConnectModal({
                             open: true,
                             product: null,
                             seller: { id: profile.id, name: profile.name }
                         })}
-                        className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100"
+                        className="w-full bg-white text-black h-14 rounded-full font-bold text-base flex items-center justify-between px-6 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100"
                     >
                         <span>Connect</span>
                         <MessageCircle className="w-5 h-5 text-gray-600" />
