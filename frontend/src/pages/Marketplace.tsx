@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
+import { PluginConfigModal } from "@/components/marketplace/PluginConfigModal";
 import {
     Search,
     Plus,
@@ -31,7 +32,11 @@ import {
     Headphones,
     DollarSign,
     Coffee,
-    Globe
+    Globe,
+    Settings,
+    Truck,
+    Box,
+    CreditCard
 } from "lucide-react";
 
 interface Plugin {
@@ -44,6 +49,7 @@ interface Plugin {
     type: string;
     is_premium: boolean;
     install_count: number;
+    config_schema?: any[];
 }
 
 interface UserPlugin {
@@ -56,14 +62,14 @@ interface UserPlugin {
 
 const CATEGORIES = [
     { id: 'all', label: 'All', icon: Globe },
-    { id: 'Social', label: 'Social', icon: Users },
-    { id: 'Music', label: 'Music', icon: Music },
-    { id: 'Video', label: 'Video', icon: Video },
     { id: 'Commerce', label: 'Commerce', icon: ShoppingBag },
     { id: 'Scheduling', label: 'Scheduling', icon: Calendar },
-    { id: 'Forms', label: 'Forms', icon: FileText },
+    { id: 'Social', label: 'Social', icon: Users },
     { id: 'Marketing', label: 'Marketing', icon: Mail },
     { id: 'Community', label: 'Community', icon: MessageCircle },
+    { id: 'Music', label: 'Music', icon: Music },
+    { id: 'Video', label: 'Video', icon: Video },
+    { id: 'Forms', label: 'Forms', icon: FileText },
 ];
 
 const getIconComponent = (iconName: string) => {
@@ -95,17 +101,25 @@ const getIconComponent = (iconName: string) => {
         mailchimp: Mail,
         convertkit: Mail,
         snapchat: Users,
+        truck: Truck,
+        box: Box,
+        "credit-card": CreditCard
     };
     return iconMap[iconName] || Globe;
 };
 
 const Marketplace = () => {
     const [plugins, setPlugins] = useState<Plugin[]>([]);
-    const [installedPlugins, setInstalledPlugins] = useState<string[]>([]);
+    const [installedPlugins, setInstalledPlugins] = useState<UserPlugin[]>([]);
     const [loading, setLoading] = useState(true);
     const [installing, setInstalling] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeCategory, setActiveCategory] = useState("all");
+
+    // Configuration Modal State
+    const [configModalOpen, setConfigModalOpen] = useState(false);
+    const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
+    const [selectedConfig, setSelectedConfig] = useState<Record<string, any>>({});
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -140,7 +154,7 @@ const Marketplace = () => {
 
             if (response.ok) {
                 const data: UserPlugin[] = await response.json();
-                setInstalledPlugins(data.map(up => up.plugin_id._id));
+                setInstalledPlugins(data);
             }
         } catch (error) {
             console.error('Error fetching installed plugins:', error);
@@ -162,8 +176,14 @@ const Marketplace = () => {
             });
 
             if (response.ok) {
-                setInstalledPlugins(prev => [...prev, pluginId]);
+                const newUserPlugin = await response.json();
+                setInstalledPlugins(prev => [...prev, newUserPlugin]);
                 toast.success('App installed successfully!');
+
+                // Open config modal if plugin has configuration
+                if (newUserPlugin.plugin_id.config_schema && newUserPlugin.plugin_id.config_schema.length > 0) {
+                    handleConfigure(newUserPlugin.plugin_id, {});
+                }
             } else {
                 const error = await response.json();
                 toast.error(error.error || 'Failed to install app');
@@ -188,7 +208,7 @@ const Marketplace = () => {
             });
 
             if (response.ok) {
-                setInstalledPlugins(prev => prev.filter(id => id !== pluginId));
+                setInstalledPlugins(prev => prev.filter(up => up.plugin_id._id !== pluginId));
                 toast.success('App uninstalled');
             } else {
                 toast.error('Failed to uninstall app');
@@ -200,6 +220,45 @@ const Marketplace = () => {
             setInstalling(null);
         }
     };
+
+    const handleConfigure = (plugin: Plugin, config: Record<string, any>) => {
+        setSelectedPlugin(plugin);
+        setSelectedConfig(config || {});
+        setConfigModalOpen(true);
+    };
+
+    const saveConfig = async (config: Record<string, any>) => {
+        if (!selectedPlugin) return;
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) return;
+
+            const response = await fetch(`${API_URL}/marketplace/config/${selectedPlugin._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ config })
+            });
+
+            if (response.ok) {
+                toast.success('Configuration saved');
+                // Update local state
+                setInstalledPlugins(prev => prev.map(up =>
+                    up.plugin_id._id === selectedPlugin._id
+                        ? { ...up, config }
+                        : up
+                ));
+            } else {
+                toast.error('Failed to save configuration');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to save configuration');
+        }
+    }
 
     const filteredPlugins = plugins.filter(plugin => {
         const matchesCategory = activeCategory === 'all' || plugin.category === activeCategory;
@@ -263,8 +322,10 @@ const Marketplace = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredPlugins.map(plugin => {
                         const IconComponent = getIconComponent(plugin.icon);
-                        const isInstalled = installedPlugins.includes(plugin._id);
+                        const installedPlugin = installedPlugins.find(p => p.plugin_id._id === plugin._id);
+                        const isInstalled = !!installedPlugin;
                         const isLoading = installing === plugin._id;
+                        const hasConfig = plugin.config_schema && plugin.config_schema.length > 0;
 
                         return (
                             <Card
@@ -289,31 +350,44 @@ const Marketplace = () => {
                                                 )}
                                             </div>
                                             <p className="text-sm text-gray-500 line-clamp-2 mb-3">{plugin.description}</p>
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex items-center justify-between gap-2">
                                                 <Badge variant="outline" className="text-xs text-gray-500">
                                                     {plugin.category}
                                                 </Badge>
-                                                <Button
-                                                    size="sm"
-                                                    variant={isInstalled ? "outline" : "default"}
-                                                    onClick={() => isInstalled ? handleUninstall(plugin._id) : handleInstall(plugin._id)}
-                                                    disabled={isLoading}
-                                                    className={`rounded-full h-8 px-4 ${isInstalled ? 'text-green-600 border-green-200 hover:bg-green-50' : 'bg-purple-600 hover:bg-purple-700'}`}
-                                                >
-                                                    {isLoading ? (
-                                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                                    ) : isInstalled ? (
-                                                        <>
-                                                            <Check className="w-4 h-4 mr-1" />
-                                                            Installed
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Plus className="w-4 h-4 mr-1" />
-                                                            Install
-                                                        </>
+
+                                                <div className="flex gap-2">
+                                                    {isInstalled && hasConfig && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => handleConfigure(plugin, installedPlugin.config)}
+                                                            className="rounded-full h-8 px-2"
+                                                        >
+                                                            <Settings className="w-4 h-4" />
+                                                        </Button>
                                                     )}
-                                                </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant={isInstalled ? "outline" : "default"}
+                                                        onClick={() => isInstalled ? handleUninstall(plugin._id) : handleInstall(plugin._id)}
+                                                        disabled={isLoading}
+                                                        className={`rounded-full h-8 px-4 ${isInstalled ? 'text-green-600 border-green-200 hover:bg-green-50' : 'bg-purple-600 hover:bg-purple-700'}`}
+                                                    >
+                                                        {isLoading ? (
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                        ) : isInstalled ? (
+                                                            <>
+                                                                <Check className="w-4 h-4 mr-1" />
+                                                                Installed
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Plus className="w-4 h-4 mr-1" />
+                                                                Install
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -333,6 +407,14 @@ const Marketplace = () => {
                         <p className="text-gray-500">Try adjusting your search or filter</p>
                     </div>
                 )}
+
+                <PluginConfigModal
+                    isOpen={configModalOpen}
+                    onClose={() => setConfigModalOpen(false)}
+                    plugin={selectedPlugin}
+                    currentConfig={selectedConfig}
+                    onSave={saveConfig}
+                />
             </div>
         </LinktreeLayout>
     );

@@ -1,4 +1,3 @@
-
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
@@ -25,6 +24,9 @@ import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 import { useTranslation } from "react-i18next";
 import { SocialLinksDialog } from "@/components/SocialLinksDialog";
 import { Copy, Sparkles } from "lucide-react";
+import { ProductPluginSuggestions } from "@/components/shop/ProductPluginSuggestions";
+import { PluginConfigModal } from "@/components/marketplace/PluginConfigModal";
+import { supabase } from "@/lib/supabase";
 
 interface Product {
     _id: string;
@@ -55,6 +57,24 @@ interface Order {
     paid_at?: string;
 }
 
+interface Plugin {
+    _id: string;
+    name: string;
+    slug: string;
+    description: string;
+    icon: string;
+    category: string;
+    type: string;
+    is_premium: boolean;
+    config_schema?: any[];
+}
+
+interface UserPlugin {
+    _id: string;
+    plugin_id: Plugin;
+    config: Record<string, any>;
+}
+
 const Shop = () => {
     const { user, links: authLinks, isLoading, selectedTheme } = useAuth();
     const { t } = useTranslation();
@@ -67,6 +87,14 @@ const Shop = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [previewTab, setPreviewTab] = useState<'links' | 'shop'>('shop');
     const [connectModal, setConnectModal] = useState<{ open: boolean; product: any; seller: any }>({ open: false, product: null, seller: null });
+
+    // Marketplace / Plugin State
+    const [plugins, setPlugins] = useState<Plugin[]>([]);
+    const [installedPlugins, setInstalledPlugins] = useState<UserPlugin[]>([]);
+    const [installingPluginId, setInstallingPluginId] = useState<string | null>(null);
+    const [configModalOpen, setConfigModalOpen] = useState(false);
+    const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
+    const [selectedConfig, setSelectedConfig] = useState<Record<string, any>>({});
 
     // New Product State
     const [newProduct, setNewProduct] = useState({
@@ -82,6 +110,8 @@ const Shop = () => {
 
     useEffect(() => {
         fetchProducts();
+        fetchPlugins();
+        fetchInstalledPlugins();
     }, []);
 
     const fetchProducts = async () => {
@@ -102,6 +132,110 @@ const Shop = () => {
             setLoadingProducts(false);
         }
     };
+
+    const fetchPlugins = async () => {
+        try {
+            const response = await fetch(`${API_URL}/marketplace/plugins`);
+            if (response.ok) {
+                const data = await response.json();
+                setPlugins(data);
+            }
+        } catch (error) {
+            console.error('Error fetching plugins:', error);
+        }
+    };
+
+    const fetchInstalledPlugins = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) return;
+
+            const response = await fetch(`${API_URL}/marketplace/my-plugins`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setInstalledPlugins(data);
+            }
+        } catch (error) {
+            console.error('Error fetching installed plugins:', error);
+        }
+    };
+
+    const handlePluginInstall = async (pluginId: string) => {
+        setInstallingPluginId(pluginId);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+                toast.error('Please log in to install apps');
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/marketplace/install/${pluginId}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+
+            if (response.ok) {
+                const newUserPlugin = await response.json();
+                setInstalledPlugins(prev => [...prev, newUserPlugin]);
+                toast.success('App connected!');
+
+                // Open config modal immediately
+                if (newUserPlugin.plugin_id.config_schema && newUserPlugin.plugin_id.config_schema.length > 0) {
+                    handleConfigurePlugin(newUserPlugin.plugin_id, {});
+                }
+            } else {
+                const error = await response.json();
+                toast.error(error.error || 'Failed to install app');
+            }
+        } catch (error) {
+            console.error('Error installing plugin:', error);
+            toast.error('Failed to install app');
+        } finally {
+            setInstallingPluginId(null);
+        }
+    };
+
+    const handleConfigurePlugin = (plugin: Plugin, config: Record<string, any>) => {
+        setSelectedPlugin(plugin);
+        setSelectedConfig(config || {});
+        setConfigModalOpen(true);
+    };
+
+    const savePluginConfig = async (config: Record<string, any>) => {
+        if (!selectedPlugin) return;
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) return;
+
+            const response = await fetch(`${API_URL}/marketplace/config/${selectedPlugin._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ config })
+            });
+
+            if (response.ok) {
+                toast.success('Configuration saved');
+                setInstalledPlugins(prev => prev.map(up =>
+                    up.plugin_id._id === selectedPlugin._id
+                        ? { ...up, config }
+                        : up
+                ));
+            } else {
+                toast.error('Failed to save configuration');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to save configuration');
+        }
+    }
+
 
     const fetchOrders = async () => {
         const token = localStorage.getItem('auth_token');
@@ -223,6 +357,8 @@ const Shop = () => {
         p && p.title && p.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const installedPluginIds = installedPlugins.map(p => p.plugin_id._id);
+
     return (
         <LinktreeLayout>
             <div className="flex h-full">
@@ -290,7 +426,7 @@ const Shop = () => {
                                     <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> Add Content
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-[425px]">
+                            <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
                                 <DialogHeader>
                                     <DialogTitle>{t('shop.addNewProduct')}</DialogTitle>
                                     <DialogDescription>
@@ -363,6 +499,19 @@ const Shop = () => {
                                             onChange={(url) => setNewProduct({ ...newProduct, image_url: url })}
                                         />
                                     </div>
+
+                                    {/* Plugin Suggestions */}
+                                    <ProductPluginSuggestions
+                                        plugins={plugins}
+                                        installedPluginIds={installedPluginIds}
+                                        onInstall={handlePluginInstall}
+                                        onConfigure={(plugin) => {
+                                            const installed = installedPlugins.find(p => p.plugin_id._id === plugin._id);
+                                            handleConfigurePlugin(plugin, installed?.config || {});
+                                        }}
+                                        installingId={installingPluginId}
+                                    />
+
                                     <DialogFooter>
                                         <Button type="submit" disabled={isSubmitting}>
                                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -425,10 +574,6 @@ const Shop = () => {
                             </div>
                         )}
                     </div>
-
-
-
-
                 </div>
                 {/* Phone Preview - Right Side */}
                 <div className="w-[400px] border-l border-gray-100 hidden xl:flex items-center justify-center bg-gray-50/50 relative p-8">
@@ -650,9 +795,16 @@ const Shop = () => {
                     toast.success(`Welcome, ${newUser.full_name}! You are now connected.`);
                 }}
             />
+
+            <PluginConfigModal
+                isOpen={configModalOpen}
+                onClose={() => setConfigModalOpen(false)}
+                plugin={selectedPlugin}
+                currentConfig={selectedConfig}
+                onSave={savePluginConfig}
+            />
         </LinktreeLayout >
     );
 };
 
 export default Shop;
-
