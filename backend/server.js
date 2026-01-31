@@ -25,7 +25,10 @@ const corsOptions = {
         'http://localhost:8082',
         'http://localhost:8083',
         'https://tap-onnn.vercel.app',
-        'https://taponn.vercel.app'
+        'https://taponn.vercel.app',
+        'http://tapx.bio',
+        'https://tapx.bio',
+        'https://www.tapx.bio'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

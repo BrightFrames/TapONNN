@@ -10,117 +10,104 @@ html {
 
 @layer base {
   :root {
-    /* Core brand colors - Premium Neutral */
-    --background: 0 0% 98%;      /* Soft Off-White */
-    --foreground: 240 10% 3.9%;  /* Deep Obsidian */
+    /* Premium Black & Grey Theme (Default) */
+    --background: 0 0% 0%;       /* Pure Black #000000 */
+    --foreground: 0 0% 98%;      /* White #fafafa */
 
-    /* Primary - Sophisticated dark tone */
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-
-    /* Hero section - Clean & Minimal */
-    --hero: 0 0% 98%;
-    --hero-foreground: 240 10% 3.9%;
-
-    /* Feature - Subtle accent (Muted Blue/Bronze) */
-    --feature: 220 14% 96%;
-    --feature-foreground: 240 5.9% 10%;
-
-    /* Share - Deep accent */
-    --share: 240 5.9% 10%;
-    --share-foreground: 0 0% 98%;
-
-    /* UI elements */
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --card-border: 240 5.9% 90%; 
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-
-    --radius: 0.75rem; 
-
-    /* Custom tokens */
-    --nav-bg: 0 0% 100%;
-    --nav-pill: 240 4.8% 95.9%;
-    
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 240 5.9% 90%;
-    --sidebar-ring: 240 5.9% 10%;
-  }
-
-  .dark {
-    /* Premium Dark Mode - Deep Slate/Obsidian */
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-
+    /* Primary - White for strong contrast */
     --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
+    --primary-foreground: 0 0% 0%;
 
-    --hero: 240 10% 3.9%;
+    /* Hero section - Dark Gray */
+    --hero: 0 0% 4%;             /* #0a0a0a */
     --hero-foreground: 0 0% 98%;
 
-    --feature: 240 3.7% 15.9%;
+    /* Feature - Slightly lighter gray */
+    --feature: 0 0% 7%;          /* #121212 */
     --feature-foreground: 0 0% 98%;
 
-    --share: 0 0% 98%;
-    --share-foreground: 240 5.9% 10%;
+    /* Share - Deep styling */
+    --share: 0 0% 0%;
+    --share-foreground: 0 0% 98%;
 
-    --card: 240 10% 3.9%;
+    /* UI elements - Zinc/Neutral Scale */
+    --card: 0 0% 7%;             /* #121212 - Soft Black Card */
     --card-foreground: 0 0% 98%;
-    --card-border: 240 3.7% 15.9%;
+    --card-border: 0 0% 15%;     /* #262626 - Subtle Border */
 
-    --popover: 240 10% 3.9%;
+    --popover: 0 0% 5%;          /* #0d0d0d */
     --popover-foreground: 0 0% 98%;
 
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 0 0% 15%;       /* #262626 */
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 0 0% 12%;           /* #1f1f1f */
+    --muted-foreground: 0 0% 60%; /* #999999 */
 
-    --accent: 240 3.7% 15.9%;
+    --accent: 0 0% 15%;          /* #262626 */
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 0 0% 12%;          /* #1f1f1f */
+    --input: 0 0% 12%;           /* #1f1f1f */
+    --ring: 0 0% 80%;            /* Light Gray Ring */
 
-    --nav-bg: 240 10% 3.9%;
-    --nav-pill: 240 3.7% 15.9%;
+    --radius: 0.75rem; 
 
-    --sidebar-background: 240 10% 3.9%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 240 4.9% 83.9%;
+    /* Navigation & Sidebar specific */
+    --nav-bg: 0 0% 0%;
+    --nav-pill: 0 0% 12%;
+    
+    --sidebar-background: 0 0% 3%;   /* #080808 */
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 10%;
+    --sidebar-ring: 0 0% 80%;
+  }
+
+  /* Dark mode stays the same since root is now dark */
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 0%;
+    --hero: 0 0% 4%;
+    --hero-foreground: 0 0% 98%;
+    --feature: 0 0% 7%;
+    --feature-foreground: 0 0% 98%;
+    --share: 0 0% 0%;
+    --share-foreground: 0 0% 98%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 98%;
+    --card-border: 0 0% 15%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 98%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 80%;
+    --nav-bg: 0 0% 0%;
+    --nav-pill: 0 0% 12%;
+    --sidebar-background: 0 0% 3%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 10%;
+    --sidebar-ring: 0 0% 80%;
   }
 }
 

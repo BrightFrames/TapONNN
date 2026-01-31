@@ -283,35 +283,35 @@ const Marketplace = () => {
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-neutral-800 to-neutral-900 border border-neutral-700 flex items-center justify-center shadow-lg shadow-black/20">
                             <Sparkles className="w-5 h-5 text-white" />
                         </div>
-                        <h1 className="text-2xl font-bold text-gray-900">App Marketplace</h1>
+                        <h1 className="text-2xl font-bold tracking-tight text-white">App Marketplace</h1>
                     </div>
-                    <p className="text-gray-500 ml-13">Discover and install apps to enhance your profile</p>
+                    <p className="text-neutral-400 ml-13">Discover and install apps to enhance your profile</p>
                 </div>
 
                 {/* Search */}
                 <div className="relative mb-6">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
                     <Input
                         placeholder="Search apps..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-12 h-12 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
+                        className="pl-12 h-12 rounded-xl bg-neutral-900/50 border-neutral-800 focus:border-neutral-600 focus:ring-neutral-700 placeholder:text-neutral-600 text-white"
                     />
                 </div>
 
                 {/* Category Tabs */}
                 <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-8">
-                    <TabsList className="h-auto p-1 bg-gray-100/80 rounded-xl flex flex-wrap gap-1">
+                    <TabsList className="h-auto p-1 bg-neutral-900 border border-neutral-800 rounded-xl flex flex-wrap gap-1">
                         {CATEGORIES.map(cat => (
                             <TabsTrigger
                                 key={cat.id}
                                 value={cat.id}
-                                className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2"
+                                className="rounded-lg px-4 py-2 text-sm font-medium text-neutral-400 data-[state=active]:bg-neutral-800 data-[state=active]:text-white data-[state=active]:shadow-sm flex items-center gap-2 transition-all"
                             >
-                                <cat.icon className="w-4 h-4" />
+                                <cat.icon className="w-4 h-4 opacity-70" />
                                 <span className="hidden sm:inline">{cat.label}</span>
                             </TabsTrigger>
                         ))}
@@ -330,28 +330,28 @@ const Marketplace = () => {
                         return (
                             <Card
                                 key={plugin._id}
-                                className="group hover:shadow-lg transition-all duration-200 border-gray-100 hover:border-purple-200 overflow-hidden"
+                                className="group hover:scale-[1.01] transition-all duration-300 bg-neutral-900/40 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900/80 hover:shadow-2xl hover:shadow-black/20 overflow-hidden"
                             >
                                 <CardContent className="p-5">
                                     <div className="flex items-start gap-4">
                                         {/* Icon */}
-                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center flex-shrink-0 group-hover:from-purple-100 group-hover:to-indigo-50 transition-colors">
-                                            <IconComponent className="w-6 h-6 text-gray-600 group-hover:text-purple-600 transition-colors" />
+                                        <div className="w-12 h-12 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-center flex-shrink-0 group-hover:border-neutral-600 transition-colors">
+                                            <IconComponent className="w-6 h-6 text-neutral-300 group-hover:text-white transition-colors" />
                                         </div>
 
                                         {/* Content */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <h3 className="font-semibold text-gray-900 truncate">{plugin.name}</h3>
+                                                <h3 className="font-semibold text-white truncate">{plugin.name}</h3>
                                                 {plugin.is_premium && (
-                                                    <Badge variant="secondary" className="bg-amber-100 text-amber-700 gap-1 flex-shrink-0">
+                                                    <Badge variant="secondary" className="bg-amber-900/30 text-amber-500 border border-amber-900/50 gap-1 flex-shrink-0">
                                                         <Crown className="w-3 h-3" /> Pro
                                                     </Badge>
                                                 )}
                                             </div>
-                                            <p className="text-sm text-gray-500 line-clamp-2 mb-3">{plugin.description}</p>
+                                            <p className="text-sm text-neutral-500 line-clamp-2 mb-4 group-hover:text-neutral-400 transition-colors">{plugin.description}</p>
                                             <div className="flex items-center justify-between gap-2">
-                                                <Badge variant="outline" className="text-xs text-gray-500">
+                                                <Badge variant="outline" className="text-xs text-neutral-500 border-neutral-800 bg-neutral-900/50">
                                                     {plugin.category}
                                                 </Badge>
 
@@ -361,7 +361,7 @@ const Marketplace = () => {
                                                             size="sm"
                                                             variant="outline"
                                                             onClick={() => handleConfigure(plugin, installedPlugin.config)}
-                                                            className="rounded-full h-8 px-2"
+                                                            className="rounded-full h-8 px-2 border-neutral-700 bg-transparent text-neutral-400 hover:text-white hover:bg-neutral-800"
                                                         >
                                                             <Settings className="w-4 h-4" />
                                                         </Button>
@@ -371,18 +371,21 @@ const Marketplace = () => {
                                                         variant={isInstalled ? "outline" : "default"}
                                                         onClick={() => isInstalled ? handleUninstall(plugin._id) : handleInstall(plugin._id)}
                                                         disabled={isLoading}
-                                                        className={`rounded-full h-8 px-4 ${isInstalled ? 'text-green-600 border-green-200 hover:bg-green-50' : 'bg-purple-600 hover:bg-purple-700'}`}
+                                                        className={`rounded-full h-8 px-4 text-xs font-medium transition-all ${isInstalled
+                                                                ? 'text-emerald-500 border-emerald-900/50 bg-emerald-950/10 hover:bg-emerald-950/30 hover:text-emerald-400'
+                                                                : 'bg-white text-black hover:bg-neutral-200'
+                                                            }`}
                                                     >
                                                         {isLoading ? (
-                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                            <Loader2 className="w-3 h-3 animate-spin" />
                                                         ) : isInstalled ? (
                                                             <>
-                                                                <Check className="w-4 h-4 mr-1" />
+                                                                <Check className="w-3 h-3 mr-1.5" />
                                                                 Installed
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <Plus className="w-4 h-4 mr-1" />
+                                                                <Plus className="w-3 h-3 mr-1.5" />
                                                                 Install
                                                             </>
                                                         )}
@@ -399,12 +402,12 @@ const Marketplace = () => {
 
                 {/* Empty State */}
                 {filteredPlugins.length === 0 && (
-                    <div className="text-center py-16">
-                        <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <Search className="w-8 h-8 text-gray-400" />
+                    <div className="text-center py-24">
+                        <div className="w-16 h-16 bg-neutral-900 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-neutral-800">
+                            <Search className="w-8 h-8 text-neutral-600" />
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-2">No apps found</h3>
-                        <p className="text-gray-500">Try adjusting your search or filter</p>
+                        <h3 className="text-lg font-semibold text-white mb-2">No apps found</h3>
+                        <p className="text-neutral-500">Try adjusting your search or filter</p>
                     </div>
                 )}
 

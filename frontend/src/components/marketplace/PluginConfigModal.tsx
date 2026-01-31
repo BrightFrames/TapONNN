@@ -51,13 +51,13 @@ export const PluginConfigModal = ({ isOpen, onClose, plugin, currentConfig, onSa
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md bg-neutral-900 border-neutral-800 text-white">
                 <DialogHeader>
                     <div className="flex items-center gap-3">
                         {/* You might want to pass the Icon component or render it here if available */}
-                        <DialogTitle>Configure {plugin.name}</DialogTitle>
+                        <DialogTitle className="text-white">Configure {plugin.name}</DialogTitle>
                     </div>
-                    <DialogDescription>
+                    <DialogDescription className="text-neutral-400">
                         Enter your settings for {plugin.name}.
                     </DialogDescription>
                 </DialogHeader>
@@ -66,7 +66,7 @@ export const PluginConfigModal = ({ isOpen, onClose, plugin, currentConfig, onSa
                     {plugin.config_schema && plugin.config_schema.length > 0 ? (
                         plugin.config_schema.map((field: any) => (
                             <div key={field.name} className="space-y-2">
-                                <Label htmlFor={field.name}>{field.label}</Label>
+                                <Label htmlFor={field.name} className="text-neutral-300">{field.label}</Label>
                                 <Input
                                     id={field.name}
                                     type={field.type || 'text'}
@@ -74,24 +74,25 @@ export const PluginConfigModal = ({ isOpen, onClose, plugin, currentConfig, onSa
                                     value={config[field.name] || ''}
                                     onChange={(e) => handleChange(field.name, e.target.value)}
                                     required={field.required}
+                                    className="bg-neutral-800 border-neutral-700 text-white focus:ring-neutral-600 focus:border-neutral-500 placeholder:text-neutral-500"
                                 />
                                 {field.helpText && (
-                                    <p className="text-xs text-muted-foreground">{field.helpText}</p>
+                                    <p className="text-xs text-neutral-500">{field.helpText}</p>
                                 )}
                             </div>
                         ))
                     ) : (
-                        <div className="text-center py-4 text-muted-foreground">
+                        <div className="text-center py-4 text-neutral-500">
                             No configuration required for this plugin.
                         </div>
                     )}
                 </div>
 
                 <DialogFooter>
-                    <Button variant="outline" onClick={onClose} disabled={saving}>
+                    <Button variant="outline" onClick={onClose} disabled={saving} className="border-neutral-700 bg-transparent text-neutral-300 hover:text-white hover:bg-neutral-800">
                         Cancel
                     </Button>
-                    <Button onClick={handleSave} disabled={saving} className="bg-purple-600 hover:bg-purple-700">
+                    <Button onClick={handleSave} disabled={saving} className="bg-white text-black hover:bg-neutral-200">
                         {saving ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
