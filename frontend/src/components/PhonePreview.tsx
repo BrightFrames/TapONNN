@@ -8,6 +8,7 @@ interface Link {
     title: string;
     url: string;
     isActive: boolean;
+    thumbnail?: string;
 }
 
 interface Product {
@@ -85,9 +86,14 @@ const PhonePreview = ({
                                     href={link.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="block w-full py-4 px-6 bg-[#e9f6e3] text-[#132c25] rounded-full text-center font-semibold hover:scale-[1.02] transition-transform text-sm"
+                                    className="relative flex items-center justify-center w-full py-3 px-12 bg-[#e9f6e3] text-[#132c25] rounded-full text-center font-semibold hover:scale-[1.02] transition-transform text-sm shadow-sm"
                                 >
-                                    {link.title}
+                                    {link.thumbnail && (
+                                        <div className="absolute left-3 w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-white/20 p-1">
+                                            <img src={link.thumbnail} alt="" className="w-full h-full object-cover rounded-full" />
+                                        </div>
+                                    )}
+                                    <span className="truncate w-full">{link.title}</span>
                                 </a>
                             ))}
                             {links.filter(l => l.isActive).length === 0 && (

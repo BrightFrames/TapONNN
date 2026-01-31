@@ -449,6 +449,8 @@ const Dashboard = () => {
                                     <div className="mt-8 space-y-3 relative z-10 w-full px-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                                         {localBlocks.filter(b => b.is_active).map((block) => {
                                             const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
+                                            const isUrlThumbnail = block.thumbnail && !Icon;
+
                                             // Simple preview for now
                                             return (
                                                 <a
@@ -456,12 +458,15 @@ const Dashboard = () => {
                                                     href={block.content.url || '#'}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className={`block w-full flex items-center justify-center relative ${currentTemplate.buttonStyle}`}
+                                                    className={`block w-full flex items-center justify-center relative px-12 ${currentTemplate.buttonStyle}`}
                                                 >
                                                     {Icon && (
                                                         <Icon className="absolute left-4 w-5 h-5 opacity-90" />
                                                     )}
-                                                    <span className="truncate max-w-[200px]">{block.title}</span>
+                                                    {isUrlThumbnail && (
+                                                        <img src={block.thumbnail} alt="" className="absolute left-4 w-5 h-5 rounded-full object-cover bg-white/10" />
+                                                    )}
+                                                    <span className="truncate w-full">{block.title}</span>
                                                 </a>
                                             );
                                         })}

@@ -188,6 +188,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 }
             }
 
+            // 3. Fetch Blocks
+            const blocksRes = await fetch(`${API_URL}/blocks`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (blocksRes.ok) {
+                const userBlocks = await blocksRes.json();
+                if (Array.isArray(userBlocks)) {
+                    setBlocks(userBlocks);
+                }
+            }
+
         } catch (error) {
             console.error("Error fetching user data:", error);
             // Don't clear auth state on network error - could be temporary
@@ -540,6 +552,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const addBlock = async (blockData: Partial<Block>): Promise<Block | null> => {
         const token = getToken();
         if (!token) return null;
+
+        // Auto-generate thumbnail for links if missing
+        if (blockData.block_type === 'link' && blockData.content?.url && !blockData.thumbnail) {
+            try {
+                const urlObj = new URL(blockData.content.url);
+                blockData.thumbnail = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
+            } catch (e) {
+                // Invalid URL, ignore
+            }
+        }
 
         try {
             const res = await fetch(`${API_URL}/blocks`, {

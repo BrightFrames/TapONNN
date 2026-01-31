@@ -154,7 +154,7 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                         <Switch
                             checked={link.isActive}
                             onCheckedChange={(c) => onUpdate(link.id, 'isActive', c)}
-                            className="data-[state=checked]:bg-green-500 scale-110 mr-1"
+                            className="data-[state=checked]:bg-green-500 mr-1"
                             title={link.isActive ? "Hide Link" : "Show Link"}
                         />
                     </div>
