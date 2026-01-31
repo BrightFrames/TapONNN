@@ -64,6 +64,10 @@ const blockSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    is_featured: {
+        type: Boolean,
+        default: false
+    },
     // Custom styling
     styles: {
         type: mongoose.Schema.Types.Mixed,

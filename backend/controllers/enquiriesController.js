@@ -1,5 +1,6 @@
 const Enquiry = require('../models/Enquiry');
 const Block = require('../models/Block');
+const mongoose = require('mongoose');
 
 // Create an enquiry (public - visitors can submit)
 const createEnquiry = async (req, res) => {
@@ -129,8 +130,15 @@ const getEnquiryStats = async (req, res) => {
     try {
         const userId = req.user.id;
 
+        let matchStage = { seller_id: userId };
+        try {
+            matchStage = { seller_id: new mongoose.Types.ObjectId(userId) };
+        } catch (e) {
+            console.warn("Could not cast seller_id to ObjectId:", userId);
+        }
+
         const stats = await Enquiry.aggregate([
-            { $match: { seller_id: userId } },
+            { $match: matchStage },
             {
                 $group: {
                     _id: '$status',

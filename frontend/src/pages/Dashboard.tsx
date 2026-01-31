@@ -156,7 +156,13 @@ const Dashboard = () => {
     // Adapt Update for SortableLinkCard
     const handleUpdateBlockField = (id: string, field: string, value: any) => {
         // Map legacy fields if necessary
-        updateBlock(id, { [field]: value });
+        const fieldMap: Record<string, string> = {
+            'isActive': 'is_active',
+            'isFeatured': 'is_featured'
+        };
+
+        const backendField = fieldMap[field] || field;
+        updateBlock(id, { [backendField]: value });
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -298,7 +304,7 @@ const Dashboard = () => {
 
                         {/* Links List with Drag and Drop */}
                         <div className="space-y-3 sm:space-y-4 pb-6">
-                            {localBlocks.filter(b => b.is_active).length === 0 && (
+                            {(localBlocks || []).length === 0 && (
                                 <div className="text-center py-10 sm:py-16 bg-gradient-to-br from-gray-50 to-white rounded-xl sm:rounded-2xl border-2 border-dashed border-gray-200 px-4">
                                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-zinc-100 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
                                         <Link2 className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-600" />
@@ -317,10 +323,10 @@ const Dashboard = () => {
                                 onDragEnd={handleDragEnd}
                             >
                                 <SortableContext
-                                    items={localBlocks.filter(b => b.is_active).map(b => b._id)}
+                                    items={localBlocks.map(b => b._id)}
                                     strategy={verticalListSortingStrategy}
                                 >
-                                    {localBlocks.filter(b => b.is_active).map(block => (
+                                    {localBlocks.map(block => (
                                         <SortableLinkCard
                                             key={block._id}
                                             // Adapter to make Block look like Link for the component
@@ -331,6 +337,7 @@ const Dashboard = () => {
                                                 isActive: block.is_active,
                                                 clicks: 0, // TODO: Add tracking
                                                 thumbnail: block.thumbnail,
+                                                isFeatured: (block as any).is_featured || false,
                                                 // Add missing properties that SortableLinkCard expects
                                             }}
                                             onUpdate={handleUpdateBlockField}

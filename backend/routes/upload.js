@@ -22,12 +22,19 @@ const storage = multer.diskStorage({
     }
 });
 
-// File filter (Images only)
+// File filter
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    // Check if it's a product file upload
+    if (req.query.type === 'product_file') {
+        // Allow all file types for product files
         cb(null, true);
     } else {
-        cb(new Error('Only image files are allowed!'), false);
+        // Default: Images only
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed!'), false);
+        }
     }
 };
 
@@ -35,12 +42,16 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit
+        fileSize: 15 * 1024 * 1024 // 15MB global limit, logic handled/checked mostly by filter/logic but multer checks max first. 
+        // We set max to 15MB to accomodate products. 
+        // For standard images, we can enforce smaller limit if needed, but 15MB hard limit is safe.
     }
 });
 
 // POST /api/upload - Single file upload
-router.post('/', upload.single('image'), (req, res) => {
+// usage: /api/upload?type=product_file (for 15MB limit & all types)
+// usage: /api/upload (for 5MB limit & images only - enforced by strict middleware if we wanted, but currently shared)
+router.post('/', upload.single('file'), (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
@@ -55,11 +66,13 @@ router.post('/', upload.single('image'), (req, res) => {
         res.json({
             success: true,
             url: fileUrl,
-            filename: req.file.filename
+            filename: req.file.filename,
+            originalName: req.file.originalname,
+            size: req.file.size
         });
     } catch (err) {
         console.error("Upload error:", err);
-        res.status(500).json({ error: 'File upload failed' });
+        res.status(500).json({ error: 'File upload failed: ' + err.message });
     }
 });
 

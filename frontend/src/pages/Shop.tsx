@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ImageUpload } from "@/components/ImageUpload";
 import { ChevronRight } from "lucide-react";
+import { FileUpload } from "@/components/FileUpload";
 import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 import { useTranslation } from "react-i18next";
 import { SocialLinksDialog } from "@/components/SocialLinksDialog";
@@ -488,13 +489,21 @@ const Shop = () => {
                                     </div>
                                     {newProduct.type === 'digital_product' && (
                                         <div className="grid gap-2">
-                                            <Label htmlFor="url" className="text-neutral-300">Product URL </Label>
+                                            <Label htmlFor="url" className="text-neutral-300">Product File (Max 15MB)</Label>
+                                            <FileUpload
+                                                value={newProduct.file_url}
+                                                onChange={(url) => setNewProduct({ ...newProduct, file_url: url })}
+                                                label="Upload Digital Product"
+                                                maxSizeMB={15}
+                                                type="product_file"
+                                            />
+                                            <div className="text-xs text-neutral-500 text-center mt-1">- OR -</div>
                                             <Input
                                                 id="url"
-                                                placeholder="https://..."
+                                                placeholder="Or enter external download URL..."
                                                 value={newProduct.file_url}
                                                 onChange={(e) => setNewProduct({ ...newProduct, file_url: e.target.value })}
-                                                className="bg-neutral-800 border-neutral-700 text-white focus:ring-neutral-600 focus:border-neutral-500"
+                                                className="bg-neutral-800 border-neutral-700 text-white focus:ring-neutral-600 focus:border-neutral-500 mt-1"
                                             />
                                         </div>
                                     )}
