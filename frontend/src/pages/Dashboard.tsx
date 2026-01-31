@@ -231,16 +231,7 @@ const Dashboard = () => {
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="hidden sm:flex items-center gap-3">
-                                        <SocialLinksDialog
-                                            initialLinks={user?.social_links || {}}
-                                            onSave={saveSocialLinks}
-                                            onLinksChange={setSocialPreview}
-                                            onOpenChange={(isOpen) => !isOpen && setSocialPreview(null)}
-                                        >
-                                            <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-zinc-200 text-zinc-700 hover:bg-zinc-50">
-                                                <Instagram className="w-4 h-4" /> {t('dashboard.socials')}
-                                            </Button>
-                                        </SocialLinksDialog>
+
 
                                     </div>
 
@@ -265,19 +256,7 @@ const Dashboard = () => {
                             </div>
 
                             {/* Action Buttons Row - Scrollable on mobile */}
-                            <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-2 px-2 sm:mx-0 sm:px-0 sm:overflow-visible sm:hidden">
-                                <SocialLinksDialog
-                                    initialLinks={user?.social_links || {}}
-                                    onSave={saveSocialLinks}
-                                    onLinksChange={setSocialPreview}
-                                    onOpenChange={(isOpen) => !isOpen && setSocialPreview(null)}
-                                >
-                                    <Button variant="outline" className="rounded-full gap-1.5 sm:gap-2 h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50 whitespace-nowrap flex-shrink-0">
-                                        <Instagram className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t('dashboard.socials')}
-                                    </Button>
-                                </SocialLinksDialog>
 
-                            </div>
                         </div>
 
                         {/* Add Link Button, Socials & Clear All */}

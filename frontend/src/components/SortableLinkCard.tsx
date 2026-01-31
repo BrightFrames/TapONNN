@@ -103,16 +103,18 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                     >
                         <div className="relative cursor-pointer group/thumb flex-shrink-0">
                             <div className={`
-                                w-[52px] h-[52px] rounded-xl flex items-center justify-center
+                                w-[52px] h-[52px] rounded-xl flex items-center justify-center overflow-hidden
                                 ${ThumbnailIcon
                                     ? 'bg-gradient-to-br from-purple-50 to-indigo-50 text-purple-600'
-                                    : 'bg-gray-100 text-gray-400'
+                                    : link.thumbnail ? 'bg-white border border-gray-100' : 'bg-gray-100 text-gray-400'
                                 }
                                 group-hover/thumb:ring-2 group-hover/thumb:ring-purple-200
                                 transition-all duration-150
                             `}>
                                 {ThumbnailIcon ? (
                                     <ThumbnailIcon className="w-6 h-6" />
+                                ) : link.thumbnail ? (
+                                    <img src={link.thumbnail} alt="" className="w-full h-full object-cover" />
                                 ) : (
                                     <Link2 className="w-5 h-5" />
                                 )}

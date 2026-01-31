@@ -237,7 +237,7 @@ const Enquiries = () => {
             if (!user) return;
             try {
                 setIsLoading(true);
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('auth_token');
                 if (!token) return;
 
                 const res = await axios.get(`${API_URL}/enquiries`, {

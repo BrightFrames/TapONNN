@@ -283,33 +283,33 @@ const Marketplace = () => {
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-neutral-800 to-neutral-900 border border-neutral-700 flex items-center justify-center shadow-lg shadow-black/20">
-                            <Sparkles className="w-5 h-5 text-white" />
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-card to-muted border border-border flex items-center justify-center shadow-lg shadow-black/20">
+                            <Sparkles className="w-5 h-5 text-foreground" />
                         </div>
-                        <h1 className="text-2xl font-bold tracking-tight text-white">App Marketplace</h1>
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">App Marketplace</h1>
                     </div>
-                    <p className="text-neutral-400 ml-13">Discover and install apps to enhance your profile</p>
+                    <p className="text-muted-foreground ml-13">Discover and install apps to enhance your profile</p>
                 </div>
 
                 {/* Search */}
                 <div className="relative mb-6">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
                         placeholder="Search apps..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-12 h-12 rounded-xl bg-neutral-900/50 border-neutral-800 focus:border-neutral-600 focus:ring-neutral-700 placeholder:text-neutral-600 text-white"
+                        className="pl-12 h-12 rounded-xl bg-card/50 border-border focus:border-ring focus:ring-ring placeholder:text-muted-foreground text-foreground"
                     />
                 </div>
 
                 {/* Category Tabs */}
                 <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-8">
-                    <TabsList className="h-auto p-1 bg-neutral-900 border border-neutral-800 rounded-xl flex flex-wrap gap-1">
+                    <TabsList className="h-auto p-1 bg-card border border-border rounded-xl flex flex-wrap gap-1">
                         {CATEGORIES.map(cat => (
                             <TabsTrigger
                                 key={cat.id}
                                 value={cat.id}
-                                className="rounded-lg px-4 py-2 text-sm font-medium text-neutral-400 data-[state=active]:bg-neutral-800 data-[state=active]:text-white data-[state=active]:shadow-sm flex items-center gap-2 transition-all"
+                                className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2 transition-all hover:text-foreground"
                             >
                                 <cat.icon className="w-4 h-4 opacity-70" />
                                 <span className="hidden sm:inline">{cat.label}</span>
@@ -325,77 +325,84 @@ const Marketplace = () => {
                         const installedPlugin = installedPlugins.find(p => p.plugin_id._id === plugin._id);
                         const isInstalled = !!installedPlugin;
                         const isLoading = installing === plugin._id;
-                        const hasConfig = plugin.config_schema && plugin.config_schema.length > 0;
 
+                        // 21st.dev inspired card design
                         return (
-                            <Card
+                            <div
                                 key={plugin._id}
-                                className="group hover:scale-[1.01] transition-all duration-300 bg-neutral-900/40 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900/80 hover:shadow-2xl hover:shadow-black/20 overflow-hidden"
+                                className="group relative flex flex-col gap-3 rounded-[2rem] overflow-hidden transition-all duration-300 hover:z-10"
                             >
-                                <CardContent className="p-5">
-                                    <div className="flex items-start gap-4">
-                                        {/* Icon */}
-                                        <div className="w-12 h-12 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-center flex-shrink-0 group-hover:border-neutral-600 transition-colors">
-                                            <IconComponent className="w-6 h-6 text-neutral-300 group-hover:text-white transition-colors" />
+                                {/* Card Body */}
+                                <div className="aspect-[16/10] w-full bg-card rounded-[2rem] border border-border/40 relative overflow-hidden group-hover:border-border/80 transition-colors">
+                                    {/* Background Gradient/Mesh */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent" />
+
+                                    {/* Inner Glow on Hover */}
+                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
+
+                                    {/* Header: Icon + Title */}
+                                    <div className="absolute top-5 left-5 right-5 flex items-start justify-between z-10">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-background border border-border/50 flex items-center justify-center shadow-lg">
+                                                <IconComponent className="w-4 h-4 text-foreground/80" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium text-foreground tracking-tight leading-none">{plugin.name}</span>
+                                                <span className="text-[10px] text-muted-foreground mt-1">{plugin.category} • Default</span>
+                                            </div>
                                         </div>
 
-                                        {/* Content */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h3 className="font-semibold text-white truncate">{plugin.name}</h3>
-                                                {plugin.is_premium && (
-                                                    <Badge variant="secondary" className="bg-amber-900/30 text-amber-500 border border-amber-900/50 gap-1 flex-shrink-0">
-                                                        <Crown className="w-3 h-3" /> Pro
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-neutral-500 line-clamp-2 mb-4 group-hover:text-neutral-400 transition-colors">{plugin.description}</p>
-                                            <div className="flex items-center justify-between gap-2">
-                                                <Badge variant="outline" className="text-xs text-neutral-500 border-neutral-800 bg-neutral-900/50">
-                                                    {plugin.category}
-                                                </Badge>
+                                        {plugin.is_premium && (
+                                            <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[10px] px-2 h-5">PRO</Badge>
+                                        )}
+                                    </div>
 
-                                                <div className="flex gap-2">
-                                                    {isInstalled && hasConfig && (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => handleConfigure(plugin, installedPlugin.config)}
-                                                            className="rounded-full h-8 px-2 border-neutral-700 bg-transparent text-neutral-400 hover:text-white hover:bg-neutral-800"
-                                                        >
-                                                            <Settings className="w-4 h-4" />
-                                                        </Button>
-                                                    )}
-                                                    <Button
-                                                        size="sm"
-                                                        variant={isInstalled ? "outline" : "default"}
-                                                        onClick={() => isInstalled ? handleUninstall(plugin._id) : handleInstall(plugin._id)}
-                                                        disabled={isLoading}
-                                                        className={`rounded-full h-8 px-4 text-xs font-medium transition-all ${isInstalled
-                                                                ? 'text-emerald-500 border-emerald-900/50 bg-emerald-950/10 hover:bg-emerald-950/30 hover:text-emerald-400'
-                                                                : 'bg-white text-black hover:bg-neutral-200'
-                                                            }`}
-                                                    >
-                                                        {isLoading ? (
-                                                            <Loader2 className="w-3 h-3 animate-spin" />
-                                                        ) : isInstalled ? (
-                                                            <>
-                                                                <Check className="w-3 h-3 mr-1.5" />
-                                                                Installed
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Plus className="w-3 h-3 mr-1.5" />
-                                                                Install
-                                                            </>
-                                                        )}
-                                                    </Button>
-                                                </div>
-                                            </div>
+                                    {/* Center Content / Preview Visualization */}
+                                    <div className="absolute inset-0 flex items-center justify-center p-8 mt-8">
+                                        <div className="text-center">
+                                            <h3 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/40 tracking-tighter leading-tight select-none">
+                                                {plugin.name}
+                                            </h3>
+                                            <p className="text-xs text-muted-foreground/60 mt-2 line-clamp-1 max-w-[200px] mx-auto">
+                                                {plugin.description}
+                                            </p>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+
+                                    {/* Bottom Status Status */}
+                                    {isInstalled && (
+                                        <div className="absolute bottom-5 right-5 z-10">
+                                            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                                                <span className="text-[10px] font-medium text-primary">Active</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Hover Overlay & Actions */}
+                                    <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3 z-20">
+                                        <Button
+                                            onClick={() => isInstalled ? handleUninstall(plugin._id) : handleInstall(plugin._id)}
+                                            disabled={isLoading}
+                                            variant={isInstalled ? "destructive" : "default"}
+                                            className={`rounded-full px-6 font-medium shadow-2xl scale-95 group-hover:scale-100 transition-transform duration-200 ${isInstalled ? '' : 'bg-foreground text-background hover:bg-foreground/90'}`}
+                                        >
+                                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : isInstalled ? "Uninstall" : "Install"}
+                                        </Button>
+
+                                        {isInstalled && plugin.config_schema && (
+                                            <Button
+                                                onClick={() => handleConfigure(plugin, installedPlugin.config)}
+                                                variant="outline"
+                                                size="icon"
+                                                className="rounded-full w-10 h-10 bg-background border-border"
+                                            >
+                                                <Settings className="w-4 h-4" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         );
                     })}
                 </div>
