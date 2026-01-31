@@ -755,27 +755,28 @@ const Shop = () => {
                                 <p className="text-xs text-gray-400 mt-1">{t('shop.previewDesc')}</p>
                             </div>
                         </div>
-                    </div>
-                </SheetContent>
-            </Sheet>
 
-            <ConnectWithSupplierModal
-                open={connectModal.open}
-                onOpenChange={(open) => setConnectModal(prev => ({ ...prev, open }))}
-                product={connectModal.product}
-                seller={connectModal.seller}
-                onSuccess={(newUser) => {
-                    toast.success(`Welcome, ${newUser.full_name}! You are now connected.`);
-                }}
-            />
+                    </SheetContent>
+                </Sheet>
 
-            <PluginConfigModal
-                isOpen={configModalOpen}
-                onClose={() => setConfigModalOpen(false)}
-                plugin={selectedPlugin}
-                currentConfig={selectedConfig}
-                onSave={savePluginConfig}
-            />
+                <ConnectWithSupplierModal
+                    open={connectModal.open}
+                    onOpenChange={(open) => setConnectModal(prev => ({ ...prev, open }))}
+                    product={connectModal.product}
+                    seller={connectModal.seller}
+                    onSuccess={(newUser) => {
+                        toast.success(`Welcome, ${newUser.full_name}! You are now connected.`);
+                    }}
+                />
+
+                <PluginConfigModal
+                    isOpen={configModalOpen}
+                    onClose={() => setConfigModalOpen(false)}
+                    plugin={selectedPlugin}
+                    currentConfig={selectedConfig}
+                    onSave={savePluginConfig}
+                />
+            </div>
         </LinktreeLayout >
     );
 };

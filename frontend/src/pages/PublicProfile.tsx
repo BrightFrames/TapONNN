@@ -349,6 +349,12 @@ const PublicProfile = () => {
                                 Offerings
                             </button>
                         )}
+                        <button
+                            onClick={() => setActiveTab('explore')}
+                            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'explore' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
+                        >
+                            Explore
+                        </button>
                     </div>
                 </div>
 
@@ -434,14 +440,31 @@ const PublicProfile = () => {
                                             {/* Action Row */}
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    onClick={() => setConnectModal({
-                                                        open: true,
-                                                        product: product,
-                                                        seller: { id: profile.id, name: profile.name }
-                                                    })}
+                                                    onClick={() => {
+                                                        // Track Product Click
+                                                        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/analytics/track`, {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({
+                                                                event_type: 'product_click',
+                                                                profile_id: profile.id,
+                                                                path: window.location.pathname,
+                                                                metadata: {
+                                                                    productId: product._id,
+                                                                    productName: product.title
+                                                                }
+                                                            })
+                                                        }).catch(err => console.error("Analytics track error:", err));
+
+                                                        setConnectModal({
+                                                            open: true,
+                                                            product: product,
+                                                            seller: { id: profile.id, name: profile.name }
+                                                        });
+                                                    }}
                                                     className="flex-1 bg-white text-black h-10 rounded-full font-bold text-sm flex items-center justify-center hover:bg-gray-100 transition-colors"
                                                 >
-                                                    Connect
+                                                    Buy Now
                                                 </button>
                                                 <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
                                                     <Heart className="w-4 h-4" />
@@ -461,10 +484,19 @@ const PublicProfile = () => {
                         )}
                     </div>
                 )}
+
+                {/* Explore View */}
+                {activeTab === 'explore' && (
+                    <div className="mt-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        <div className="bg-black/5 backdrop-blur-sm rounded-3xl p-4 border border-white/5">
+                            <ExploreSection hideHeader />
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Footer - Connect Button - Match Phone Preview */}
-            <div className="fixed bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-40">
+            {/* Footer - Connect Button - Match Phone Preview - ENHANCED UI */}
+            <div className="fixed bottom-6 left-0 right-0 flex flex-col items-center gap-3 px-6 z-40 translate-y-0 opacity-100 transition-all duration-500 delay-300">
                 <div className="w-full max-w-md">
                     <button
                         onClick={() => setConnectModal({
@@ -472,16 +504,29 @@ const PublicProfile = () => {
                             product: null,
                             seller: { id: profile.id, name: profile.name }
                         })}
-                        className="w-full bg-white text-black h-14 rounded-full font-bold text-base flex items-center justify-between px-6 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100"
+                        className="group w-full relative overflow-hidden rounded-full h-14 shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 active:scale-95"
                     >
-                        <span>Connect</span>
-                        <MessageCircle className="w-5 h-5 text-gray-600" />
+                        {/* Gradient Background */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-black to-gray-900 group-hover:bg-gradient-to-r group-hover:from-gray-800 group-hover:via-gray-900 group-hover:to-gray-800 transition-all duration-500" />
+
+                        {/* Shimmer Effect */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-r from-transparent via-white to-transparent -skew-x-12 translate-x-[-100%] group-hover:animate-shimmer" />
+
+                        <div className="relative flex items-center justify-between px-6 h-full text-white">
+                            <span className="font-bold text-lg tracking-wide">Connect</span>
+                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/20 transition-all duration-300">
+                                <MessageCircle className="w-5 h-5 text-white" />
+                            </div>
+                        </div>
                     </button>
                 </div>
 
-                {/* Tap2 Branding */}
-                <a href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-background/20 backdrop-blur-md border border-white/10 rounded-full text-xs font-semibold hover:bg-background/30 transition-all hover:scale-105 mt-2">
-                    <Sparkles className="w-3 h-3 text-primary" />
+                {/* Tap2 Branding - ENHANCED UI */}
+                <a
+                    href="/"
+                    className="inline-flex items-center gap-2 px-5 py-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full text-xs font-medium text-current/60 hover:text-current hover:bg-white/10 hover:border-white/20 transition-all hover:scale-105 shadow-sm"
+                >
+                    <Sparkles className="w-3 h-3 text-purple-500" />
                     <span>Create your own Tap2</span>
                 </a>
             </div>

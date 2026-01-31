@@ -687,6 +687,55 @@ const signupVerifyOTP = async (req, res) => {
     }
 };
 
+// CHECK USERNAME AVAILABILITY
+const checkUsernameAvailability = async (req, res) => {
+    const { username } = req.params;
+
+    if (!username) {
+        return res.status(400).json({ available: false, message: "Username is required" });
+    }
+
+    // Validate username format (alphanumeric, hyphens, underscores only, 3-30 chars)
+    const usernameRegex = /^[a-z0-9_-]{3,30}$/;
+    if (!usernameRegex.test(username.toLowerCase())) {
+        return res.json({
+            available: false,
+            message: "Username must be 3-30 characters and contain only letters, numbers, hyphens, or underscores"
+        });
+    }
+
+    try {
+        // Check if username exists in Profile collection
+        const existingProfile = await Profile.findOne({ username: username.toLowerCase() });
+
+        if (existingProfile) {
+            return res.json({
+                available: false,
+                message: "Username is already taken"
+            });
+        }
+
+        // Also check store_username field
+        const existingStoreProfile = await Profile.findOne({ store_username: username.toLowerCase() });
+
+        if (existingStoreProfile) {
+            return res.json({
+                available: false,
+                message: "Username is already taken"
+            });
+        }
+
+        res.json({
+            available: true,
+            message: "Username is available"
+        });
+
+    } catch (err) {
+        console.error("Check Username Error:", err);
+        res.status(500).json({ available: false, message: "Error checking username availability" });
+    }
+};
+
 module.exports = {
     signup,
     signupSendOTP,
@@ -698,5 +747,6 @@ module.exports = {
     forgotPasswordVerifyOTP,
     resetPassword,
     resendOTP,
-    deleteAccount
+    deleteAccount,
+    checkUsernameAvailability
 };

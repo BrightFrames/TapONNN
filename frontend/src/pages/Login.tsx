@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Mail, ChevronRight } from "lucide-react";
+import { Loader2, Mail, ChevronRight, Check, X } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import axios from "axios";
 
 const Login = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -27,7 +28,13 @@ const Login = () => {
     const [maskedEmail, setMaskedEmail] = useState("");
     const [otpLoading, setOtpLoading] = useState(false);
 
+    // Username availability state
+    const [checkingUsername, setCheckingUsername] = useState(false);
+    const [usernameAvailability, setUsernameAvailability] = useState<{ available: boolean; message: string } | null>(null);
+
     const [loading, setLoading] = useState(false);
+
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
     const { login, signUp, sendSignupOTP, verifySignupOTP, loginWithGoogle, isAuthenticated, isLoading } = useAuth();
     const navigate = useNavigate();
@@ -36,12 +43,44 @@ const Login = () => {
     // Get the redirect path from ProtectedRoute, default to /dashboard
     const from = (location.state as any)?.from?.pathname || "/dashboard";
 
+    // Pre-fill username from URL query parameter
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const usernameParam = params.get('username');
+        if (usernameParam && !isLogin) {
+            setUsername(usernameParam);
+        }
+    }, [location.search, isLogin]);
+
     // Redirect to dashboard if already logged in
     useEffect(() => {
         if (!isLoading && isAuthenticated) {
             navigate(from, { replace: true });
         }
     }, [isAuthenticated, isLoading, navigate, from]);
+
+    // Debounced username availability check
+    useEffect(() => {
+        if (isLogin || !username || username.length < 3) {
+            setUsernameAvailability(null);
+            return;
+        }
+
+        setCheckingUsername(true);
+        const timer = setTimeout(async () => {
+            try {
+                const response = await axios.get(`${API_URL}/auth/check-username/${username}`);
+                setUsernameAvailability(response.data);
+            } catch (error) {
+                console.error("Error checking username:", error);
+                setUsernameAvailability({ available: false, message: "Error checking availability" });
+            } finally {
+                setCheckingUsername(false);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [username, isLogin, API_URL]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -243,16 +282,28 @@ const Login = () => {
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="signup-username">Username</Label>
-                                    <Input
-                                        id="signup-username"
-                                        placeholder="johndoe"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
-                                        required
-                                        minLength={3}
-                                        className="h-10"
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            id="signup-username"
+                                            placeholder="johndoe"
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
+                                            required
+                                            minLength={3}
+                                            className="h-10 pr-10"
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            {checkingUsername && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                                            {!checkingUsername && usernameAvailability?.available && <Check className="w-4 h-4 text-green-600" />}
+                                            {!checkingUsername && usernameAvailability && !usernameAvailability.available && <X className="w-4 h-4 text-red-600" />}
+                                        </div>
+                                    </div>
                                     <p className="text-[10px] text-muted-foreground">tap2.me/{username || 'username'}</p>
+                                    {usernameAvailability && username.length >= 3 && (
+                                        <p className={`text-[10px] ${usernameAvailability.available ? 'text-green-600' : 'text-red-600'}`}>
+                                            {usernameAvailability.message}
+                                        </p>
+                                    )}
                                 </div>
 
                                 {/* Gender Selection */}

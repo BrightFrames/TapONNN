@@ -476,58 +476,67 @@ const Enquiries = () => {
                                     key={lead.id}
                                     onClick={() => isBulkMode ? toggleSelect(lead.id) : setActiveId(lead.id)}
                                     className={`
-                                        group flex items-start gap-3 p-4 cursor-pointer border-b border-border/40 transition-all duration-200
-                                        ${activeId === lead.id && !isBulkMode ? 'bg-[#FDFDFD] border-l-2 border-l-primary shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)]' : 'hover:bg-zinc-50/80 border-l-2 border-l-transparent'}
+                                        group flex items-start gap-4 p-4 cursor-pointer border-b border-zinc-100 transition-all duration-200 relative overflow-hidden
+                                        ${activeId === lead.id && !isBulkMode ? 'bg-blue-50/50' : 'hover:bg-zinc-50'}
                                     `}
                                 >
+                                    {/* Active Indicator Bar */}
+                                    {activeId === lead.id && !isBulkMode && (
+                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r-full" />
+                                    )}
+
                                     {isBulkMode ? (
                                         <div className="w-10 h-10 flex items-center justify-center shrink-0">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedLeads.has(lead.id)}
                                                 readOnly
-                                                className="w-4 h-4 accent-primary rounded cursor-pointer"
+                                                className="w-5 h-5 accent-blue-600 rounded cursor-pointer"
                                             />
                                         </div>
                                     ) : (
-                                        <div className="relative w-10 h-10 shrink-0 mt-0.5">
-                                            <Avatar className="w-full h-full border border-border/50 shadow-sm group-hover:shadow-md transition-shadow">
+                                        <div className="relative w-12 h-12 shrink-0">
+                                            <Avatar className={`w-full h-full border-2 ${lead.status === 'unread' ? 'border-blue-500 shadow-md ring-2 ring-blue-100' : 'border-zinc-200'}`}>
                                                 <AvatarImage src={lead.avatar} />
-                                                <AvatarFallback className="bg-primary/5 text-primary text-xs font-medium">{lead.name[0]}</AvatarFallback>
+                                                <AvatarFallback className="bg-zinc-100 text-zinc-500 font-bold text-lg">{lead.name[0]}</AvatarFallback>
                                             </Avatar>
                                             {lead.role === 'user' && (
-                                                <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-[2px] border-2 border-white" title="Registered User">
-                                                    <Check className="w-2 h-2 text-white" />
+                                                <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1 border-2 border-white shadow-sm" title="Registered User">
+                                                    <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
                                                 </div>
                                             )}
                                             {lead.status === 'unread' && (
-                                                <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-sm animate-in zoom-in"></div>
+                                                <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-blue-500 border-2 border-white rounded-full shadow-sm animate-pulse" />
                                             )}
                                         </div>
                                     )}
 
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <span className={`text-sm truncate ${lead.status === 'unread' ? 'font-semibold text-zinc-900' : 'font-medium text-zinc-700'}`}>
+                                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                                        <div className="flex justify-between items-center">
+                                            <span className={`text-sm truncate ${lead.status === 'unread' ? 'font-bold text-zinc-900' : 'font-semibold text-zinc-700'}`}>
                                                 {lead.name}
                                             </span>
-                                            <span className="text-[10px] text-zinc-400 tabular-nums shrink-0 ml-2">{formatTimestamp(lead.time)}</span>
+                                            <span className={`text-[10px] tabular-nums shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded-full ${lead.status === 'unread' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-zinc-400 bg-zinc-50'}`}>
+                                                {formatTimestamp(lead.time)}
+                                            </span>
                                         </div>
-                                        <p className={`text-xs truncate mb-2 ${lead.status === 'unread' ? 'text-zinc-600 font-medium' : 'text-zinc-500'}`}>
+
+                                        <p className={`text-xs truncate ${lead.status === 'unread' ? 'text-zinc-800 font-medium' : 'text-zinc-500'}`}>
                                             {lead.preview}
                                         </p>
-                                        <div className="flex gap-1.5 flex-wrap">
+
+                                        <div className="flex gap-2 items-center flex-wrap pt-1">
                                             {(() => {
                                                 const badge = getSourceBadge(lead.source);
                                                 return (
-                                                    <Badge variant="secondary" className={`text-[9px] px-1.5 h-4 font-semibold border ${badge.color}`}>
-                                                        {badge.emoji && <span className="mr-0.5">{badge.emoji}</span>}
+                                                    <Badge variant="secondary" className={`text-[9px] px-2 h-5 font-semibold border-0 bg-opacity-10 capitalize tracking-tight ${badge.color.replace('bg-', 'bg-opacity-10 bg-')}`}>
+                                                        {badge.emoji && <span className="mr-1 opacity-80">{badge.emoji}</span>}
                                                         {badge.label}
                                                     </Badge>
                                                 );
                                             })()}
                                             {lead.labels.map((lbl, idx) => (
-                                                <span key={idx} className={`text-[9px] px-1.5 py-0.5 rounded-full flex items-center gap-1 ${lbl.color === 'yellow' ? 'bg-yellow-50 text-yellow-700 border border-yellow-100' : 'bg-blue-50 text-blue-700 border border-blue-100'}`}>
+                                                <span key={idx} className={`text-[9px] px-2 py-0.5 rounded-full flex items-center gap-1 font-medium ${lbl.color === 'yellow' ? 'bg-yellow-50 text-yellow-700' : 'bg-blue-50 text-blue-700'}`}>
                                                     {lbl.text}
                                                 </span>
                                             ))}
@@ -555,9 +564,9 @@ const Enquiries = () => {
                 {activeLead ? (
                     <div className="flex flex-col flex-1 h-full w-full relative bg-zinc-50/50">
                         {/* Chat Header */}
-                        <div className="h-16 px-4 bg-white/80 border-b border-border flex items-center justify-between shrink-0 backdrop-blur-md">
-                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsInfoPanelOpen(!isInfoPanelOpen)}>
-                                <Avatar className="w-10 h-10 border border-border">
+                        <div className="h-20 px-6 bg-white/90 border-b border-border flex items-center justify-between shrink-0 backdrop-blur-xl z-20 sticky top-0">
+                            <div className="flex items-center gap-4 cursor-pointer" onClick={() => setIsInfoPanelOpen(!isInfoPanelOpen)}>
+                                <Avatar className="w-11 h-11 border-2 border-white shadow-sm ring-1 ring-zinc-100">
                                     <AvatarImage src={activeLead.avatar} />
                                     <AvatarFallback>{activeLead.name[0]}</AvatarFallback>
                                 </Avatar>
@@ -602,9 +611,9 @@ const Enquiries = () => {
                                             </div>
                                         ) : (
                                             <div className="max-w-[75%] group relative">
-                                                <div className={`px-3 py-2 text-sm shadow-sm ${msg.from === 'me'
-                                                    ? 'bg-zinc-900 text-white rounded-[12px_12px_0px_12px]'
-                                                    : 'bg-white border border-zinc-100 rounded-[12px_12px_12px_0px]'
+                                                <div className={`px-4 py-3 text-sm shadow-sm ${msg.from === 'me'
+                                                    ? 'bg-gradient-to-br from-zinc-800 to-black text-white rounded-[18px_18px_4px_18px]'
+                                                    : 'bg-white border text-zinc-800 border-zinc-100 rounded-[18px_18px_18px_4px] shadow-[0_2px_4px_rgba(0,0,0,0.02)]'
                                                     }`}>
                                                     {msg.type === 'product' ? (
                                                         <div className="w-[200px] bg-white text-black rounded-md overflow-hidden border border-zinc-100">
@@ -642,9 +651,9 @@ const Enquiries = () => {
                         </ScrollArea>
 
                         {/* Input Area */}
-                        <div className="p-4 bg-background border-t border-border shrink-0">
+                        <div className="p-4 bg-transparent shrink-0">
                             {/* Actions / Inputs */}
-                            <div className="flex items-center gap-2 max-w-3xl mx-auto">
+                            <div className="flex items-center gap-2 max-w-4xl mx-auto bg-white p-2 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-zinc-100">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="icon" className="text-muted-foreground"><Paperclip className="w-4 h-4" /></Button>
@@ -679,7 +688,7 @@ const Enquiries = () => {
                                         onChange={(e) => setChatInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                                         placeholder="Type a message..."
-                                        className="pr-10"
+                                        className="pr-10 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent placeholder:text-zinc-400 font-medium"
                                     />
                                     <Button size="icon" variant="ghost" className="absolute right-0 top-0 h-full text-muted-foreground hover:text-foreground">
                                         <Smile className="w-4 h-4" />
@@ -705,54 +714,51 @@ const Enquiries = () => {
                         <h1 className="text-2xl font-normal text-zinc-900">Dashboard Overview</h1>
                         <p className="text-zinc-500 text-sm mt-1 max-w-md">Platform Intelligence Summary</p>
 
-                        <div className="grid grid-cols-3 gap-8 mt-10 w-full max-w-3xl">
+                        <div className="grid grid-cols-3 gap-6 mt-12 w-full max-w-4xl px-4">
                             {[
                                 {
-                                    label: 'ACTIVE LEADS',
+                                    label: 'Total Leads',
                                     val: stats.total,
-                                    icon: ArrowUp,
-                                    color: 'text-green-600',
-                                    bgColor: 'bg-green-50',
-                                    sub: calculatePercentageChange(stats.total, Math.max(0, stats.total - stats.recent)),
-                                    subText: 'vs yesterday'
+                                    icon: Users,
+                                    color: 'text-blue-600',
+                                    bg: 'bg-blue-50',
+                                    border: 'border-blue-100',
+                                    desc: 'Lifetime enquiries'
                                 },
                                 {
-                                    label: 'HOT PROSPECTS',
+                                    label: 'Hot Prospects',
                                     val: stats.new,
                                     icon: Zap,
-                                    color: 'text-red-600',
-                                    bgColor: 'bg-red-50',
-                                    sub: stats.new > 0 ? '🔥 High Intent Detected' : 'No hot leads',
-                                    subText: ''
+                                    color: 'text-orange-600',
+                                    bg: 'bg-orange-50', // Fixed bg color class
+                                    border: 'border-orange-100',
+                                    desc: stats.new > 0 ? 'Action required' : 'All caught up'
                                 },
                                 {
-                                    label: 'AVG RESPONSE',
+                                    label: 'Response Time',
                                     val: stats.avgResponse,
                                     icon: Clock,
-                                    color: 'text-blue-600',
-                                    bgColor: 'bg-blue-50',
-                                    sub: 'Target: < 15m',
-                                    subText: ''
+                                    color: 'text-green-600',
+                                    bg: 'bg-green-50',
+                                    border: 'border-green-100',
+                                    desc: 'Average specific'
                                 }
                             ].map((stat, i) => (
-                                <div key={i} className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-3">{stat.label}</div>
-                                    <div className="text-4xl font-bold text-zinc-900 mb-2">{stat.val}</div>
-                                    <div className={`text-xs font-semibold flex items-center justify-center gap-1.5 ${stat.color}`}>
-                                        {stat.sub.includes('↑') || stat.sub.includes('↓') ? (
-                                            <>
-                                                <span>{stat.sub}</span>
-                                                <span className="text-zinc-400 font-normal text-[10px]">{stat.subText}</span>
-                                            </>
-                                        ) : (
-                                            <span>{stat.sub}</span>
-                                        )}
+                                <div key={i} className={`p-6 rounded-2xl bg-white border ${stat.border} shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group`}>
+                                    <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110`}>
+                                        <stat.icon className="w-6 h-6" />
                                     </div>
+                                    <div className="text-3xl font-bold text-zinc-900 mb-1 tracking-tight">{stat.val}</div>
+                                    <div className="font-semibold text-zinc-700 text-sm">{stat.label}</div>
+                                    <div className="text-xs text-zinc-400 mt-2 font-medium">{stat.desc}</div>
                                 </div>
                             ))}
                         </div>
 
-                        <p className="text-zinc-400 text-xs mt-8">Select a conversation from the left to view Biolink Analytics, CRM notes, and user journey.</p>
+                        <div className="mt-16 flex flex-col items-center opacity-40">
+                            <Smartphone className="w-12 h-12 mb-4 text-zinc-300 stroke-1" />
+                            <p className="text-zinc-500 text-sm max-w-sm">Select a conversation from the sidebar to view full history, visitor analytics, and smart insights.</p>
+                        </div>
                     </div>
                 )}
 

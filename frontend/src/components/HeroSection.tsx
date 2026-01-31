@@ -1,9 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check, X, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const HeroSection = () => {
   const [username, setUsername] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [availability, setAvailability] = useState<{ available: boolean; message: string } | null>(null);
+  const navigate = useNavigate();
+
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+  // Debounced username check
+  useEffect(() => {
+    if (!username || username.length < 3) {
+      setAvailability(null);
+      return;
+    }
+
+    setChecking(true);
+    const timer = setTimeout(async () => {
+      try {
+        const response = await axios.get(`${API_URL}/auth/check-username/${username}`);
+        setAvailability(response.data);
+      } catch (error) {
+        console.error("Error checking username:", error);
+        setAvailability({ available: false, message: "Error checking availability" });
+      } finally {
+        setChecking(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [username, API_URL]);
+
+  const handleGetStarted = () => {
+    if (availability?.available) {
+      navigate(`/login?username=${username}`);
+    }
+  };
 
   return (
     <section className="bg-background min-h-screen pt-32 pb-20 px-4 overflow-hidden flex flex-col justify-center">
@@ -32,15 +68,32 @@ const HeroSection = () => {
                 <input
                   type="text"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
                   placeholder="yourname"
-                  className="w-full h-12 pl-24 pr-4 rounded-lg border border-input bg-background/50 ring-offset-background focus:ring-2 focus:ring-ring focus:border-input transition-all outline-none shadow-sm"
+                  className="w-full h-12 pl-24 pr-12 rounded-lg border border-input bg-background/50 ring-offset-background focus:ring-2 focus:ring-ring focus:border-input transition-all outline-none shadow-sm"
                 />
+                {/* Status Icon */}
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  {checking && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                  {!checking && availability?.available && <Check className="w-5 h-5 text-green-600" />}
+                  {!checking && availability && !availability.available && <X className="w-5 h-5 text-red-600" />}
+                </div>
               </div>
-              <Button size="lg" className="h-12 px-8 rounded-lg font-semibold text-base shadow-lg hover:shadow-primary/25 transition-all duration-300">
+              <Button
+                size="lg"
+                className="h-12 px-8 rounded-lg font-semibold text-base shadow-lg hover:shadow-primary/25 transition-all duration-300"
+                onClick={handleGetStarted}
+                disabled={!availability?.available}
+              >
                 Get started
               </Button>
             </div>
+            {/* Availability Message */}
+            {availability && username.length >= 3 && (
+              <p className={`text-sm ${availability.available ? 'text-green-600' : 'text-red-600'} max-w-md mx-auto lg:mx-0`}>
+                {availability.message}
+              </p>
+            )}
           </div>
 
           {/* Right Content - Phone Mockups */}

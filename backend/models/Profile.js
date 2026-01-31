@@ -90,6 +90,14 @@ const profileSchema = new mongoose.Schema({
         type: String,
         default: 'clean'
     },
+    store_design_config: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
+    },
+    store_category: {
+        type: String,
+        default: ''
+    },
     // Role: 'super' (can have personal + store profiles) or 'personal' (single profile only)
     role: {
         type: String,

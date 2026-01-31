@@ -12,9 +12,9 @@ const analyticsEventSchema = new mongoose.Schema({
         index: true
     },
     event_type: {
-        type: String, // 'pageview', 'click', 'ping'
+        type: String, // 'pageview', 'click', 'ping', 'product_click'
         required: true,
-        enum: ['pageview', 'click', 'ping']
+        enum: ['pageview', 'click', 'ping', 'product_click']
     },
     url: String,
     path: String,
@@ -30,6 +30,12 @@ const analyticsEventSchema = new mongoose.Schema({
         ref: 'Link'
     },
     link_url: String,
+
+    // Metadata for ML features (product_id, category, etc.)
+    metadata: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
+    },
 
     timestamp: {
         type: Date,

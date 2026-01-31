@@ -36,4 +36,7 @@ router.post('/forgot-password/resend-otp', authController.resendOTP);
 // DELETE /api/auth/delete-account (Authenticated)
 router.delete('/delete-account', authMiddleware, authController.deleteAccount);
 
+// GET /api/auth/check-username/:username - Check if username is available
+router.get('/check-username/:username', authController.checkUsernameAvailability);
+
 module.exports = router;
