@@ -518,7 +518,7 @@ const PublicProfile = () => {
                         <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-r from-transparent via-white to-transparent -skew-x-12 translate-x-[-100%] group-hover:animate-shimmer" />
 
                         <div className="relative flex items-center justify-between px-6 h-full text-white">
-                            <span className="font-bold text-lg tracking-wide">Connect</span>
+                            <span className="font-bold text-lg tracking-wide">Message {profile.name?.split(' ')[0] || profile.username || 'User'}</span>
                             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/20 transition-all duration-300">
                                 <MessageCircle className="w-5 h-5 text-white" />
                             </div>

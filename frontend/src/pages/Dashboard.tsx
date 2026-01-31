@@ -284,14 +284,28 @@ const Dashboard = () => {
                             </div>
                         </div>
 
-                        {/* Add Link Button & Clear All */}
+                        {/* Add Link Button, Socials & Clear All */}
                         <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8">
                             <Button
                                 onClick={() => setIsAddingBlock(true)}
-                                className="flex-1 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-zinc-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
+                                className="w-3/4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-zinc-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
                             >
                                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> {t('dashboard.addContent')}
                             </Button>
+                            <SocialLinksDialog
+                                initialLinks={user?.social_links || {}}
+                                onSave={saveSocialLinks}
+                                onLinksChange={setSocialPreview}
+                                onOpenChange={(isOpen) => !isOpen && setSocialPreview(null)}
+                            >
+                                <Button
+                                    variant="outline"
+                                    className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-medium gap-1.5 sm:gap-2"
+                                >
+                                    <Instagram className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span className="hidden sm:inline">{t('dashboard.socials')}</span>
+                                </Button>
+                            </SocialLinksDialog>
                             <Button
                                 onClick={handleClearAll}
                                 variant="outline"
@@ -539,7 +553,7 @@ const Dashboard = () => {
                                                                     rel="noopener noreferrer"
                                                                     className="flex-1 bg-white text-black h-8 rounded-full font-bold text-xs flex items-center justify-center hover:bg-gray-100 transition-colors"
                                                                 >
-                                                                    {t('common.connect')}
+                                                                    Message {user?.name?.split(' ')[0] || 'User'}
                                                                 </a>
                                                                 <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
                                                                     <Heart className="w-3.5 h-3.5" />
@@ -563,7 +577,7 @@ const Dashboard = () => {
                                 {/* Footer - Connect Button */}
                                 <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-30">
                                     <button className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100">
-                                        <span>{t('common.connect')}</span>
+                                        <span>Message {user?.name?.split(' ')[0] || 'User'}</span>
                                         <MessageCircle className="w-5 h-5 text-gray-600" />
                                     </button>
                                 </div>

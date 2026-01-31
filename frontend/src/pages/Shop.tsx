@@ -749,7 +749,7 @@ const Shop = () => {
                                             })}
                                             className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100"
                                         >
-                                            <span>{t('shop.connect')}</span>
+                                            <span>Message {user?.name?.split(' ')[0] || 'User'}</span>
                                             <MessageCircle className="w-5 h-5 text-gray-600" />
                                         </button>
                                     </div>
