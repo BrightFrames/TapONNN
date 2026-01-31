@@ -216,7 +216,7 @@ const Dashboard = () => {
         <LinktreeLayout>
             <div className="flex h-full">
                 {/* Main Editor */}
-                <div className="flex-1 py-8 px-6 md:px-10 overflow-y-auto">
+                <div className="flex-1 py-8 px-6 md:px-10">
                     <div className="max-w-2xl mx-auto">
 
 
@@ -345,8 +345,8 @@ const Dashboard = () => {
                 </div>
 
                 {/* Phone Preview - Right Side */}
-                <div className="w-[400px] border-l border-gray-100 hidden xl:flex items-center justify-center bg-gradient-to-b from-gray-50 to-white relative p-8">
-                    <div className="sticky top-8">
+                <div className="w-[400px] border-l border-gray-100 hidden xl:flex items-center justify-center bg-gradient-to-b from-gray-50 to-white sticky top-0 h-full">
+                    <div className="py-8 px-8 flex flex-col items-center">
                         {/* Phone Frame */}
                         <div className="w-[300px] h-[620px] bg-black rounded-[3rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">
                             {/* Notch */}

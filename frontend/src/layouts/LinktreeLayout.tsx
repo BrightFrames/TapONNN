@@ -94,7 +94,8 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
             {/* Profile Switcher */}
             <ProfileSwitcher />
 
-            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+            {/* Scrollable Navigation - Manage & Growth */}
+            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6 scrollbar-thin hover:scrollbar-thumb-gray-300">
 
                 {/* 1. Manage Group */}
                 <div className="space-y-1">
@@ -126,19 +127,19 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                     )}
                     <NavItem icon={Sparkles} label={t('nav.marketplace')} active={location.pathname === '/marketplace'} onClick={() => handleNav('/marketplace')} />
                 </div>
+            </div>
 
-                {/* 3. System Group */}
-                <div className="space-y-1">
-                    <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">{t('nav.system')}</h4>
-                    <NavItem icon={Settings} label={t('nav.settings')} active={location.pathname === '/settings'} onClick={() => handleNav('/settings')} />
-                    <NavItem icon={Languages} label={t('nav.language')} active={false} onClick={() => setIsLanguageOpen(true)} />
-                    <NavItem
-                        icon={isDark ? Sun : Moon}
-                        label={isDark ? "Light Mode" : "Dark Mode"}
-                        active={false}
-                        onClick={toggleTheme}
-                    />
-                </div>
+            {/* Fixed System Section with Separator */}
+            <div className="border-t border-sidebar-border/50 px-3 py-2 space-y-0.5">
+                <h4 className="px-4 text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wider">{t('nav.system')}</h4>
+                <NavItem icon={Settings} label={t('nav.settings')} active={location.pathname === '/settings'} onClick={() => handleNav('/settings')} />
+                <NavItem icon={Languages} label={t('nav.language')} active={false} onClick={() => setIsLanguageOpen(true)} />
+                <NavItem
+                    icon={isDark ? Sun : Moon}
+                    label={isDark ? "Light Mode" : "Dark Mode"}
+                    active={false}
+                    onClick={toggleTheme}
+                />
             </div>
 
             {/* Language Dialog */}
@@ -188,7 +189,15 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
     }, [location.pathname]);
 
     return (
-        <div className="min-h-screen bg-background flex flex-col font-sans">
+        <div className="h-screen bg-background flex flex-col font-sans overflow-hidden">
+            {/* Top Banner */}
+            <div className="bg-primary text-primary-foreground py-2 px-4 text-center text-xs font-medium flex justify-center items-center gap-4">
+                <span className="hidden sm:inline">{t('banner.upgradeText')}</span>
+                <span className="sm:hidden">{t('banner.upgradeTextMobile')}</span>
+                <Button size="sm" variant="secondary" className="h-7 px-3 text-xs rounded-full gap-1" onClick={() => navigate('/pricing')}>
+                    <Zap className="w-3 h-3 fill-current" /> {t('common.upgrade')}
+                </Button>
+            </div>
 
 
 
@@ -217,13 +226,13 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
                     </div>
                 </header>
 
-                {/* Desktop Sidebar */}
-                <aside className="w-64 bg-sidebar border-r hidden lg:block h-full overflow-y-auto">
+                {/* Desktop Sidebar - Independent Scroll */}
+                <aside className="w-64 bg-sidebar border-r hidden lg:flex flex-col h-full overflow-y-auto scrollbar-thin hover:scrollbar-thumb-gray-300">
                     <SidebarContent navigate={navigate} location={location} onShare={() => setShareOpen(true)} onLogout={handleLogout} />
                 </aside>
 
-                {/* Main Content Area */}
-                <main className="flex-1 min-w-0 overflow-y-auto bg-muted/10">
+                {/* Main Content Area - Independent Scroll */}
+                <main className="flex-1 min-w-0 h-full overflow-y-auto scrollbar-thin hover:scrollbar-thumb-gray-300 bg-muted/10">
                     {children}
                 </main>
             </div >

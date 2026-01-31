@@ -70,32 +70,12 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
         }
     }, [block, open]);
 
-    // Auto-switch to favicon if URL provided and no thumbnail
-    useEffect(() => {
-        if (formData.block_type === 'link' && formData.content.url && !block?.thumbnail) { // block?.thumbnail check prevents overwriting existing custom thumbnail on edit, but if it was empty, we overwrite
-            // Actually, if user clears thumbnail manually, we might re-add it. Let's strictly check if it's empty.
-            // Better: Only if it's a NEW block or thumbnail is empty.
-            try {
-                const urlObj = new URL(formData.content.url);
-                const faviconUrl = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
-                // Only set if current thumbnail is empty or equals previous auto-generated one
-                setFormData(prev => {
-                    if (!prev.thumbnail || prev.thumbnail.includes('google.com/s2/favicons')) {
-                        return { ...prev, thumbnail: faviconUrl };
-                    }
-                    return prev;
-                });
-            } catch (e) { }
-        }
-    }, [formData.content.url]);
-
-    // Auto-switch to favicon if URL provided and no thumbnail
+    // Auto-switch to favicon if URL provided
     useEffect(() => {
         if (formData.block_type === 'link' && formData.content.url) {
             try {
                 const urlObj = new URL(formData.content.url);
                 const faviconUrl = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
-                // Only set if current thumbnail is empty or looks like an auto-generated one
                 setFormData(prev => {
                     if (!prev.thumbnail || prev.thumbnail.includes('google.com/s2/favicons')) {
                         return { ...prev, thumbnail: faviconUrl };
@@ -126,8 +106,6 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
             content: { ...prev.content, [key]: value }
         }));
     };
-
-
 
     const renderContentFields = () => {
         switch (formData.block_type) {
@@ -312,7 +290,6 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
                         />
                     </div>
 
-
                     {/* Thumbnail Preview/Input */}
                     <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
                         <div className="shrink-0 w-12 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden relative shadow-sm">
@@ -335,8 +312,6 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
 
                     {/* Content Fields (dynamic based on block_type) */}
                     {renderContentFields()}
-
-
                 </div>
 
                 <DialogFooter>

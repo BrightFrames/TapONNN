@@ -14,6 +14,7 @@ import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 import useIntent, { getPendingIntent, clearPendingIntent } from "@/hooks/useIntent";
 import { toast } from "sonner";
 import { getIconForThumbnail } from "@/utils/socialIcons";
+import { ExploreSection } from "@/components/ExploreSection";
 
 const PublicProfile = () => {
     const { username } = useParams();
