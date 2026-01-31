@@ -11,16 +11,15 @@ const trackEvent = async (req, res) => {
         // In a real app, we validate the header/cookie
         let session_id = req.headers['x-session-id'] || req.body.session_id;
 
-        if (!session_id || !event_type) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-
         // Determine profile_id from path (e.g. /username or /s/username) or body
         // Ideally, frontend sends profile_id
         const profile_id = req.body.profile_id;
 
-        if (!profile_id) {
-            return res.status(400).json({ error: 'Missing profile_id' });
+        console.log('📝 Analytics Track Request:', { event_type, profile_id, session_id });
+
+        if (!session_id || !event_type || !profile_id) {
+            console.log('❌ Missing required fields for analytics');
+            return res.status(400).json({ error: 'Missing required fields' });
         }
 
         const event = new AnalyticsEvent({
@@ -211,4 +210,195 @@ const getStats = async (req, res) => {
     }
 };
 
-module.exports = { trackEvent, getStats };
+// Get Personal Profile Stats (for personal accounts)
+const getPersonalStats = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const mongoose = require('mongoose');
+        const userObjectId = new mongoose.Types.ObjectId(userId);
+        const profile = await Profile.findOne({ user_id: userObjectId });
+
+        console.log('📊 Get Personal Stats:', { userId, profileFound: !!profile });
+
+        if (!profile) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        const profileId = profile._id;
+        const { period = '30d' } = req.query;
+
+        console.log('🔎 Query Period:', period, 'ProfileId:', profileId);
+
+        let startDate = new Date();
+        if (period === '24h') startDate.setHours(startDate.getHours() - 24);
+        else if (period === '7d') startDate.setDate(startDate.getDate() - 7);
+        else startDate.setDate(startDate.getDate() - 30);
+
+        // 1. Total Views (pageview events)
+        const totalViews = await AnalyticsEvent.countDocuments({
+            profile_id: profileId,
+            event_type: 'pageview',
+            timestamp: { $gte: startDate }
+        });
+
+        // 2. Unique Visitors (distinct session_ids)
+        const uniqueVisitors = (await AnalyticsEvent.distinct('session_id', {
+            profile_id: profileId,
+            event_type: 'pageview',
+            timestamp: { $gte: startDate }
+        })).length;
+
+        // 3. Top Clicked Links (most clicked links)
+        const topLinks = await AnalyticsEvent.aggregate([
+            {
+                $match: {
+                    profile_id: profileId,
+                    event_type: 'click',
+                    timestamp: { $gte: startDate }
+                }
+            },
+            {
+                $group: {
+                    _id: '$link_url',
+                    clicks: { $sum: 1 },
+                    link_id: { $first: '$link_id' }
+                }
+            },
+            { $sort: { clicks: -1 } },
+            { $limit: 10 }
+        ]);
+
+        // Get link titles for top links
+        const topLinksWithTitles = await Promise.all(
+            topLinks.map(async (link) => {
+                let title = link._id;
+                if (link.link_id) {
+                    try {
+                        const linkDoc = await Link.findById(link.link_id);
+                        if (linkDoc) {
+                            title = linkDoc.title || linkDoc.url;
+                        }
+                    } catch (e) { }
+                }
+                // Extract domain for display
+                try {
+                    const url = new URL(link._id);
+                    const domain = url.hostname.replace('www.', '');
+                    title = title || domain;
+                } catch (e) {
+                    title = title || link._id;
+                }
+                return {
+                    url: link._id,
+                    title,
+                    clicks: link.clicks
+                };
+            })
+        );
+
+        // 4. Top Referrer Sources (where visitors came from)
+        const topReferrers = await AnalyticsEvent.aggregate([
+            {
+                $match: {
+                    profile_id: profileId,
+                    event_type: 'pageview',
+                    timestamp: { $gte: startDate },
+                    referrer: { $ne: null, $ne: '' }
+                }
+            },
+            {
+                $group: {
+                    _id: '$referrer',
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { count: -1 } },
+            { $limit: 10 }
+        ]);
+
+        // Parse referrer URLs to get friendly names
+        const parsedReferrers = topReferrers.map(ref => {
+            let source = ref._id || 'Direct';
+            try {
+                if (ref._id && ref._id.length > 0) {
+                    const url = new URL(ref._id);
+                    const domain = url.hostname.replace('www.', '');
+                    // Friendly names for common platforms
+                    const platformNames = {
+                        'instagram.com': 'Instagram',
+                        'facebook.com': 'Facebook',
+                        'twitter.com': 'Twitter',
+                        'x.com': 'X (Twitter)',
+                        'youtube.com': 'YouTube',
+                        'linkedin.com': 'LinkedIn',
+                        'tiktok.com': 'TikTok',
+                        'google.com': 'Google Search',
+                        'bing.com': 'Bing Search',
+                        'pinterest.com': 'Pinterest',
+                        'reddit.com': 'Reddit',
+                        'whatsapp.com': 'WhatsApp',
+                        't.co': 'Twitter',
+                        'l.facebook.com': 'Facebook',
+                        'lm.facebook.com': 'Facebook Messenger'
+                    };
+                    source = platformNames[domain] || domain;
+                }
+            } catch (e) {
+                source = ref._id || 'Direct';
+            }
+            return {
+                source,
+                rawUrl: ref._id,
+                count: ref.count
+            };
+        });
+
+        // Add Direct traffic
+        const directTraffic = await AnalyticsEvent.countDocuments({
+            profile_id: profileId,
+            event_type: 'pageview',
+            timestamp: { $gte: startDate },
+            $or: [
+                { referrer: null },
+                { referrer: '' },
+                { referrer: { $exists: false } }
+            ]
+        });
+
+        if (directTraffic > 0) {
+            parsedReferrers.push({
+                source: 'Direct',
+                rawUrl: '',
+                count: directTraffic
+            });
+            // Re-sort
+            parsedReferrers.sort((a, b) => b.count - a.count);
+        }
+
+        // 5. Active Visitors (last 5 mins)
+        const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
+        const activeVisitors = (await AnalyticsEvent.distinct('session_id', {
+            profile_id: profileId,
+            timestamp: { $gte: fiveMinsAgo }
+        })).length;
+
+        // Find highest visited link
+        const highestVisitedLink = topLinksWithTitles.length > 0 ? topLinksWithTitles[0] : null;
+
+        res.json({
+            totalViews,
+            uniqueVisitors,
+            activeVisitors,
+            highestVisitedLink,
+            topLinks: topLinksWithTitles,
+            referrers: parsedReferrers,
+            period
+        });
+
+    } catch (error) {
+        console.error('Get personal stats error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+module.exports = { trackEvent, getStats, getPersonalStats };

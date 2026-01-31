@@ -133,45 +133,228 @@ const Analytics = () => {
         </Card>
     );
 
-    // Restrict access to Store Accounts only
+    // State for personal stats
+    const [personalData, setPersonalData] = useState<any>(null);
+    const [personalLoading, setPersonalLoading] = useState(true);
+
+    // Fetch personal stats for personal accounts
+    useEffect(() => {
+        if (user && !user.has_store) {
+            const fetchPersonalStats = async () => {
+                setPersonalLoading(true);
+                const token = localStorage.getItem('auth_token');
+                if (!token) {
+                    setPersonalLoading(false);
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`${API_URL}/analytics/personal-stats?period=${period}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const json = await res.json();
+                        setPersonalData(json);
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch personal stats", err);
+                } finally {
+                    setPersonalLoading(false);
+                }
+            };
+
+            fetchPersonalStats();
+            const interval = setInterval(fetchPersonalStats, 30000); // Refresh every 30s for real-time feel
+            return () => clearInterval(interval);
+        }
+    }, [period, user]);
+
+    // Personal Profile Analytics View
     if (user && !user.has_store) {
         return (
             <LinktreeLayout>
-                <div className="flex flex-col items-center justify-center min-h-[80vh] p-6 text-center space-y-8 animate-in fade-in zoom-in duration-500">
-                    <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl mb-4">
-                        <Zap className="w-10 h-10 text-white" />
-                    </div>
-
-                    <div className="space-y-4 max-w-2xl">
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">{t('analytics.unlockTitle')}</h1>
-                        <p className="text-gray-500 text-lg leading-relaxed">
-                            {t('analytics.unlockDesc')} <span className="font-semibold text-gray-900">{t('analytics.storeAccounts')}</span>.
-                            <br />{t('analytics.upgradeProfile')}
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
-                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center hover:shadow-md transition-shadow">
-                            <span className="text-3xl font-bold text-gray-900 mb-1">{t('common.live')}</span>
-                            <span className="text-sm font-medium text-gray-500">{t('analytics.realtimeVisitor')}</span>
+                <div className="p-6 md:p-10 max-w-4xl mx-auto font-sans text-gray-900 bg-gray-50/50 min-h-full">
+                    {/* Header */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm">
+                                <Zap className="w-5 h-5 text-indigo-600 fill-indigo-100" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('analytics.growthInsights')}</h1>
+                                <p className="text-sm text-gray-500">{t('analytics.trackPerformance')}</p>
+                            </div>
                         </div>
-                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center hover:shadow-md transition-shadow">
-                            <span className="text-3xl font-bold text-gray-900 mb-1">{t('common.deep')}</span>
-                            <span className="text-sm font-medium text-gray-500">{t('analytics.locationDeviceData')}</span>
-                        </div>
+
+                        <Select value={period} onValueChange={setPeriod}>
+                            <SelectTrigger className="w-[140px] bg-white border-gray-200 shadow-sm font-medium">
+                                <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="24h">{t('analytics.last24Hours')}</SelectItem>
+                                <SelectItem value="7d">{t('analytics.last7Days')}</SelectItem>
+                                <SelectItem value="30d">{t('analytics.last30Days')}</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    <Button
-                        size="lg"
-                        className="rounded-full px-10 py-6 text-lg font-bold bg-gray-900 hover:bg-gray-800 text-white shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all mt-6"
-                        onClick={() => window.location.href = '/pricing?tab=store'}
-                    >
-                        {t('analytics.upgradeToStore')} <ArrowUpRight className="w-5 h-5 ml-2" />
-                    </Button>
+                    {personalLoading && !personalData ? (
+                        <div className="flex items-center justify-center h-64">
+                            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            {/* Main Stats Grid */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                {/* Total Views */}
+                                <Card className="border-gray-100 shadow-sm bg-white">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                                                <Monitor className="w-5 h-5 text-blue-600" />
+                                            </div>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500 mb-1">{t('analytics.totalViews')}</p>
+                                        <p className="text-3xl font-bold text-gray-900">{personalData?.totalViews?.toLocaleString() || 0}</p>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Unique Visitors */}
+                                <Card className="border-gray-100 shadow-sm bg-white">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+                                                <Globe className="w-5 h-5 text-green-600" />
+                                            </div>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500 mb-1">{t('analytics.uniqueVisitors')}</p>
+                                        <p className="text-3xl font-bold text-gray-900">{personalData?.uniqueVisitors?.toLocaleString() || 0}</p>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Active Visitors */}
+                                <Card className="border-gray-100 shadow-sm bg-white">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+                                                <div className="relative">
+                                                    <span className="absolute inline-flex h-3 w-3 rounded-full bg-amber-400 animate-ping opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500 mb-1">{t('analytics.activeNow')}</p>
+                                        <p className="text-3xl font-bold text-gray-900">{personalData?.activeVisitors || 0}</p>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Highest Visited Link */}
+                                <Card className="border-gray-100 shadow-sm bg-white">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                                                <ArrowUpRight className="w-5 h-5 text-purple-600" />
+                                            </div>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500 mb-1">{t('analytics.topLink')}</p>
+                                        {personalData?.highestVisitedLink ? (
+                                            <div>
+                                                <p className="text-lg font-bold text-gray-900 truncate" title={personalData.highestVisitedLink.title}>
+                                                    {personalData.highestVisitedLink.title}
+                                                </p>
+                                                <p className="text-sm text-gray-500">{personalData.highestVisitedLink.clicks} clicks</p>
+                                            </div>
+                                        ) : (
+                                            <p className="text-lg text-gray-400">—</p>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Top Links and Referrers */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Top Clicked Links */}
+                                <Card className="border-gray-100 shadow-sm bg-white">
+                                    <CardHeader className="pb-3 border-b border-gray-50">
+                                        <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-800">
+                                            <ArrowUpRight className="w-4 h-4 text-gray-400" />
+                                            {t('analytics.topClickedLinks')}
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-0">
+                                        {personalData?.topLinks?.length > 0 ? (
+                                            <div className="divide-y divide-gray-50">
+                                                {personalData.topLinks.map((link: any, i: number) => (
+                                                    <div key={i} className="flex items-center justify-between px-4 py-3">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <span className="text-xs font-bold text-gray-400 w-5">{i + 1}</span>
+                                                            <span className="text-sm text-gray-700 truncate">{link.title}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-3 flex-shrink-0">
+                                                            <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-indigo-500 rounded-full"
+                                                                    style={{ width: `${(link.clicks / personalData.topLinks[0].clicks) * 100}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-sm font-semibold text-gray-600 w-10 text-right">{link.clicks}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="p-8 text-center text-sm text-gray-400">
+                                                {t('analytics.noLinkClicks')}
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+
+                                {/* Referrer Sources */}
+                                <Card className="border-gray-100 shadow-sm bg-white">
+                                    <CardHeader className="pb-3 border-b border-gray-50">
+                                        <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-800">
+                                            <Globe className="w-4 h-4 text-gray-400" />
+                                            {t('analytics.trafficSources')}
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-0">
+                                        {personalData?.referrers?.length > 0 ? (
+                                            <div className="divide-y divide-gray-50">
+                                                {personalData.referrers.slice(0, 8).map((ref: any, i: number) => (
+                                                    <div key={i} className="flex items-center justify-between px-4 py-3">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <span className="text-xs font-bold text-gray-400 w-5">{i + 1}</span>
+                                                            <span className="text-sm text-gray-700">{ref.source}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-3 flex-shrink-0">
+                                                            <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-green-500 rounded-full"
+                                                                    style={{ width: `${(ref.count / personalData.referrers[0].count) * 100}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-sm font-semibold text-gray-600 w-10 text-right">{ref.count}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="p-8 text-center text-sm text-gray-400">
+                                                {t('analytics.noReferrers')}
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </LinktreeLayout>
         );
     }
+
 
     return (
         <LinktreeLayout>

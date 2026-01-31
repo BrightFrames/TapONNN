@@ -15,6 +15,8 @@ import useIntent, { getPendingIntent, clearPendingIntent } from "@/hooks/useInte
 import { toast } from "sonner";
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { ExploreSection } from "@/components/ExploreSection";
+import { useAnalytics } from "@/hooks/useAnalytics";
+
 
 const PublicProfile = () => {
     const { username } = useParams();
@@ -43,6 +45,10 @@ const PublicProfile = () => {
     const [paymentModal, setPaymentModal] = useState({ open: false, blockId: '', blockTitle: '', price: 0, intentId: '', sellerId: '' });
     const [loginModal, setLoginModal] = useState({ open: false, intentId: '', ctaType: '', blockTitle: '' });
     const [connectModal, setConnectModal] = useState<{ open: boolean; product: any; seller: any }>({ open: false, product: null, seller: null });
+
+    // Initialize Analytics
+    const { trackClick } = useAnalytics(profile?.id);
+
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -115,8 +121,8 @@ const PublicProfile = () => {
                 setProducts(publicProducts.products || publicProducts || []);
             }
 
-            // 4. Track View (Fire & Forget)
-            fetch(`${API_URL}/profile/${userProfile.id}/view`, { method: 'POST' }).catch(() => { });
+            // 4. Track View (handled by useAnalytics hook)
+
 
         } catch (error) {
             console.error("Error fetching profile:", error);
@@ -326,6 +332,7 @@ const PublicProfile = () => {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer backdrop-blur-sm"
+                                        onClick={() => trackClick(null, href)}
                                     >
                                         <Icon className="w-5 h-5" />
                                     </a>
@@ -369,7 +376,10 @@ const PublicProfile = () => {
                             return (
                                 <button
                                     key={block._id}
-                                    onClick={() => handleBlockInteract(block)}
+                                    onClick={() => {
+                                        handleBlockInteract(block);
+                                        if (block.url) trackClick(block._id, block.url);
+                                    }}
                                     className={`block w-full flex items-center justify-center relative px-12 ${currentTemplate.buttonStyle}`}
                                 >
                                     {Icon && (

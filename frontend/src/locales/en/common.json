@@ -127,10 +127,13 @@
     },
     "analytics": {
         "title": "Growth Insights",
+        "growthInsights": "Growth Insights",
+        "trackPerformance": "Track your profile performance",
         "currentVisitors": "current visitors",
         "uniqueVisitors": "Unique Visitors",
         "unique": "Unique",
         "totalVisits": "Total Visits",
+        "totalViews": "Total Views",
         "totalPageviews": "Total Pageviews",
         "viewsPerVisit": "Views / Visit",
         "bounceRate": "Bounce Rate",
@@ -150,7 +153,13 @@
         "upgradeProfile": "Upgrade your profile to get the full picture.",
         "realtimeVisitor": "Real-time Visitor Count",
         "locationDeviceData": "Location & Device Data",
-        "upgradeToStore": "Upgrade to Store"
+        "upgradeToStore": "Upgrade to Store",
+        "activeNow": "Active Now",
+        "topLink": "Top Link",
+        "topClickedLinks": "Top Clicked Links",
+        "trafficSources": "Traffic Sources",
+        "noLinkClicks": "No link clicks yet. Share your profile to start tracking!",
+        "noReferrers": "No referrer data yet. Share your profile to see where visitors come from."
     },
     "design": {
         "title": "Design",

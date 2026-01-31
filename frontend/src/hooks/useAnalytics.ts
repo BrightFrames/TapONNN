@@ -61,11 +61,23 @@ export const useAnalytics = (profileId: string | undefined) => {
 
     }, [profileId]);
 
-    const trackClick = async (linkId: string, linkUrl: string) => {
+    const trackClick = async (linkId: string | null, linkUrl: string) => {
         if (!profileId) return;
         try {
             const sessionId = localStorage.getItem('analytics_session_id') || self.crypto.randomUUID();
             const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+            const body: any = {
+                profile_id: profileId,
+                session_id: sessionId,
+                event_type: 'click',
+                link_url: linkUrl,
+                path: window.location.pathname
+            };
+
+            if (linkId) {
+                body.link_id = linkId;
+            }
 
             await fetch(`${API_URL}/analytics/track`, {
                 method: 'POST',
@@ -73,14 +85,7 @@ export const useAnalytics = (profileId: string | undefined) => {
                     'Content-Type': 'application/json',
                     'x-session-id': sessionId
                 },
-                body: JSON.stringify({
-                    profile_id: profileId,
-                    session_id: sessionId,
-                    event_type: 'click',
-                    link_id: linkId,
-                    link_url: linkUrl,
-                    path: window.location.pathname
-                })
+                body: JSON.stringify(body)
             });
         } catch (error) {
             console.error("Track click error:", error);
