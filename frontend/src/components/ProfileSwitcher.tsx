@@ -63,17 +63,15 @@ const ProfileSwitcher = () => {
                             </div>
                             <div className="text-left">
                                 <div className="text-sm font-semibold leading-none flex items-center gap-2">
-                                    {currentMode === 'store' ? `${user.username} 's Store` : user.username}
-                                    < Badge variant="secondary" className="text-[10px] px-1 h-4 font-normal" >
+                                    {currentMode === 'store' ? `${user.username}'s Store` : user.username}
+                                    <Badge variant="secondary" className="text-[10px] px-1 h-4 font-normal">
                                         {currentMode === 'store' ? 'Store' : 'Personal'}
-                                    </Badge >
-                                </div >
-                                {isSuperUser && (
-                                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                                        <Sparkles className="w-3 h-3" /> Super User
-                                    </div>
-                                )}
-                            </div >
+                                    </Badge>
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                    {currentMode === 'store' ? 'Digital Store' : 'Personal Profile'}
+                                </div>
+                            </div>
                         </div >
                         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                     </Button >

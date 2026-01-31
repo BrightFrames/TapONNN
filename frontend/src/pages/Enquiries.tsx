@@ -404,6 +404,9 @@ const Enquiries = () => {
 
     const insertTemplate = (text: string) => setChatInput(text);
 
+    // Determine mode
+    const isPersonalMode = user?.active_profile_mode === 'personal';
+
     return (
         <div className="h-screen w-full bg-zinc-100 flex items-center justify-center p-0 sm:p-2 overflow-hidden font-sans">
             {/* Main Window */}
@@ -416,20 +419,25 @@ const Enquiries = () => {
                     <div className="h-16 px-4 border-b border-border flex items-center justify-between shrink-0 bg-white/50 backdrop-blur">
                         <div className="flex items-center gap-3">
                             <Avatar className="w-9 h-9 border">
-                                <AvatarImage src={user?.photo_url} />
-                                <AvatarFallback>{user?.username?.[0] || 'SU'}</AvatarFallback>
+                                <AvatarImage src={user?.avatar || user?.photo_url} />
+                                <AvatarFallback>{user?.username?.[0] || 'ME'}</AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col">
-                                <span className="font-medium text-sm text-foreground">{user?.username || 'Super User'}</span>
-                                <span className="text-[10px] text-green-600 font-bold tracking-wide flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse"></span> ONLINE
-                                </span>
+                                <span className="font-medium text-sm text-foreground">{user?.username || 'My Profile'}</span>
+                                {!isPersonalMode && (
+                                    <span className="text-[10px] text-green-600 font-bold tracking-wide flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse"></span> ONLINE
+                                    </span>
+                                )}
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => setIsBulkMode(!isBulkMode)} title="Bulk Actions">
-                                <CheckCircle className={`w-4 h-4 ${isBulkMode ? 'text-primary' : 'text-muted-foreground'}`} />
-                            </Button>
+                            {/* Only show Bulk Actions in Store Mode */}
+                            {!isPersonalMode && (
+                                <Button variant="ghost" size="icon" onClick={() => setIsBulkMode(!isBulkMode)} title="Bulk Actions">
+                                    <CheckCircle className={`w-4 h-4 ${isBulkMode ? 'text-primary' : 'text-muted-foreground'}`} />
+                                </Button>
+                            )}
                             <Button variant="ghost" size="icon">
                                 <MoreVertical className="w-4 h-4 text-muted-foreground" />
                             </Button>
@@ -441,17 +449,20 @@ const Enquiries = () => {
                         <div className="relative">
                             <Search className="absolute left-3 top-2.5 text-muted-foreground w-4 h-4" />
                             <Input
-                                placeholder="Search leads..."
+                                placeholder={isPersonalMode ? "Search messages..." : "Search leads..."}
                                 className="pl-9 h-9 bg-muted/30"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                            <Badge variant="default" className="cursor-pointer">All</Badge>
-                            <Badge variant="outline" className="cursor-pointer hover:bg-zinc-100">Hot Leads 🔥</Badge>
-                            <Badge variant="outline" className="cursor-pointer hover:bg-zinc-100">Unread</Badge>
-                        </div>
+                        {/* Hide advanced filters in Personal Mode */}
+                        {!isPersonalMode && (
+                            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                                <Badge variant="default" className="cursor-pointer">All</Badge>
+                                <Badge variant="outline" className="cursor-pointer hover:bg-zinc-100">Hot Leads 🔥</Badge>
+                                <Badge variant="outline" className="cursor-pointer hover:bg-zinc-100">Unread</Badge>
+                            </div>
+                        )}
                     </div>
 
                     {/* Leads List */}
@@ -467,7 +478,7 @@ const Enquiries = () => {
                                 </div>
                                 <h3 className="text-sm font-semibold text-zinc-900">No messages yet</h3>
                                 <p className="text-xs text-muted-foreground mt-2 max-w-[200px] leading-relaxed">
-                                    Share your profile link to start receiving enquiries from visitors.
+                                    Share your profile link to start receiving messages.
                                 </p>
                             </div>
                         ) : (
@@ -500,7 +511,9 @@ const Enquiries = () => {
                                                 <AvatarImage src={lead.avatar} />
                                                 <AvatarFallback className="bg-zinc-100 text-zinc-500 font-bold text-lg">{lead.name[0]}</AvatarFallback>
                                             </Avatar>
-                                            {lead.role === 'user' && (
+
+                                            {/* Store Mode: User Badge */}
+                                            {!isPersonalMode && lead.role === 'user' && (
                                                 <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1 border-2 border-white shadow-sm" title="Registered User">
                                                     <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
                                                 </div>
@@ -525,30 +538,33 @@ const Enquiries = () => {
                                             {lead.preview}
                                         </p>
 
-                                        <div className="flex gap-2 items-center flex-wrap pt-1">
-                                            {(() => {
-                                                const badge = getSourceBadge(lead.source);
-                                                return (
-                                                    <Badge variant="secondary" className={`text-[9px] px-2 h-5 font-semibold border-0 bg-opacity-10 capitalize tracking-tight ${badge.color.replace('bg-', 'bg-opacity-10 bg-')}`}>
-                                                        {badge.emoji && <span className="mr-1 opacity-80">{badge.emoji}</span>}
-                                                        {badge.label}
-                                                    </Badge>
-                                                );
-                                            })()}
-                                            {lead.labels.map((lbl, idx) => (
-                                                <span key={idx} className={`text-[9px] px-2 py-0.5 rounded-full flex items-center gap-1 font-medium ${lbl.color === 'yellow' ? 'bg-yellow-50 text-yellow-700' : 'bg-blue-50 text-blue-700'}`}>
-                                                    {lbl.text}
-                                                </span>
-                                            ))}
-                                        </div>
+                                        {/* Store Mode: Badges */}
+                                        {!isPersonalMode && (
+                                            <div className="flex gap-2 items-center flex-wrap pt-1">
+                                                {(() => {
+                                                    const badge = getSourceBadge(lead.source);
+                                                    return (
+                                                        <Badge variant="secondary" className={`text-[9px] px-2 h-5 font-semibold border-0 bg-opacity-10 capitalize tracking-tight ${badge.color.replace('bg-', 'bg-opacity-10 bg-')}`}>
+                                                            {badge.emoji && <span className="mr-1 opacity-80">{badge.emoji}</span>}
+                                                            {badge.label}
+                                                        </Badge>
+                                                    );
+                                                })()}
+                                                {lead.labels.map((lbl, idx) => (
+                                                    <span key={idx} className={`text-[9px] px-2 py-0.5 rounded-full flex items-center gap-1 font-medium ${lbl.color === 'yellow' ? 'bg-yellow-50 text-yellow-700' : 'bg-blue-50 text-blue-700'}`}>
+                                                        {lbl.text}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))
                         )}
                     </ScrollArea>
 
-                    {/* Bulk Action Bar */}
-                    {isBulkMode && (
+                    {/* Bulk Action Bar - Store Mode Only */}
+                    {!isPersonalMode && isBulkMode && (
                         <div className="absolute bottom-0 left-0 w-full bg-zinc-900 text-white p-3 flex items-center justify-between z-30 animate-in slide-in-from-bottom-5">
                             <span className="text-xs font-medium">{selectedLeads.size} Selected</span>
                             <div className="flex gap-3">
@@ -565,7 +581,7 @@ const Enquiries = () => {
                     <div className="flex flex-col flex-1 h-full w-full relative bg-zinc-50/50">
                         {/* Chat Header */}
                         <div className="h-20 px-6 bg-white/90 border-b border-border flex items-center justify-between shrink-0 backdrop-blur-xl z-20 sticky top-0">
-                            <div className="flex items-center gap-4 cursor-pointer" onClick={() => setIsInfoPanelOpen(!isInfoPanelOpen)}>
+                            <div className="flex items-center gap-4 cursor-pointer" onClick={() => !isPersonalMode && setIsInfoPanelOpen(!isInfoPanelOpen)}>
                                 <Avatar className="w-11 h-11 border-2 border-white shadow-sm ring-1 ring-zinc-100">
                                     <AvatarImage src={activeLead.avatar} />
                                     <AvatarFallback>{activeLead.name[0]}</AvatarFallback>
@@ -573,28 +589,39 @@ const Enquiries = () => {
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2">
                                         <h2 className="font-semibold text-sm text-zinc-900">{activeLead.name}</h2>
-                                        {activeLead.score >= 70 ? (
-                                            <Badge className="text-[10px] px-1.5 h-5 rounded-sm bg-red-500 hover:bg-red-600 text-white border-0 flex items-center gap-0.5 font-bold">
-                                                HOT 🔥
-                                            </Badge>
-                                        ) : (
-                                            <Badge variant={activeLead.score >= 30 ? 'default' : 'secondary'} className="text-[10px] px-1.5 h-5 rounded-sm">
-                                                {activeLead.score} Score
-                                            </Badge>
+
+                                        {/* Store Mode: Lead Score */}
+                                        {!isPersonalMode && (
+                                            activeLead.score >= 70 ? (
+                                                <Badge className="text-[10px] px-1.5 h-5 rounded-sm bg-red-500 hover:bg-red-600 text-white border-0 flex items-center gap-0.5 font-bold">
+                                                    HOT 🔥
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant={activeLead.score >= 30 ? 'default' : 'secondary'} className="text-[10px] px-1.5 h-5 rounded-sm">
+                                                    {activeLead.score} Score
+                                                </Badge>
+                                            )
                                         )}
                                     </div>
-                                    <p className="text-xs text-muted-foreground">{activeLead.role === 'visitor' ? 'Visitor • External' : 'Registered User'}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {isPersonalMode ? (activeLead.status === 'unread' ? 'New Message' : 'Seen') : (activeLead.role === 'visitor' ? 'Visitor • External' : 'Registered User')}
+                                    </p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 text-zinc-400">
-                                <Button variant="ghost" size="icon" onClick={() => setIsInfoPanelOpen(!isInfoPanelOpen)}>
-                                    <Layout className="w-5 h-5 text-primary" />
-                                </Button>
-                            </div>
+
+                            {/* Store Mode: Side Panel Toggle */}
+                            {!isPersonalMode && (
+                                <div className="flex items-center gap-2 text-zinc-400">
+                                    <Button variant="ghost" size="icon" onClick={() => setIsInfoPanelOpen(!isInfoPanelOpen)}>
+                                        <Layout className="w-5 h-5 text-primary" />
+                                    </Button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Chat Area */}
                         <ScrollArea className="flex-1 p-4 sm:p-8 bg-[#e5e5e5]">
+                            {/* ... existing chat content ... */}
                             {/* Background Pattern */}
                             <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
 
@@ -662,25 +689,29 @@ const Enquiries = () => {
                                         <DropdownMenuItem onClick={() => setQuoteModalOpen(true)}>
                                             <FileText className="w-4 h-4 mr-2" /> Send Quote/Invoice
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleSendMessage('product', 'MOCK PRODUCT')}>
-                                            <ShoppingBag className="w-4 h-4 mr-2" /> Share Product
-                                        </DropdownMenuItem>
+                                        {!isPersonalMode && (
+                                            <DropdownMenuItem onClick={() => handleSendMessage('product', 'MOCK PRODUCT')}>
+                                                <ShoppingBag className="w-4 h-4 mr-2" /> Share Product
+                                            </DropdownMenuItem>
+                                        )}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
 
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="text-yellow-500"><Zap className="w-4 h-4" /></Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start" className="w-56">
-                                        <DropdownMenuItem onClick={() => insertTemplate("Price list attached below.")}>
-                                            <Tag className="w-4 h-4 mr-2" /> Send Price List
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => insertTemplate("Here is our office location.")}>
-                                            <MapPin className="w-4 h-4 mr-2" /> Share Location
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                {!isPersonalMode && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="text-yellow-500"><Zap className="w-4 h-4" /></Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start" className="w-56">
+                                            <DropdownMenuItem onClick={() => insertTemplate("Price list attached below.")}>
+                                                <Tag className="w-4 h-4 mr-2" /> Send Price List
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => insertTemplate("Here is our office location.")}>
+                                                <MapPin className="w-4 h-4 mr-2" /> Share Location
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
 
                                 <div className="flex-1 relative">
                                     <Input
@@ -706,64 +737,76 @@ const Enquiries = () => {
 
                     </div>
                 ) : (
-                    // EMPTY STATE - DASHBOARD OVERVIEW
-                    <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-white text-center p-8">
-                        <div className="w-20 h-20 bg-zinc-100 rounded-2xl flex items-center justify-center mb-4">
-                            <PieChart className="w-10 h-10 text-zinc-400" />
+                    // EMPTY STATE
+                    isPersonalMode ? (
+                        // Personal Mode Empty State
+                        <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-white text-center p-8">
+                            <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-6">
+                                <MessageSquare className="w-8 h-8 text-zinc-400" />
+                            </div>
+                            <h2 className="text-2xl font-semibold text-zinc-900">Your Conversations</h2>
+                            <p className="text-zinc-500 mt-2 max-w-sm">Select a chat from the sidebar to view messages.</p>
                         </div>
-                        <h1 className="text-2xl font-normal text-zinc-900">Dashboard Overview</h1>
-                        <p className="text-zinc-500 text-sm mt-1 max-w-md">Platform Intelligence Summary</p>
+                    ) : (
+                        // Store Mode Empty State - DASHBOARD OVERVIEW
+                        <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-white text-center p-8">
+                            <div className="w-20 h-20 bg-zinc-100 rounded-2xl flex items-center justify-center mb-4">
+                                <PieChart className="w-10 h-10 text-zinc-400" />
+                            </div>
+                            <h1 className="text-2xl font-normal text-zinc-900">Dashboard Overview</h1>
+                            <p className="text-zinc-500 text-sm mt-1 max-w-md">Platform Intelligence Summary</p>
 
-                        <div className="grid grid-cols-3 gap-6 mt-12 w-full max-w-4xl px-4">
-                            {[
-                                {
-                                    label: 'Total Leads',
-                                    val: stats.total,
-                                    icon: Users,
-                                    color: 'text-blue-600',
-                                    bg: 'bg-blue-50',
-                                    border: 'border-blue-100',
-                                    desc: 'Lifetime enquiries'
-                                },
-                                {
-                                    label: 'Hot Prospects',
-                                    val: stats.new,
-                                    icon: Zap,
-                                    color: 'text-orange-600',
-                                    bg: 'bg-orange-50', // Fixed bg color class
-                                    border: 'border-orange-100',
-                                    desc: stats.new > 0 ? 'Action required' : 'All caught up'
-                                },
-                                {
-                                    label: 'Response Time',
-                                    val: stats.avgResponse,
-                                    icon: Clock,
-                                    color: 'text-green-600',
-                                    bg: 'bg-green-50',
-                                    border: 'border-green-100',
-                                    desc: 'Average specific'
-                                }
-                            ].map((stat, i) => (
-                                <div key={i} className={`p-6 rounded-2xl bg-white border ${stat.border} shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group`}>
-                                    <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110`}>
-                                        <stat.icon className="w-6 h-6" />
+                            <div className="grid grid-cols-3 gap-6 mt-12 w-full max-w-4xl px-4">
+                                {[
+                                    {
+                                        label: 'Total Leads',
+                                        val: stats.total,
+                                        icon: Users,
+                                        color: 'text-blue-600',
+                                        bg: 'bg-blue-50',
+                                        border: 'border-blue-100',
+                                        desc: 'Lifetime enquiries'
+                                    },
+                                    {
+                                        label: 'Hot Prospects',
+                                        val: stats.new,
+                                        icon: Zap,
+                                        color: 'text-orange-600',
+                                        bg: 'bg-orange-50',
+                                        border: 'border-orange-100',
+                                        desc: stats.new > 0 ? 'Action required' : 'All caught up'
+                                    },
+                                    {
+                                        label: 'Response Time',
+                                        val: stats.avgResponse,
+                                        icon: Clock,
+                                        color: 'text-green-600',
+                                        bg: 'bg-green-50',
+                                        border: 'border-green-100',
+                                        desc: 'Average specific'
+                                    }
+                                ].map((stat, i) => (
+                                    <div key={i} className={`p-6 rounded-2xl bg-white border ${stat.border} shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group`}>
+                                        <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110`}>
+                                            <stat.icon className="w-6 h-6" />
+                                        </div>
+                                        <div className="text-3xl font-bold text-zinc-900 mb-1 tracking-tight">{stat.val}</div>
+                                        <div className="font-semibold text-zinc-700 text-sm">{stat.label}</div>
+                                        <div className="text-xs text-zinc-400 mt-2 font-medium">{stat.desc}</div>
                                     </div>
-                                    <div className="text-3xl font-bold text-zinc-900 mb-1 tracking-tight">{stat.val}</div>
-                                    <div className="font-semibold text-zinc-700 text-sm">{stat.label}</div>
-                                    <div className="text-xs text-zinc-400 mt-2 font-medium">{stat.desc}</div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
 
-                        <div className="mt-16 flex flex-col items-center opacity-40">
-                            <Smartphone className="w-12 h-12 mb-4 text-zinc-300 stroke-1" />
-                            <p className="text-zinc-500 text-sm max-w-sm">Select a conversation from the sidebar to view full history, visitor analytics, and smart insights.</p>
+                            <div className="mt-16 flex flex-col items-center opacity-40">
+                                <Smartphone className="w-12 h-12 mb-4 text-zinc-300 stroke-1" />
+                                <p className="text-zinc-500 text-sm max-w-sm">Select a conversation from the sidebar to view full history, visitor analytics, and smart insights.</p>
+                            </div>
                         </div>
-                    </div>
+                    )
                 )}
 
-                {/* --- RIGHT PANEL: INFO SIDEBAR --- */}
-                {activeLead && (
+                {/* --- RIGHT PANEL: INFO SIDEBAR - Store Mode Only --- */}
+                {activeLead && !isPersonalMode && (
                     <div
                         className={`absolute top-0 right-0 h-full w-[350px] bg-background border-l border-border shadow-xl transform transition-transform duration-300 z-50 flex flex-col
                         ${isInfoPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}

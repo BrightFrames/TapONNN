@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface Link {
     id: string;
@@ -29,6 +30,7 @@ const PhonePreview = ({
     links: Link[];
     products?: Product[];
 }) => {
+    const { t } = useTranslation();
     const [previewTab, setPreviewTab] = useState<'links' | 'shop'>('links');
 
     return (
@@ -63,13 +65,13 @@ const PhonePreview = ({
                             onClick={() => setPreviewTab('links')}
                             className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-white/70 hover:text-white'}`}
                         >
-                            Links
+                            {t('dashboard.links')}
                         </button>
                         <button
                             onClick={() => setPreviewTab('shop')}
                             className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-white/70 hover:text-white'}`}
                         >
-                            Shop
+                            {t('dashboard.offerings')}
                         </button>
                     </div>
                 </div>
@@ -89,7 +91,7 @@ const PhonePreview = ({
                                 </a>
                             ))}
                             {links.filter(l => l.isActive).length === 0 && (
-                                <div className="text-center text-white/50 text-sm mt-10">Add links to see them here</div>
+                                <div className="text-center text-white/50 text-sm mt-10">{t('dashboard.addLinksHere')}</div>
                             )}
                         </>
                     ) : (
@@ -100,7 +102,7 @@ const PhonePreview = ({
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-50 text-current" />
                                 <input
                                     type="text"
-                                    placeholder={`Search products`}
+                                    placeholder={t('shop.searchProducts') || "Search products"}
                                     className="w-full pl-8 pr-4 py-2.5 rounded-xl text-xs bg-white/10 backdrop-blur-md border border-white/10 placeholder:text-white/50 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all font-medium text-white"
                                 />
                             </div>
@@ -125,10 +127,10 @@ const PhonePreview = ({
                                                     <span className="font-bold text-sm">${product.price}</span>
                                                     <div className="flex gap-1">
                                                         <button className="h-7 px-2 text-[10px] font-bold rounded-full bg-white border border-gray-200 text-black hover:bg-gray-50">
-                                                            Enquiry
+                                                            {t('shop.enquiry')}
                                                         </button>
                                                         <button className="h-7 px-3 text-[10px] font-bold rounded-full bg-black text-white hover:bg-black/80">
-                                                            Buy
+                                                            {t('common.buy')}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -137,14 +139,16 @@ const PhonePreview = ({
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center text-white/50 text-sm mt-10">No products added yet</div>
+                                <div className="text-center text-white/50 text-sm mt-10">{t('shop.noProducts')}</div>
                             )}
                         </div>
                     )}
                 </div>
 
                 <div className="mt-auto absolute bottom-8 w-full left-0 flex flex-col items-center gap-2">
-                    <button className="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">Join @{username} on Tap2</button>
+                    <button className="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">
+                        {t('common.joinOnTap2', { username })}
+                    </button>
                 </div>
             </div>
         </div>

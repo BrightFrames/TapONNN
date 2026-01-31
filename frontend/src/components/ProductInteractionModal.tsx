@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,15 +42,20 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
         }
     }, [open, initialStep]);
 
+    const { refreshProfile } = useAuth(); // Access auth context
+
     const handleEnquiry = async () => {
         setSubmitting(true);
         const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-        const token = localStorage.getItem('auth_token'); // Might be null for public users (buyers)
+        const token = localStorage.getItem('auth_token');
 
         try {
             const res = await fetch(`${API_URL}/orders`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     seller_id: seller.id || seller._id,
                     product_id: product._id || product.id,
@@ -58,14 +64,27 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
                     buyer_name: formData.name,
                     buyer_email: formData.email,
                     buyer_phone: formData.phone,
-                    transaction_details: formData.message // Storing message in transaction_details for now
+                    intent_id: "preview_intent", // Placeholder if not real intent
+                    transaction_details: formData.message
                 })
             });
 
+            const data = await res.json();
+
             if (res.ok) {
+                // Auto-login if new account created
+                if (data.token && data.new_account) {
+                    localStorage.setItem('auth_token', data.token);
+                    await refreshProfile();
+                    toast.success("Account created successfully!");
+                }
                 setStep('success');
             } else {
-                toast.error("Failed to send enquiry");
+                if (data.code === 'ACCOUNT_EXISTS') {
+                    toast.error(data.error);
+                } else {
+                    toast.error(data.error || "Failed to send enquiry");
+                }
             }
         } catch (error) {
             toast.error("Something went wrong");
@@ -77,11 +96,15 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
     const handlePurchase = async () => {
         setSubmitting(true);
         const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const token = localStorage.getItem('auth_token');
 
         try {
             const res = await fetch(`${API_URL}/orders`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     seller_id: seller.id || seller._id,
                     product_id: product._id || product.id,
@@ -90,14 +113,26 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
                     buyer_name: formData.name,
                     buyer_email: formData.email,
                     buyer_phone: formData.phone,
+                    intent_id: "preview_intent",
                     transaction_details: `Transaction Ref: ${formData.transactionRef}`
                 })
             });
 
+            const data = await res.json();
+
             if (res.ok) {
+                if (data.token && data.new_account) {
+                    localStorage.setItem('auth_token', data.token);
+                    await refreshProfile();
+                    toast.success("Account created successfully!");
+                }
                 setStep('success');
             } else {
-                toast.error("Failed to record order");
+                if (data.code === 'ACCOUNT_EXISTS') {
+                    toast.error(data.error);
+                } else {
+                    toast.error(data.error || "Failed to record order");
+                }
             }
         } catch (error) {
             toast.error("Something went wrong");

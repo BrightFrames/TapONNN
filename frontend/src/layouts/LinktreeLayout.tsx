@@ -22,7 +22,9 @@ import {
     MessageCircle,
     Image,
     Smartphone,
-    Languages
+    Languages,
+    Moon,
+    Sun
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +61,25 @@ const NavItem = ({ icon: Icon, label, active = false, badge, onClick }: { icon: 
 const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { navigate: (path: string) => void, location: { pathname: string }, onClose?: () => void, onShare: () => void, onLogout: () => void }) => {
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
     const { t } = useTranslation();
+    const [isDark, setIsDark] = useState(false);
+
+    useEffect(() => {
+        // Init theme from system or local storage
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        setIsDark(isDarkMode);
+    }, []);
+
+    const toggleTheme = () => {
+        const newDark = !isDark;
+        setIsDark(newDark);
+        if (newDark) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    };
 
     const handleNav = (path: string) => {
         navigate(path);
@@ -69,7 +90,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
     const isStoreMode = user?.active_profile_mode === 'store';
 
     return (
-        <div className="flex flex-col h-full bg-sidebar/50 text-sidebar-foreground">
+        <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
             {/* Profile Switcher */}
             <ProfileSwitcher />
 
@@ -111,6 +132,12 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: { na
                     <h4 className="px-4 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">{t('nav.system')}</h4>
                     <NavItem icon={Settings} label={t('nav.settings')} active={location.pathname === '/settings'} onClick={() => handleNav('/settings')} />
                     <NavItem icon={Languages} label={t('nav.language')} active={false} onClick={() => setIsLanguageOpen(true)} />
+                    <NavItem
+                        icon={isDark ? Sun : Moon}
+                        label={isDark ? "Light Mode" : "Dark Mode"}
+                        active={false}
+                        onClick={toggleTheme}
+                    />
                 </div>
             </div>
 

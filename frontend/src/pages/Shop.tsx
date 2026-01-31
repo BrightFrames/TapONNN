@@ -559,7 +559,7 @@ const Shop = () => {
                                             <div>
                                                 <h3 className="font-semibold text-white">{product.title}</h3>
                                                 <div className="flex items-center gap-2 mt-1">
-                                                    <Badge variant="secondary" className="font-bold border-neutral-800 bg-neutral-800 text-neutral-300">${product.price}</Badge>
+                                                    <Badge variant="secondary" className="font-bold border-neutral-800 bg-neutral-800 text-neutral-300">₹{product.price}</Badge>
                                                     <span className="text-neutral-600">•</span>
                                                     <span className="text-xs text-neutral-500 capitalize">{product.type?.replace('_', ' ')}</span>
                                                 </div>

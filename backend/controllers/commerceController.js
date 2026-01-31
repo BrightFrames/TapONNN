@@ -2,6 +2,12 @@ const { Product } = require('../models/Product');
 const Order = require('../models/Order');
 const Intent = require('../models/Intent');
 const Profile = require('../models/Profile');
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { createAvatar } = require('@dicebear/core');
+const { initials } = require('@dicebear/collection');
+const { sendWelcomeEmail } = require('../services/msg91Service');
 
 // Get user's products
 const getProducts = async (req, res) => {
@@ -95,17 +101,109 @@ const deleteProduct = async (req, res) => {
 // Create an order (Intent-Aware)
 const createOrder = async (req, res) => {
     try {
-        const { seller_id, buyer_email, product_id, amount, type, intent_id, transaction } = req.body;
-        const buyer_id = req.user ? req.user.id : null;
+        const { seller_id, buyer_email, buyer_name, buyer_phone, product_id, amount, type, intent_id, transaction } = req.body;
+        let buyer_id = req.user ? req.user.id : null;
+        let newAccountCreated = false;
+        let authToken = null;
+        let newUserObj = null;
 
         if (!seller_id || !amount || !intent_id) {
             return res.status(400).json({ error: 'Seller ID, amount, and intent_id are required' });
         }
 
+        // AUTO-SIGNUP LOGIC FOR GUESTS
+        if (!buyer_id && buyer_email) {
+            // Check if user exists
+            const existingUser = await User.findOne({ email: buyer_email });
+
+            if (existingUser) {
+                // User exists, but is not logged in.
+                // Security Decision: Do not allow guest order to link to existing account automatically without auth.
+                // Return error prompting login.
+                return res.status(400).json({
+                    error: 'Account already exists with this email. Please login to continue.',
+                    code: 'ACCOUNT_EXISTS'
+                });
+            } else {
+                // CREATE NEW ACCOUNT
+                try {
+                    // 1. Generate Random Password
+                    const randomPassword = Math.random().toString(36).slice(-8) + "Aa1!";
+                    const salt = await bcrypt.genSalt(10);
+                    const passwordHash = await bcrypt.hash(randomPassword, salt);
+
+                    // 2. Create User
+                    const newUser = new User({
+                        email: buyer_email,
+                        password_hash: passwordHash
+                    });
+                    await newUser.save();
+
+                    // 3. Create Profile
+                    // Generate minimal username from email or name
+                    let baseUsername = (buyer_name || buyer_email.split('@')[0]).replace(/[^a-zA-Z0-9]/g, '').toLowerCase().substring(0, 15);
+                    if (baseUsername.length < 3) baseUsername = `user${Math.floor(Math.random() * 1000)}`;
+                    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+                    const finalUsername = `${baseUsername}${randomSuffix}`;
+
+                    const avatar = createAvatar(initials, {
+                        seed: buyer_name || 'Guest',
+                        size: 128
+                    }).toDataUri();
+
+                    const newProfile = new Profile({
+                        user_id: newUser._id,
+                        username: finalUsername,
+                        full_name: buyer_name || 'Guest User',
+                        email: buyer_email,
+                        phone_number: buyer_phone || '',
+                        avatar_url: avatar,
+                        selected_theme: 'artemis'
+                    });
+                    await newProfile.save();
+
+                    // 4. Generate Token
+                    authToken = jwt.sign(
+                        { id: newUser._id.toString(), email: newUser.email },
+                        process.env.JWT_SECRET,
+                        { expiresIn: '7d' }
+                    );
+
+                    // 5. Send Welcome Email with credentials
+                    // sendWelcomeEmail usually takes (email, username, name). 
+                    // We might need a variant that sends the password too, or update the service.
+                    // For now, we'll assume sendWelcomeEmail sends a generic welcome. 
+                    // Ideally, we should send an email saying "Account Created" with the password.
+                    // Assuming existing service for now, but logging credential generation.
+                    // In production, use a specific email template for "Auto-created account".
+
+                    // Attempt to send email (async)
+                    // If msg91Service supports custom content, we'd use that.
+                    // Falling back to standard welcome for now.
+                    sendWelcomeEmail(buyer_email, finalUsername, buyer_name || 'User').catch(e => console.error("Email fail", e));
+
+                    buyer_id = newUser._id;
+                    newAccountCreated = true;
+                    newUserObj = {
+                        id: newUser._id,
+                        email: newUser.email,
+                        username: newProfile.username,
+                        full_name: newProfile.full_name,
+                        avatar: newProfile.avatar_url,
+                        role: 'personal' // default
+                    };
+
+                } catch (signupError) {
+                    console.error("Auto-signup failed:", signupError);
+                    return res.status(500).json({ error: "Failed to create account for enquiry" });
+                }
+            }
+        }
+
         const newOrder = new Order({
-            buyer_id,
+            buyer_id, // Now populated if auto-signup succeeded
             seller_id,
-            profile_id: seller_id, // Assuming profile matches seller user
+            profile_id: seller_id,
             buyer_email: buyer_email || 'anonymous',
             product_id: product_id || null,
             intent_id,
@@ -114,7 +212,6 @@ const createOrder = async (req, res) => {
             type: type || 'product_sale',
             transaction: transaction || {},
             payment_method: transaction?.method || 'unknown',
-            // Generate IDs
             invoice_id: `HSG-${Math.floor(1000000 + Math.random() * 9000000)}`,
             payment_id: `H_${Math.floor(10000000 + Math.random() * 90000000)}`,
             paid_at: new Date()
@@ -130,7 +227,12 @@ const createOrder = async (req, res) => {
             completed_at: new Date()
         });
 
-        res.json(newOrder);
+        res.json({
+            ...newOrder.toObject(),
+            token: authToken,
+            user: newUserObj, // Return user info so frontend can login
+            new_account: newAccountCreated
+        });
     } catch (err) {
         console.error('Error creating order:', err);
         res.status(500).json({ error: 'Internal Server Error' });

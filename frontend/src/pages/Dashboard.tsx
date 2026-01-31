@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { templates } from "@/data/templates";
+import { useTranslation } from "react-i18next";
 import {
     DndContext,
     closestCenter,
@@ -71,6 +72,7 @@ interface Product {
 }
 
 const Dashboard = () => {
+    const { t } = useTranslation();
     const { user, blocks, addBlock, updateBlock, deleteBlock, reorderBlocks, selectedTheme, updateProfile } = useAuth(); // Use blocks instead of links
     // Removed local links state to rely on context or separate local state if needed (using context for now)
     const [isAddingBlock, setIsAddingBlock] = useState(false);
@@ -147,7 +149,7 @@ const Dashboard = () => {
     };
 
     const handleDeleteBlock = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this block?")) return;
+        if (!confirm(t('common.delete') + "?")) return;
         await deleteBlock(id);
     };
 
@@ -178,7 +180,7 @@ const Dashboard = () => {
         const profilePath = user?.active_profile_mode === 'store' ? `/s/${username}` : `/${username}`;
         const url = `${window.location.origin}${profilePath}`;
         navigator.clipboard.writeText(url);
-        toast.success("Profile link copied to clipboard!");
+        toast.success(t('common.copied') || "Profile link copied to clipboard!");
     };
 
     const saveSocialLinks = async (updatedLinks: Record<string, string>) => {
@@ -198,7 +200,7 @@ const Dashboard = () => {
     };
 
     const handleClearAll = async () => {
-        if (!confirm("Are you sure you want to delete ALL blocks?")) return;
+        if (!confirm(t('common.confirm') + "?")) return;
         for (const block of blocks) {
             await deleteBlock(block._id);
         }
@@ -218,8 +220,8 @@ const Dashboard = () => {
                             {/* Title Row */}
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                 <div>
-                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Links</h1>
-                                    <p className="text-gray-500 text-xs sm:text-sm mt-1 hidden sm:block">Manage your profile links • Drag to reorder</p>
+                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('dashboard.title')}</h1>
+                                    <p className="text-gray-500 text-xs sm:text-sm mt-1 hidden sm:block">{t('dashboard.subtitle')}</p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="hidden sm:flex items-center gap-3">
@@ -229,12 +231,12 @@ const Dashboard = () => {
                                             onLinksChange={setSocialPreview}
                                             onOpenChange={(isOpen) => !isOpen && setSocialPreview(null)}
                                         >
-                                            <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50">
-                                                <Instagram className="w-4 h-4" /> Socials
+                                            <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-zinc-200 text-zinc-700 hover:bg-zinc-50">
+                                                <Instagram className="w-4 h-4" /> {t('dashboard.socials')}
                                             </Button>
                                         </SocialLinksDialog>
-                                        <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50">
-                                            <Sparkles className="w-4 h-4" /> Enhance
+                                        <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-zinc-200 text-zinc-700 hover:bg-zinc-50">
+                                            <Sparkles className="w-4 h-4" /> {t('dashboard.enhance')}
                                         </Button>
                                     </div>
 
@@ -267,11 +269,11 @@ const Dashboard = () => {
                                     onOpenChange={(isOpen) => !isOpen && setSocialPreview(null)}
                                 >
                                     <Button variant="outline" className="rounded-full gap-1.5 sm:gap-2 h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50 whitespace-nowrap flex-shrink-0">
-                                        <Instagram className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Socials
+                                        <Instagram className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t('dashboard.socials')}
                                     </Button>
                                 </SocialLinksDialog>
                                 <Button variant="outline" className="rounded-full gap-1.5 sm:gap-2 h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50 whitespace-nowrap flex-shrink-0">
-                                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Enhance
+                                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t('dashboard.enhance')}
                                 </Button>
                             </div>
                         </div>
@@ -280,9 +282,9 @@ const Dashboard = () => {
                         <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8">
                             <Button
                                 onClick={() => setIsAddingBlock(true)}
-                                className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-purple-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
+                                className="flex-1 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-zinc-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
                             >
-                                <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> Add Content
+                                <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> {t('dashboard.addContent')}
                             </Button>
                             <Button
                                 onClick={handleClearAll}
@@ -290,7 +292,7 @@ const Dashboard = () => {
                                 className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 font-medium"
                             >
                                 <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                                <span className="hidden sm:inline ml-2">Clear All</span>
+                                <span className="hidden sm:inline ml-2">{t('dashboard.clearAll')}</span>
                             </Button>
                         </div>
 
@@ -298,13 +300,13 @@ const Dashboard = () => {
                         <div className="space-y-3 sm:space-y-4 pb-6">
                             {localBlocks.filter(b => b.is_active).length === 0 && (
                                 <div className="text-center py-10 sm:py-16 bg-gradient-to-br from-gray-50 to-white rounded-xl sm:rounded-2xl border-2 border-dashed border-gray-200 px-4">
-                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                                        <Link2 className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
+                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-zinc-100 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                                        <Link2 className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-600" />
                                     </div>
-                                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">No links yet</h3>
-                                    <p className="text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6">Add your first block to get started</p>
+                                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">{t('dashboard.noLinks')}</h3>
+                                    <p className="text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6">{t('dashboard.noLinksDesc')}</p>
                                     <Button onClick={() => setIsAddingBlock(true)} variant="outline" className="rounded-full gap-2 text-sm">
-                                        <Plus className="w-4 h-4" /> Add your first block
+                                        <Plus className="w-4 h-4" /> {t('dashboard.addFirstBlock')}
                                     </Button>
                                 </div>
                             )}
@@ -422,14 +424,14 @@ const Dashboard = () => {
                                             onClick={() => setPreviewTab('links')}
                                             className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
                                         >
-                                            Links
+                                            {t('dashboard.links')}
                                         </button>
                                         {user?.active_profile_mode === 'store' && (
                                             <button
                                                 onClick={() => setPreviewTab('shop')}
                                                 className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
                                             >
-                                                Offerings
+                                                {t('dashboard.offerings')}
                                             </button>
                                         )}
                                     </div>
@@ -458,7 +460,7 @@ const Dashboard = () => {
                                         })}
                                         {localBlocks.filter(b => b.is_active).length === 0 && (
                                             <div className={`text-center text-sm py-8 ${currentTemplate.textColor} opacity-60`}>
-                                                Add links to see them here
+                                                {t('dashboard.addLinksHere')}
                                             </div>
                                         )}
                                     </div>
@@ -472,7 +474,7 @@ const Dashboard = () => {
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-50 text-current" />
                                             <input
                                                 type="text"
-                                                placeholder={`Search ${username}'s products`}
+                                                placeholder={t('shop.searchProducts') || `Search ${username}'s products`}
                                                 className="w-full pl-8 pr-4 py-2.5 rounded-xl text-xs bg-white/10 backdrop-blur-md border border-white/10 placeholder:text-current/50 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all font-medium"
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -525,7 +527,7 @@ const Dashboard = () => {
                                                                     rel="noopener noreferrer"
                                                                     className="flex-1 bg-white text-black h-8 rounded-full font-bold text-xs flex items-center justify-center hover:bg-gray-100 transition-colors"
                                                                 >
-                                                                    Connect
+                                                                    {t('common.connect')}
                                                                 </a>
                                                                 <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
                                                                     <Heart className="w-3.5 h-3.5" />
@@ -540,7 +542,7 @@ const Dashboard = () => {
                                             </div>
                                         ) : (
                                             <div className="text-center py-10 opacity-60">
-                                                <p className="text-sm font-medium">No products yet</p>
+                                                <p className="text-sm font-medium">{t('shop.noProducts')}</p>
                                             </div>
                                         )}
                                     </div>
@@ -549,7 +551,7 @@ const Dashboard = () => {
                                 {/* Footer - Connect Button */}
                                 <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-30">
                                     <button className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100">
-                                        <span>Connect</span>
+                                        <span>{t('common.connect')}</span>
                                         <MessageCircle className="w-5 h-5 text-gray-600" />
                                     </button>
                                 </div>
@@ -559,9 +561,9 @@ const Dashboard = () => {
                         {/* Preview Label */}
                         <div className="text-center mt-6">
                             <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
-                                <Smartphone className="w-4 h-4" /> Live Preview
+                                <Smartphone className="w-4 h-4" /> {t('dashboard.livePreview')}
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">Reflects your current theme</p>
+                            <p className="text-xs text-gray-400 mt-1">{t('dashboard.previewDesc')}</p>
                         </div>
                     </div>
                 </div>

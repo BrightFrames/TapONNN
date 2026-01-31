@@ -44,7 +44,10 @@
         "custom": "कस्टम",
         "connect": "कनेक्ट",
         "live": "लाइव",
-        "deep": "गहरा"
+        "live": "लाइव",
+        "deep": "गहरा",
+        "joinOnTap2": "Tap2 पर @{{username}} से जुड़ें",
+        "buy": "खरीदें"
     },
     "settings": {
         "title": "सेटिंग्स",
@@ -119,7 +122,9 @@
         "livePreview": "लाइव पूर्वावलोकन",
         "previewDesc": "आपकी वर्तमान थीम दर्शाता है",
         "links": "लिंक्स",
-        "offerings": "प्रस्ताव"
+        "offerings": "प्रस्ताव",
+        "shop": "दुकान",
+        "previewLabel": "आपकी वर्तमान थीम दर्शाता है"
     },
     "analytics": {
         "title": "विकास अंतर्दृष्टि",

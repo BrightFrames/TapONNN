@@ -43,7 +43,9 @@
         "custom": "Custom",
         "connect": "Connect",
         "live": "Live",
-        "deep": "Deep"
+        "deep": "Deep",
+        "joinOnTap2": "Join @{{username}} on Tap2",
+        "buy": "Buy"
     },
     "settings": {
         "title": "Settings",
@@ -118,7 +120,10 @@
         "livePreview": "Live Preview",
         "previewDesc": "Reflects your current theme",
         "links": "Links",
-        "offerings": "Offerings"
+        "links": "Links",
+        "offerings": "Offerings",
+        "shop": "Shop",
+        "previewLabel": "Reflects your current theme"
     },
     "analytics": {
         "title": "Growth Insights",
