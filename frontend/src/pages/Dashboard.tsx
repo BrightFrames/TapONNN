@@ -241,9 +241,7 @@ const Dashboard = () => {
                                                 <Instagram className="w-4 h-4" /> {t('dashboard.socials')}
                                             </Button>
                                         </SocialLinksDialog>
-                                        <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-zinc-200 text-zinc-700 hover:bg-zinc-50">
-                                            <Sparkles className="w-4 h-4" /> {t('dashboard.enhance')}
-                                        </Button>
+
                                     </div>
 
                                     {/* Profile Link - Mobile responsive */}
@@ -278,9 +276,7 @@ const Dashboard = () => {
                                         <Instagram className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t('dashboard.socials')}
                                     </Button>
                                 </SocialLinksDialog>
-                                <Button variant="outline" className="rounded-full gap-1.5 sm:gap-2 h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium border-purple-200 text-purple-700 hover:bg-purple-50 whitespace-nowrap flex-shrink-0">
-                                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t('dashboard.enhance')}
-                                </Button>
+
                             </div>
                         </div>
 

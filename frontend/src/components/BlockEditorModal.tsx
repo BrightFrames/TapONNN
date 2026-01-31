@@ -127,78 +127,7 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
         }));
     };
 
-    const renderContentFields = () => {
-        // ... (rest of function kept same by not including in replacement range if possible, but here I need to inject UI)
-        // I will just add the thumbnail input above renderContentFields call in the JSX
-        return (
-            <div className="space-y-4">
-                {/* Thumbnail Preview/Input */}
-                <div className="flex items-center gap-4">
-                    <div className="shrink-0 w-16 h-16 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden relative group">
-                        {formData.thumbnail ? (
-                            <img src={formData.thumbnail} alt="Thumbnail" className="w-full h-full object-cover" />
-                        ) : (
-                            <span className="text-xs text-gray-400">Icon</span>
-                        )}
-                    </div>
-                    <div className="flex-1 space-y-2">
-                        <Label>Thumbnail URL (optional)</Label>
-                        <Input
-                            placeholder="https://..."
-                            value={formData.thumbnail || ''}
-                            onChange={(e) => setFormData(prev => ({ ...prev, thumbnail: e.target.value }))}
-                        />
-                        <p className="text-[10px] text-muted-foreground">We automatically fetch icons for common websites.</p>
-                    </div>
-                </div>
 
-                {(() => {
-                    switch (formData.block_type) {
-                        case 'link':
-                            return (
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label>URL</Label>
-                                        <Input
-                                            type="url"
-                                            placeholder="https://example.com"
-                                            value={formData.content.url || ''}
-                                            onChange={(e) => updateContent('url', e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Description (optional)</Label>
-                                        <Textarea
-                                            placeholder="Short description..."
-                                            value={formData.content.description || ''}
-                                            onChange={(e) => updateContent('description', e.target.value)}
-                                            rows={2}
-                                        />
-                                    </div>
-                                </div>
-                            );
-                        // ... I need to include other cases or this replacement will delete them. 
-                        // Since I can't easily replace just "renderContentFields" logic without re-writing it all, 
-                        // I will target the JSX return structure instead.
-                    }
-                })()}
-                {/* Re-implementing switch here locally for the replacement block - actually this is messy. */}
-                {/* Better strategy: Insert useEffect at top, and insert UI in the JSX return */}
-            </div>
-        );
-    };
-
-    // WAIT. I should use separate edits.
-    // 1. Add useEffect.
-    // 2. Add UI input in JSX.
-
-
-    const updateContent = (key: string, value: any) => {
-        setFormData(prev => ({
-            ...prev,
-            content: { ...prev.content, [key]: value }
-        }));
-    };
 
     const renderContentFields = () => {
         switch (formData.block_type) {
