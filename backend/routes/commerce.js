@@ -13,6 +13,9 @@ router.get('/products', authMiddleware, commerceController.getProducts);
 // DELETE /api/products/:productId (Authenticated)
 router.delete('/products/:productId', authMiddleware, commerceController.deleteProduct);
 
+// PUT /api/products/:productId (Authenticated)
+router.put('/products/:productId', authMiddleware, commerceController.updateProduct);
+
 // GET /api/public/products/:username (Public)
 router.get('/public/products/:username', commerceController.getPublicProducts);
 

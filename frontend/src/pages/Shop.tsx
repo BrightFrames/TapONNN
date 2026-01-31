@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, Trash2, MessageSquare, Check, X, Clock, CreditCard } from "lucide-react";
+import { Loader2, Trash2, MessageSquare, Check, X, Clock, CreditCard, Package } from "lucide-react";
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -341,6 +341,32 @@ const Shop = () => {
         }
     };
 
+    const handleToggleProduct = async (id: string, currentStatus: boolean) => {
+        const token = localStorage.getItem('auth_token');
+
+        try {
+            const res = await fetch(`${API_URL}/products/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ is_active: !currentStatus })
+            });
+
+            if (res.ok) {
+                setProducts(products.map(p =>
+                    p._id === id ? { ...p, is_active: !currentStatus } : p
+                ));
+                toast.success(!currentStatus ? "Product enabled" : "Product disabled");
+            } else {
+                toast.error("Failed to toggle product");
+            }
+        } catch (error) {
+            toast.error("Failed to toggle product");
+        }
+    };
+
 
     if (isLoading) {
         return <div className="h-screen w-full flex items-center justify-center bg-gray-50">
@@ -364,429 +390,496 @@ const Shop = () => {
 
     return (
         <LinktreeLayout>
-            <div className="relative h-full">
-                {/* Center Column: Editor */}
-                <div className="max-w-6xl mx-auto py-10 px-4 md:px-8">
+            <div className="flex h-full">
+                {/* Main Editor */}
+                <div className="flex-1 py-8 px-6 md:px-10">
+                    <div className="max-w-2xl mx-auto">
 
-                    {/* Header */}
-                    <div className="flex flex-col gap-4 mb-6">
-                        {/* Title Row */}
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                            <div>
-                                <h1 className="text-xl sm:text-2xl font-bold text-white">Offerings</h1>
-                                <p className="text-neutral-400 text-xs sm:text-sm mt-1 hidden sm:block">Manage your offerings • Add products or services to see them here</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="hidden sm:flex items-center gap-3">
-                                    <SocialLinksDialog
-                                        initialLinks={user?.social_links || {}}
-                                        onSave={async () => { }}
-                                        onLinksChange={() => { }}
-                                        onOpenChange={() => { }}
-                                    >
-                                        <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-purple-500/30 text-purple-400 hover:bg-purple-900/30 bg-transparent">
-                                            <Instagram className="w-4 h-4" /> {t('dashboard.socials')}
-                                        </Button>
-                                    </SocialLinksDialog>
-                                    <Button variant="outline" className="rounded-full gap-2 h-9 px-4 text-sm font-medium border-purple-500/30 text-purple-400 hover:bg-purple-900/30 bg-transparent">
-                                        <Sparkles className="w-4 h-4" /> {t('dashboard.enhance')}
-                                    </Button>
+                        {/* Header */}
+                        <div className="flex flex-col gap-4 mb-6">
+                            {/* Title Row */}
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                <div>
+                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('shop.offerings')}</h1>
+                                    <p className="text-gray-500 text-xs sm:text-sm mt-1 hidden sm:block">{t('shop.manageOfferings')} • {t('shop.dragToReorder')}</p>
                                 </div>
-
-                                {/* Profile Link - Mobile responsive */}
-                                <div className="relative group w-full sm:w-auto">
-                                    <div
-                                        onClick={() => window.open(user?.active_profile_mode === 'store' ? `/s/${username}` : `/${username}`, '_blank')}
-                                        className="bg-neutral-900 hover:bg-neutral-800 transition-colors rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-neutral-400 pr-10 border border-neutral-800 cursor-pointer truncate"
-                                    >
-                                        tap2.me/{user?.active_profile_mode === 'store' ? `s/${username}` : username}
+                                <div className="flex items-center gap-3">
+                                    {/* Profile Link */}
+                                    <div className="relative group w-full sm:w-auto">
+                                        <div
+                                            onClick={() => window.open(`/s/${username}`, '_blank')}
+                                            className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 pr-10 border border-gray-200 cursor-pointer truncate"
+                                        >
+                                            tap2.me/s/{username}
+                                        </div>
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 rounded-full hover:bg-gray-300"
+                                            onClick={() => {
+                                                const url = `${window.location.origin}/s/${username}`;
+                                                navigator.clipboard.writeText(url);
+                                                toast.success("Store link copied!");
+                                            }}
+                                        >
+                                            <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                        </Button>
                                     </div>
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 rounded-full hover:bg-neutral-800 text-white"
-                                        onClick={() => {
-                                            const profilePath = user?.active_profile_mode === 'store' ? `/s/${username}` : `/${username}`;
-                                            const url = `${window.location.origin}${profilePath}`;
-                                            navigator.clipboard.writeText(url);
-                                            toast.success("Profile link copied!");
-                                        }}
-                                    >
-                                        <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                                    </Button>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Add Button & Clear All */}
-                    <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8">
-                        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                            <DialogTrigger asChild>
-                                <Button
-                                    className="flex-1 bg-white hover:bg-neutral-200 text-black rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-white/5 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2 border-none"
-                                >
-                                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> Add Content
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto bg-neutral-900 border-neutral-800 text-white">
-                                <DialogHeader>
-                                    <DialogTitle className="text-white">{t('shop.addNewProduct')}</DialogTitle>
-                                    <DialogDescription className="text-neutral-400">
-                                        {t('shop.addProductDesc')}
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <form onSubmit={handleCreateProduct} className="grid gap-4 py-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="title" className="text-neutral-300">{t('shop.productName')}</Label>
-                                        <Input
-                                            id="title"
-                                            value={newProduct.title}
-                                            onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-                                            required
-                                            className="bg-neutral-800 border-neutral-700 text-white focus:ring-neutral-600 focus:border-neutral-500"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                        {/* Add Button, Socials & Clear All */}
+                        <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8">
+                            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                                <DialogTrigger asChild>
+                                    <Button
+                                        className="w-3/4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-zinc-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
+                                    >
+                                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> {t('dashboard.addContent')}
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
+                                    <DialogHeader>
+                                        <DialogTitle>{t('shop.addNewProduct')}</DialogTitle>
+                                        <DialogDescription>
+                                            {t('shop.addProductDesc')}
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <form onSubmit={handleCreateProduct} className="grid gap-4 py-4">
                                         <div className="grid gap-2">
-                                            <Label htmlFor="price" className="text-neutral-300">{t('shop.price')}</Label>
+                                            <Label htmlFor="title">{t('shop.productName')}</Label>
                                             <Input
-                                                id="price"
-                                                type="number"
-                                                step="0.01"
-                                                value={newProduct.price}
-                                                onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                                                id="title"
+                                                value={newProduct.title}
+                                                onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
                                                 required
-                                                className="bg-neutral-800 border-neutral-700 text-white focus:ring-neutral-600 focus:border-neutral-500"
                                             />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="price">{t('shop.price')}</Label>
+                                                <Input
+                                                    id="price"
+                                                    type="number"
+                                                    step="0.01"
+                                                    value={newProduct.price}
+                                                    onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="type">{t('shop.type')}</Label>
+                                                <Select
+                                                    value={newProduct.type}
+                                                    onValueChange={(val: any) => setNewProduct({ ...newProduct, type: val })}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="digital_product">Digital Product</SelectItem>
+                                                        <SelectItem value="physical_product">Physical Product</SelectItem>
+                                                        <SelectItem value="physical_service">Physical Service</SelectItem>
+                                                        <SelectItem value="digital_service">Digital Service</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
                                         </div>
                                         <div className="grid gap-2">
-                                            <Label htmlFor="type" className="text-neutral-300">{t('shop.type')}</Label>
-                                            <Select
-                                                value={newProduct.type}
-                                                onValueChange={(val: any) => setNewProduct({ ...newProduct, type: val })}
-                                            >
-                                                <SelectTrigger className="bg-neutral-800 border-neutral-700 text-white focus:ring-neutral-600">
-                                                    <SelectValue placeholder="Select type" />
-                                                </SelectTrigger>
-                                                <SelectContent className="bg-neutral-900 border-neutral-800 text-white">
-                                                    <SelectItem value="digital_product">Digital Product</SelectItem>
-                                                    <SelectItem value="physical_product">Physical Product</SelectItem>
-                                                    <SelectItem value="physical_service">Physical Service</SelectItem>
-                                                    <SelectItem value="digital_service">Digital Service</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            <Label htmlFor="desc">Description</Label>
+                                            <Textarea
+                                                id="desc"
+                                                value={newProduct.description}
+                                                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                                            />
                                         </div>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="desc" className="text-neutral-300">Description</Label>
-                                        <Textarea
-                                            id="desc"
-                                            value={newProduct.description}
-                                            onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                                            className="bg-neutral-800 border-neutral-700 text-white focus:ring-neutral-600 focus:border-neutral-500"
-                                        />
-                                    </div>
-                                    {newProduct.type === 'digital_product' && (
+                                        {newProduct.type === 'digital_product' && (
+                                            <>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="url">Product File (Max 15MB)</Label>
+                                                    <FileUpload
+                                                        value={newProduct.file_url}
+                                                        onChange={(url) => setNewProduct({ ...newProduct, file_url: url })}
+                                                        label="Upload Digital Product"
+                                                        maxSizeMB={15}
+                                                        type="product_file"
+                                                    />
+                                                    <div className="text-xs text-gray-500 text-center mt-1">- OR -</div>
+                                                    <Input
+                                                        id="url"
+                                                        type="url"
+                                                        placeholder="https://drive.google.com/file/..."
+                                                        value={newProduct.file_url}
+                                                        onChange={(e) => setNewProduct({ ...newProduct, file_url: e.target.value })}
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
                                         <div className="grid gap-2">
-                                            <Label htmlFor="url" className="text-neutral-300">Product File (Max 15MB)</Label>
-                                            <FileUpload
-                                                value={newProduct.file_url}
-                                                onChange={(url) => setNewProduct({ ...newProduct, file_url: url })}
-                                                label="Upload Digital Product"
-                                                maxSizeMB={15}
-                                                type="product_file"
-                                            />
-                                            <div className="text-xs text-neutral-500 text-center mt-1">- OR -</div>
-                                            <Input
-                                                id="url"
-                                                placeholder="Or enter external download URL..."
-                                                value={newProduct.file_url}
-                                                onChange={(e) => setNewProduct({ ...newProduct, file_url: e.target.value })}
-                                                className="bg-neutral-800 border-neutral-700 text-white focus:ring-neutral-600 focus:border-neutral-500 mt-1"
+                                            <Label>Product Image</Label>
+                                            <ImageUpload
+                                                value={newProduct.image_url}
+                                                onChange={(url) => setNewProduct({ ...newProduct, image_url: url })}
                                             />
                                         </div>
-                                    )}
-                                    <div className="grid gap-2">
-                                        <Label className="text-neutral-300">Product Image</Label>
-                                        <ImageUpload
-                                            value={newProduct.image_url}
-                                            onChange={(url) => setNewProduct({ ...newProduct, image_url: url })}
-                                        />
-                                    </div>
+                                        <DialogFooter>
+                                            <Button type="submit" disabled={isSubmitting} className="w-full">
+                                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                                                {t('shop.createProduct')}
+                                            </Button>
+                                        </DialogFooter>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                            <SocialLinksDialog
+                                initialLinks={user?.social_links || {}}
+                                onSave={async () => { }}
+                                onLinksChange={() => { }}
+                                onOpenChange={() => { }}
+                            >
+                                <Button
+                                    variant="outline"
+                                    className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-medium gap-1.5 sm:gap-2"
+                                >
+                                    <Instagram className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span className="hidden sm:inline">{t('dashboard.socials')}</span>
+                                </Button>
+                            </SocialLinksDialog>
+                            <Button
+                                variant="outline"
+                                className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 font-medium"
+                                onClick={() => toast.info("Clear All functionality coming soon")}
+                            >
+                                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="hidden sm:inline ml-2">{t('dashboard.clearAll')}</span>
+                            </Button>
+                        </div>
 
-                                    {/* Plugin Suggestions */}
-                                    <ProductPluginSuggestions
-                                        plugins={plugins}
-                                        installedPluginIds={installedPluginIds}
-                                        onInstall={handlePluginInstall}
-                                        onConfigure={(plugin) => {
-                                            const installed = installedPlugins.find(p => p.plugin_id._id === plugin._id);
-                                            handleConfigurePlugin(plugin, installed?.config || {});
-                                        }}
-                                        installingId={installingPluginId}
-                                    />
-
-                                    <DialogFooter>
-                                        <Button type="submit" disabled={isSubmitting} className="bg-white text-black hover:bg-neutral-200">
-                                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            Save Product
-                                        </Button>
-                                    </DialogFooter>
-                                </form>
-                            </DialogContent>
-                        </Dialog>
-                        <Button
-                            variant="outline"
-                            className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-red-900/50 text-red-400 hover:bg-red-950/30 hover:text-red-300 font-medium bg-transparent"
-                            onClick={() => toast.info("Clear All functionality to be implemented")}
-                        >
-                            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                            <span className="hidden sm:inline ml-2">{t('dashboard.clearAll')}</span>
-                        </Button>
-                    </div>
-
-                    {/* Products List (Directly rendered, no tabs) */}
-                    <div className="space-y-4">
-                        {loadingProducts ? (
-                            <div className="flex justify-center py-10"><Loader2 className="animate-spin text-neutral-500" /></div>
-                        ) : filteredProducts.length > 0 ? (
-                            <div className="space-y-3">
-                                {filteredProducts.map((product) => (
-                                    <div key={product._id} className="bg-neutral-900 p-4 rounded-xl border border-neutral-800 shadow-sm flex items-center justify-between group hover:border-purple-500/30 transition-colors">
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-neutral-600 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Products List */}
+                        <div className="space-y-3 sm:space-y-4 pb-6">
+                            {loadingProducts ? (
+                                <div className="flex justify-center py-10"><Loader2 className="animate-spin text-gray-400" /></div>
+                            ) : filteredProducts.length > 0 ? (
+                                filteredProducts.map((product) => (
+                                    <div key={product._id} className="bg-white p-4 rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:shadow-md transition-shadow">
+                                        <div className="flex items-center gap-3 sm:gap-4">
+                                            {/* Drag Handle */}
+                                            <div className="text-gray-300 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <GripVertical className="w-5 h-5" />
                                             </div>
-                                            <div className="w-16 h-16 bg-neutral-800 rounded-lg overflow-hidden flex-shrink-0 border border-neutral-700">
+                                            {/* Product Image */}
+                                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
                                                 {product.image_url ? (
                                                     <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-xl bg-neutral-800">🛍️</div>
+                                                    <div className="w-full h-full flex items-center justify-center text-xl bg-gradient-to-br from-purple-100 to-pink-100">🛍️</div>
                                                 )}
                                             </div>
+                                            {/* Product Info */}
                                             <div>
-                                                <h3 className="font-semibold text-white">{product.title}</h3>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <Badge variant="secondary" className="font-bold border-neutral-800 bg-neutral-800 text-neutral-300">₹{product.price}</Badge>
-                                                    <span className="text-neutral-600">•</span>
-                                                    <span className="text-xs text-neutral-500 capitalize">{product.type?.replace('_', ' ')}</span>
+                                                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{product.title}</h3>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className="text-xs sm:text-sm font-bold text-green-600">₹{product.price}</span>
+                                                    <span className="text-gray-300">•</span>
+                                                    <span className="text-xs text-gray-500 capitalize">{product.type?.replace('_', ' ')}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <Button variant="ghost" size="icon" className="text-neutral-500 hover:text-red-400 hover:bg-red-950/30 rounded-full" onClick={() => handleDeleteProduct(product._id)}>
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
+                                        {/* Actions */}
+                                        <div className="flex items-center gap-2">
+                                            <Switch
+                                                checked={product.is_active}
+                                                onCheckedChange={() => handleToggleProduct(product._id, product.is_active)}
+                                            />
+                                            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full" onClick={() => handleDeleteProduct(product._id)}>
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            /* Empty State Card */
-                            <div className="bg-neutral-900 rounded-2xl border border-dashed border-neutral-800 p-10 text-center">
-                                <div className="w-16 h-16 bg-neutral-800 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border border-neutral-700">🛍️</div>
-                                <h3 className="text-lg font-bold text-white mb-1">{t('shop.addFirstProduct')}</h3>
-                                <p className="text-neutral-500 mb-6 font-medium max-w-sm mx-auto">{t('shop.sellDesc')}</p>
-                            </div>
-                        )}
+                                ))
+                            ) : (
+                                <div className="text-center py-10 sm:py-16 bg-gradient-to-br from-gray-50 to-white rounded-xl sm:rounded-2xl border-2 border-dashed border-gray-200 px-4">
+                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-zinc-100 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                                        <Package className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-600" />
+                                    </div>
+                                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">{t('shop.noProducts')}</h3>
+                                    <p className="text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6">{t('shop.noProductsDesc')}</p>
+                                    <Button onClick={() => setIsAddOpen(true)} variant="outline" className="rounded-full gap-2 text-sm">
+                                        <Plus className="w-4 h-4" /> {t('shop.addFirstProduct')}
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* Toggleable Phone Preview Trigger */}
-                <div className="fixed bottom-6 right-6 z-40">
-                    <Button
-                        onClick={() => setShowPreview(true)}
-                        className="rounded-full w-14 h-14 bg-white text-black hover:bg-neutral-200 shadow-2xl flex items-center justify-center"
-                    >
-                        <Smartphone className="w-6 h-6" />
-                    </Button>
-                </div>
+                {/* Phone Preview - Right Side */}
+                <div className="w-[400px] border-l border-gray-100 hidden xl:flex items-center justify-center bg-gradient-to-b from-gray-50 to-white sticky top-0 h-full">
+                    <div className="py-8 px-8 flex flex-col items-center">
+                        {/* Phone Frame */}
+                        <div className="w-[300px] h-[620px] bg-black rounded-[3rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">
+                            {/* Notch */}
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-2xl z-20" />
 
-                {/* Phone Preview Sheet (Slide from skin) */}
-                <Sheet open={showPreview} onOpenChange={setShowPreview}>
-                    <SheetContent side="right" className="w-full sm:w-[480px] p-0 border-l border-neutral-800 bg-neutral-950 flex items-center justify-center">
-                        <div className="relative w-full h-full flex items-center justify-center p-4">
-                            {/* Phone Frame */}
-                            <div className="w-[300px] h-[620px] bg-black rounded-[3rem] border-8 border-neutral-800 shadow-2xl overflow-hidden relative transition-all duration-300 scale-95 sm:scale-100">
-                                {/* Notch */}
-                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-2xl z-20" />
-
-                                {/* Status Bar */}
-                                <div className="h-8 w-full bg-black flex items-center justify-between px-8 text-[10px] text-white font-medium pt-1 z-30 relative">
-                                    <span>9:41</span>
-                                    <div className="flex gap-1.5 items-center">
-                                        <div className="flex gap-0.5">
-                                            <div className="w-1 h-1 bg-white rounded-full" />
-                                            <div className="w-1 h-1 bg-white rounded-full" />
-                                            <div className="w-1 h-1.5 bg-white rounded-full" />
-                                            <div className="w-1 h-2 bg-white rounded-full" />
-                                        </div>
+                            {/* Status Bar */}
+                            <div className="h-8 w-full bg-black flex items-center justify-between px-8 text-[10px] text-white font-medium pt-1 z-30 relative">
+                                <span>9:41</span>
+                                <div className="flex gap-1.5 items-center">
+                                    <div className="flex gap-0.5">
+                                        <div className="w-1 h-1 bg-white rounded-full" />
+                                        <div className="w-1 h-1 bg-white rounded-full" />
+                                        <div className="w-1 h-1.5 bg-white rounded-full" />
+                                        <div className="w-1 h-2 bg-white rounded-full" />
+                                    </div>
+                                    <span className="text-[8px]">5G</span>
+                                    <div className="w-5 h-2.5 border border-white rounded-sm relative">
+                                        <div className="absolute inset-0.5 right-1 bg-white rounded-[1px]" />
+                                        <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-1 bg-white rounded-r" />
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* Screen Content */}
-                                <div
-                                    className={`h-full w-full overflow-y-auto ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor} transition-colors duration-300`}
-                                    style={bgStyle}
-                                >
-                                    {/* Overlay/Backdrop */}
-                                    {currentTemplate.bgImage && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
+                            {/* Screen Content */}
+                            <div
+                                className={`h-full w-full overflow-y-auto p-6 pb-20 ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor}`}
+                                style={bgStyle}
+                            >
+                                {currentTemplate.bgImage && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
 
-                                    {/* Content Container */}
-                                    <div className="relative z-10 pt-10 pb-20 px-4 min-h-full flex flex-col items-center">
+                                {/* Share Button */}
+                                <div className="absolute top-12 right-6 w-8 h-8 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center z-10">
+                                    <ExternalLink className={`w-4 h-4 ${currentTemplate.textColor ? 'opacity-80' : 'text-gray-700'}`} />
+                                </div>
 
-                                        {/* Profile Header */}
-                                        <div className="mb-6 flex flex-col items-center">
-                                            <Avatar className="w-20 h-20 border-2 border-white shadow-lg mb-3">
-                                                <AvatarImage src={user?.avatar} />
-                                                <AvatarFallback className="bg-neutral-700 text-white text-xl font-bold">
-                                                    {userInitial}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <h2 className="text-lg font-bold tracking-tight mb-0.5">@{username}</h2>
+                                <div className="flex flex-col items-center mt-8 space-y-3 relative z-10">
+                                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
+                                        <AvatarImage src={user?.avatar} />
+                                        <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
+                                            {userInitial}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <h2 className="text-xl font-bold tracking-tight">@{username}</h2>
 
-                                            {/* Preview Tabs (Links | Shop) */}
-                                            <div className="mt-4 flex bg-black/30 backdrop-blur-sm p-1 rounded-full border border-white/10">
-                                                <button
-                                                    onClick={() => setPreviewTab('links')}
-                                                    className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-white opacity-70 hover:opacity-100'}`}
-                                                >
-                                                    {t('shop.links')}
-                                                </button>
-                                                <button
-                                                    onClick={() => setPreviewTab('shop')}
-                                                    className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-white opacity-70 hover:opacity-100'}`}
-                                                >
-                                                    {t('shop.title')}
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {/* Links View */}
-                                        {previewTab === 'links' && (
-                                            <div className="w-full space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                                                {/* Socials */}
-                                                <div className="flex gap-3 flex-wrap justify-center mb-4">
-                                                    {user?.social_links && Object.entries(user.social_links).map(([platform, url]) => {
-                                                        if (!url) return null;
-                                                        const Icon = getIconForThumbnail(platform);
-                                                        return Icon ? (
-                                                            <a key={platform} href="#" className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-current hover:scale-110 transition-transform">
-                                                                <Icon className="w-4 h-4" />
-                                                            </a>
-                                                        ) : null;
-                                                    })}
-                                                </div>
-
-                                                {/* Links */}
-                                                {authLinks.filter(l => l.isActive).map((link) => {
-                                                    const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
-                                                    return (
-                                                        <a
-                                                            key={link.id}
-                                                            href="#"
-                                                            className={`block w-full flex items-center justify-center relative p-3.5 rounded-full transition-transform hover:scale-[1.02] active:scale-[0.98] ${currentTemplate.buttonStyle}`}
-                                                        >
-                                                            {Icon && <Icon className="absolute left-4 w-4 h-4 opacity-80" />}
-                                                            <span className="text-sm font-medium truncate max-w-[200px]">{link.title}</span>
-                                                        </a>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-
-                                        {/* Shop View */}
-                                        {previewTab === 'shop' && (
-                                            <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                                                {/* Product Grid */}
-                                                {products.filter(p => p && p._id).length > 0 ? (
-                                                    <div className="grid gap-3">
-                                                        {products.filter(p => p && p._id).map((product, index) => (
-                                                            <div
-                                                                key={product._id || `product-${index}`}
-                                                                className="relative aspect-square w-full rounded-2xl overflow-hidden group shadow-md"
-                                                            >
-                                                                {/* Background Image */}
-                                                                {product.image_url ? (
-                                                                    <img src={product.image_url} alt={product.title} className="absolute inset-0 w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <div className="absolute inset-0 bg-neutral-900 w-full h-full flex items-center justify-center">
-                                                                        <div className="text-4xl opacity-20">✨</div>
-                                                                    </div>
-                                                                )}
-
-                                                                {/* Overlay */}
-                                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
-                                                                {/* Bottom Content */}
-                                                                <div className="absolute bottom-0 left-0 right-0 p-3 z-20 text-white">
-                                                                    <div className="inline-flex items-center gap-1 bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-full text-[8px] font-medium mb-2 border border-white/10">
-                                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                                                                        <span>{user?.name || "User"}</span>
-                                                                    </div>
-                                                                    <h3 className="text-sm font-bold leading-tight mb-1 text-white">{product.title}</h3>
-                                                                    <p className="text-[10px] text-gray-300 line-clamp-1 mb-2 font-light">{product.description}</p>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-center py-10 opacity-60">
-                                                        <p className="text-sm font-medium">No products yet</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                    </div>
-
-                                    {/* Footer - Connect Button */}
-                                    <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-30">
+                                    {/* Tab Switcher */}
+                                    <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
                                         <button
-                                            onClick={() => setConnectModal({
-                                                open: true,
-                                                product: null,
-                                                seller: { id: user?.id || '', name: user?.name || '' }
-                                            })}
-                                            className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100"
+                                            onClick={() => setPreviewTab('links')}
+                                            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
                                         >
-                                            <span>Message {user?.name?.split(' ')[0] || 'User'}</span>
-                                            <MessageCircle className="w-5 h-5 text-gray-600" />
+                                            {t('dashboard.links')}
+                                        </button>
+                                        <button
+                                            onClick={() => setPreviewTab('shop')}
+                                            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
+                                        >
+                                            {t('shop.title')}
                                         </button>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Preview Label */}
-                            <div className="text-center mt-6">
-                                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
-                                    <Share className="w-4 h-4" /> {t('shop.livePreview')}
+                                {/* Links Preview */}
+                                {previewTab === 'links' && (
+                                    <div className="mt-8 space-y-3 relative z-10 w-full px-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                        {authLinks.filter(l => l.isActive).map((link) => {
+                                            const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
+                                            return (
+                                                <a
+                                                    key={link.id}
+                                                    href="#"
+                                                    className={`block w-full flex items-center justify-center relative p-3.5 rounded-full transition-transform hover:scale-[1.02] active:scale-[0.98] ${currentTemplate.buttonStyle}`}
+                                                >
+                                                    {Icon && <Icon className="absolute left-4 w-4 h-4 opacity-80" />}
+                                                    <span className="text-sm font-medium truncate max-w-[200px]">{link.title}</span>
+                                                </a>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+                                {/* Shop Preview */}
+                                {previewTab === 'shop' && (
+                                    <div className="mt-8 space-y-3 relative z-10 w-full px-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                        {products.filter(p => p && p._id && p.is_active).map((product) => (
+                                            <div
+                                                key={product._id}
+                                                className="relative aspect-square w-full rounded-2xl overflow-hidden group shadow-md"
+                                            >
+                                                {product.image_url ? (
+                                                    <img src={product.image_url} alt={product.title} className="absolute inset-0 w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-400 w-full h-full flex items-center justify-center">
+                                                        <div className="text-4xl opacity-40">✨</div>
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                                                <div className="absolute bottom-0 left-0 right-0 p-4">
+                                                    <h4 className="font-bold text-white text-sm truncate">{product.title}</h4>
+                                                    <p className="text-white/80 text-xs font-semibold">₹{product.price}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {products.filter(p => p && p.is_active).length === 0 && (
+                                            <div className="text-center py-8 text-white/50 text-sm">
+                                                No products yet
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Bottom Message Button */}
+                                <div className="absolute bottom-4 left-4 right-4 z-20">
+                                    <button
+                                        className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100"
+                                    >
+                                        <span>Message {user?.name?.split(' ')[0] || 'User'}</span>
+                                        <MessageCircle className="w-5 h-5 text-gray-600" />
+                                    </button>
                                 </div>
-                                <p className="text-xs text-gray-400 mt-1">{t('shop.previewDesc')}</p>
                             </div>
                         </div>
 
-                    </SheetContent>
-                </Sheet>
-
-                <ConnectWithSupplierModal
-                    open={connectModal.open}
-                    onOpenChange={(open) => setConnectModal(prev => ({ ...prev, open }))}
-                    product={connectModal.product}
-                    seller={connectModal.seller}
-                    onSuccess={(newUser) => {
-                        toast.success(`Welcome, ${newUser.full_name}! You are now connected.`);
-                    }}
-                />
-
-                <PluginConfigModal
-                    isOpen={configModalOpen}
-                    onClose={() => setConfigModalOpen(false)}
-                    plugin={selectedPlugin}
-                    currentConfig={selectedConfig}
-                    onSave={savePluginConfig}
-                />
+                        {/* Preview Label */}
+                        <div className="text-center mt-6">
+                            <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
+                                <Smartphone className="w-4 h-4" /> {t('dashboard.livePreview')}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">{t('dashboard.previewDesc')}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </LinktreeLayout >
+
+            {/* Mobile Preview Trigger */}
+            <div className="fixed bottom-6 right-6 z-40 xl:hidden">
+                <Button
+                    onClick={() => setShowPreview(true)}
+                    className="rounded-full w-14 h-14 bg-zinc-900 text-white hover:bg-zinc-800 shadow-2xl flex items-center justify-center"
+                >
+                    <Smartphone className="w-6 h-6" />
+                </Button>
+            </div>
+
+            {/* Mobile Preview Sheet */}
+            <Sheet open={showPreview} onOpenChange={setShowPreview}>
+                <SheetContent side="right" className="w-full sm:max-w-lg p-0 bg-gradient-to-b from-gray-50 to-white">
+                    <div className="h-full flex flex-col items-center justify-center p-6">
+                        {/* Phone Frame - Mobile */}
+                        <div className="w-[280px] h-[560px] bg-black rounded-[2.5rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">
+                            {/* Notch */}
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-b-xl z-20" />
+
+                            {/* Status Bar */}
+                            <div className="h-7 w-full bg-black flex items-center justify-between px-6 text-[9px] text-white font-medium pt-1 z-30 relative">
+                                <span>9:41</span>
+                                <div className="flex gap-1 items-center">
+                                    <span className="text-[7px]">5G</span>
+                                    <div className="w-4 h-2 border border-white rounded-sm relative">
+                                        <div className="absolute inset-0.5 right-0.5 bg-white rounded-[1px]" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Screen Content */}
+                            <div
+                                className={`h-full w-full overflow-y-auto p-5 pb-16 ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor}`}
+                                style={bgStyle}
+                            >
+                                <div className="flex flex-col items-center mt-6 space-y-2 relative z-10">
+                                    <Avatar className="w-20 h-20 border-3 border-white/20 shadow-lg">
+                                        <AvatarImage src={user?.avatar} />
+                                        <AvatarFallback className="bg-gray-400 text-white text-2xl font-bold">
+                                            {userInitial}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <h2 className="text-lg font-bold tracking-tight">@{username}</h2>
+
+                                    {/* Tab Switcher */}
+                                    <div className="mt-3 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
+                                        <button
+                                            onClick={() => setPreviewTab('links')}
+                                            className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all ${previewTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70'}`}
+                                        >
+                                            {t('dashboard.links')}
+                                        </button>
+                                        <button
+                                            onClick={() => setPreviewTab('shop')}
+                                            className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70'}`}
+                                        >
+                                            {t('shop.title')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Shop Preview in Mobile */}
+                                {previewTab === 'shop' && (
+                                    <div className="mt-6 space-y-2 relative z-10 w-full">
+                                        {products.filter(p => p && p._id && p.is_active).map((product) => (
+                                            <div
+                                                key={product._id}
+                                                className="relative aspect-square w-full rounded-xl overflow-hidden shadow-md"
+                                            >
+                                                {product.image_url ? (
+                                                    <img src={product.image_url} alt={product.title} className="absolute inset-0 w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-400" />
+                                                )}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                                                <div className="absolute bottom-0 left-0 right-0 p-3">
+                                                    <h4 className="font-bold text-white text-xs truncate">{product.title}</h4>
+                                                    <p className="text-white/80 text-[10px] font-semibold">₹{product.price}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Links Preview in Mobile */}
+                                {previewTab === 'links' && (
+                                    <div className="mt-6 space-y-2 relative z-10 w-full">
+                                        {authLinks.filter(l => l.isActive).map((link) => (
+                                            <a
+                                                key={link.id}
+                                                href="#"
+                                                className={`block w-full flex items-center justify-center p-3 rounded-full transition-transform ${currentTemplate.buttonStyle}`}
+                                            >
+                                                <span className="text-xs font-medium truncate">{link.title}</span>
+                                            </a>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Bottom Message Button */}
+                                <div className="absolute bottom-3 left-3 right-3 z-20">
+                                    <button className="w-full bg-white text-black h-10 rounded-full font-bold text-xs flex items-center justify-between px-4 shadow-lg border border-gray-100">
+                                        <span>Message {user?.name?.split(' ')[0] || 'User'}</span>
+                                        <MessageCircle className="w-4 h-4 text-gray-600" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
+
+            <ConnectWithSupplierModal
+                open={connectModal.open}
+                onOpenChange={(open) => setConnectModal(prev => ({ ...prev, open }))}
+                product={connectModal.product}
+                seller={connectModal.seller}
+                onSuccess={(newUser) => {
+                    toast.success(`Welcome, ${newUser.full_name}! You are now connected.`);
+                }}
+            />
+
+            <PluginConfigModal
+                isOpen={configModalOpen}
+                onClose={() => setConfigModalOpen(false)}
+                plugin={selectedPlugin}
+                currentConfig={selectedConfig}
+                onSave={savePluginConfig}
+            />
+        </LinktreeLayout>
     );
 };
 

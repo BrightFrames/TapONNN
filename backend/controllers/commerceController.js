@@ -98,6 +98,35 @@ const deleteProduct = async (req, res) => {
     }
 };
 
+// Update a product
+const updateProduct = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { productId } = req.params;
+        const updates = req.body;
+
+        // Remove fields that shouldn't be updated directly
+        delete updates._id;
+        delete updates.user_id;
+        delete updates.created_at;
+
+        const product = await Product.findOneAndUpdate(
+            { _id: productId, user_id: userId },
+            { $set: updates },
+            { new: true }
+        );
+
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found or unauthorized' });
+        }
+
+        res.json(product);
+    } catch (err) {
+        console.error('Error updating product:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 // Create an order (Intent-Aware)
 const createOrder = async (req, res) => {
     try {
@@ -300,6 +329,7 @@ module.exports = {
     getPublicProducts,
     createProduct,
     deleteProduct,
+    updateProduct,
     createOrder,
     getOrders,
     updateOrderStatus
