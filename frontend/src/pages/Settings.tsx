@@ -63,9 +63,6 @@ const Settings = () => {
     const [hasStore, setHasStore] = useState(false);
     const [storePublished, setStorePublished] = useState(false);
     const [storeShareOpen, setStoreShareOpen] = useState(false);
-    const [hasStore, setHasStore] = useState(false);
-    const [storePublished, setStorePublished] = useState(false);
-    const [storeShareOpen, setStoreShareOpen] = useState(false);
     const [savingStore, setSavingStore] = useState(false);
     const [installedPlugins, setInstalledPlugins] = useState<Plugin[]>([]);
 
