@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { ThumbnailSelector } from "@/components/ThumbnailSelector";
 import { getIconForThumbnail } from "@/utils/socialIcons";
@@ -165,21 +166,11 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                         </button>
 
                         {/* Toggle */}
-                        <button
-                            onClick={() => onUpdate(link.id, 'isActive', !link.isActive)}
-                            className={`
-                                w-11 h-6 rounded-full transition-colors duration-200 relative
-                                ${link.isActive ? 'bg-[#43E660]' : 'bg-zinc-700'}
-                            `}
-                        >
-                            <div
-                                className={`
-                                    absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md border-2
-                                    transition-all duration-200
-                                    ${link.isActive ? 'right-0.5 border-[#43E660]/20' : 'left-0.5 border-zinc-600/20'}
-                                `}
-                            />
-                        </button>
+                        <Switch
+                            checked={link.isActive}
+                            onCheckedChange={() => onUpdate(link.id, 'isActive', !link.isActive)}
+                            className="data-[state=checked]:bg-green-500"
+                        />
 
                         {/* More Menu */}
                         <DropdownMenu>

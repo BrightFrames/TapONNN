@@ -15,7 +15,6 @@ import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 import useIntent, { getPendingIntent, clearPendingIntent } from "@/hooks/useIntent";
 import { toast } from "sonner";
 import { getIconForThumbnail } from "@/utils/socialIcons";
-import { ExploreSection } from "@/components/ExploreSection";
 import { useAnalytics } from "@/hooks/useAnalytics";
 
 
@@ -36,9 +35,10 @@ const PublicProfile = () => {
     const [profile, setProfile] = useState<any>(null);
     const [blocks, setBlocks] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState<'links' | 'offerings' | 'explore'>('links');
+    const [activeTab, setActiveTab] = useState<'links' | 'offerings'>('links');
     const [searchQuery, setSearchQuery] = useState('');
     const [notFound, setNotFound] = useState(false);
+    const [likedProductIds, setLikedProductIds] = useState<Set<string>>(new Set());
 
     // Modals State
     const [shareOpen, setShareOpen] = useState(false);
@@ -157,6 +157,56 @@ const PublicProfile = () => {
             setNotFound(true);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Fetch Liked Products
+    useEffect(() => {
+        const fetchLikedProducts = async () => {
+            if (!authUser) return;
+            try {
+                const response = await fetch(`${API_URL}/products/liked`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setLikedProductIds(new Set(data.likedProductIds || []));
+                }
+            } catch (error) {
+                console.error('Error fetching liked products:', error);
+            }
+        };
+        fetchLikedProducts();
+    }, [authUser, API_URL]);
+
+    const handleLike = async (productId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!authUser) {
+            toast.error("Please login to like products");
+            return;
+        }
+
+        const isLiked = likedProductIds.has(productId);
+
+        // Optimistic Update
+        const newLikedIds = new Set(likedProductIds);
+        if (isLiked) {
+            newLikedIds.delete(productId);
+        } else {
+            newLikedIds.add(productId);
+        }
+        setLikedProductIds(newLikedIds);
+
+        try {
+            await fetch(`${API_URL}/products/${productId}/like`, {
+                method: isLiked ? 'DELETE' : 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+        } catch (error) {
+            console.error('Error toggling like:', error);
+            // Revert on error
+            setLikedProductIds(likedProductIds);
+            toast.error("Failed to update like");
         }
     };
 
@@ -375,22 +425,16 @@ const PublicProfile = () => {
                             onClick={() => setActiveTab('links')}
                             className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
                         >
-                            Links
+                            Profile
                         </button>
                         {profile?.is_store_identity && (
                             <button
                                 onClick={() => setActiveTab('offerings')}
                                 className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'offerings' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
                             >
-                                Offerings
+                                Shop
                             </button>
                         )}
-                        <button
-                            onClick={() => setActiveTab('explore')}
-                            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'explore' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
-                        >
-                            Explore
-                        </button>
                     </div>
                 </div>
 
@@ -481,8 +525,21 @@ const PublicProfile = () => {
                                             <h3 className="text-base font-bold leading-tight mb-1 text-white">{product.title}</h3>
                                             <p className="text-xs text-gray-300 line-clamp-1 mb-3 font-light">{product.description}</p>
 
-                                            {/* Action Row */}
                                             <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setEnquiryModal({
+                                                            open: true,
+                                                            blockId: product._id, // Using product ID as block ID for context
+                                                            blockTitle: product.title,
+                                                            ctaType: 'enquiry',
+                                                            intentId: ''
+                                                        });
+                                                    }}
+                                                    className="flex-1 bg-white/10 text-white h-10 rounded-full font-bold text-sm flex items-center justify-center hover:bg-white/20 transition-colors border border-white/10"
+                                                >
+                                                    Enquire Now
+                                                </button>
                                                 <button
                                                     onClick={() => {
                                                         // Track Product Click
@@ -510,8 +567,11 @@ const PublicProfile = () => {
                                                 >
                                                     Buy Now
                                                 </button>
-                                                <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
-                                                    <Heart className="w-4 h-4" />
+                                                <button
+                                                    onClick={(e) => handleLike(product._id, e)}
+                                                    className={`w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors border border-white/10 ${likedProductIds.has(product._id) ? 'text-red-500 fill-current' : 'text-white'}`}
+                                                >
+                                                    <Heart className={`w-4 h-4 ${likedProductIds.has(product._id) ? 'fill-red-500' : ''}`} />
                                                 </button>
                                                 <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
                                                     <Share className="w-4 h-4" />
@@ -529,14 +589,7 @@ const PublicProfile = () => {
                     </div>
                 )}
 
-                {/* Explore View */}
-                {activeTab === 'explore' && (
-                    <div className="mt-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        <div className="bg-black/5 backdrop-blur-sm rounded-3xl p-4 border border-white/5">
-                            <ExploreSection hideHeader />
-                        </div>
-                    </div>
-                )}
+
             </div>
 
             {/* Footer - Connect Button - Match Phone Preview - ENHANCED UI */}
@@ -557,7 +610,12 @@ const PublicProfile = () => {
                         <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-r from-transparent via-white to-transparent -skew-x-12 translate-x-[-100%] group-hover:animate-shimmer" />
 
                         <div className="relative flex items-center justify-between px-6 h-full text-white">
-                            <span className="font-bold text-lg tracking-wide">Message {profile.name?.split(' ')[0] || profile.username || 'User'}</span>
+                            <span className="font-bold text-lg tracking-wide">
+                                {activeTab === 'links'
+                                    ? `Message ${profile.name?.split(' ')[0] || profile.username || 'User'}`
+                                    : 'Connect with Seller'
+                                }
+                            </span>
                             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/20 transition-all duration-300">
                                 <MessageCircle className="w-5 h-5 text-white" />
                             </div>

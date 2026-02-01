@@ -226,7 +226,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
                     <div className="space-y-[1px]">
                         <SidebarItem
                             icon={ShoppingBag}
-                            label="Offerings"
+                            label="Shop"
                             to="/dashboard/business"
                             active={location.pathname === "/dashboard/business"}
                             count={12}

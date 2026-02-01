@@ -280,6 +280,31 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
+                    {/* Block Type Selector */}
+                    <div className="space-y-2">
+                        <Label>Block Type *</Label>
+                        <Select
+                            value={formData.block_type}
+                            onValueChange={(value) => setFormData(prev => ({ ...prev, block_type: value }))}
+                            disabled={!!block?._id} // Disable editing type for existing blocks
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select block type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="link">🔗 Link</SelectItem>
+                                <SelectItem value="product">🛍️ Product</SelectItem>
+                                <SelectItem value="service">💼 Service</SelectItem>
+                                <SelectItem value="contact_card">📞 Contact Card</SelectItem>
+                                <SelectItem value="whatsapp">💬 WhatsApp</SelectItem>
+                                <SelectItem value="text">📝 Text</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {block?._id && (
+                            <p className="text-xs text-muted-foreground">Block type cannot be changed after creation</p>
+                        )}
+                    </div>
+
                     {/* Title */}
                     <div className="space-y-2">
                         <Label>Title *</Label>

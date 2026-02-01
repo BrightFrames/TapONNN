@@ -170,7 +170,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: {
                     />
                     <NavItem
                         icon={Store}
-                        label={t('nav.offerings')}
+                        label="Shop"
                         active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')}
                         onClick={() => handleNav('/dashboard/business?tab=shop')}
                     />

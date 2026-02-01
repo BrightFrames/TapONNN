@@ -344,6 +344,19 @@ const Shop = () => {
     const handleToggleProduct = async (id: string, currentStatus: boolean) => {
         const token = localStorage.getItem('auth_token');
 
+        if (!token) {
+            toast.error("Please log in to toggle products");
+            return;
+        }
+
+        const newStatus = !currentStatus;
+        console.log(`[Toggle] Product ${id}: ${currentStatus} -> ${newStatus}`);
+
+        // Optimistic update
+        setProducts(products.map(p =>
+            p._id === id ? { ...p, is_active: newStatus } : p
+        ));
+
         try {
             const res = await fetch(`${API_URL}/products/${id}`, {
                 method: 'PUT',
@@ -351,19 +364,38 @@ const Shop = () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ is_active: !currentStatus })
+                body: JSON.stringify({ is_active: newStatus })
             });
 
-            if (res.ok) {
+            if (!res.ok) {
+                // Revert on error
                 setProducts(products.map(p =>
-                    p._id === id ? { ...p, is_active: !currentStatus } : p
+                    p._id === id ? { ...p, is_active: currentStatus } : p
                 ));
-                toast.success(!currentStatus ? "Product enabled" : "Product disabled");
-            } else {
-                toast.error("Failed to toggle product");
+
+                const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+                console.error('[Toggle] Error:', errorData);
+                toast.error(errorData.error || "Failed to toggle product");
+                return;
             }
+
+            const updatedProduct = await res.json();
+            console.log('[Toggle] Success:', updatedProduct);
+
+            // Update with server response to ensure sync
+            setProducts(products.map(p =>
+                p._id === id ? { ...p, is_active: updatedProduct.is_active } : p
+            ));
+
+            toast.success(newStatus ? "Product enabled" : "Product disabled");
         } catch (error) {
-            toast.error("Failed to toggle product");
+            // Revert on error
+            setProducts(products.map(p =>
+                p._id === id ? { ...p, is_active: currentStatus } : p
+            ));
+
+            console.error('[Toggle] Network error:', error);
+            toast.error("Failed to toggle product. Please check your connection.");
         }
     };
 
@@ -400,8 +432,8 @@ const Shop = () => {
                             {/* Title Row */}
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                 <div>
-                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('shop.offerings')}</h1>
-                                    <p className="text-gray-500 text-xs sm:text-sm mt-1 hidden sm:block">{t('shop.manageOfferings')} • {t('shop.dragToReorder')}</p>
+                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Shop</h1>
+                                    <p className="text-gray-500 text-xs sm:text-sm mt-1 hidden sm:block">Manage your products • Drag to reorder</p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     {/* Profile Link */}
@@ -567,10 +599,10 @@ const Shop = () => {
                                 <div className="flex justify-center py-10"><Loader2 className="animate-spin text-gray-400" /></div>
                             ) : filteredProducts.length > 0 ? (
                                 filteredProducts.map((product) => (
-                                    <div key={product._id} className="bg-white p-4 rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:shadow-md transition-shadow">
+                                    <div key={product._id} className="bg-zinc-900 p-4 rounded-xl sm:rounded-2xl border border-zinc-800 shadow-sm flex items-center justify-between group hover:shadow-md transition-shadow">
                                         <div className="flex items-center gap-3 sm:gap-4">
                                             {/* Drag Handle */}
-                                            <div className="text-gray-300 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="text-zinc-500 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <GripVertical className="w-5 h-5" />
                                             </div>
                                             {/* Product Image */}
@@ -583,11 +615,11 @@ const Shop = () => {
                                             </div>
                                             {/* Product Info */}
                                             <div>
-                                                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{product.title}</h3>
+                                                <h3 className="font-semibold text-white text-sm sm:text-base">{product.title}</h3>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="text-xs sm:text-sm font-bold text-green-600">₹{product.price}</span>
-                                                    <span className="text-gray-300">•</span>
-                                                    <span className="text-xs text-gray-500 capitalize">{product.type?.replace('_', ' ')}</span>
+                                                    <span className="text-xs sm:text-sm font-bold text-green-400">₹{product.price}</span>
+                                                    <span className="text-zinc-600">•</span>
+                                                    <span className="text-xs text-zinc-400 capitalize">{product.type?.replace('_', ' ')}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -596,6 +628,7 @@ const Shop = () => {
                                             <Switch
                                                 checked={product.is_active}
                                                 onCheckedChange={() => handleToggleProduct(product._id, product.is_active)}
+                                                className="data-[state=checked]:bg-green-500"
                                             />
                                             <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full" onClick={() => handleDeleteProduct(product._id)}>
                                                 <Trash2 className="w-4 h-4" />
@@ -620,7 +653,7 @@ const Shop = () => {
                 </div>
 
                 {/* Phone Preview - Right Side */}
-                <div className="w-[400px] border-l border-gray-100 hidden xl:flex items-center justify-center bg-gradient-to-b from-gray-50 to-white sticky top-0 h-full">
+                <div className="w-[400px] border-l border-zinc-800 hidden xl:flex items-center justify-center bg-[#0A0A0A] sticky top-0 h-full">
                     <div className="py-8 px-8 flex flex-col items-center">
                         {/* Phone Frame */}
                         <div className="w-[300px] h-[620px] bg-black rounded-[3rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">

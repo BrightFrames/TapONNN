@@ -408,22 +408,22 @@ const Enquiries = () => {
     const isPersonalMode = user?.active_profile_mode === 'personal';
 
     return (
-        <div className="h-screen w-full bg-zinc-100 flex items-center justify-center p-0 sm:p-2 overflow-hidden font-sans">
+        <div className="h-screen w-full bg-zinc-950 flex items-center justify-center p-0 sm:p-2 overflow-hidden font-sans">
             {/* Main Window */}
-            <div className="w-full h-full sm:h-[95vh] sm:w-[98vw] max-w-[1700px] bg-background rounded-none sm:rounded-xl shadow-2xl border border-border flex overflow-hidden relative">
+            <div className="w-full h-full sm:h-[95vh] sm:w-[98vw] max-w-[1700px] bg-zinc-900 rounded-none sm:rounded-xl shadow-2xl border border-zinc-800 flex overflow-hidden relative">
 
                 {/* --- LEFT PANEL: LEADS LIST --- */}
-                <div className="w-full sm:w-[350px] md:w-[380px] flex flex-col border-r border-border bg-white z-20 shrink-0">
+                <div className="w-full sm:w-[350px] md:w-[380px] flex flex-col border-r border-zinc-800 bg-zinc-900 z-20 shrink-0">
 
                     {/* Header */}
-                    <div className="h-16 px-4 border-b border-border flex items-center justify-between shrink-0 bg-white/50 backdrop-blur">
+                    <div className="h-16 px-4 border-b border-zinc-800 flex items-center justify-between shrink-0 bg-zinc-900/50 backdrop-blur">
                         <div className="flex items-center gap-3">
                             <Avatar className="w-9 h-9 border">
                                 <AvatarImage src={user?.avatar || user?.photo_url} />
                                 <AvatarFallback>{user?.username?.[0] || 'ME'}</AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col">
-                                <span className="font-medium text-sm text-foreground">{user?.username || 'My Profile'}</span>
+                                <span className="font-medium text-sm text-white">{user?.username || 'My Profile'}</span>
                                 {!isPersonalMode && (
                                     <span className="text-[10px] text-green-600 font-bold tracking-wide flex items-center gap-1">
                                         <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse"></span> ONLINE
@@ -445,12 +445,12 @@ const Enquiries = () => {
                     </div>
 
                     {/* Search & Filter */}
-                    <div className="p-3 border-b border-border space-y-3">
+                    <div className="p-3 border-b border-zinc-800 space-y-3">
                         <div className="relative">
                             <Search className="absolute left-3 top-2.5 text-muted-foreground w-4 h-4" />
                             <Input
                                 placeholder={isPersonalMode ? "Search messages..." : "Search leads..."}
-                                className="pl-9 h-9 bg-muted/30"
+                                className="pl-9 h-9 bg-zinc-800/50 text-white border-zinc-700"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -466,7 +466,7 @@ const Enquiries = () => {
                     </div>
 
                     {/* Leads List */}
-                    <ScrollArea className="flex-1 bg-white">
+                    <ScrollArea className="flex-1 bg-zinc-900">
                         {isLoading ? (
                             <div className="flex items-center justify-center h-64">
                                 <div className="text-sm text-muted-foreground">Loading...</div>
@@ -476,7 +476,7 @@ const Enquiries = () => {
                                 <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4">
                                     <MessageSquare className="w-7 h-7 text-zinc-300" />
                                 </div>
-                                <h3 className="text-sm font-semibold text-zinc-900">No messages yet</h3>
+                                <h3 className="text-sm font-semibold text-white">No messages yet</h3>
                                 <p className="text-xs text-muted-foreground mt-2 max-w-[200px] leading-relaxed">
                                     Share your profile link to start receiving messages.
                                 </p>
@@ -487,13 +487,13 @@ const Enquiries = () => {
                                     key={lead.id}
                                     onClick={() => isBulkMode ? toggleSelect(lead.id) : setActiveId(lead.id)}
                                     className={`
-                                        group flex items-start gap-4 p-4 cursor-pointer border-b border-zinc-100 transition-all duration-200 relative overflow-hidden
-                                        ${activeId === lead.id && !isBulkMode ? 'bg-blue-50/50' : 'hover:bg-zinc-50'}
+                                        group flex items-start gap-4 p-4 cursor-pointer border-b border-zinc-800 transition-all duration-200 relative overflow-hidden
+                                        ${activeId === lead.id && !isBulkMode ? 'bg-zinc-800/50' : 'hover:bg-zinc-800/30'}
                                     `}
                                 >
                                     {/* Active Indicator Bar */}
                                     {activeId === lead.id && !isBulkMode && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r-full" />
+                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-400 rounded-r-full" />
                                     )}
 
                                     {isBulkMode ? (
@@ -526,7 +526,7 @@ const Enquiries = () => {
 
                                     <div className="flex-1 min-w-0 flex flex-col gap-1">
                                         <div className="flex justify-between items-center">
-                                            <span className={`text-sm truncate ${lead.status === 'unread' ? 'font-bold text-zinc-900' : 'font-semibold text-zinc-700'}`}>
+                                            <span className={`text-sm truncate ${lead.status === 'unread' ? 'font-bold text-white' : 'font-semibold text-zinc-300'}`}>
                                                 {lead.name}
                                             </span>
                                             <span className={`text-[10px] tabular-nums shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded-full ${lead.status === 'unread' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-zinc-400 bg-zinc-50'}`}>
@@ -534,7 +534,7 @@ const Enquiries = () => {
                                             </span>
                                         </div>
 
-                                        <p className={`text-xs truncate ${lead.status === 'unread' ? 'text-zinc-800 font-medium' : 'text-zinc-500'}`}>
+                                        <p className={`text-xs truncate ${lead.status === 'unread' ? 'text-zinc-300 font-medium' : 'text-zinc-500'}`}>
                                             {lead.preview}
                                         </p>
 
@@ -580,7 +580,7 @@ const Enquiries = () => {
                 {activeLead ? (
                     <div className="flex flex-col flex-1 h-full w-full relative bg-zinc-50/50">
                         {/* Chat Header */}
-                        <div className="h-20 px-6 bg-white/90 border-b border-border flex items-center justify-between shrink-0 backdrop-blur-xl z-20 sticky top-0">
+                        <div className="h-20 px-6 bg-zinc-900/90 border-b border-zinc-800 flex items-center justify-between shrink-0 backdrop-blur-xl z-20 sticky top-0">
                             <div className="flex items-center gap-4 cursor-pointer" onClick={() => !isPersonalMode && setIsInfoPanelOpen(!isInfoPanelOpen)}>
                                 <Avatar className="w-11 h-11 border-2 border-white shadow-sm ring-1 ring-zinc-100">
                                     <AvatarImage src={activeLead.avatar} />
@@ -588,7 +588,7 @@ const Enquiries = () => {
                                 </Avatar>
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2">
-                                        <h2 className="font-semibold text-sm text-zinc-900">{activeLead.name}</h2>
+                                        <h2 className="font-semibold text-sm text-white">{activeLead.name}</h2>
 
                                         {/* Store Mode: Lead Score */}
                                         {!isPersonalMode && (
@@ -620,7 +620,7 @@ const Enquiries = () => {
                         </div>
 
                         {/* Chat Area */}
-                        <ScrollArea className="flex-1 p-4 sm:p-8 bg-[#e5e5e5]">
+                        <ScrollArea className="flex-1 p-4 sm:p-8 bg-zinc-950">
                             {/* ... existing chat content ... */}
                             {/* Background Pattern */}
                             <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
@@ -740,21 +740,21 @@ const Enquiries = () => {
                     // EMPTY STATE
                     isPersonalMode ? (
                         // Personal Mode Empty State
-                        <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-white text-center p-8">
+                        <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-zinc-900 text-center p-8">
                             <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-6">
                                 <MessageSquare className="w-8 h-8 text-zinc-400" />
                             </div>
-                            <h2 className="text-2xl font-semibold text-zinc-900">Your Conversations</h2>
-                            <p className="text-zinc-500 mt-2 max-w-sm">Select a chat from the sidebar to view messages.</p>
+                            <h2 className="text-2xl font-semibold text-white">Your Conversations</h2>
+                            <p className="text-zinc-400 mt-2 max-w-sm">Select a chat from the sidebar to view messages.</p>
                         </div>
                     ) : (
                         // Store Mode Empty State - DASHBOARD OVERVIEW
-                        <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-white text-center p-8">
+                        <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-zinc-900 text-center p-8">
                             <div className="w-20 h-20 bg-zinc-100 rounded-2xl flex items-center justify-center mb-4">
                                 <PieChart className="w-10 h-10 text-zinc-400" />
                             </div>
-                            <h1 className="text-2xl font-normal text-zinc-900">Dashboard Overview</h1>
-                            <p className="text-zinc-500 text-sm mt-1 max-w-md">Platform Intelligence Summary</p>
+                            <h1 className="text-2xl font-normal text-white">Dashboard Overview</h1>
+                            <p className="text-zinc-400 text-sm mt-1 max-w-md">Platform Intelligence Summary</p>
 
                             <div className="grid grid-cols-3 gap-6 mt-12 w-full max-w-4xl px-4">
                                 {[
@@ -786,13 +786,13 @@ const Enquiries = () => {
                                         desc: 'Average specific'
                                     }
                                 ].map((stat, i) => (
-                                    <div key={i} className={`p-6 rounded-2xl bg-white border ${stat.border} shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group`}>
+                                    <div key={i} className={`p-6 rounded-2xl bg-zinc-800 border ${stat.border} shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group`}>
                                         <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110`}>
                                             <stat.icon className="w-6 h-6" />
                                         </div>
-                                        <div className="text-3xl font-bold text-zinc-900 mb-1 tracking-tight">{stat.val}</div>
-                                        <div className="font-semibold text-zinc-700 text-sm">{stat.label}</div>
-                                        <div className="text-xs text-zinc-400 mt-2 font-medium">{stat.desc}</div>
+                                        <div className="text-3xl font-bold text-white mb-1 tracking-tight">{stat.val}</div>
+                                        <div className="font-semibold text-zinc-200 text-sm">{stat.label}</div>
+                                        <div className="text-xs text-zinc-500 mt-2 font-medium">{stat.desc}</div>
                                     </div>
                                 ))}
                             </div>

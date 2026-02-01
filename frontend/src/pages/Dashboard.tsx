@@ -433,7 +433,7 @@ const Dashboard = () => {
                                                 onClick={() => setPreviewTab('shop')}
                                                 className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
                                             >
-                                                {t('dashboard.offerings')}
+                                                Shop
                                             </button>
                                         )}
                                     </div>
