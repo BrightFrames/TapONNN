@@ -144,7 +144,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: {
                 <ProfileSwitcher />
             </div>
 
-            {/* Main Navigation */}
+            {/* Main Navigation - Scrollable */}
             <nav className="flex-1 px-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 hover:scrollbar-thumb-zinc-700 py-2">
 
                 <SidebarSectionTitle>{t('nav.manage')}</SidebarSectionTitle>
@@ -226,7 +226,10 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: {
                         onClick={() => handleNav('/marketplace')}
                     />
                 </div>
+            </nav>
 
+            {/* Fixed System Section with Separator */}
+            <div className="border-t border-[#1A1A1A] px-1 pt-2 pb-1 bg-[#050505]">
                 <SidebarSectionTitle>{t('nav.system')}</SidebarSectionTitle>
                 <div className="space-y-[1px]">
                     <NavItem
@@ -242,7 +245,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: {
                         onClick={() => setIsLanguageOpen(true)}
                     />
                 </div>
-            </nav>
+            </div>
 
             {/* Language Dialog */}
             <LanguageSelectorDialog open={isLanguageOpen} onOpenChange={setIsLanguageOpen} />
