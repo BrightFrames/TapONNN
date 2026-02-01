@@ -115,7 +115,7 @@ const Dashboard = () => {
     const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
     const [selectedConfig, setSelectedConfig] = useState<Record<string, any>>({});
 
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
     // Sensors for drag and drop
     const sensors = useSensors(
@@ -404,8 +404,8 @@ const Dashboard = () => {
                             {/* Title Row */}
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                 <div>
-                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('dashboard.title')}</h1>
-                                    <p className="text-gray-500 text-xs sm:text-sm mt-1 hidden sm:block">{t('dashboard.subtitle')}</p>
+                                    <h1 className="text-xl sm:text-2xl font-bold text-white">{t('dashboard.title')}</h1>
+                                    <p className="text-zinc-400 text-xs sm:text-sm mt-1 hidden sm:block">{t('dashboard.subtitle')}</p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="hidden sm:flex items-center gap-3">
@@ -421,7 +421,7 @@ const Dashboard = () => {
                                                 const url = `${window.location.origin}${path}`;
                                                 window.open(url, '_blank');
                                             }}
-                                            className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 pr-10 border border-gray-200 cursor-pointer truncate max-w-[200px]"
+                                            className="bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-zinc-300 pr-10 border border-zinc-800 cursor-pointer truncate max-w-[200px]"
                                             title="Click to open public profile"
                                         >
                                             {/* Show localhost if on localhost, else tap2.me */}
@@ -430,7 +430,7 @@ const Dashboard = () => {
                                         <Button
                                             size="icon"
                                             variant="ghost"
-                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 rounded-full hover:bg-gray-300"
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 rounded-full hover:bg-zinc-700 text-zinc-400"
                                             onClick={copyProfileLink}
                                         >
                                             <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -447,7 +447,7 @@ const Dashboard = () => {
                         <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8">
                             <Button
                                 onClick={() => setIsAddingBlock(true)}
-                                className="w-3/4 rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
+                                className="w-3/4 bg-white hover:bg-zinc-200 text-black rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-zinc-900/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
                             >
                                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> {t('dashboard.addContent')}
                             </Button>
@@ -459,7 +459,7 @@ const Dashboard = () => {
                             >
                                 <Button
                                     variant="outline"
-                                    className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl gap-1.5 sm:gap-2"
+                                    className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-white font-medium gap-1.5 sm:gap-2"
                                 >
                                     <Instagram className="w-4 h-4 sm:w-5 sm:h-5" />
                                     <span className="hidden sm:inline">{t('dashboard.socials')}</span>
@@ -467,8 +467,8 @@ const Dashboard = () => {
                             </SocialLinksDialog>
                             <Button
                                 onClick={handleClearAll}
-                                variant="destructive"
-                                className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl gap-2"
+                                variant="outline"
+                                className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-red-900/30 text-red-400 hover:bg-red-950/30 hover:text-red-300 font-medium"
                             >
                                 <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                                 <span className="hidden sm:inline">{t('dashboard.clearAll')}</span>
@@ -488,8 +488,8 @@ const Dashboard = () => {
                                                             <div className="font-bold text-sm">⚡</div>}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <h4 className="text-sm font-semibold text-zinc-900 truncate">{plugin.plugin_id.name}</h4>
-                                                    <p className="text-[11px] text-zinc-500 truncate flex items-center gap-1.5">
+                                                    <h4 className="text-sm font-semibold text-zinc-100 truncate">{plugin.plugin_id.name}</h4>
+                                                    <p className="text-[11px] text-zinc-400 truncate flex items-center gap-1.5">
                                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                                         Active
                                                     </p>
@@ -512,13 +512,13 @@ const Dashboard = () => {
                         {/* Links List with Drag and Drop */}
                         <div className="space-y-3 sm:space-y-4 pb-6">
                             {(localBlocks || []).length === 0 && (
-                                <div className="text-center py-10 sm:py-16 bg-gradient-to-br from-gray-50 to-white rounded-xl sm:rounded-2xl border-2 border-dashed border-gray-200 px-4">
-                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-zinc-100 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                                        <Link2 className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-600" />
+                                <div className="text-center py-10 sm:py-16 bg-zinc-900/50 rounded-xl sm:rounded-2xl border-2 border-dashed border-zinc-800 px-4">
+                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-zinc-800 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                                        <Link2 className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-500" />
                                     </div>
-                                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">{t('dashboard.noLinks')}</h3>
-                                    <p className="text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6">{t('dashboard.noLinksDesc')}</p>
-                                    <Button onClick={() => setIsAddingBlock(true)} variant="outline" className="rounded-full gap-2 text-sm">
+                                    <h3 className="text-base sm:text-lg font-semibold text-white mb-2">{t('dashboard.noLinks')}</h3>
+                                    <p className="text-zinc-400 text-xs sm:text-sm mb-4 sm:mb-6">{t('dashboard.noLinksDesc')}</p>
+                                    <Button onClick={() => setIsAddingBlock(true)} variant="outline" className="rounded-full gap-2 text-sm bg-zinc-800 border-zinc-700 text-zinc-200 hover:bg-zinc-700 hover:text-white">
                                         <Plus className="w-4 h-4" /> {t('dashboard.addFirstBlock')}
                                     </Button>
                                 </div>

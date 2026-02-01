@@ -34,7 +34,7 @@ const Login = () => {
 
     const [loading, setLoading] = useState(false);
 
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
     const { login, signUp, sendSignupOTP, verifySignupOTP, loginWithGoogle, isAuthenticated, isLoading } = useAuth();
     const navigate = useNavigate();

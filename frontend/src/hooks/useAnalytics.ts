@@ -28,7 +28,7 @@ export const useAnalytics = (profileId: string | undefined) => {
                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                 const device = isMobile ? 'Mobile' : 'Desktop';
 
-                const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+                const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
                 await fetch(`${API_URL}/analytics/track`, {
                     method: 'POST',
@@ -65,7 +65,7 @@ export const useAnalytics = (profileId: string | undefined) => {
         if (!profileId) return;
         try {
             const sessionId = localStorage.getItem('analytics_session_id') || self.crypto.randomUUID();
-            const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+            const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
             const body: any = {
                 profile_id: profileId,
