@@ -38,23 +38,20 @@ const ProfileSwitcher = () => {
         setIsOpen(false);
     };
 
-    // Always show the full profile switcher to allow discovery of features
-    // Personal users will see "Store" as disabled/locked until they upgrade
-
-    // Super users see the full profile switcher
+    // 21st.dev style profile switcher for dark sidebar
     return (
-        <div className="p-4 border-b border-sidebar-border/50">
+        <div className="">
             <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
                 <DropdownMenuTrigger asChild>
                     <Button
                         variant="ghost"
-                        className="w-full justify-between px-2 h-auto py-2 hover:bg-sidebar-accent group"
+                        className="w-full justify-between px-3 h-auto py-2.5 hover:bg-[#1A1A1A]/60 rounded-xl border border-[#1A1A1A] bg-[#0A0A0A]/50 group transition-all"
                     >
-                        <div className="flex items-center gap-3">
-                            <div className={`w - 8 h - 8 rounded - full flex items - center justify - center font - bold border ${currentMode === 'store'
-                                ? 'bg-orange-500/10 text-orange-600 border-orange-500/20'
-                                : 'bg-primary/10 text-primary border-primary/20'
-                                } `}>
+                        <div className="flex items-center gap-2.5">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${currentMode === 'store'
+                                    ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                                    : 'bg-zinc-800 text-zinc-100 border border-zinc-700'
+                                }`}>
                                 {currentMode === 'store' ? (
                                     <Store className="w-4 h-4" />
                                 ) : (
@@ -62,89 +59,85 @@ const ProfileSwitcher = () => {
                                 )}
                             </div>
                             <div className="text-left">
-                                <div className="text-sm font-semibold leading-none flex items-center gap-2">
+                                <div className="text-[13px] font-semibold leading-none text-zinc-100">
                                     {currentMode === 'store' ? `${user.username}'s Store` : user.username}
-                                    <Badge variant="secondary" className="text-[10px] px-1 h-4 font-normal">
-                                        {currentMode === 'store' ? 'Store' : 'Personal'}
-                                    </Badge>
                                 </div>
-                                <div className="text-xs text-muted-foreground mt-1">
+                                <div className="text-[11px] text-zinc-500 mt-1">
                                     {currentMode === 'store' ? 'Digital Store' : 'Personal Profile'}
                                 </div>
                             </div>
-                        </div >
-                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                    </Button >
-                </DropdownMenuTrigger >
+                        </div>
+                        <ChevronDown className={`w-3.5 h-3.5 text-zinc-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    </Button>
+                </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="start" className="w-[240px]">
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <DropdownMenuContent align="start" className="w-[240px] bg-[#0A0A0A] border-[#1A1A1A] text-zinc-100">
+                    <div className="px-3 py-2 text-[10px] font-semibold text-zinc-600 uppercase tracking-wider">
                         Switch Profile
                     </div>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className="bg-[#1A1A1A]" />
 
                     {/* Personal Profile Option */}
                     <DropdownMenuItem
                         onClick={() => handleSwitch('personal')}
-                        className="flex items-center justify-between cursor-pointer"
+                        className="flex items-center justify-between cursor-pointer hover:bg-[#1A1A1A] focus:bg-[#1A1A1A] text-zinc-100"
                     >
-                        <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                                <User className="w-3 h-3 text-primary" />
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-zinc-800 flex items-center justify-center border border-zinc-700">
+                                <User className="w-3.5 h-3.5 text-zinc-300" />
                             </div>
                             <div>
                                 <div className="text-sm font-medium">@{user.username}</div>
-                                <div className="text-[10px] text-muted-foreground">Personal Profile</div>
+                                <div className="text-[10px] text-zinc-500">Personal Profile</div>
                             </div>
                         </div>
-                        {currentMode === 'personal' && <Check className="w-4 h-4 text-green-500" />}
+                        {currentMode === 'personal' && <Check className="w-4 h-4 text-[#ADFA1D]" />}
                     </DropdownMenuItem>
 
                     {/* Store Profile Option */}
-                    {/* Store Profile Option - Conditional */}
                     {hasStore ? (
                         <DropdownMenuItem
                             onClick={() => handleSwitch('store')}
-                            className="flex items-center justify-between cursor-pointer"
+                            className="flex items-center justify-between cursor-pointer hover:bg-[#1A1A1A] focus:bg-[#1A1A1A] text-zinc-100"
                         >
-                            <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-orange-500/10 flex items-center justify-center">
-                                    <Store className="w-3 h-3 text-orange-500" />
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-lg bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
+                                    <Store className="w-3.5 h-3.5 text-orange-400" />
                                 </div>
                                 <div>
                                     <div className="text-sm font-medium">{user.username}'s Store</div>
-                                    <div className="text-[10px] text-muted-foreground">
+                                    <div className="text-[10px] text-zinc-500">
                                         Digital Store
                                     </div>
                                 </div>
                             </div>
 
-                            {currentMode === 'store' && <Check className="w-4 h-4 text-green-500" />}
+                            {currentMode === 'store' && <Check className="w-4 h-4 text-[#ADFA1D]" />}
                         </DropdownMenuItem>
                     ) : (
                         <DropdownMenuItem
                             onClick={() => navigate('/pricing?tab=store')}
-                            className="flex items-center justify-between cursor-pointer opacity-75 hover:opacity-100"
+                            className="flex items-center justify-between cursor-pointer hover:bg-[#1A1A1A] focus:bg-[#1A1A1A] text-zinc-100 opacity-75 hover:opacity-100"
                         >
-                            <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
-                                    <Lock className="w-3 h-3 text-gray-500" />
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-lg bg-zinc-900 flex items-center justify-center border border-zinc-800">
+                                    <Lock className="w-3.5 h-3.5 text-zinc-600" />
                                 </div>
                                 <div>
                                     <div className="text-sm font-medium">Upgrade for Store</div>
-                                    <div className="text-[10px] text-muted-foreground">
+                                    <div className="text-[10px] text-zinc-500">
                                         Unlock Store Features
                                     </div>
                                 </div>
                             </div>
-                            <div className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gradient-to-r from-orange-400 to-pink-500 text-white shadow-sm">
+                            <div className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#ADFA1D] text-black">
                                 NEW
                             </div>
                         </DropdownMenuItem>
                     )}
                 </DropdownMenuContent>
-            </DropdownMenu >
-        </div >
+            </DropdownMenu>
+        </div>
     );
 };
 

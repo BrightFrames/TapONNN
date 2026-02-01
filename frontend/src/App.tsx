@@ -28,6 +28,7 @@ import Enquiries from "./pages/Enquiries";
 import Media from "./pages/Media";
 import NFCCards from "./pages/NFCCards";
 import Explore from "./pages/Explore";
+import LikedProducts from "./pages/LikedProducts";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/template-marketplace" element={<TemplateMarketplace />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/liked" element={<ProtectedRoute><LikedProducts /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
 

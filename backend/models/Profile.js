@@ -113,6 +113,10 @@ const profileSchema = new mongoose.Schema({
     payment_instructions: {
         type: String,
         default: ''
+    },
+    liked_products: {
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+        default: []
     }
 }, {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }

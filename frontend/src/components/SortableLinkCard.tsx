@@ -75,11 +75,11 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
             ref={setNodeRef}
             style={style}
             className={`
-                bg-white rounded-[20px] overflow-hidden
+                bg-zinc-900 rounded-[20px] overflow-hidden border border-zinc-800
                 transition-all duration-200 ease-out
                 ${isDragging
-                    ? 'shadow-[0_20px_40px_rgba(0,0,0,0.15)] scale-[1.02]'
-                    : 'shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)]'
+                    ? 'shadow-[0_20px_40px_rgba(0,0,0,0.4)] scale-[1.02]'
+                    : 'shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.5)] hover:border-zinc-700'
                 }
                 ${!link.isActive ? 'opacity-50' : ''}
             `}
@@ -89,9 +89,9 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                 <div
                     {...attributes}
                     {...listeners}
-                    className="flex items-center justify-center w-10 cursor-grab active:cursor-grabbing bg-transparent hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-center w-10 cursor-grab active:cursor-grabbing bg-transparent hover:bg-zinc-800 transition-colors"
                 >
-                    <GripVertical className="w-4 h-4 text-gray-300" />
+                    <GripVertical className="w-4 h-4 text-zinc-600" />
                 </div>
 
                 {/* Main Content */}
@@ -105,10 +105,10 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                             <div className={`
                                 w-[52px] h-[52px] rounded-xl flex items-center justify-center overflow-hidden
                                 ${ThumbnailIcon
-                                    ? 'bg-gradient-to-br from-purple-50 to-indigo-50 text-purple-600'
-                                    : link.thumbnail ? 'bg-white border border-gray-100' : 'bg-gray-100 text-gray-400'
+                                    ? 'bg-gradient-to-br from-zinc-800 to-zinc-700 text-purple-400'
+                                    : link.thumbnail ? 'bg-zinc-800 border border-zinc-700' : 'bg-zinc-800 text-zinc-500'
                                 }
-                                group-hover/thumb:ring-2 group-hover/thumb:ring-purple-200
+                                group-hover/thumb:ring-2 group-hover/thumb:ring-purple-500/30
                                 transition-all duration-150
                             `}>
                                 {ThumbnailIcon ? (
@@ -126,14 +126,14 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                     <div className="flex-1 min-w-0">
                         <input
                             type="text"
-                            className="w-full font-semibold text-[15px] text-gray-900 bg-transparent border-0 p-0 focus:outline-none focus:ring-0 placeholder:text-gray-400"
+                            className="w-full font-semibold text-[15px] text-white bg-transparent border-0 p-0 focus:outline-none focus:ring-0 placeholder:text-zinc-600"
                             value={link.title}
                             placeholder="Title"
                             onChange={(e) => onUpdate(link.id, 'title', e.target.value)}
                         />
                         <input
                             type="text"
-                            className="w-full text-[13px] text-gray-500 bg-transparent border-0 p-0 mt-0.5 focus:outline-none focus:ring-0 placeholder:text-gray-400"
+                            className="w-full text-[13px] text-zinc-400 bg-transparent border-0 p-0 mt-0.5 focus:outline-none focus:ring-0 placeholder:text-zinc-600"
                             value={link.url}
                             placeholder="URL"
                             onChange={(e) => onUpdate(link.id, 'url', e.target.value)}
@@ -144,7 +144,7 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                     <div className="flex items-center gap-1">
                         {/* Stats */}
                         {link.clicks !== undefined && link.clicks > 0 && (
-                            <div className="flex items-center gap-1 text-gray-400 text-xs mr-2">
+                            <div className="flex items-center gap-1 text-zinc-500 text-xs mr-2">
                                 <BarChart2 className="w-3.5 h-3.5" />
                                 <span>{link.clicks}</span>
                             </div>
@@ -156,8 +156,8 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                             className={`
                                 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-150
                                 ${link.isFeatured
-                                    ? 'text-yellow-500 bg-yellow-50'
-                                    : 'text-gray-300 hover:text-gray-400 hover:bg-gray-50'
+                                    ? 'text-yellow-500 bg-yellow-500/10'
+                                    : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800'
                                 }
                             `}
                         >
@@ -168,15 +168,15 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                         <button
                             onClick={() => onUpdate(link.id, 'isActive', !link.isActive)}
                             className={`
-                                w-[42px] h-6 rounded-full p-0.5 transition-colors duration-200
-                                ${link.isActive ? 'bg-[#43E660]' : 'bg-gray-200'}
+                                w-11 h-6 rounded-full transition-colors duration-200 relative
+                                ${link.isActive ? 'bg-[#43E660]' : 'bg-zinc-700'}
                             `}
                         >
                             <div
                                 className={`
-                                    w-5 h-5 rounded-full bg-white shadow-sm
-                                    transition-transform duration-200
-                                    ${link.isActive ? 'translate-x-[18px]' : 'translate-x-0'}
+                                    absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md border-2
+                                    transition-all duration-200
+                                    ${link.isActive ? 'right-0.5 border-[#43E660]/20' : 'left-0.5 border-zinc-600/20'}
                                 `}
                             />
                         </button>
@@ -184,7 +184,7 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                         {/* More Menu */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <button className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
+                                <button className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors">
                                     <MoreHorizontal className="w-5 h-5" />
                                 </button>
                             </DropdownMenuTrigger>

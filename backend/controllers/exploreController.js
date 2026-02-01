@@ -177,3 +177,61 @@ exports.getAllBusinesses = async (req, res) => {
         res.status(500).json({ message: 'Server error fetching businesses' });
     }
 };
+
+exports.getAllProducts = async (req, res) => {
+    try {
+        const { Product } = require('../models/Product');
+
+        // Fetch all active products with their owner's profile info
+        const products = await Product.aggregate([
+            {
+                $match: {
+                    is_active: true
+                }
+            },
+            {
+                $lookup: {
+                    from: 'profiles',
+                    localField: 'user_id',
+                    foreignField: 'user_id',
+                    as: 'owner'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$owner',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    title: 1,
+                    description: 1,
+                    price: 1,
+                    image_url: 1,
+                    file_url: 1,
+                    type: 1,
+                    product_type: 1,
+                    created_at: 1,
+                    user_id: 1,
+                    owner_name: '$owner.name',
+                    owner_username: '$owner.username',
+                    owner_avatar: '$owner.avatar',
+                    store_username: '$owner.store_username'
+                }
+            },
+            {
+                $sort: { created_at: -1 }
+            },
+            {
+                $limit: 100 // Limit to 100 most recent products
+            }
+        ]);
+
+        res.status(200).json(products);
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        res.status(500).json({ message: 'Server error fetching products' });
+    }
+};

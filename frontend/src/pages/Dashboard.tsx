@@ -345,7 +345,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Phone Preview - Right Side */}
-                <div className="w-[400px] border-l border-gray-100 hidden xl:flex items-center justify-center bg-gradient-to-b from-gray-50 to-white sticky top-0 h-full">
+                <div className="w-[400px] border-l border-zinc-800 hidden xl:flex items-center justify-center bg-[#0A0A0A] sticky top-0 h-full">
                     <div className="py-8 px-8 flex flex-col items-center">
                         {/* Phone Frame */}
                         <div className="w-[300px] h-[620px] bg-black rounded-[3rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">
@@ -561,10 +561,10 @@ const Dashboard = () => {
 
                         {/* Preview Label */}
                         <div className="text-center mt-6">
-                            <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
+                            <div className="flex items-center justify-center gap-2 text-sm font-medium text-zinc-400">
                                 <Smartphone className="w-4 h-4" /> {t('dashboard.livePreview')}
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">{t('dashboard.previewDesc')}</p>
+                            <p className="text-xs text-zinc-600 mt-1">{t('dashboard.previewDesc')}</p>
                         </div>
                     </div>
                 </div>
