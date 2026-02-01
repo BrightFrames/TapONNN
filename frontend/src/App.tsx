@@ -29,6 +29,7 @@ import Media from "./pages/Media";
 import NFCCards from "./pages/NFCCards";
 import Explore from "./pages/Explore";
 import LikedProducts from "./pages/LikedProducts";
+import Messages from "./pages/Messages";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/my-apps" element={<ProtectedRoute><MyApps /></ProtectedRoute>} />
             <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
             <Route path="/nfc-cards" element={<ProtectedRoute><NFCCards /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
 
             {/* Earn Routes */}
             <Route path="/dashboard/earn" element={<ProtectedRoute><EarnOverview /></ProtectedRoute>} />

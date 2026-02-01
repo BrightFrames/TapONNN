@@ -596,11 +596,16 @@ const PublicProfile = () => {
             <div className="fixed bottom-6 left-0 right-0 flex flex-col items-center gap-3 px-6 z-40 translate-y-0 opacity-100 transition-all duration-500 delay-300">
                 <div className="w-full max-w-md">
                     <button
-                        onClick={() => setConnectModal({
-                            open: true,
-                            product: null,
-                            seller: { id: profile.id, name: profile.name }
-                        })}
+                        onClick={() => {
+                            // If user is logged in, go directly to messages
+                            if (authUser) {
+                                navigate(`/messages?with=${profile.username}`);
+                            } else {
+                                // Store redirect info and go to login
+                                sessionStorage.setItem('tap2_redirect_after_login', `/messages?with=${profile.username}`);
+                                navigate('/login');
+                            }
+                        }}
                         className="group w-full relative overflow-hidden rounded-full h-14 shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 active:scale-95"
                     >
                         {/* Gradient Background */}

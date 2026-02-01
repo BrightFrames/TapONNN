@@ -40,8 +40,15 @@ const Login = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Get the redirect path from ProtectedRoute, default to /dashboard
-    const from = (location.state as any)?.from?.pathname || "/dashboard";
+    // Get the redirect path: first check sessionStorage (from Message button click), then location state, default to /dashboard
+    const getRedirectPath = () => {
+        const sessionRedirect = sessionStorage.getItem('tap2_redirect_after_login');
+        if (sessionRedirect) {
+            return sessionRedirect;
+        }
+        return (location.state as any)?.from?.pathname || "/dashboard";
+    };
+    const from = getRedirectPath();
 
     // Pre-fill username from URL query parameter
     useEffect(() => {
@@ -55,6 +62,8 @@ const Login = () => {
     // Redirect to dashboard if already logged in
     useEffect(() => {
         if (!isLoading && isAuthenticated) {
+            // Clear the redirect from sessionStorage after using it
+            sessionStorage.removeItem('tap2_redirect_after_login');
             navigate(from, { replace: true });
         }
     }, [isAuthenticated, isLoading, navigate, from]);
@@ -91,6 +100,8 @@ const Login = () => {
                 const { success, error } = await login(email, password);
                 if (success) {
                     toast.success("Welcome back!");
+                    // Clear redirect after using it
+                    sessionStorage.removeItem('tap2_redirect_after_login');
                     navigate(from, { replace: true });
                 } else {
                     toast.error(error || "Invalid credentials");

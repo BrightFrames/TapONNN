@@ -1,5 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
 import {
     LayoutGrid,
     List,
@@ -49,11 +50,12 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 // 21st.dev style navigation item
-const NavItem = ({ icon: Icon, label, active = false, count, isNew, onClick }: {
+const NavItem = ({ icon: Icon, label, active = false, count, badge, isNew, onClick }: {
     icon: any,
     label: string,
     active?: boolean,
     count?: number,
+    badge?: number, // Red notification badge
     isNew?: boolean,
     onClick?: () => void
 }) => (
@@ -67,7 +69,14 @@ const NavItem = ({ icon: Icon, label, active = false, count, isNew, onClick }: {
         onClick={onClick}
     >
         <div className="flex items-center gap-3">
-            <Icon className={cn("w-4 h-4", active ? "text-zinc-100" : "text-zinc-500 group-hover:text-zinc-300")} />
+            <div className="relative">
+                <Icon className={cn("w-4 h-4", active ? "text-zinc-100" : "text-zinc-500 group-hover:text-zinc-300")} />
+                {badge !== undefined && badge > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] px-1 rounded-full font-bold flex items-center justify-center animate-pulse">
+                        {badge > 99 ? '99+' : badge}
+                    </span>
+                )}
+            </div>
             <span>{label}</span>
         </div>
         <div className="flex items-center gap-2">
@@ -90,12 +99,13 @@ const SidebarSectionTitle = ({ children }: { children: ReactNode }) => (
 );
 
 // Sidebar content component for reuse in desktop and mobile
-const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: {
+const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unreadMessageCount }: {
     navigate: (path: string) => void,
     location: { pathname: string },
     onClose?: () => void,
     onShare: () => void,
-    onLogout: () => void
+    onLogout: () => void,
+    unreadMessageCount?: number
 }) => {
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
     const { t } = useTranslation();
@@ -210,8 +220,9 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout }: {
                     <NavItem
                         icon={MessageCircle}
                         label={isStoreMode ? t('nav.lead') : t('nav.message')}
-                        active={location.pathname === '/enquiries'}
-                        onClick={() => handleNav('/enquiries')}
+                        active={location.pathname === '/messages' || location.pathname === '/enquiries'}
+                        onClick={() => handleNav('/messages')}
+                        badge={unreadMessageCount}
                     />
                     <NavItem
                         icon={Smartphone}
@@ -285,13 +296,84 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
     const [shareOpen, setShareOpen] = useState(false);
     const { user, logout } = useAuth();
     const { t } = useTranslation();
+    const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
     const shareUrl = `${window.location.origin}/${user?.username}`;
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
     const handleLogout = async () => {
         await logout();
         navigate('/login');
     };
+
+    // Fetch unread message count
+    const fetchUnreadCount = async () => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        try {
+            const res = await fetch(`${API_URL}/chat/unread`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setUnreadMessageCount(data.unreadCount || 0);
+            }
+        } catch (err) {
+            console.error('[Layout] Error fetching unread count:', err);
+        }
+    };
+
+    // Fetch unread count on mount and set up socket listener
+    useEffect(() => {
+        fetchUnreadCount();
+
+        // Set up socket listener for real-time updates
+        const socketUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/api\/?$/, '');
+        const socket = (window as any).__notificationSocket || io(socketUrl);
+        (window as any).__notificationSocket = socket;
+
+        const token = localStorage.getItem('auth_token');
+        if (user?.id) {
+            socket.emit('joinUser', user.id);
+        }
+
+        socket.on('messageNotification', () => {
+            // Refresh unread count when new message arrives
+            fetchUnreadCount();
+        });
+
+        socket.on('newMessage', () => {
+            // Also refresh on newMessage events
+            fetchUnreadCount();
+        });
+
+        // Refresh unread count when page becomes visible
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchUnreadCount();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Listen for custom event when user reads messages
+        const handleMessagesRead = () => {
+            fetchUnreadCount();
+        };
+        window.addEventListener('messagesRead', handleMessagesRead);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('messagesRead', handleMessagesRead);
+        };
+    }, [user?.id]);
+
+    // Refresh unread count when navigating away from messages page
+    useEffect(() => {
+        if (!location.pathname.startsWith('/messages')) {
+            fetchUnreadCount();
+        }
+    }, [location.pathname]);
 
     // Close mobile menu on route change
     useEffect(() => {
@@ -308,13 +390,18 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
                     <div className="flex items-center gap-4">
                         <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
                             <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="-ml-2">
+                                <Button variant="ghost" size="icon" className="-ml-2 relative">
                                     <Menu className="w-6 h-6" />
+                                    {unreadMessageCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] px-1 rounded-full font-bold flex items-center justify-center animate-pulse">
+                                            {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
+                                        </span>
+                                    )}
                                 </Button>
                             </SheetTrigger>
                             <SheetContent side="left" className="p-0 w-[280px] z-[60] border-r border-[#1A1A1A]">
                                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                                <SidebarContent navigate={navigate} location={location} onClose={() => setIsMobileOpen(false)} onShare={() => setShareOpen(true)} onLogout={handleLogout} />
+                                <SidebarContent navigate={navigate} location={location} onClose={() => setIsMobileOpen(false)} onShare={() => setShareOpen(true)} onLogout={handleLogout} unreadMessageCount={unreadMessageCount} />
                             </SheetContent>
                         </Sheet>
                         <div className="flex items-center gap-2">
@@ -328,7 +415,7 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
 
                 {/* Desktop Sidebar - 21st.dev Style */}
                 <aside className="w-[280px] bg-[#050505] border-r border-[#1A1A1A] hidden lg:flex flex-col h-full overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 hover:scrollbar-thumb-zinc-700">
-                    <SidebarContent navigate={navigate} location={location} onShare={() => setShareOpen(true)} onLogout={handleLogout} />
+                    <SidebarContent navigate={navigate} location={location} onShare={() => setShareOpen(true)} onLogout={handleLogout} unreadMessageCount={unreadMessageCount} />
                 </aside>
 
                 {/* Main Content Area */}

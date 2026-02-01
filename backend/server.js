@@ -64,6 +64,33 @@ io.on("connection", (socket) => {
         }
     });
 
+    // Chat room joining
+    socket.on("joinChat", (conversationId) => {
+        if (conversationId) {
+            socket.join(`chat_${conversationId}`);
+            console.log(`[ChatDebug] Socket ${socket.id} joined chat_${conversationId}`);
+        }
+    });
+
+    socket.on("leaveChat", (conversationId) => {
+        if (conversationId) {
+            socket.leave(`chat_${conversationId}`);
+        }
+    });
+
+    // User room for notifications
+    socket.on("joinUser", (userId) => {
+        if (userId) {
+            socket.join(`user_${userId}`);
+            console.log(`[ChatDebug] Socket ${socket.id} joined user_${userId}`);
+        }
+    });
+
+    // Typing indicator
+    socket.on("typing", ({ conversationId, userId, isTyping }) => {
+        socket.to(`chat_${conversationId}`).emit("userTyping", { userId, isTyping });
+    });
+
     socket.on("disconnect", () => {
         // console.log("Client disconnected", socket.id);
     });
@@ -97,6 +124,7 @@ const uploadRoutes = require('./routes/upload');
 const exploreRoutes = require('./routes/explore');
 const connectRoutes = require('./routes/connect');
 const likesRoutes = require('./routes/likes');
+const chatRoutes = require('./routes/chat');
 
 // --- Routes ---
 
@@ -120,6 +148,7 @@ app.use('/api/upload', uploadRoutes); // File upload
 app.use('/api/explore', exploreRoutes);
 app.use('/api/connect', connectRoutes); // Connect registration flow
 app.use('/api/products', likesRoutes); // Product likes
+app.use('/api/chat', chatRoutes); // Real-time chat
 
 // Legacy route support - /api/my-links is now under /api/links/my-links
 // But since it was originally at /api/my-links, we add an alias
