@@ -26,8 +26,22 @@ import {
     AtSign,
 
     ShoppingBag,
-    Share2
+    ShoppingBag,
+    Share2,
+    Truck,
+    CreditCard,
+    Settings as SettingsIcon,
 } from "lucide-react";
+
+interface Plugin {
+    _id: string;
+    plugin_id: {
+        _id: string;
+        name: string;
+        icon: string;
+    };
+    config: any;
+}
 
 const Settings = () => {
     const { user, isAuthenticated, refreshProfile } = useAuth();
@@ -49,7 +63,11 @@ const Settings = () => {
     const [hasStore, setHasStore] = useState(false);
     const [storePublished, setStorePublished] = useState(false);
     const [storeShareOpen, setStoreShareOpen] = useState(false);
+    const [hasStore, setHasStore] = useState(false);
+    const [storePublished, setStorePublished] = useState(false);
+    const [storeShareOpen, setStoreShareOpen] = useState(false);
     const [savingStore, setSavingStore] = useState(false);
+    const [installedPlugins, setInstalledPlugins] = useState<Plugin[]>([]);
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -88,8 +106,25 @@ const Settings = () => {
             }
         };
 
+        const fetchInstalledPlugins = async () => {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_URL}/marketplace/my-plugins`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setInstalledPlugins(data);
+                }
+            } catch (e) {
+                console.error("Failed to fetch plugins", e);
+            }
+        };
+
         if (isAuthenticated) {
             loadProfile();
+            fetchInstalledPlugins();
         }
     }, [isAuthenticated, API_URL]);
 
@@ -389,61 +424,7 @@ const Settings = () => {
                                     </CardContent>
                                 </Card>
 
-                                {/* Social Links Card */}
-                                <Card className="border-0 shadow-sm">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">{t('settings.socialLinks')}</CardTitle>
-                                        <CardDescription>{t('settings.socialLinksDesc')}</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <SocialLinksManager
-                                            socialLinks={[]}
-                                            onUpdate={(links) => {
-                                                console.log("Social links updated:", links);
-                                                // TODO: Save to backend when social_links table is created
-                                            }}
-                                        />
-                                    </CardContent>
-                                </Card>
 
-                                {/* Store Profile Card - Only visible if user has products */}
-                                {hasStore && (
-                                    <Card className="border-0 shadow-sm border-purple-100 bg-gradient-to-r from-purple-50 to-pink-50">
-                                        <CardHeader>
-                                            <CardTitle className="text-lg flex items-center gap-2">
-                                                <ShoppingBag className="w-5 h-5 text-purple-600" />
-                                                {t('settings.storeProfile')}
-                                            </CardTitle>
-                                            <CardDescription>{t('settings.storeProfileDesc')}</CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className="font-medium">{t('settings.publishStore')}</p>
-                                                    <p className="text-sm text-gray-500">{t('settings.publishStoreDesc')} /{username}/store</p>
-                                                </div>
-                                                <Switch
-                                                    checked={storePublished}
-                                                    onCheckedChange={handleStorePublishToggle}
-                                                    disabled={savingStore}
-                                                />
-                                            </div>
-
-                                            {storePublished && (
-                                                <div className="pt-2 border-t">
-                                                    <p className="text-sm text-gray-600 mb-3">{t('settings.storeLive')}</p>
-                                                    <Button
-                                                        onClick={() => setStoreShareOpen(true)}
-                                                        className="gap-2 bg-purple-600 hover:bg-purple-700 rounded-xl"
-                                                    >
-                                                        <Share2 className="w-4 h-4" />
-                                                        {t('settings.shareStore')}
-                                                    </Button>
-                                                </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                )}
                             </TabsContent>
 
                             {/* Security Tab */}

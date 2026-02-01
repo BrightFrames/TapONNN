@@ -3,27 +3,27 @@ import { Palette, BarChart3, Zap, Globe } from "lucide-react";
 
 const FeatureSection = () => {
   return (
-    <section className="bg-muted/30 py-24 px-4 overflow-hidden">
+    <section className="bg-[#0A0A0A] py-24 px-4 overflow-hidden border-t border-zinc-900">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left - Mockup */}
           <div className="relative h-[500px] order-2 lg:order-1 w-full max-w-[400px] mx-auto lg:max-w-none scale-90 sm:scale-100">
             {/* Main phone mockup */}
-            <div className="absolute left-0 right-0 mx-auto lg:mx-0 lg:left-10 lg:translate-x-0 w-64 h-[450px] bg-share rounded-[2.5rem] shadow-2xl overflow-hidden animate-float border-4 border-share-foreground/10 z-10">
+            <div className="absolute left-0 right-0 mx-auto lg:mx-0 lg:left-10 lg:translate-x-0 w-64 h-[450px] bg-zinc-900 rounded-[2.5rem] shadow-2xl overflow-hidden animate-float border-4 border-zinc-800 z-10">
               <div className="p-5 space-y-4">
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-share-foreground" />
-                  <span className="text-share-foreground font-bold text-lg italic">BILLIE</span>
+                  <span className="text-white font-bold text-lg italic">BILLIE</span>
                 </div>
 
                 <div className="space-y-3 mt-4">
-                  <div className="w-full py-3 px-4 bg-share-foreground/20 rounded-xl flex items-center gap-3">
+                  <div className="w-full py-3 px-4 bg-zinc-800 rounded-xl flex items-center gap-3">
                     <div className="w-8 h-8 bg-primary rounded-lg" />
-                    <span className="text-share-foreground text-sm font-medium">Fall reading list</span>
+                    <span className="text-zinc-300 text-sm font-medium">Fall reading list</span>
                   </div>
-                  <div className="w-full py-3 px-4 bg-share-foreground/20 rounded-xl flex items-center gap-3">
+                  <div className="w-full py-3 px-4 bg-zinc-800 rounded-xl flex items-center gap-3">
                     <div className="w-8 h-8 bg-feature rounded-lg" />
-                    <span className="text-share-foreground text-sm font-medium">Swell report</span>
+                    <span className="text-zinc-300 text-sm font-medium">Swell report</span>
                   </div>
                 </div>
               </div>
@@ -59,11 +59,11 @@ const FeatureSection = () => {
 
           {/* Right - Content */}
           <div className="space-y-8 order-1 lg:order-2">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-foreground tracking-tight">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-white tracking-tight">
               Create and customize your Tap2 in minutes
             </h2>
 
-            <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
+            <p className="text-lg text-zinc-400 max-w-lg leading-relaxed">
               Connect all your content across social media, websites, stores and more in
               one link in bio. Customize every detail or let Tap2 automatically enhance
               it to match your brand and drive more clicks.

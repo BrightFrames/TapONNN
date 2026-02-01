@@ -468,7 +468,7 @@ const Shop = () => {
 
                         {/* Add Button, Socials & Clear All */}
                         <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8">
-                            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                            {/* <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                                 <DialogTrigger asChild>
                                     <Button
                                         className="w-3/4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-zinc-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
@@ -568,7 +568,7 @@ const Shop = () => {
                                         </DialogFooter>
                                     </form>
                                 </DialogContent>
-                            </Dialog>
+                            </Dialog> */}
                             <SocialLinksDialog
                                 initialLinks={user?.social_links || {}}
                                 onSave={async () => { }}

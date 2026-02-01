@@ -38,11 +38,33 @@ import {
     Heart,
     X,
     Share,
-    MessageCircle
+    MessageCircle,
+    Settings,
+    Truck,
+    CreditCard
 } from "lucide-react";
 
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { SocialLinksDialog } from "@/components/SocialLinksDialog";
+import { PluginConfigModal } from "@/components/marketplace/PluginConfigModal";
+
+interface Plugin {
+    _id: string;
+    name: string;
+    slug: string;
+    description: string;
+    icon: string;
+    category: string;
+    type: string;
+    is_premium: boolean;
+    config_schema?: any[];
+}
+
+interface UserPlugin {
+    _id: string;
+    plugin_id: Plugin;
+    config: Record<string, any>;
+}
 
 interface Link {
     id: string;
@@ -80,7 +102,16 @@ const Dashboard = () => {
     const [socialPreview, setSocialPreview] = useState<Record<string, string> | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [previewTab, setPreviewTab] = useState<'links' | 'shop'>('links');
+
     const [searchQuery, setSearchQuery] = useState("");
+
+    // Plugin State
+    const [plugins, setPlugins] = useState<Plugin[]>([]);
+    const [installedPlugins, setInstalledPlugins] = useState<UserPlugin[]>([]);
+    const [installingPluginId, setInstallingPluginId] = useState<string | null>(null);
+    const [configModalOpen, setConfigModalOpen] = useState(false);
+    const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
+    const [selectedConfig, setSelectedConfig] = useState<Record<string, any>>({});
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -96,8 +127,113 @@ const Dashboard = () => {
         })
     );
 
-    // Sync with AuthContext
-    // Sync with AuthContext - Blocks are managed there
+    useEffect(() => {
+        fetchPlugins();
+        fetchInstalledPlugins();
+    }, []);
+
+    const fetchPlugins = async () => {
+        try {
+            const response = await fetch(`${API_URL}/marketplace/plugins`);
+            if (response.ok) {
+                const data = await response.json();
+                setPlugins(data);
+            }
+        } catch (error) {
+            console.error('Error fetching plugins:', error);
+        }
+    };
+
+    const fetchInstalledPlugins = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) return;
+
+            const response = await fetch(`${API_URL}/marketplace/my-plugins`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setInstalledPlugins(data);
+            }
+        } catch (error) {
+            console.error('Error fetching installed plugins:', error);
+        }
+    };
+
+    const handlePluginInstall = async (pluginId: string) => {
+        setInstallingPluginId(pluginId);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+                toast.error('Please log in to install apps');
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/marketplace/install/${pluginId}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+
+            if (response.ok) {
+                const newUserPlugin = await response.json();
+                setInstalledPlugins(prev => [...prev, newUserPlugin]);
+                toast.success('App connected!');
+
+                // Open config modal immediately
+                if (newUserPlugin.plugin_id.config_schema && newUserPlugin.plugin_id.config_schema.length > 0) {
+                    handleConfigurePlugin(newUserPlugin.plugin_id, {});
+                }
+            } else {
+                const error = await response.json();
+                toast.error(error.error || 'Failed to install app');
+            }
+        } catch (error) {
+            console.error('Error installing plugin:', error);
+            toast.error('Failed to install app');
+        } finally {
+            setInstallingPluginId(null);
+        }
+    };
+
+    const handleConfigurePlugin = (plugin: Plugin, config: Record<string, any>) => {
+        setSelectedPlugin(plugin);
+        setSelectedConfig(config || {});
+        setConfigModalOpen(true);
+    };
+
+    const savePluginConfig = async (config: Record<string, any>) => {
+        if (!selectedPlugin) return;
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) return;
+
+            const response = await fetch(`${API_URL}/marketplace/config/${selectedPlugin._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ config })
+            });
+
+            if (response.ok) {
+                toast.success('Configuration saved');
+                setInstalledPlugins(prev => prev.map(up =>
+                    up.plugin_id._id === selectedPlugin._id
+                        ? { ...up, config }
+                        : up
+                ));
+            } else {
+                toast.error('Failed to save configuration');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to save configuration');
+        }
+    };
     // No need for local links useEffect syncing if we use blocks directly from context, 
     // but dnd-kit might want a local state for smooth dragging.
     // Let's create a local state for blocks to handle drag smoothly
@@ -154,6 +290,7 @@ const Dashboard = () => {
     };
 
     // Adapt Update for SortableLinkCard
+    // Adapt Update for SortableLinkCard
     const handleUpdateBlockField = (id: string, field: string, value: any) => {
         // Map legacy fields if necessary
         const fieldMap: Record<string, string> = {
@@ -162,7 +299,46 @@ const Dashboard = () => {
         };
 
         const backendField = fieldMap[field] || field;
+
+        // Optimistic update first to prevent flicker
         updateBlock(id, { [backendField]: value });
+
+        // If toggling Featured status, we need to reorder
+        if (field === 'isFeatured') {
+            setLocalBlocks(currentBlocks => {
+                const blockIndex = currentBlocks.findIndex(b => b._id === id);
+                if (blockIndex === -1) return currentBlocks;
+
+                const blockToMove = { ...currentBlocks[blockIndex], [backendField]: value }; // Optimistic update
+                const otherBlocks = currentBlocks.filter(b => b._id !== id);
+
+                let newOrder = [];
+
+                if (value === true) {
+                    // Moving TO Featured
+                    // Logic: Append to end of EXISTING featured items (FIFO)
+                    // 1. Get all currently featured items (excluding the one being moved)
+                    const existingFeatured = otherBlocks.filter(b => (b as any).is_featured);
+                    const unfeatured = otherBlocks.filter(b => !(b as any).is_featured);
+
+                    // 2. Insert new block after the last featured item
+                    newOrder = [...existingFeatured, blockToMove, ...unfeatured];
+                } else {
+                    // Moving FROM Featured (Unstarring)
+                    // Logic: Move to top of Unfeatured list (or restore position? Top of unfeatured is safest)
+                    const existingFeatured = otherBlocks.filter(b => (b as any).is_featured);
+                    const unfeatured = otherBlocks.filter(b => !(b as any).is_featured);
+
+                    // Insert at the start of unfeatured list
+                    newOrder = [...existingFeatured, blockToMove, ...unfeatured];
+                }
+
+                // Call backend to save new order
+                reorderBlocks(newOrder);
+
+                return newOrder;
+            });
+        }
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -296,6 +472,40 @@ const Dashboard = () => {
                                 <span className="hidden sm:inline ml-2">{t('dashboard.clearAll')}</span>
                             </Button>
                         </div>
+                        {/* Connected Apps Section (Store Mode Only) */}
+                        {user?.active_profile_mode === 'store' && installedPlugins.length > 0 && (
+                            <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 px-1 ml-1">{t('dashboard.connectedApps') || 'Connected Apps'}</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                                    {installedPlugins.map((plugin) => (
+                                        <div key={plugin._id} className="group flex items-center justify-between p-3 bg-white border border-zinc-200/60 rounded-2xl shadow-sm hover:shadow-md hover:border-zinc-300 transition-all duration-300">
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <div className="shrink-0 w-10 h-10 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-500 group-hover:bg-zinc-100 group-hover:text-zinc-700 transition-colors">
+                                                    {plugin.plugin_id.icon === 'truck' ? <Truck className="w-5 h-5" /> :
+                                                        plugin.plugin_id.icon === 'credit-card' ? <CreditCard className="w-5 h-5" /> :
+                                                            <div className="font-bold text-sm">⚡</div>}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h4 className="text-sm font-semibold text-zinc-900 truncate">{plugin.plugin_id.name}</h4>
+                                                    <p className="text-[11px] text-zinc-500 truncate flex items-center gap-1.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                        Active
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 rounded-lg text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100"
+                                                onClick={() => handleConfigurePlugin(plugin.plugin_id, plugin.config)}
+                                            >
+                                                <Settings className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Links List with Drag and Drop */}
                         <div className="space-y-3 sm:space-y-4 pb-6">
@@ -527,20 +737,20 @@ const Dashboard = () => {
                                                             <p className="text-[10px] text-gray-300 line-clamp-1 mb-2 font-light">{product.description}</p>
 
                                                             {/* Action Row */}
+                                                            {/* Action Row */}
                                                             <div className="flex items-center gap-2">
-                                                                <a
-                                                                    href={product.file_url ? (product.file_url.startsWith('http') ? product.file_url : `https://${product.file_url}`) : '#'}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="flex-1 bg-white text-black h-8 rounded-full font-bold text-xs flex items-center justify-center hover:bg-gray-100 transition-colors"
-                                                                >
-                                                                    Message {user?.name?.split(' ')[0] || 'User'}
-                                                                </a>
-                                                                <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
-                                                                    <Heart className="w-3.5 h-3.5" />
-                                                                </button>
-                                                                <button className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
-                                                                    <Share className="w-3.5 h-3.5" />
+                                                                {product.file_url && (
+                                                                    <a
+                                                                        href={product.file_url ? (product.file_url.startsWith('http') ? product.file_url : `https://${product.file_url}`) : '#'}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="flex-1 bg-white text-black h-8 rounded-full font-bold text-[10px] flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                                                    >
+                                                                        Buy Now
+                                                                    </a>
+                                                                )}
+                                                                <button className="flex-1 bg-white/10 backdrop-blur-md border border-white/20 text-white h-8 rounded-full font-bold text-[10px] flex items-center justify-center hover:bg-white/20 transition-colors">
+                                                                    Enquire Now
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -558,7 +768,11 @@ const Dashboard = () => {
                                 {/* Footer - Connect Button */}
                                 <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-30">
                                     <button className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100">
-                                        <span>Message {user?.name?.split(' ')[0] || 'User'}</span>
+                                        <span>
+                                            {previewTab === 'shop'
+                                                ? 'Connect with Seller'
+                                                : `Message ${user?.name?.split(' ')[0] || 'User'}`}
+                                        </span>
                                         <MessageCircle className="w-5 h-5 text-gray-600" />
                                     </button>
                                 </div>
@@ -586,6 +800,23 @@ const Dashboard = () => {
                 }}
                 block={editingBlock}
                 onSave={handleSaveBlock}
+                allowedTypes={user?.active_profile_mode === 'store' ? ['product'] : undefined}
+                plugins={plugins}
+                installedPlugins={installedPlugins}
+                onInstallPlugin={handlePluginInstall}
+                onConfigurePlugin={(plugin) => {
+                    const userPlugin = installedPlugins.find(p => p.plugin_id._id === plugin._id);
+                    handleConfigurePlugin(plugin, userPlugin?.config || {});
+                }}
+                installingPluginId={installingPluginId}
+            />
+
+            <PluginConfigModal
+                open={configModalOpen}
+                onOpenChange={setConfigModalOpen}
+                plugin={selectedPlugin}
+                config={selectedConfig}
+                onSave={savePluginConfig}
             />
         </LinktreeLayout >
     );

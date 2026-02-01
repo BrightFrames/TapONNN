@@ -7,6 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Loader2 } from 'lucide-react';
+import { ImageUpload } from "@/components/ImageUpload";
+import { FileUpload } from "@/components/FileUpload";
+import { ProductPluginSuggestions } from "@/components/shop/ProductPluginSuggestions";
 
 interface Block {
     _id?: string;
@@ -25,7 +28,22 @@ interface BlockEditorModalProps {
     onOpenChange: (open: boolean) => void;
     block: Block | null;
     onSave: (block: Block) => Promise<void>;
+    allowedTypes?: string[];
+    plugins?: any[];
+    installedPlugins?: any[];
+    onInstallPlugin?: (id: string) => void;
+    onConfigurePlugin?: (plugin: any) => void;
+    installingPluginId?: string | null;
 }
+
+const ALL_BLOCK_TYPES = [
+    { value: 'link', label: '🔗 Link' },
+    { value: 'product', label: '🛍️ Product' },
+    { value: 'service', label: '💼 Service' },
+    { value: 'contact_card', label: '📞 Contact Card' },
+    { value: 'whatsapp', label: '💬 WhatsApp' },
+    { value: 'text', label: '📝 Text' }
+];
 
 const ctaOptions = [
     { value: 'none', label: 'No CTA' },
@@ -39,9 +57,20 @@ const ctaOptions = [
     { value: 'custom', label: 'Custom' }
 ];
 
-const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModalProps) => {
+const BlockEditorModal = ({
+    open,
+    onOpenChange,
+    block,
+    onSave,
+    allowedTypes,
+    plugins,
+    installedPlugins,
+    onInstallPlugin,
+    onConfigurePlugin,
+    installingPluginId
+}: BlockEditorModalProps) => {
     const [formData, setFormData] = useState<Block>({
-        block_type: 'link',
+        block_type: allowedTypes && allowedTypes.length > 0 ? allowedTypes[0] : 'link',
         title: '',
         content: {},
         cta_type: 'none',
@@ -58,8 +87,9 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
                 content: block.content || {}
             });
         } else {
+            const defaultType = allowedTypes && allowedTypes.length > 0 ? allowedTypes[0] : 'link';
             setFormData({
-                block_type: 'link',
+                block_type: defaultType,
                 title: '',
                 content: {},
                 cta_type: 'visit',
@@ -68,7 +98,7 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
                 is_active: true
             });
         }
-    }, [block, open]);
+    }, [block, open, allowedTypes]);
 
     // Auto-switch to favicon if URL provided
     useEffect(() => {
@@ -137,15 +167,35 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
             case 'service':
                 return (
                     <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Price</Label>
-                            <Input
-                                type="number"
-                                placeholder="0.00"
-                                value={formData.content.price || ''}
-                                onChange={(e) => updateContent('price', parseFloat(e.target.value))}
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Price</Label>
+                                <Input
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={formData.content.price || ''}
+                                    onChange={(e) => updateContent('price', e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Product Type</Label>
+                                <Select
+                                    value={formData.content.product_type || 'physical_product'}
+                                    onValueChange={(v) => updateContent('product_type', v)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="digital_product">Digital Product</SelectItem>
+                                        <SelectItem value="physical_product">Physical Product</SelectItem>
+                                        <SelectItem value="physical_service">Physical Service</SelectItem>
+                                        <SelectItem value="digital_service">Digital Service</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
+
                         <div className="space-y-2">
                             <Label>Description</Label>
                             <Textarea
@@ -155,32 +205,48 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
                                 rows={3}
                             />
                         </div>
+
+                        {formData.content.product_type === 'digital_product' && (
+                            <div className="space-y-2">
+                                <Label>Product File (Max 15MB)</Label>
+                                <FileUpload
+                                    value={formData.content.file_url}
+                                    onChange={(url) => updateContent('file_url', url)}
+                                    label="Upload Digital Product"
+                                    maxSizeMB={15}
+                                    type="product_file"
+                                />
+                                <div className="text-xs text-center text-muted-foreground">- OR -</div>
+                                <Input
+                                    type="url"
+                                    placeholder="https://drive.google.com/..."
+                                    value={formData.content.file_url || ''}
+                                    onChange={(e) => updateContent('file_url', e.target.value)}
+                                />
+                            </div>
+                        )}
+
                         <div className="space-y-2">
-                            <Label>Image URL (optional)</Label>
-                            <Input
-                                type="url"
-                                placeholder="https://..."
-                                value={formData.content.image_url || ''}
-                                onChange={(e) => updateContent('image_url', e.target.value)}
+                            <Label>Product Image</Label>
+                            <ImageUpload
+                                value={formData.content.image_url}
+                                onChange={(url) => {
+                                    updateContent('image_url', url);
+                                    setFormData(prev => ({ ...prev, thumbnail: url })); // Sync thumbnail
+                                }}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label>Product Type</Label>
-                            <Select
-                                value={formData.content.product_type || 'physical_product'}
-                                onValueChange={(v) => updateContent('product_type', v)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="digital_product">Digital Product</SelectItem>
-                                    <SelectItem value="physical_product">Physical Product</SelectItem>
-                                    <SelectItem value="physical_service">Physical Service</SelectItem>
-                                    <SelectItem value="digital_service">Digital Service</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+
+                        {/* Plugin Suggestions */}
+                        {plugins && onInstallPlugin && (
+                            <ProductPluginSuggestions
+                                plugins={plugins}
+                                installedPluginIds={installedPlugins?.map(p => p.plugin_id._id) || []}
+                                onInstall={onInstallPlugin}
+                                onConfigure={onConfigurePlugin!}
+                                installingId={installingPluginId || null}
+                            />
+                        )}
                     </div>
                 );
 
@@ -271,69 +337,79 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg">
-                <DialogHeader>
-                    <DialogTitle>{block?._id ? 'Edit Block' : 'Add Block'}</DialogTitle>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto sm:max-w-xl">
+                <DialogHeader className="px-1">
+                    <DialogTitle>
+                        {allowedTypes?.length === 1 && allowedTypes[0] === 'product'
+                            ? 'Add New Product'
+                            : block?._id ? 'Edit Block' : 'Add Block'}
+                    </DialogTitle>
                     <DialogDescription>
-                        Configure your {formData.block_type} block
+                        {allowedTypes?.length === 1 && allowedTypes[0] === 'product'
+                            ? 'Add a new product to your shop.'
+                            : `Configure your ${formData.block_type} block`}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
-                    {/* Block Type Selector */}
-                    <div className="space-y-2">
-                        <Label>Block Type *</Label>
-                        <Select
-                            value={formData.block_type}
-                            onValueChange={(value) => setFormData(prev => ({ ...prev, block_type: value }))}
-                            disabled={!!block?._id} // Disable editing type for existing blocks
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select block type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="link">🔗 Link</SelectItem>
-                                <SelectItem value="product">🛍️ Product</SelectItem>
-                                <SelectItem value="service">💼 Service</SelectItem>
-                                <SelectItem value="contact_card">📞 Contact Card</SelectItem>
-                                <SelectItem value="whatsapp">💬 WhatsApp</SelectItem>
-                                <SelectItem value="text">📝 Text</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        {block?._id && (
-                            <p className="text-xs text-muted-foreground">Block type cannot be changed after creation</p>
-                        )}
-                    </div>
+                    {/* Block Type Selector - Hide if locked to single type */}
+                    {!(allowedTypes?.length === 1) && (
+                        <div className="space-y-2">
+                            <Label>Block Type *</Label>
+                            <Select
+                                value={formData.block_type}
+                                onValueChange={(value) => setFormData(prev => ({ ...prev, block_type: value }))}
+                                disabled={!!block?._id}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select block type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ALL_BLOCK_TYPES
+                                        .filter(t => !allowedTypes || allowedTypes.includes(t.value))
+                                        .map(t => (
+                                            <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                                        ))
+                                    }
+                                </SelectContent>
+                            </Select>
+                            {block?._id && (
+                                <p className="text-xs text-muted-foreground">Block type cannot be changed after creation</p>
+                            )}
+                        </div>
+                    )}
 
                     {/* Title */}
                     <div className="space-y-2">
-                        <Label>Title *</Label>
+                        <Label>{formData.block_type === 'product' ? 'Product Name' : 'Title *'}</Label>
                         <Input
-                            placeholder="Block title"
+                            placeholder={formData.block_type === 'product' ? "Enter product name" : "Block title"}
                             value={formData.title}
                             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                         />
                     </div>
 
-                    {/* Thumbnail Preview/Input */}
-                    <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                        <div className="shrink-0 w-12 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden relative shadow-sm">
-                            {formData.thumbnail ? (
-                                <img src={formData.thumbnail} alt="Thumbnail" className="w-full h-full object-cover" />
-                            ) : (
-                                <span className="text-[10px] text-slate-400 font-medium">Icon</span>
-                            )}
+                    {/* Thumbnail Preview/Input - Hide for Product since it uses ImageUpload */}
+                    {formData.block_type !== 'product' && (
+                        <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="shrink-0 w-12 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden relative shadow-sm">
+                                {formData.thumbnail ? (
+                                    <img src={formData.thumbnail} alt="Thumbnail" className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-[10px] text-slate-400 font-medium">Icon</span>
+                                )}
+                            </div>
+                            <div className="flex-1 space-y-1">
+                                <Label className="text-xs">Thumbnail URL</Label>
+                                <Input
+                                    className="h-8 text-xs bg-white"
+                                    placeholder="https://..."
+                                    value={formData.thumbnail || ''}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, thumbnail: e.target.value }))}
+                                />
+                            </div>
                         </div>
-                        <div className="flex-1 space-y-1">
-                            <Label className="text-xs">Thumbnail URL</Label>
-                            <Input
-                                className="h-8 text-xs bg-white"
-                                placeholder="https://..."
-                                value={formData.thumbnail || ''}
-                                onChange={(e) => setFormData(prev => ({ ...prev, thumbnail: e.target.value }))}
-                            />
-                        </div>
-                    </div>
+                    )}
 
                     {/* Content Fields (dynamic based on block_type) */}
                     {renderContentFields()}
@@ -345,7 +421,9 @@ const BlockEditorModal = ({ open, onOpenChange, block, onSave }: BlockEditorModa
                     </Button>
                     <Button onClick={handleSave} disabled={saving || !formData.title.trim()}>
                         {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                        {block?._id ? 'Save Changes' : 'Add Block'}
+                        {block?._id
+                            ? 'Save Changes'
+                            : formData.block_type === 'product' ? 'Add Product' : 'Add Block'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

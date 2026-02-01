@@ -23,6 +23,7 @@ const Explore = () => {
     const [likedProductIds, setLikedProductIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -77,26 +78,25 @@ const Explore = () => {
     const handleLike = async (productId: string, e: React.MouseEvent) => {
         e.stopPropagation();
 
-        console.log('handleLike called for product:', productId);
-        console.log('User:', user);
-
         if (!user) {
-            console.log('No user, redirecting to login');
-            // Redirect to login page
             window.location.href = '/login';
             return;
         }
 
         const isLiked = likedProductIds.has(productId);
         const token = localStorage.getItem('auth_token');
-        console.log('Is liked:', isLiked);
-        console.log('Token:', token ? 'exists' : 'not found');
+
+        // Optimistic Update
+        const newLikedIds = new Set(likedProductIds);
+        if (isLiked) {
+            newLikedIds.delete(productId);
+        } else {
+            newLikedIds.add(productId);
+        }
+        setLikedProductIds(newLikedIds);
 
         try {
             const url = `${API_URL}/products/${productId}/like`;
-            console.log('Making request to:', url);
-            console.log('Method:', isLiked ? 'DELETE' : 'POST');
-
             const response = await fetch(url, {
                 method: isLiked ? 'DELETE' : 'POST',
                 headers: {
@@ -105,27 +105,15 @@ const Explore = () => {
                 }
             });
 
-            console.log('Response status:', response.status);
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Success response:', data);
-                const newLikedIds = new Set(likedProductIds);
-                if (isLiked) {
-                    newLikedIds.delete(productId);
-                } else {
-                    newLikedIds.add(productId);
-                }
-                setLikedProductIds(newLikedIds);
-                console.log('Updated liked IDs:', Array.from(newLikedIds));
-            } else {
+            if (!response.ok) {
+                // Revert on error
+                setLikedProductIds(likedProductIds);
                 const errorData = await response.json();
                 console.error('Like error response:', errorData);
-                alert(`Error: ${errorData.message || 'Failed to like product'}`);
             }
         } catch (error) {
             console.error('Error toggling like:', error);
-            alert('Failed to connect to server');
+            setLikedProductIds(likedProductIds); // Revert
         }
     };
 
@@ -139,8 +127,8 @@ const Explore = () => {
     if (loading) {
         return (
             <LinktreeLayout>
-                <div className="flex items-center justify-center min-h-screen">
-                    <Loader2 className="w-8 h-8 animate-spin text-zinc-600" />
+                <div className="flex items-center justify-center min-h-screen bg-black">
+                    <Loader2 className="w-8 h-8 animate-spin text-white" />
                 </div>
             </LinktreeLayout>
         );
@@ -148,122 +136,122 @@ const Explore = () => {
 
     return (
         <LinktreeLayout>
-            <div className="min-h-screen p-4 md:p-8">
-                <div className="max-w-7xl mx-auto">
-                    {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold mb-2 text-white">Explore</h1>
-                        <p className="text-zinc-500">
-                            Discover amazing products from creators
-                        </p>
+            <div className="min-h-screen bg-black text-white p-4 md:p-8">
+                {/* Pinterest-style Header */}
+                <div className="max-w-[1600px] mx-auto mb-8 flex flex-col md:flex-row gap-6 items-center justify-between sticky top-0 z-30 bg-black/80 backdrop-blur-xl py-4 transition-all">
+                    <div className="flex-1 w-full md:w-auto">
+                        <div className="relative group">
+                            <input
+                                type="text"
+                                placeholder="Search for ideas..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-zinc-900 text-white rounded-full pl-12 pr-4 py-3.5 border-none focus:ring-2 focus:ring-white/20 transition-all font-medium text-base shadow-sm group-hover:bg-zinc-800"
+                            />
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+                            </div>
+                        </div>
                     </div>
-
-                    {/* Error State */}
-                    {error && (
-                        <div className="flex flex-col items-center justify-center py-20">
-                            <div className="text-red-500 mb-2">⚠️ {error}</div>
-                            <button
-                                onClick={() => window.location.reload()}
-                                className="text-sm text-blue-500 hover:underline"
-                            >
-                                Retry
+                    {/* Categories Pills */}
+                    <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide w-full md:w-auto mask-linear-fade">
+                        {['All', 'Design', 'Technology', 'Art', 'Fashion', 'Home', 'Travel'].map((cat) => (
+                            <button key={cat} className="px-5 py-2.5 rounded-full bg-zinc-900 hover:bg-white hover:text-black font-semibold transition-all whitespace-nowrap text-sm border border-zinc-800 hover:border-transparent">
+                                {cat}
                             </button>
-                        </div>
-                    )}
+                        ))}
+                    </div>
+                </div>
 
-                    {/* Empty State */}
-                    {!error && products.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-20 text-zinc-600">
-                            <ShoppingBag className="w-16 h-16 mb-4 opacity-20" />
-                            <p className="text-lg font-medium">No products yet</p>
-                            <p className="text-sm mt-1">Check back soon for amazing products from creators!</p>
-                        </div>
-                    )}
+                {/* Error State */}
+                {error && (
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <div className="text-red-500 mb-2 font-medium">⚠️ {error}</div>
+                        <button onClick={() => window.location.reload()} className="px-6 py-2 bg-zinc-800 rounded-full text-sm font-semibold hover:bg-zinc-700 transition-colors">
+                            Retry
+                        </button>
+                    </div>
+                )}
 
-                    {/* Instagram-style Grid */}
-                    {!error && products.length > 0 && (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
-                            {products.map((product) => {
+                {/* Masonry Grid */}
+                {!error && products.length > 0 && (
+                    <div className="max-w-[1600px] mx-auto columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4 space-y-4 px-2">
+                        {products
+                            .filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                            .map((product) => {
                                 const isLiked = likedProductIds.has(product._id);
-
                                 return (
-                                    <div
-                                        key={product._id}
-                                        className="relative aspect-square cursor-pointer group overflow-hidden bg-zinc-900"
-                                        onClick={() => handleProductClick(product)}
-                                    >
-                                        {/* Product Image */}
-                                        {product.image_url ? (
-                                            <img
-                                                src={product.image_url}
-                                                alt={product.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
-                                                <span className="text-4xl opacity-20">✨</span>
-                                            </div>
-                                        )}
-
-                                        {/* Hover Overlay */}
-                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-4">
-                                            <div className="flex items-center gap-6 text-white">
-                                                <button
-                                                    onClick={(e) => handleLike(product._id, e)}
-                                                    className="flex items-center gap-2 hover:scale-110 transition-transform"
-                                                >
-                                                    <Heart
-                                                        className={`w-5 h-5 ${isLiked ? 'fill-red-500 text-red-500' : ''}`}
-                                                    />
-                                                    <span className="font-bold text-sm">
-                                                        {isLiked ? 'Liked' : 'Like'}
-                                                    </span>
-                                                </button>
-                                                <div className="flex items-center gap-2">
-                                                    <ExternalLink className="w-5 h-5" />
-                                                    <span className="font-bold text-sm">View</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Product Title */}
-                                            <div className="text-white text-center px-4">
-                                                <p className="font-semibold text-sm line-clamp-1">{product.title}</p>
-                                                {product.price && (
-                                                    <p className="text-xs mt-1 opacity-90">₹{product.price}</p>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Like indicator - Top Right */}
-                                        {isLiked && (
-                                            <div className="absolute top-2 right-2 z-10">
-                                                <Heart className="w-6 h-6 fill-red-500 text-red-500 drop-shadow-lg" />
-                                            </div>
-                                        )}
-
-                                        {/* Owner Info Badge - Bottom Left */}
-                                        <div className="absolute bottom-2 left-2 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full z-10">
-                                            {product.owner_avatar ? (
+                                    <div key={product._id} className="break-inside-avoid relative group mb-4 rounded-3xl overflow-hidden bg-zinc-900 hover:shadow-2xl hover:shadow-white/5 transition-all duration-300 cursor-zoom-in">
+                                        {/* Image */}
+                                        <div className="relative w-full" onClick={() => handleProductClick(product)}>
+                                            {product.image_url ? (
                                                 <img
-                                                    src={product.owner_avatar}
-                                                    alt={product.owner_name || 'User'}
-                                                    className="w-5 h-5 rounded-full object-cover border border-white/20"
+                                                    src={product.image_url}
+                                                    alt={product.title}
+                                                    className="w-full h-auto object-cover hover:scale-105 transition-transform duration-700 ease-out"
+                                                    loading="lazy"
                                                 />
                                             ) : (
-                                                <div className="w-5 h-5 rounded-full bg-zinc-700 flex items-center justify-center text-white text-[10px] font-bold border border-white/20">
-                                                    {product.owner_name?.[0]?.toUpperCase() || 'U'}
+                                                <div className="w-full aspect-[4/5] flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+                                                    <span className="text-4xl opacity-20">✨</span>
                                                 </div>
                                             )}
-                                            <span className="text-white text-[11px] font-medium">
-                                                {product.owner_name || product.owner_username || 'User'}
-                                            </span>
+                                            {/* Dark Gradient Overlay */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                                        </div>
+
+                                        {/* Hover Controls */}
+                                        <div className="absolute inset-x-0 top-0 p-4 flex justify-between items-start opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                            <p className="text-xs font-semibold text-white/70 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                                                {product.product_type === 'digital_product' ? 'Digital' : 'Physical'}
+                                            </p>
+                                            <button
+                                                onClick={(e) => handleLike(product._id, e)}
+                                                className={`px-4 py-3 rounded-full font-bold text-sm transition-all transform hover:scale-105 active:scale-95 shadow-lg flex items-center gap-2 ${isLiked
+                                                        ? 'bg-black text-white hover:bg-zinc-900'
+                                                        : 'bg-[#E60023] text-white hover:bg-[#ad081b]'
+                                                    }`}
+                                            >
+                                                {isLiked ? 'Saved' : 'Save'}
+                                            </button>
+                                        </div>
+
+                                        {/* Bottom Info */}
+                                        <div className="absolute inset-x-0 bottom-0 p-4 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <a
+                                                    href={product.file_url || '#'}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="flex-1 bg-white/90 hover:bg-white text-black font-bold py-2.5 px-4 rounded-full text-sm text-center shadow-lg transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    <ExternalLink className="w-3.5 h-3.5" />
+                                                    Visit
+                                                </a>
+                                                <div className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 cursor-pointer transition-colors border border-white/10" title="More options">
+                                                    <div className="flex gap-0.5">
+                                                        <div className="w-1 h-1 bg-white rounded-full"></div>
+                                                        <div className="w-1 h-1 bg-white rounded-full"></div>
+                                                        <div className="w-1 h-1 bg-white rounded-full"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 );
                             })}
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
+
+                {/* Empty State */}
+                {!error && products.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-32 text-zinc-500">
+                        <ShoppingBag className="w-20 h-20 mb-6 opacity-20" />
+                        <p className="text-xl font-bold text-zinc-300">Nothing here yet</p>
+                        <p className="text-base mt-2">Check back later for fresh ideas!</p>
+                    </div>
+                )}
             </div>
         </LinktreeLayout>
     );
