@@ -97,13 +97,30 @@ const LoginToContinueModal = ({
                         </div>
 
                         <Button
-                            onClick={handleLogin}
+                            onClick={() => {
+                                sessionStorage.setItem('tap2_pending_intent', intentId);
+                                sessionStorage.setItem('tap2_redirect_after_login', window.location.pathname);
+                                onOpenChange(false);
+                                navigate('/signup');
+                            }}
                             className="w-full gap-2"
                             size="lg"
                         >
                             <LogIn className="w-4 h-4" />
-                            Login / Sign Up
+                            Create Free Account
                         </Button>
+
+                        {/* Already have account - Sign In link */}
+                        <div className="text-center text-sm text-muted-foreground">
+                            Already have an account?{' '}
+                            <button
+                                type="button"
+                                onClick={handleLogin}
+                                className="text-primary hover:underline font-medium"
+                            >
+                                Sign In
+                            </button>
+                        </div>
 
                         {allowGuest && (
                             <>
