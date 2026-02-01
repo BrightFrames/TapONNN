@@ -130,19 +130,20 @@ const BlockTypeSelector = ({ open, onOpenChange, onSelect }: BlockTypeSelectorPr
                 {filtered.map((block) => {
                     const Icon = iconMap[block.icon] || Square;
                     return (
-                        <button
+                        <Button
                             key={block.type}
+                            variant="outline"
                             onClick={() => handleSelect(block)}
-                            className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all text-center group"
+                            className="flex flex-col items-center gap-2 p-4 h-auto rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all text-center group"
                         >
                             <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                                 <Icon className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
                             </div>
-                            <div>
+                            <div className="w-full">
                                 <p className="font-medium text-sm">{block.name}</p>
-                                <p className="text-xs text-muted-foreground line-clamp-1">{block.description}</p>
+                                <p className="text-xs text-muted-foreground line-clamp-1 whitespace-normal">{block.description}</p>
                             </div>
-                        </button>
+                        </Button>
                     );
                 })}
             </div>

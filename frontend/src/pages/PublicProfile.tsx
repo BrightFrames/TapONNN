@@ -424,19 +424,21 @@ const PublicProfile = () => {
 
                     {/* Tab Switcher - Match Phone Preview Design */}
                     <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
-                        <button
+                        <Button
+                            variant="ghost"
                             onClick={() => setActiveTab('links')}
-                            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
+                            className={`px-5 py-2 h-auto rounded-full text-sm font-semibold transition-all hover:bg-white/20 hover:text-white ${activeTab === 'links' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-current opacity-70 hover:opacity-100'}`}
                         >
                             Profile
-                        </button>
+                        </Button>
                         {profile?.is_store_identity && (
-                            <button
+                            <Button
+                                variant="ghost"
                                 onClick={() => setActiveTab('offerings')}
-                                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === 'offerings' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
+                                className={`px-5 py-2 h-auto rounded-full text-sm font-semibold transition-all hover:bg-white/20 hover:text-white ${activeTab === 'offerings' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-current opacity-70 hover:opacity-100'}`}
                             >
                                 Shop
-                            </button>
+                            </Button>
                         )}
                     </div>
                 </div>
@@ -449,13 +451,14 @@ const PublicProfile = () => {
                             const isUrlThumbnail = block.thumbnail && !Icon;
 
                             return (
-                                <button
+                                <Button
                                     key={block._id}
+                                    variant="ghost"
                                     onClick={() => {
                                         handleBlockInteract(block);
                                         if (block.url) trackClick(block._id, block.url);
                                     }}
-                                    className={`block w-full flex items-center justify-center relative px-12 ${currentTemplate.buttonStyle}`}
+                                    className={`block w-full h-auto flex items-center justify-center relative px-12 py-3.5 hover:scale-[1.02] active:scale-[0.98] ${currentTemplate.buttonStyle} whitespace-normal min-h-[50px]`}
                                 >
                                     {Icon && (
                                         <Icon className="absolute left-4 w-5 h-5 opacity-90" />
@@ -464,7 +467,7 @@ const PublicProfile = () => {
                                         <img src={block.thumbnail} alt="" className="absolute left-4 w-5 h-5 rounded-full object-cover bg-white/10" />
                                     )}
                                     <span className="truncate w-full">{block.title}</span>
-                                </button>
+                                </Button>
                             );
                         })}
                         {blocks.filter(b => b.is_active).length === 0 && (
@@ -512,9 +515,9 @@ const PublicProfile = () => {
 
                                         {/* Top Actions */}
                                         <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10">
-                                            <button className="w-8 h-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors">
+                                            <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors">
                                                 <X className="w-4 h-4" />
-                                            </button>
+                                            </Button>
                                         </div>
 
                                         {/* Bottom Content */}
@@ -529,7 +532,8 @@ const PublicProfile = () => {
                                             <p className="text-xs text-gray-300 line-clamp-1 mb-3 font-light">{product.description}</p>
 
                                             <div className="flex items-center gap-2">
-                                                <button
+                                                <Button
+                                                    variant="ghost"
                                                     onClick={() => {
                                                         setEnquiryModal({
                                                             open: true,
@@ -542,8 +546,9 @@ const PublicProfile = () => {
                                                     className="flex-1 bg-white/10 text-white h-10 rounded-full font-bold text-sm flex items-center justify-center hover:bg-white/20 transition-colors border border-white/10"
                                                 >
                                                     Enquire Now
-                                                </button>
-                                                <button
+                                                </Button>
+                                                <Button
+                                                    variant="secondary"
                                                     onClick={() => {
                                                         // Track Product Click
                                                         fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/analytics/track`, {
@@ -569,16 +574,18 @@ const PublicProfile = () => {
                                                     className="flex-1 bg-white text-black h-10 rounded-full font-bold text-sm flex items-center justify-center hover:bg-gray-100 transition-colors"
                                                 >
                                                     Buy Now
-                                                </button>
-                                                <button
+                                                </Button>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
                                                     onClick={(e) => handleLike(product._id, e)}
                                                     className={`w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors border border-white/10 ${likedProductIds.has(product._id) ? 'text-red-500 fill-current' : 'text-white'}`}
                                                 >
                                                     <Heart className={`w-4 h-4 ${likedProductIds.has(product._id) ? 'fill-red-500' : ''}`} />
-                                                </button>
-                                                <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
+                                                </Button>
+                                                <Button size="icon" variant="ghost" className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
                                                     <Share className="w-4 h-4" />
-                                                </button>
+                                                </Button>
                                             </div>
                                         </div>
                                     </div>
@@ -598,7 +605,7 @@ const PublicProfile = () => {
             {/* Footer - Connect Button - Match Phone Preview - ENHANCED UI */}
             <div className="fixed bottom-6 left-0 right-0 flex flex-col items-center gap-3 px-6 z-40 translate-y-0 opacity-100 transition-all duration-500 delay-300">
                 <div className="w-full max-w-md">
-                    <button
+                    <Button
                         onClick={() => {
                             // If user is logged in, go directly to messages
                             if (authUser) {
@@ -608,7 +615,7 @@ const PublicProfile = () => {
                                 setMessageSignupOpen(true);
                             }
                         }}
-                        className="group w-full relative overflow-hidden rounded-full h-14 shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 active:scale-95"
+                        className="group w-full relative overflow-hidden rounded-full h-14 shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 active:scale-95 p-0 border-none"
                     >
                         {/* Gradient Background */}
                         <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-black to-gray-900 group-hover:bg-gradient-to-r group-hover:from-gray-800 group-hover:via-gray-900 group-hover:to-gray-800 transition-all duration-500" />
@@ -616,7 +623,7 @@ const PublicProfile = () => {
                         {/* Shimmer Effect */}
                         <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-r from-transparent via-white to-transparent -skew-x-12 translate-x-[-100%] group-hover:animate-shimmer" />
 
-                        <div className="relative flex items-center justify-between px-6 h-full text-white">
+                        <div className="relative flex items-center justify-between px-6 h-full text-white w-full">
                             <span className="font-bold text-lg tracking-wide">
                                 {activeTab === 'links'
                                     ? `Message ${profile.name?.split(' ')[0] || profile.username || 'User'}`
@@ -627,7 +634,7 @@ const PublicProfile = () => {
                                 <MessageCircle className="w-5 h-5 text-white" />
                             </div>
                         </div>
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Tap2 Branding - ENHANCED UI */}

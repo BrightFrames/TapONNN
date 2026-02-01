@@ -156,9 +156,13 @@ const Explore = () => {
                     {/* Categories Pills */}
                     <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide w-full md:w-auto mask-linear-fade">
                         {['All', 'Design', 'Technology', 'Art', 'Fashion', 'Home', 'Travel'].map((cat) => (
-                            <button key={cat} className="px-5 py-2.5 rounded-full bg-zinc-900 hover:bg-white hover:text-black font-semibold transition-all whitespace-nowrap text-sm border border-zinc-800 hover:border-transparent">
+                            <Button
+                                key={cat}
+                                variant="outline"
+                                className="px-5 py-2.5 h-auto rounded-full bg-zinc-900 hover:bg-white hover:text-black font-semibold transition-all whitespace-nowrap text-sm border-zinc-800 hover:border-transparent text-white"
+                            >
                                 {cat}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </div>
@@ -167,9 +171,13 @@ const Explore = () => {
                 {error && (
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="text-red-500 mb-2 font-medium">⚠️ {error}</div>
-                        <button onClick={() => window.location.reload()} className="px-6 py-2 bg-zinc-800 rounded-full text-sm font-semibold hover:bg-zinc-700 transition-colors">
+                        <Button
+                            onClick={() => window.location.reload()}
+                            variant="secondary"
+                            className="px-6 py-2 bg-zinc-800 rounded-full text-sm font-semibold hover:bg-zinc-700 transition-colors text-white h-auto"
+                        >
                             Retry
-                        </button>
+                        </Button>
                     </div>
                 )}
 
@@ -205,15 +213,15 @@ const Explore = () => {
                                             <p className="text-xs font-semibold text-white/70 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
                                                 {product.product_type === 'digital_product' ? 'Digital' : 'Physical'}
                                             </p>
-                                            <button
+                                            <Button
                                                 onClick={(e) => handleLike(product._id, e)}
-                                                className={`px-4 py-3 rounded-full font-bold text-sm transition-all transform hover:scale-105 active:scale-95 shadow-lg flex items-center gap-2 ${isLiked
-                                                        ? 'bg-black text-white hover:bg-zinc-900'
-                                                        : 'bg-[#E60023] text-white hover:bg-[#ad081b]'
+                                                className={`px-4 py-3 h-auto rounded-full font-bold text-sm transition-all transform hover:scale-105 active:scale-95 shadow-lg flex items-center gap-2 ${isLiked
+                                                    ? 'bg-black text-white hover:bg-zinc-900'
+                                                    : 'bg-[#E60023] text-white hover:bg-[#ad081b]'
                                                     }`}
                                             >
                                                 {isLiked ? 'Saved' : 'Save'}
-                                            </button>
+                                            </Button>
                                         </div>
 
                                         {/* Bottom Info */}

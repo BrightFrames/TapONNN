@@ -139,12 +139,15 @@ const LinktreeMarketplace = () => {
                             className="pl-12 h-12 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200 bg-white"
                         />
                         {searchQuery && (
-                            <button
+                            <Button
+                                size="icon"
+                                variant="ghost"
                                 onClick={() => setSearchQuery("")}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-400 hover:text-gray-600 rounded-full"
                             >
+                                <span className="sr-only">Clear search</span>
                                 ✕
-                            </button>
+                            </Button>
                         )}
                     </div>
                 </div>
@@ -158,26 +161,27 @@ const LinktreeMarketplace = () => {
                                 const isActive = selectedCategory === category;
 
                                 return (
-                                    <button
+                                    <Button
                                         key={category}
+                                        variant="ghost"
                                         onClick={() => setSelectedCategory(category)}
                                         className={`
-                                            w-full px-4 py-3 rounded-xl text-left text-sm font-medium
-                                            transition-all duration-200 flex items-center justify-between
+                                            w-full px-4 py-8 rounded-xl text-left font-medium
+                                            transition-all duration-200 flex items-center justify-between h-auto
                                             ${isActive
-                                                ? 'bg-gray-900 text-white shadow-lg'
+                                                ? 'bg-gray-900 text-white shadow-lg focus:ring-0 hover:bg-gray-800 hover:text-white'
                                                 : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                             }
                                         `}
                                     >
-                                        <span>{category}</span>
+                                        <span className="text-sm">{category}</span>
                                         <span className={`
                                             text-xs px-2 py-0.5 rounded-full
                                             ${isActive ? 'bg-white/20' : 'bg-gray-100 text-gray-500'}
                                         `}>
                                             {count}
                                         </span>
-                                    </button>
+                                    </Button>
                                 );
                             })}
                         </div>

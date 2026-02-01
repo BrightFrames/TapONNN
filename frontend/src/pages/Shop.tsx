@@ -577,19 +577,19 @@ const Shop = () => {
                             >
                                 <Button
                                     variant="outline"
-                                    className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-medium gap-1.5 sm:gap-2"
+                                    className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl gap-1.5 sm:gap-2"
                                 >
                                     <Instagram className="w-4 h-4 sm:w-5 sm:h-5" />
                                     <span className="hidden sm:inline">{t('dashboard.socials')}</span>
                                 </Button>
                             </SocialLinksDialog>
                             <Button
-                                variant="outline"
-                                className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 font-medium"
+                                variant="destructive"
+                                className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl gap-2"
                                 onClick={() => toast.info("Clear All functionality coming soon")}
                             >
                                 <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                                <span className="hidden sm:inline ml-2">{t('dashboard.clearAll')}</span>
+                                <span className="hidden sm:inline">{t('dashboard.clearAll')}</span>
                             </Button>
                         </div>
 
@@ -700,19 +700,23 @@ const Shop = () => {
                                     <h2 className="text-xl font-bold tracking-tight">@{username}</h2>
 
                                     {/* Tab Switcher */}
-                                    <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
-                                        <button
+                                    <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full w-fit">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
                                             onClick={() => setPreviewTab('links')}
-                                            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
+                                            className={`px-4 py-1.5 h-auto rounded-full text-xs font-semibold transition-all hover:bg-white/10 ${previewTab === 'links' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-current opacity-70 hover:opacity-100 hover:text-white'}`}
                                         >
                                             {t('dashboard.links')}
-                                        </button>
-                                        <button
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
                                             onClick={() => setPreviewTab('shop')}
-                                            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70 hover:opacity-100'}`}
+                                            className={`px-4 py-1.5 h-auto rounded-full text-xs font-semibold transition-all hover:bg-white/10 ${previewTab === 'shop' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-current opacity-70 hover:opacity-100 hover:text-white'}`}
                                         >
                                             {t('shop.title')}
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
 
@@ -767,12 +771,13 @@ const Shop = () => {
 
                                 {/* Bottom Message Button */}
                                 <div className="absolute bottom-4 left-4 right-4 z-20">
-                                    <button
-                                        className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100"
+                                    <Button
+                                        variant="secondary"
+                                        className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100 hover:bg-white"
                                     >
                                         <span>Message {user?.name?.split(' ')[0] || 'User'}</span>
                                         <MessageCircle className="w-5 h-5 text-gray-600" />
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -792,7 +797,7 @@ const Shop = () => {
             <div className="fixed bottom-6 right-6 z-40 xl:hidden">
                 <Button
                     onClick={() => setShowPreview(true)}
-                    className="rounded-full w-14 h-14 bg-zinc-900 text-white hover:bg-zinc-800 shadow-2xl flex items-center justify-center"
+                    className="rounded-full w-14 h-14 shadow-2xl flex items-center justify-center"
                 >
                     <Smartphone className="w-6 h-6" />
                 </Button>

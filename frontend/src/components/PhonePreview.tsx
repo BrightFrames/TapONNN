@@ -1,4 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -61,19 +63,23 @@ const PhonePreview = ({
                     <h2 className="text-xl font-bold tracking-tight">@{username}</h2>
 
                     {/* Preview Tabs (Links | Shop) - Only show if there are products */}
-                    <div className="mt-2 flex bg-black/20 backdrop-blur-sm p-1 rounded-full">
-                        <button
+                    <div className="mt-2 flex bg-black/20 backdrop-blur-sm p-1 rounded-full w-fit">
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setPreviewTab('links')}
-                            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-white/70 hover:text-white'}`}
+                            className={`px-4 py-1.5 h-auto rounded-full text-xs font-semibold transition-all hover:bg-white/10 ${previewTab === 'links' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-white/70 hover:text-white'}`}
                         >
                             {t('dashboard.links')}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setPreviewTab('shop')}
-                            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-white/70 hover:text-white'}`}
+                            className={`px-4 py-1.5 h-auto rounded-full text-xs font-semibold transition-all hover:bg-white/10 ${previewTab === 'shop' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-white/70 hover:text-white'}`}
                         >
                             {t('dashboard.offerings')}
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
@@ -106,10 +112,10 @@ const PhonePreview = ({
                             {/* Search Bar */}
                             <div className="relative w-full">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-50 text-current" />
-                                <input
+                                <Input
                                     type="text"
                                     placeholder={t('shop.searchProducts') || "Search products"}
-                                    className="w-full pl-8 pr-4 py-2.5 rounded-xl text-xs bg-white/10 backdrop-blur-md border border-white/10 placeholder:text-white/50 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all font-medium text-white"
+                                    className="w-full pl-8 pr-4 py-2.5 h-auto rounded-xl text-xs bg-white/10 backdrop-blur-md border border-white/10 placeholder:text-white/50 focus-visible:ring-1 focus-visible:ring-white/30 transition-all font-medium text-white shadow-none"
                                 />
                             </div>
 
@@ -132,12 +138,12 @@ const PhonePreview = ({
                                                 <div className="flex items-center justify-between mt-2">
                                                     <span className="font-bold text-sm">${product.price}</span>
                                                     <div className="flex gap-1">
-                                                        <button className="h-7 px-2 text-[10px] font-bold rounded-full bg-white border border-gray-200 text-black hover:bg-gray-50">
+                                                        <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-bold rounded-full border-gray-200 text-black hover:bg-gray-50">
                                                             {t('shop.enquiry')}
-                                                        </button>
-                                                        <button className="h-7 px-3 text-[10px] font-bold rounded-full bg-black text-white hover:bg-black/80">
+                                                        </Button>
+                                                        <Button size="sm" className="h-7 px-3 text-[10px] font-bold rounded-full bg-black text-white hover:bg-black/80">
                                                             {t('common.buy')}
-                                                        </button>
+                                                        </Button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -152,9 +158,9 @@ const PhonePreview = ({
                 </div>
 
                 <div className="mt-auto absolute bottom-8 w-full left-0 flex flex-col items-center gap-2">
-                    <button className="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">
+                    <Button variant="secondary" className="bg-white text-black px-4 py-2 h-auto rounded-full text-xs font-bold hover:bg-white/90">
                         {t('common.joinOnTap2', { username })}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

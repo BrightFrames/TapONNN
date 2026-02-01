@@ -280,16 +280,17 @@ const ConnectWithSupplierModal = ({
 
                                 <div className="text-center pt-4">
                                     <span className="text-gray-500 text-sm">Already have an account? </span>
-                                    <button
+                                    <Button
+                                        variant="link"
                                         type="button"
                                         onClick={() => {
                                             onOpenChange(false);
                                             navigate('/login');
                                         }}
-                                        className="text-blue-500 text-sm font-semibold hover:text-blue-400 transition-colors"
+                                        className="text-blue-500 text-sm font-semibold hover:text-blue-400 transition-colors p-0 h-auto"
                                     >
                                         Sign In
-                                    </button>
+                                    </Button>
                                 </div>
                             </form>
                         )}
@@ -337,14 +338,15 @@ const ConnectWithSupplierModal = ({
                                     />
                                     {otpSent && (
                                         <div className="flex justify-end mt-2">
-                                            <button
+                                            <Button
+                                                variant="link"
                                                 type="button"
                                                 onClick={handleResendOtp}
                                                 disabled={isSendingOtp}
-                                                className="text-blue-500 text-xs font-medium hover:text-blue-400 transition-colors"
+                                                className="text-blue-500 text-xs font-medium hover:text-blue-400 transition-colors p-0 h-auto block ml-auto"
                                             >
                                                 {isSendingOtp ? 'Sending...' : 'Resend OTP'}
-                                            </button>
+                                            </Button>
                                         </div>
                                     )}
                                 </div>
@@ -361,14 +363,15 @@ const ConnectWithSupplierModal = ({
                                     )}
                                 </Button>
 
-                                <button
+                                <Button
+                                    variant="ghost"
                                     type="button"
                                     onClick={() => setStep('details')}
-                                    className="w-full text-center text-gray-400 text-sm hover:text-white transition-colors flex items-center justify-center gap-2 py-2"
+                                    className="w-full text-center text-gray-400 text-sm hover:text-white transition-colors flex items-center justify-center gap-2 py-2 h-auto hover:bg-transparent"
                                 >
                                     <ArrowLeft className="w-4 h-4" />
                                     Back to Details
-                                </button>
+                                </Button>
                             </form>
                         )}
                     </div>

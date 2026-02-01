@@ -279,24 +279,26 @@ const PricingSection = () => {
 
                 {/* Tabs */}
                 <div className="bg-card border border-border p-1 rounded-full flex gap-1 mb-16 shadow-sm">
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={() => setActiveTab("profile")}
-                        className={`px-8 py-3 rounded-full text-sm font-semibold transition-all ${activeTab === "profile"
-                            ? "bg-secondary text-secondary-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
+                        className={`px-8 py-3 rounded-full text-sm font-semibold h-auto transition-all hover:bg-transparent ${activeTab === "profile"
+                            ? "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary"
+                            : "text-muted-foreground hover:text-foreground hover:bg-transparent"
                             }`}
                     >
                         DIGITAL PROFILE
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="ghost"
                         onClick={() => setActiveTab("store")}
-                        className={`px-8 py-3 rounded-full text-sm font-semibold transition-all ${activeTab === "store"
-                            ? "bg-secondary text-secondary-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
+                        className={`px-8 py-3 rounded-full text-sm font-semibold h-auto transition-all hover:bg-transparent ${activeTab === "store"
+                            ? "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary"
+                            : "text-muted-foreground hover:text-foreground hover:bg-transparent"
                             }`}
                     >
                         DIGITAL STORE
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Pricing Cards */}
@@ -314,15 +316,15 @@ const PricingSection = () => {
                                 </p>
                             </div>
 
-                            <button
+                            <Button
                                 onClick={() => handlePlanSelect(plan)}
-                                className={`mt-auto w-full group flex items-center justify-between py-4 px-6 rounded-full font-bold transition-all ${plan.buttonBg}`}
+                                className={`mt-auto w-full group flex items-center justify-between py-6 px-6 h-auto rounded-full font-bold transition-all ${plan.buttonBg}`}
                             >
                                 <span>{plan.buttonText || "Try For Free"}</span>
                                 <div className={`p-1 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1 ${plan.title === "Professional" || plan.title === "Enterprise" ? "bg-black text-primary" : "bg-background text-foreground"}`}>
                                     <ArrowRight size={20} />
                                 </div>
-                            </button>
+                            </Button>
                         </div>
                     ))}
                 </div>
@@ -332,12 +334,14 @@ const PricingSection = () => {
             {showPaymentModal && selectedPlan && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-3xl max-w-md w-full p-8 relative shadow-2xl">
-                        <button
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={closeModal}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-transparent"
                         >
                             <X size={24} />
-                        </button>
+                        </Button>
 
                         <div className="text-center">
                             <h3 className="text-2xl font-bold mb-2">Subscribe to {selectedPlan.title}</h3>

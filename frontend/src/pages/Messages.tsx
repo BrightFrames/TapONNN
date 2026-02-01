@@ -418,11 +418,12 @@ const Messages = () => {
                         ) : (
                             <div className="divide-y divide-zinc-800/50">
                                 {filteredConversations.map(conv => (
-                                    <button
+                                    <Button
                                         key={conv.id}
+                                        variant="ghost"
                                         onClick={() => selectConversation(conv)}
                                         className={cn(
-                                            "w-full p-4 flex items-center gap-3 hover:bg-zinc-800/50 transition-colors text-left",
+                                            "w-full p-4 h-auto flex items-center gap-3 hover:bg-zinc-800/50 transition-colors text-left justify-start rounded-none",
                                             activeConversation?.id === conv.id && "bg-zinc-800/50"
                                         )}
                                     >
@@ -452,7 +453,7 @@ const Messages = () => {
                                                 )}
                                             </div>
                                         </div>
-                                    </button>
+                                    </Button>
                                 ))}
                             </div>
                         )}

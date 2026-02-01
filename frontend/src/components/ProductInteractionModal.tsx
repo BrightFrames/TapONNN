@@ -169,9 +169,10 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
                         <div className="space-y-4">
                             <h2 className="text-xl font-bold mb-4">How would you like to proceed?</h2>
 
-                            <button
+                            <Button
+                                variant="outline"
                                 onClick={() => setStep('contact_enquiry')}
-                                className="w-full p-4 rounded-xl border-2 border-gray-100 hover:border-black transition-all flex items-center gap-4 group text-left"
+                                className="w-full p-4 h-auto rounded-xl border-2 border-gray-100 hover:border-black transition-all flex items-center gap-4 group text-left hover:bg-transparent"
                             >
                                 <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors">
                                     <MessageSquare className="w-5 h-5" />
@@ -181,11 +182,12 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
                                     <p className="text-sm text-gray-500">Ask a question or request more info.</p>
                                 </div>
                                 <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-black" />
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button
+                                variant="outline"
                                 onClick={() => setStep('contact_buy')}
-                                className="w-full p-4 rounded-xl border-2 border-gray-100 hover:border-black transition-all flex items-center gap-4 group text-left"
+                                className="w-full p-4 h-auto rounded-xl border-2 border-gray-100 hover:border-black transition-all flex items-center gap-4 group text-left hover:bg-transparent"
                             >
                                 <div className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors">
                                     <ShoppingBag className="w-5 h-5" />
@@ -195,7 +197,7 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
                                     <p className="text-sm text-gray-500">Purchase internally via manual payment.</p>
                                 </div>
                                 <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-black" />
-                            </button>
+                            </Button>
                         </div>
                     )}
 

@@ -1,4 +1,5 @@
 import { MarketplaceCategory, marketplaceItems, MARKETPLACE_CATEGORIES } from "@/data/marketplaceData";
+import { Button } from "@/components/ui/button";
 
 interface CategorySidebarProps {
     selectedCategory: MarketplaceCategory;
@@ -22,17 +23,17 @@ const CategorySidebar = ({ selectedCategory, onCategoryChange }: CategorySidebar
                     const count = getCategoryCount(category);
 
                     return (
-                        <button
+                        <Button
                             key={category}
+                            variant={isActive ? "default" : "outline"}
                             onClick={() => onCategoryChange(category)}
                             className={`
-                                px-6 py-3 rounded-full text-sm font-semibold
+                                rounded-full text-sm font-semibold h-auto py-3 px-6 w-full
                                 transition-all duration-200 ease-in-out
-                                text-left whitespace-nowrap
-                                flex items-center justify-between gap-3
+                                justify-between gap-3
                                 ${isActive
-                                    ? 'bg-[#1E2330] text-white border-[#1E2330] shadow-lg'
-                                    : 'bg-white text-[#1E2330] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                                    ? 'shadow-lg hover:bg-zinc-800'
+                                    : 'bg-white hover:bg-gray-50 border-gray-200'
                                 }
                             `}
                         >
@@ -48,7 +49,7 @@ const CategorySidebar = ({ selectedCategory, onCategoryChange }: CategorySidebar
                             >
                                 {count}
                             </span>
-                        </button>
+                        </Button>
                     );
                 })}
             </div>

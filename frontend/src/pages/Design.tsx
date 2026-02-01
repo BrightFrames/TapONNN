@@ -118,24 +118,26 @@ const Design = () => {
                                 <div className="space-y-4">
                                     <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Profile image layout</h2>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <button
+                                        <Button
+                                            variant="outline"
                                             onClick={() => handleConfigChange('headerLayout', 'classic')}
-                                            className={`p-4 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 transition-all ${config.headerLayout === 'classic' ? 'border-black bg-gray-50' : 'border-gray-200 bg-white'}`}
+                                            className={`h-auto p-4 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 hover:bg-gray-50 transition-all ${config.headerLayout === 'classic' ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
                                         >
                                             <div className="w-full flex justify-center pb-2">
                                                 <div className="w-8 h-8 rounded-full border-2 border-current"></div>
                                             </div>
                                             <span className="text-sm font-medium">Classic</span>
-                                        </button>
-                                        <button
+                                        </Button>
+                                        <Button
+                                            variant="outline"
                                             onClick={() => handleConfigChange('headerLayout', 'hero')}
-                                            className={`p-4 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 transition-all ${config.headerLayout === 'hero' ? 'border-black bg-gray-50' : 'border-gray-200 bg-white'}`}
+                                            className={`h-auto p-4 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 hover:bg-gray-50 transition-all ${config.headerLayout === 'hero' ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
                                         >
                                             <div className="w-full h-8 border-2 border-dashed border-current rounded-md flex items-center justify-center">
                                                 <div className="w-4 h-4 rounded-full border-2 border-current"></div>
                                             </div>
                                             <span className="text-sm font-medium">Hero</span>
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
 
@@ -143,20 +145,22 @@ const Design = () => {
                                 <div className="space-y-4">
                                     <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Title style</h2>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <button
+                                        <Button
+                                            variant="outline"
                                             onClick={() => handleConfigChange('titleStyle', 'text')}
-                                            className={`p-6 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 transition-all ${config.titleStyle === 'text' ? 'border-black bg-gray-50' : 'border-gray-200 bg-white'}`}
+                                            className={`h-auto p-6 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 hover:bg-gray-50 transition-all ${config.titleStyle === 'text' ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
                                         >
                                             <span className="font-serif text-xl">Aa</span>
                                             <span className="text-xs font-medium mt-1">Text</span>
-                                        </button>
-                                        <button
+                                        </Button>
+                                        <Button
+                                            variant="outline"
                                             onClick={() => handleConfigChange('titleStyle', 'logo')}
-                                            className={`p-6 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 transition-all ${config.titleStyle === 'logo' ? 'border-black bg-gray-50' : 'border-gray-200 bg-white'}`}
+                                            className={`h-auto p-6 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 hover:bg-gray-50 transition-all ${config.titleStyle === 'logo' ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
                                         >
                                             <ImageIcon className="w-6 h-6" />
                                             <span className="text-xs font-medium mt-1">{t('design.logo')}</span>
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
 
@@ -164,18 +168,20 @@ const Design = () => {
                                 <div className="space-y-4">
                                     <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('design.size')}</h2>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <button
+                                        <Button
+                                            variant="outline"
                                             onClick={() => handleConfigChange('profileSize', 'small')}
-                                            className={`py-3 px-4 border-2 rounded-full font-medium text-sm transition-all ${config.profileSize === 'small' ? 'border-black bg-gray-50' : 'border-gray-200 bg-white'}`}
+                                            className={`h-auto py-3 px-4 border-2 rounded-full font-medium text-sm transition-all hover:bg-gray-50 ${config.profileSize === 'small' ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
                                         >
                                             {t('design.small')}
-                                        </button>
-                                        <button
+                                        </Button>
+                                        <Button
+                                            variant="outline"
                                             onClick={() => handleConfigChange('profileSize', 'large')}
-                                            className={`py-3 px-4 border-2 rounded-full font-medium text-sm transition-all ${config.profileSize === 'large' ? 'border-black bg-gray-50' : 'border-gray-200 bg-white'}`}
+                                            className={`h-auto py-3 px-4 border-2 rounded-full font-medium text-sm transition-all hover:bg-gray-50 ${config.profileSize === 'large' ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
                                         >
                                             {t('design.large')}
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             </TabsContent>
@@ -250,10 +256,11 @@ const Design = () => {
                                         <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Solid Color</h3>
                                         <div className="grid grid-cols-6 gap-3">
                                             {['#FFFFFF', '#F8FAFC', '#FEF3C7', '#DCFCE7', '#E0E7FF', '#FCE7F3', '#111827', '#1F2937', '#7C3AED', '#059669', '#DC2626', '#F59E0B'].map(color => (
-                                                <button
+                                                <Button
                                                     key={color}
+                                                    variant="ghost"
                                                     onClick={() => handleConfigChange('bgColor', color)}
-                                                    className={`w-10 h-10 rounded-xl border-2 transition-all hover:scale-110 ${config.bgColor === color ? 'ring-2 ring-purple-500 ring-offset-2' : 'border-gray-200'}`}
+                                                    className={`w-10 h-10 rounded-xl border-2 p-0 transition-all hover:scale-110 ${config.bgColor === color ? 'ring-2 ring-purple-500 ring-offset-2' : 'border-gray-200'}`}
                                                     style={{ backgroundColor: color }}
                                                 />
                                             ))}
@@ -272,10 +279,11 @@ const Design = () => {
                                                 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
                                                 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)'
                                             ].map((gradient, i) => (
-                                                <button
+                                                <Button
                                                     key={i}
+                                                    variant="ghost"
                                                     onClick={() => handleConfigChange('bgGradient', gradient)}
-                                                    className={`h-16 rounded-xl border-2 transition-all hover:scale-105 ${config.bgGradient === gradient ? 'ring-2 ring-purple-500 ring-offset-2' : 'border-gray-200'}`}
+                                                    className={`h-16 w-full rounded-xl border-2 p-0 transition-all hover:scale-105 ${config.bgGradient === gradient ? 'ring-2 ring-purple-500 ring-offset-2' : 'border-gray-200'}`}
                                                     style={{ background: gradient }}
                                                 />
                                             ))}
@@ -310,14 +318,15 @@ const Design = () => {
                                                 { name: 'Playfair Display', className: 'font-serif' },
                                                 { name: 'Roboto Mono', className: 'font-mono' }
                                             ].map((font) => (
-                                                <button
+                                                <Button
                                                     key={font.name}
+                                                    variant="outline"
                                                     onClick={() => handleConfigChange('fontFamily', font.name)}
-                                                    className={`p-4 border-2 rounded-xl transition-all hover:border-gray-300 ${config.fontFamily === font.name ? 'border-black bg-gray-50' : 'border-gray-200'}`}
+                                                    className={`h-auto p-4 border-2 rounded-xl transition-all hover:border-gray-300 hover:bg-gray-50 flex flex-col items-center gap-1 ${config.fontFamily === font.name ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
                                                 >
                                                     <span className={`text-xl ${font.className}`}>Aa</span>
                                                     <p className="text-xs mt-1 text-gray-600">{font.name}</p>
-                                                </button>
+                                                </Button>
                                             ))}
                                         </div>
                                     </div>
@@ -327,14 +336,15 @@ const Design = () => {
                                         <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('design.textColor')}</h3>
                                         <div className="grid grid-cols-6 gap-3">
                                             {['#111827', '#374151', '#6B7280', '#FFFFFF', '#7C3AED', '#059669'].map(color => (
-                                                <button
+                                                <Button
                                                     key={color}
+                                                    variant="ghost"
                                                     onClick={() => handleConfigChange('textColor', color)}
-                                                    className={`w-10 h-10 rounded-xl border-2 transition-all hover:scale-110 flex items-center justify-center ${config.textColor === color ? 'ring-2 ring-purple-500 ring-offset-2' : 'border-gray-200'}`}
+                                                    className={`w-10 h-10 rounded-xl border-2 p-0 transition-all hover:scale-110 flex items-center justify-center ${config.textColor === color ? 'ring-2 ring-purple-500 ring-offset-2' : 'border-gray-200'}`}
                                                     style={{ backgroundColor: color === '#FFFFFF' ? '#000' : '#FFF' }}
                                                 >
                                                     <span style={{ color }} className="font-bold">A</span>
-                                                </button>
+                                                </Button>
                                             ))}
                                         </div>
                                     </div>

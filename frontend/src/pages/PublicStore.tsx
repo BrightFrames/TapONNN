@@ -271,10 +271,11 @@ const PublicStore = () => {
                     {store.products.length > 1 && (
                         <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2">
                             {store.products.map((_, index) => (
-                                <button
+                                <Button
                                     key={index}
+                                    variant="ghost"
                                     onClick={() => scrollToProduct(index)}
-                                    className={`w-2 h-2 rounded-full transition-all ${currentProductIndex === index
+                                    className={`w-2 h-2 p-0 rounded-full transition-all hover:bg-white/80 ${currentProductIndex === index
                                         ? 'bg-white scale-125'
                                         : 'bg-white/30 hover:bg-white/60'
                                         }`}

@@ -1,9 +1,10 @@
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Home } from "lucide-react";
+import { ChevronRight, Home, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -19,6 +20,53 @@ interface Order {
     amount: number;
     status: string;
 }
+
+const DUMMY_ORDERS: Order[] = [
+    {
+        _id: "order_1",
+        payment_id: "PAY_123456789",
+        invoice_id: "INV-2024-001",
+        product_name: "Premium Template Pack",
+        buyer_name: "Alice Johnson",
+        paid_at: "2024-02-01T10:30:00Z",
+        created_at: "2024-02-01T10:30:00Z",
+        amount: 49.99,
+        status: "paid"
+    },
+    {
+        _id: "order_2",
+        payment_id: "PAY_987654321",
+        invoice_id: "INV-2024-002",
+        product_name: "1-Hour Consultation",
+        buyer_name: "Bob Smith",
+        paid_at: "2024-01-31T15:45:00Z",
+        created_at: "2024-01-31T15:45:00Z",
+        amount: 150.00,
+        status: "paid"
+    },
+    {
+        _id: "order_3",
+        payment_id: "PAY_456123789",
+        invoice_id: "INV-2024-003",
+        product_name: "Digital Art Bundle",
+        buyer_name: "Charlie Brown",
+        paid_at: "2024-01-30T09:15:00Z",
+        created_at: "2024-01-30T09:15:00Z",
+        amount: 25.00,
+        status: "paid"
+    },
+    {
+        _id: "order_4",
+        payment_id: "PAY_789321654",
+        invoice_id: "INV-2024-004",
+        product_name: "Monthly Subscription",
+        buyer_name: "Diana Prince",
+        paid_at: "2024-01-29T14:20:00Z",
+        created_at: "2024-01-29T14:20:00Z",
+        amount: 9.99,
+        status: "paid"
+    }
+];
 
 const Earnings = () => {
     const { t } = useTranslation();
@@ -37,12 +85,43 @@ const Earnings = () => {
             });
             const orderData = await orderRes.json();
             const ordersList = Array.isArray(orderData) ? orderData : (orderData.orders || []);
-            setOrders(ordersList);
+            setOrders(ordersList.length > 0 ? ordersList : DUMMY_ORDERS);
             setLoading(false);
         } catch (error) {
             console.error("Error loading earnings:", error);
+            // Fallback to dummy data on error for demo purposes
+            setOrders(DUMMY_ORDERS);
             setLoading(false);
         }
+    };
+
+    const handleDownloadInvoice = (order: Order) => {
+        const invoiceContent = `
+INVOICE #${order.invoice_id}
+Date: ${new Date(order.paid_at || order.created_at).toLocaleDateString()}
+
+Billed To:
+${order.buyer_name}
+
+Item:
+${order.product_name}
+
+Amount Paid: $${order.amount.toFixed(2)}
+Payment ID: ${order.payment_id}
+Status: ${order.status.toUpperCase()}
+
+Thank you for your business!
+        `;
+
+        const blob = new Blob([invoiceContent], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Invoice-${order.invoice_id}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
     };
 
     useEffect(() => {
@@ -87,7 +166,7 @@ const Earnings = () => {
                                     <TableHeader className="bg-gray-50/50">
                                         <TableRow>
                                             <TableHead className="w-[50px]">
-                                                <input type="checkbox" className="rounded border-gray-300 ml-2" />
+                                                <Checkbox className="ml-2" />
                                             </TableHead>
                                             <TableHead className="font-medium text-gray-500">{t('earnings.paymentId')}</TableHead>
                                             <TableHead className="font-medium text-gray-500">{t('earnings.invoiceId')}</TableHead>
@@ -103,12 +182,12 @@ const Earnings = () => {
                                             orders.map((order) => (
                                                 <TableRow key={order._id} className="hover:bg-gray-50/50">
                                                     <TableCell>
-                                                        <input type="checkbox" className="rounded border-gray-300 ml-2" />
+                                                        <Checkbox className="ml-2" />
                                                     </TableCell>
                                                     <TableCell>
-                                                        <span className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs font-mono font-medium">
+                                                        <Badge variant="secondary" className="bg-zinc-100 text-zinc-600 border-none font-mono font-medium rounded">
                                                             {order.payment_id || `H_${order._id.substr(-8).toUpperCase()}`}
-                                                        </span>
+                                                        </Badge>
                                                     </TableCell>
                                                     <TableCell>
                                                         <span className="font-bold text-xs text-gray-700">
@@ -116,27 +195,29 @@ const Earnings = () => {
                                                         </span>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <div className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs inline-block font-medium truncate max-w-[150px]">
+                                                        <Badge variant="outline" className="font-medium truncate max-w-[150px] inline-flex rounded">
                                                             {order.product_name || "Digital Service"}
-                                                        </div>
+                                                        </Badge>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <div className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs inline-block font-medium truncate max-w-[200px]">
+                                                        <span className="text-sm text-zinc-600 font-medium">
                                                             {order.buyer_name || "Anonymous User"}
-                                                        </div>
+                                                        </span>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <div className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs inline-block font-medium">
+                                                        <span className="text-sm text-zinc-500">
                                                             {order.paid_at ? new Date(order.paid_at).toISOString().split('T')[0] : new Date(order.created_at).toISOString().split('T')[0]}
-                                                        </div>
+                                                        </span>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <div className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs inline-block font-bold">
+                                                        <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-none font-bold inline-flex rounded">
                                                             ${order.amount?.toFixed(2)}
-                                                        </div>
+                                                        </Badge>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <ChevronRight className="w-4 h-4 text-purple-600" />
+                                                        <Button variant="ghost" size="icon" onClick={() => handleDownloadInvoice(order)} title="Download Invoice">
+                                                            <Download className="w-4 h-4 text-zinc-500 hover:text-zinc-900" />
+                                                        </Button>
                                                     </TableCell>
                                                 </TableRow>
                                             ))

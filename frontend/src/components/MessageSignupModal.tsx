@@ -191,9 +191,9 @@ export function MessageSignupModal({ open, onOpenChange, intentUsername, intentN
                                 <div className="text-center pt-2">
                                     <p className="text-zinc-500 text-sm">
                                         Already have an account?{" "}
-                                        <button type="button" onClick={handleSignIn} className="text-[#4A90E2] font-medium hover:underline">
+                                        <Button variant="link" type="button" onClick={handleSignIn} className="text-[#4A90E2] font-medium hover:underline p-0 h-auto">
                                             Sign In
-                                        </button>
+                                        </Button>
                                     </p>
                                 </div>
                             </form>
@@ -241,13 +241,14 @@ export function MessageSignupModal({ open, onOpenChange, intentUsername, intentN
                                 </Button>
 
                                 <div className="text-center pt-4">
-                                    <button
+                                    <Button
+                                        variant="ghost"
                                         onClick={() => setStep(1)}
-                                        className="flex items-center justify-center gap-2 text-zinc-400 hover:text-white text-sm mx-auto transition-colors"
+                                        className="flex items-center justify-center gap-2 text-zinc-400 hover:text-white text-sm mx-auto transition-colors h-auto hover:bg-transparent"
                                     >
                                         <ArrowLeft className="w-4 h-4" />
                                         Back to Details
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         )}

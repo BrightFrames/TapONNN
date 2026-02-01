@@ -113,13 +113,14 @@ const LoginToContinueModal = ({
                         {/* Already have account - Sign In link */}
                         <div className="text-center text-sm text-muted-foreground">
                             Already have an account?{' '}
-                            <button
+                            <Button
+                                variant="link"
                                 type="button"
                                 onClick={handleLogin}
-                                className="text-primary hover:underline font-medium"
+                                className="text-primary hover:underline font-medium p-0 h-auto"
                             >
                                 Sign In
-                            </button>
+                            </Button>
                         </div>
 
                         {allowGuest && (

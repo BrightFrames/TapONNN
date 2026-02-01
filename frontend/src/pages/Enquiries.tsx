@@ -40,7 +40,9 @@ import {
     Play,
     Pause,
     ShoppingBag,
-    Layers
+    Layers,
+    MousePointer,
+    Plus
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +72,8 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -219,7 +223,117 @@ const calculatePercentageChange = (current: number, previous: number): string =>
 
 // --- Mock Data ---
 // --- Mock Data Removed ---
-const MOCK_LEADS: Lead[] = [];
+// --- Mock Data ---
+const DUMMY_LEADS: Lead[] = [
+    {
+        id: "lead_1",
+        name: "Rahul Sharma",
+        role: "visitor",
+        source: "Instagram",
+        email: "rahul.s@example.com",
+        phone: "9876543210",
+        truecaller: "Rahul S",
+        isSpam: false,
+        avatar: "https://api.dicebear.com/9.x/avataaars/svg?seed=rahul",
+        status: "unread",
+        crmStatus: "New",
+        internalNotes: [],
+        labels: [{ text: "High Intent", color: "blue" }],
+        score: 85,
+        scoreFactors: ["High Quality Source", "Verified Number"],
+        preview: "I'm interested in the premium package...",
+        time: new Date().toISOString(),
+        location: "Mumbai, India",
+        duration: "2m 30s",
+        device: "iPhone",
+        os: "iOS 17",
+        resolution: "390x844",
+        network: "4G",
+        visits: 3,
+        lastSeen: "Just now",
+        utm: { source: "instagram", medium: "social", campaign: "summer_sale", term: "" },
+        messages: [
+            { id: 1, from: "them", text: "Hi, I saw your post on Instagram.", time: "10:30 AM", type: "text" },
+            { id: 2, from: "them", text: "I'm interested in the premium package. Can you tell me more about the features?", time: "10:31 AM", type: "text" }
+        ],
+        journey: [
+            { text: "Visited Profile", sub: "Direct Link", icon: User, time: "10:28 AM" },
+            { text: "Clicked 'Pricing'", sub: "Link Click", icon: MousePointer, time: "10:29 AM" },
+            { text: "Sent Message", sub: "Enquiry", icon: MessageSquare, time: "10:30 AM" }
+        ]
+    },
+    {
+        id: "lead_2",
+        name: "Sarah Jenkins",
+        role: "user",
+        source: "Google",
+        email: "sarah.j@example.com",
+        phone: "+15551234567",
+        truecaller: "Unknown",
+        isSpam: false,
+        avatar: "https://api.dicebear.com/9.x/avataaars/svg?seed=sarah",
+        status: "read",
+        crmStatus: "Contacted",
+        internalNotes: [{ text: "Sent price list", date: "Yesterday" }],
+        labels: [],
+        score: 60,
+        scoreFactors: ["Registered User"],
+        preview: "Do you offer international shipping?",
+        time: new Date(Date.now() - 86400000).toISOString(),
+        location: "New York, USA",
+        duration: "5m 10s",
+        device: "Desktop",
+        os: "Windows 11",
+        resolution: "1920x1080",
+        network: "Fiber",
+        visits: 1,
+        lastSeen: "Yesterday",
+        utm: { source: "google", medium: "organic", campaign: "", term: "" },
+        messages: [
+            { id: 1, from: "them", text: "Hello", time: "Yesterday", type: "text" },
+            { id: 2, from: "them", text: "Do you offer international shipping?", time: "Yesterday", type: "text" },
+            { id: 3, from: "me", text: "Yes, we ship worldwide! Shipping costs depend on the destination.", time: "Yesterday", type: "text" }
+        ],
+        journey: [
+            { text: "Search: 'Custom Art'", sub: "Google Search", icon: Search, time: "Yesterday" },
+            { text: "Viewed Shop", sub: "Page Visit", icon: ShoppingBag, time: "Yesterday" }
+        ]
+    },
+    {
+        id: "lead_3",
+        name: "David Lee",
+        role: "visitor",
+        source: "Direct",
+        email: "david.lee@test.com",
+        phone: "",
+        truecaller: "",
+        isSpam: false,
+        avatar: "https://api.dicebear.com/9.x/avataaars/svg?seed=david",
+        status: "read",
+        crmStatus: "Closed",
+        internalNotes: [],
+        labels: [{ text: "VIP", color: "yellow" }],
+        score: 95,
+        scoreFactors: ["Repeat Visitor", "High Engagement"],
+        preview: "Thanks for the quick delivery!",
+        time: new Date(Date.now() - 172800000).toISOString(),
+        location: "London, UK",
+        duration: "1m",
+        device: "Android",
+        os: "Android 14",
+        resolution: "1080x2400",
+        network: "5G",
+        visits: 12,
+        lastSeen: "2 days ago",
+        utm: { source: "direct", medium: "", campaign: "", term: "" },
+        messages: [
+            { id: 1, from: "them", text: "Order received.", time: "2 days ago", type: "text" },
+            { id: 2, from: "them", text: "Thanks for the quick delivery! The quality is amazing.", time: "2 days ago", type: "text" },
+            { id: 3, from: "me", text: "You're welcome, David! Glad you liked it.", time: "2 days ago", type: "text" }
+        ],
+        journey: []
+    }
+];
 
 import { User, Settings } from 'lucide-react'; // Late import for mock usage
 
@@ -251,62 +365,64 @@ const Enquiries = () => {
 
 
                 if (res.data && res.data.enquiries) {
-                    const mappedLeads: Lead[] = res.data.enquiries.map((e: any) => {
-                        const lead = {
-                            id: e._id,
-                            name: e.visitor_name || e.visitor_email.split('@')[0] || "Guest",
-                            role: e.visitor_id ? 'user' : 'visitor',
-                            source: e.metadata?.source || 'Profile',
-                            email: e.visitor_email,
-                            phone: e.visitor_phone || "",
-                            truecaller: e.visitor_phone ? "Verified" : "Unknown",
-                            isSpam: false,
-                            avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${e.visitor_email}`,
-                            status: e.status === 'new' ? 'unread' : 'read',
-                            crmStatus: e.status === 'new' ? 'New' : 'Contacted',
-                            internalNotes: [],
-                            labels: [],
-                            score: 50,
-                            scoreFactors: [] as string[],
-                            preview: e.message || 'No message content',
-                            time: e.created_at,
-                            location: "Unknown",
-                            duration: "0s",
-                            device: e.metadata?.device || "Unknown",
-                            os: "-",
-                            resolution: "-",
-                            network: "-",
-                            visits: 1,
-                            lastSeen: new Date(e.created_at).toLocaleTimeString(),
-                            utm: { source: e.metadata?.source || "-", medium: "-", campaign: "-", term: "-" },
-                            messages: [
-                                {
-                                    id: Date.parse(e.created_at),
-                                    from: 'them',
-                                    text: e.message || '(No message part)',
-                                    time: new Date(e.created_at).toLocaleTimeString()
-                                },
-                                ...(e.seller_response ? [{
-                                    id: Date.parse(e.responded_at || new Date().toISOString()),
-                                    from: 'me',
-                                    text: e.seller_response,
-                                    time: new Date(e.responded_at || new Date()).toLocaleTimeString()
-                                }] : [])
-                            ],
-                            journey: []
-                        };
+                    let mappedLeads: Lead[] = [];
 
-                        // Calculate dynamic score and factors
-                        lead.score = calculateBiolinkScore(lead);
-                        lead.scoreFactors = getScoreFactors(lead);
+                    if (res.data && res.data.enquiries) {
+                        mappedLeads = res.data.enquiries.map((e: any) => {
+                            const lead = {
+                                id: e._id,
+                                name: e.visitor_name || e.visitor_email.split('@')[0] || "Guest",
+                                role: e.visitor_id ? 'user' : 'visitor',
+                                source: e.metadata?.source || 'Profile',
+                                email: e.visitor_email,
+                                phone: e.visitor_phone || "",
+                                truecaller: e.visitor_phone ? "Verified" : "Unknown",
+                                isSpam: false,
+                                avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${e.visitor_email}`,
+                                status: e.status === 'new' ? 'unread' : 'read',
+                                crmStatus: e.status === 'new' ? 'New' : 'Contacted',
+                                internalNotes: [],
+                                labels: [],
+                                score: 50,
+                                scoreFactors: [] as string[],
+                                preview: e.message || 'No message content',
+                                time: e.created_at,
+                                location: "Unknown",
+                                duration: "0s",
+                                device: e.metadata?.device || "Unknown",
+                                os: "-",
+                                resolution: "-",
+                                network: "-",
+                                visits: 1,
+                                lastSeen: new Date(e.created_at).toLocaleTimeString(),
+                                utm: { source: e.metadata?.source || "-", medium: "-", campaign: "-", term: "-" },
+                                messages: [
+                                    {
+                                        id: Date.parse(e.created_at),
+                                        from: 'them',
+                                        text: e.message || '(No message part)',
+                                        time: new Date(e.created_at).toLocaleTimeString()
+                                    },
+                                    ...(e.seller_response ? [{
+                                        id: Date.parse(e.responded_at || new Date().toISOString()),
+                                        from: 'me',
+                                        text: e.seller_response,
+                                        time: new Date(e.responded_at || new Date()).toLocaleTimeString()
+                                    }] : [])
+                                ],
+                                journey: []
+                            };
 
-                        return lead;
-                    });
-                    setLeads(mappedLeads);
-                }
+                            // Calculate dynamic score and factors
+                            lead.score = calculateBiolinkScore(lead);
+                            lead.scoreFactors = getScoreFactors(lead);
 
-                if (statsRes.data) {
-                    // Calculate hot prospects (score >= 70)
+                            return lead;
+                        });
+                        setLeads(mappedLeads);
+                    }
+
+                    // Dynamically count hot prospects
                     const hotProspects = mappedLeads.filter(l => l.score >= 70).length;
 
                     setStats({
@@ -317,9 +433,15 @@ const Enquiries = () => {
                     });
                 }
 
+                if (mappedLeads.length === 0) {
+                    setLeads(DUMMY_LEADS);
+                }
+
             } catch (error) {
                 console.error("Error fetching enquiries:", error);
-                toast.error("Failed to load enquiries");
+                // Fallback to dummy data
+                setLeads(DUMMY_LEADS);
+                // toast.error("Failed to load enquiries");
             } finally {
                 setIsLoading(false);
             }
@@ -413,328 +535,306 @@ const Enquiries = () => {
             <div className="w-full h-full sm:h-[95vh] sm:w-[98vw] max-w-[1700px] bg-zinc-900 rounded-none sm:rounded-xl shadow-2xl border border-zinc-800 flex overflow-hidden relative">
 
                 {/* --- LEFT PANEL: LEADS LIST --- */}
-                <div className="w-full sm:w-[350px] md:w-[380px] flex flex-col border-r border-zinc-800 bg-zinc-900 z-20 shrink-0">
+                <div className="w-full sm:w-[380px] flex flex-col border-r border-zinc-800 bg-zinc-900/95 backdrop-blur-xl z-20 shrink-0">
 
                     {/* Header */}
-                    <div className="h-16 px-4 border-b border-zinc-800 flex items-center justify-between shrink-0 bg-zinc-900/50 backdrop-blur">
+                    <div className="h-16 px-5 border-b border-zinc-800 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-3">
-                            <Avatar className="w-9 h-9 border">
-                                <AvatarImage src={user?.avatar || user?.photo_url} />
-                                <AvatarFallback>{user?.username?.[0] || 'ME'}</AvatarFallback>
-                            </Avatar>
+                            <div className="relative">
+                                <Avatar className="w-9 h-9 border border-zinc-700 shadow-sm">
+                                    <AvatarImage src={user?.avatar || user?.photo_url} />
+                                    <AvatarFallback>{user?.username?.[0] || 'ME'}</AvatarFallback>
+                                </Avatar>
+                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-zinc-900 rounded-full"></span>
+                            </div>
                             <div className="flex flex-col">
-                                <span className="font-medium text-sm text-white">{user?.username || 'My Profile'}</span>
-                                {!isPersonalMode && (
-                                    <span className="text-[10px] text-green-600 font-bold tracking-wide flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse"></span> ONLINE
-                                    </span>
-                                )}
+                                <span className="font-semibold text-sm text-zinc-100">{isPersonalMode ? 'Messages' : 'Inbox'}</span>
+                                <span className="text-[10px] text-zinc-500 font-medium">
+                                    {isPersonalMode ? 'Personal Chats' : 'All Enquiries'}
+                                </span>
                             </div>
                         </div>
-                        <div className="flex gap-2">
-                            {/* Only show Bulk Actions in Store Mode */}
+                        <div className="flex gap-1">
                             {!isPersonalMode && (
-                                <Button variant="ghost" size="icon" onClick={() => setIsBulkMode(!isBulkMode)} title="Bulk Actions">
-                                    <CheckCircle className={`w-4 h-4 ${isBulkMode ? 'text-primary' : 'text-muted-foreground'}`} />
-                                </Button>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => setIsBulkMode(!isBulkMode)}
+                                                className={`h-8 w-8 ${isBulkMode ? 'bg-blue-500/10 text-blue-500' : 'text-zinc-400 hover:text-zinc-100'}`}
+                                            >
+                                                <CheckCircle className="w-4 h-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Bulk Actions</TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             )}
-                            <Button variant="ghost" size="icon">
-                                <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-100">
+                                <Search className="w-4 h-4" />
                             </Button>
                         </div>
                     </div>
 
-                    {/* Search & Filter */}
-                    <div className="p-3 border-b border-zinc-800 space-y-3">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-2.5 text-muted-foreground w-4 h-4" />
+                    {/* Search & Tabs */}
+                    <div className="p-3 border-b border-zinc-800 space-y-3 bg-zinc-900/50">
+                        <div className="relative group">
+                            <Search className="absolute left-3 top-2.5 text-zinc-500 w-4 h-4 group-focus-within:text-zinc-300 transition-colors" />
                             <Input
-                                placeholder={isPersonalMode ? "Search messages..." : "Search leads..."}
-                                className="pl-9 h-9 bg-zinc-800/50 text-white border-zinc-700"
+                                placeholder={isPersonalMode ? "Search conversations..." : "Search leads, email, phone..."}
+                                className="pl-9 h-10 bg-zinc-950 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-zinc-700 transition-all rounded-lg"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        {/* Hide advanced filters in Personal Mode */}
+
                         {!isPersonalMode && (
-                            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                                <Badge variant="default" className="cursor-pointer">All</Badge>
-                                <Badge variant="outline" className="cursor-pointer hover:bg-zinc-100">Hot Leads 🔥</Badge>
-                                <Badge variant="outline" className="cursor-pointer hover:bg-zinc-100">Unread</Badge>
+                            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                                <Badge
+                                    variant="outline"
+                                    className="cursor-pointer bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border-zinc-700 px-3 py-1 h-7"
+                                >
+                                    All
+                                </Badge>
+                                <Badge
+                                    variant="outline"
+                                    className="cursor-pointer hover:bg-zinc-800 text-zinc-500 border-zinc-800 px-3 py-1 h-7"
+                                >
+                                    Unread
+                                </Badge>
+                                <Badge
+                                    variant="outline"
+                                    className="cursor-pointer hover:bg-zinc-800 text-zinc-500 border-zinc-800 px-3 py-1 h-7 flex gap-1"
+                                >
+                                    <Zap className="w-3 h-3 text-orange-500" /> Hot
+                                </Badge>
                             </div>
                         )}
                     </div>
 
                     {/* Leads List */}
-                    <ScrollArea className="flex-1 bg-zinc-900">
+                    <ScrollArea className="flex-1 bg-zinc-900/30">
                         {isLoading ? (
-                            <div className="flex items-center justify-center h-64">
-                                <div className="text-sm text-muted-foreground">Loading...</div>
+                            <div className="flex flex-col items-center justify-center h-40 space-y-3">
+                                <div className="w-6 h-6 border-2 border-zinc-600 border-t-transparent rounded-full animate-spin"></div>
+                                <div className="text-xs text-zinc-500">Syncing conversations...</div>
                             </div>
                         ) : filteredLeads.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-[60vh] text-center px-6">
-                                <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4">
-                                    <MessageSquare className="w-7 h-7 text-zinc-300" />
+                            <div className="flex flex-col items-center justify-center h-[50vh] text-center px-8">
+                                <div className="w-16 h-16 bg-zinc-800/50 rounded-2xl flex items-center justify-center mb-4 ring-1 ring-zinc-700/50">
+                                    <MessageSquare className="w-8 h-8 text-zinc-500" />
                                 </div>
-                                <h3 className="text-sm font-semibold text-white">No messages yet</h3>
-                                <p className="text-xs text-muted-foreground mt-2 max-w-[200px] leading-relaxed">
-                                    Share your profile link to start receiving messages.
+                                <h3 className="text-sm font-medium text-zinc-200">No messages found</h3>
+                                <p className="text-xs text-zinc-500 mt-2 leading-relaxed max-w-[220px]">
+                                    {searchTerm ? "Try adjusting your search terms." : "Share your link to start receiving enquiries."}
                                 </p>
                             </div>
                         ) : (
-                            filteredLeads.map(lead => (
-                                <div
-                                    key={lead.id}
-                                    onClick={() => isBulkMode ? toggleSelect(lead.id) : setActiveId(lead.id)}
-                                    className={`
-                                        group flex items-start gap-4 p-4 cursor-pointer border-b border-zinc-800 transition-all duration-200 relative overflow-hidden
-                                        ${activeId === lead.id && !isBulkMode ? 'bg-zinc-800/50' : 'hover:bg-zinc-800/30'}
-                                    `}
-                                >
-                                    {/* Active Indicator Bar */}
-                                    {activeId === lead.id && !isBulkMode && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-400 rounded-r-full" />
-                                    )}
-
-                                    {isBulkMode ? (
-                                        <div className="w-10 h-10 flex items-center justify-center shrink-0">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedLeads.has(lead.id)}
-                                                readOnly
-                                                className="w-5 h-5 accent-blue-600 rounded cursor-pointer"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="relative w-12 h-12 shrink-0">
-                                            <Avatar className={`w-full h-full border-2 ${lead.status === 'unread' ? 'border-blue-500 shadow-md ring-2 ring-blue-100' : 'border-zinc-200'}`}>
-                                                <AvatarImage src={lead.avatar} />
-                                                <AvatarFallback className="bg-zinc-100 text-zinc-500 font-bold text-lg">{lead.name[0]}</AvatarFallback>
-                                            </Avatar>
-
-                                            {/* Store Mode: User Badge */}
-                                            {!isPersonalMode && lead.role === 'user' && (
-                                                <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1 border-2 border-white shadow-sm" title="Registered User">
-                                                    <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
-                                                </div>
-                                            )}
-                                            {lead.status === 'unread' && (
-                                                <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-blue-500 border-2 border-white rounded-full shadow-sm animate-pulse" />
-                                            )}
-                                        </div>
-                                    )}
-
-                                    <div className="flex-1 min-w-0 flex flex-col gap-1">
-                                        <div className="flex justify-between items-center">
-                                            <span className={`text-sm truncate ${lead.status === 'unread' ? 'font-bold text-white' : 'font-semibold text-zinc-300'}`}>
-                                                {lead.name}
-                                            </span>
-                                            <span className={`text-[10px] tabular-nums shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded-full ${lead.status === 'unread' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-zinc-400 bg-zinc-50'}`}>
-                                                {formatTimestamp(lead.time)}
-                                            </span>
-                                        </div>
-
-                                        <p className={`text-xs truncate ${lead.status === 'unread' ? 'text-zinc-300 font-medium' : 'text-zinc-500'}`}>
-                                            {lead.preview}
-                                        </p>
-
-                                        {/* Store Mode: Badges */}
-                                        {!isPersonalMode && (
-                                            <div className="flex gap-2 items-center flex-wrap pt-1">
-                                                {(() => {
-                                                    const badge = getSourceBadge(lead.source);
-                                                    return (
-                                                        <Badge variant="secondary" className={`text-[9px] px-2 h-5 font-semibold border-0 bg-opacity-10 capitalize tracking-tight ${badge.color.replace('bg-', 'bg-opacity-10 bg-')}`}>
-                                                            {badge.emoji && <span className="mr-1 opacity-80">{badge.emoji}</span>}
-                                                            {badge.label}
-                                                        </Badge>
-                                                    );
-                                                })()}
-                                                {lead.labels.map((lbl, idx) => (
-                                                    <span key={idx} className={`text-[9px] px-2 py-0.5 rounded-full flex items-center gap-1 font-medium ${lbl.color === 'yellow' ? 'bg-yellow-50 text-yellow-700' : 'bg-blue-50 text-blue-700'}`}>
-                                                        {lbl.text}
-                                                    </span>
-                                                ))}
+                            <div className="flex flex-col">
+                                {filteredLeads.map(lead => (
+                                    <div
+                                        key={lead.id}
+                                        onClick={() => isBulkMode ? toggleSelect(lead.id) : setActiveId(lead.id)}
+                                        className={`
+                                            group flex items-start gap-4 p-4 cursor-pointer border-b border-zinc-800/50 hover:bg-zinc-800/40 transition-all duration-200 relative
+                                            ${activeId === lead.id && !isBulkMode ? 'bg-zinc-800/80 border-l-2 border-l-emerald-500' : 'border-l-2 border-l-transparent'}
+                                        `}
+                                    >
+                                        {isBulkMode && (
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                                                <Checkbox
+                                                    checked={selectedLeads.has(lead.id)}
+                                                    onCheckedChange={() => toggleSelect(lead.id)}
+                                                    className="w-5 h-5 rounded-md border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                                                />
                                             </div>
                                         )}
+
+                                        <div className={`relative shrink-0 ${isBulkMode ? 'opacity-0' : 'opacity-100'} transition-opacity`}>
+                                            <Avatar className="w-11 h-11 border border-zinc-700 shadow-sm">
+                                                <AvatarImage src={lead.avatar} />
+                                                <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs font-bold">{lead.name[0]}</AvatarFallback>
+                                            </Avatar>
+                                            {lead.status === 'unread' && (
+                                                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                                </span>
+                                            )}
+                                            {!isPersonalMode && getSourceBadge(lead.source).emoji && (
+                                                <div className="absolute -bottom-1 -right-1 bg-zinc-900 rounded-full p-0.5 border border-zinc-700 text-[10px]" title={lead.source}>
+                                                    {getSourceBadge(lead.source).emoji}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className={`flex-1 min-w-0 flex flex-col gap-0.5 ${isBulkMode ? 'pl-8' : ''} transition-all`}>
+                                            <div className="flex justify-between items-start">
+                                                <span className={`text-sm truncate ${lead.status === 'unread' ? 'font-bold text-white' : 'font-medium text-zinc-300 group-hover:text-zinc-200'}`}>
+                                                    {lead.name}
+                                                </span>
+                                                <span className={`text-[10px] whitespace-nowrap ${lead.status === 'unread' ? 'text-emerald-500 font-bold' : 'text-zinc-500'}`}>
+                                                    {formatTimestamp(lead.time)}
+                                                </span>
+                                            </div>
+
+                                            <p className={`text-xs truncate leading-relaxed ${lead.status === 'unread' ? 'text-zinc-300' : 'text-zinc-500 group-hover:text-zinc-400'}`}>
+                                                {lead.from === 'me' && <span className="text-zinc-600 mr-1">You:</span>}
+                                                {lead.preview}
+                                            </p>
+
+                                            {/* Labels / Badges */}
+                                            {!isPersonalMode && (
+                                                <div className="flex gap-1.5 items-center flex-wrap mt-2">
+                                                    {lead.score >= 70 && (
+                                                        <Badge variant="secondary" className="text-[9px] px-1.5 h-4 bg-orange-500/10 text-orange-400 border-0 pointer-events-none">
+                                                            High Intent
+                                                        </Badge>
+                                                    )}
+                                                    {lead.labels.map((lbl, idx) => (
+                                                        <span key={idx} className={`text-[9px] px-1.5 py-0.5 rounded-[3px] border ${lbl.color === 'yellow' ? 'border-yellow-500/20 text-yellow-500 bg-yellow-500/5' : 'border-blue-500/20 text-blue-500 bg-blue-500/5'}`}>
+                                                            {lbl.text}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                ))}
+                            </div>
                         )}
                     </ScrollArea>
 
-                    {/* Bulk Action Bar - Store Mode Only */}
-                    {!isPersonalMode && isBulkMode && (
-                        <div className="absolute bottom-0 left-0 w-full bg-zinc-900 text-white p-3 flex items-center justify-between z-30 animate-in slide-in-from-bottom-5">
-                            <span className="text-xs font-medium">{selectedLeads.size} Selected</span>
-                            <div className="flex gap-3">
-                                <button onClick={() => bulkAction('export')} className="text-xs hover:text-green-400 flex items-center gap-1"><FileText className="w-3 h-3" /> Export</button>
-                                <button onClick={() => bulkAction('label')} className="text-xs hover:text-blue-400 flex items-center gap-1"><Tag className="w-3 h-3" /> Label</button>
-                                <button onClick={() => setIsBulkMode(false)} className="text-xs text-zinc-400 hover:text-white"><X className="w-3 h-3" /></button>
-                            </div>
+                    {/* Bulk Action Bar - Overlay */}
+                    <div className={`absolute bottom-4 left-4 right-4 bg-zinc-800 border border-zinc-700 text-white p-3 rounded-lg shadow-2xl flex items-center justify-between z-30 transition-all duration-300 ${isBulkMode && selectedLeads.size > 0 ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>
+                        <span className="text-xs font-medium text-zinc-300">{selectedLeads.size} selected</span>
+                        <div className="flex gap-2">
+                            <Button size="sm" variant="ghost" onClick={() => bulkAction('export')} className="h-7 text-[10px] hover:bg-zinc-700 px-2 text-zinc-300">
+                                <FileText className="w-3 h-3 mr-1.5" /> Export
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => bulkAction('label')} className="h-7 text-[10px] hover:bg-zinc-700 px-2 text-zinc-300">
+                                <Tag className="w-3 h-3 mr-1.5" /> Label
+                            </Button>
+                            <div className="w-px h-4 bg-zinc-700 mx-1 self-center"></div>
+                            <Button size="sm" variant="ghost" onClick={() => { setIsBulkMode(false); setSelectedLeads(new Set()); }} className="h-7 w-7 p-0 text-zinc-400 hover:text-white">
+                                <X className="w-3.5 h-3.5" />
+                            </Button>
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* --- MIDDLE PANEL: ACTIVE CHAT --- */}
                 {activeLead ? (
-                    <div className="flex flex-col flex-1 h-full w-full relative bg-zinc-50/50">
+                    <div className="flex flex-col flex-1 h-full w-full relative bg-zinc-950/50 backdrop-blur-sm">
                         {/* Chat Header */}
-                        <div className="h-20 px-6 bg-zinc-900/90 border-b border-zinc-800 flex items-center justify-between shrink-0 backdrop-blur-xl z-20 sticky top-0">
-                            <div className="flex items-center gap-4 cursor-pointer" onClick={() => !isPersonalMode && setIsInfoPanelOpen(!isInfoPanelOpen)}>
-                                <Avatar className="w-11 h-11 border-2 border-white shadow-sm ring-1 ring-zinc-100">
+                        <div className="h-16 px-6 border-b border-zinc-800 flex items-center justify-between shrink-0 bg-zinc-900/80 backdrop-blur-md z-20">
+                            <div className="flex items-center gap-3">
+                                <Avatar className="w-10 h-10 border border-zinc-700">
                                     <AvatarImage src={activeLead.avatar} />
                                     <AvatarFallback>{activeLead.name[0]}</AvatarFallback>
                                 </Avatar>
-                                <div className="flex flex-col">
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="font-semibold text-sm text-white">{activeLead.name}</h2>
-
-                                        {/* Store Mode: Lead Score */}
-                                        {!isPersonalMode && (
-                                            activeLead.score >= 70 ? (
-                                                <Badge className="text-[10px] px-1.5 h-5 rounded-sm bg-red-500 hover:bg-red-600 text-white border-0 flex items-center gap-0.5 font-bold">
-                                                    HOT 🔥
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant={activeLead.score >= 30 ? 'default' : 'secondary'} className="text-[10px] px-1.5 h-5 rounded-sm">
-                                                    {activeLead.score} Score
-                                                </Badge>
-                                            )
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        {isPersonalMode ? (activeLead.status === 'unread' ? 'New Message' : 'Seen') : (activeLead.role === 'visitor' ? 'Visitor • External' : 'Registered User')}
+                                <div>
+                                    <h2 className="font-semibold text-sm text-zinc-100 flex items-center gap-2">
+                                        {activeLead.name}
+                                        {!isPersonalMode && activeLead.score >= 70 && <Badge variant="destructive" className="h-4 px-1 text-[10px]">HOT</Badge>}
+                                    </h2>
+                                    <p className="text-xs text-zinc-500 flex items-center gap-1.5">
+                                        {activeLead.role === 'user' && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
+                                        {activeLead.email}
                                     </p>
                                 </div>
                             </div>
 
-                            {/* Store Mode: Side Panel Toggle */}
-                            {!isPersonalMode && (
-                                <div className="flex items-center gap-2 text-zinc-400">
-                                    <Button variant="ghost" size="icon" onClick={() => setIsInfoPanelOpen(!isInfoPanelOpen)}>
-                                        <Layout className="w-5 h-5 text-primary" />
-                                    </Button>
-                                </div>
-                            )}
+                            <div className="flex items-center gap-2">
+                                <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white" onClick={() => setIsInfoPanelOpen(!isInfoPanelOpen)}>
+                                    <Layout className="w-5 h-5" />
+                                </Button>
+                            </div>
                         </div>
 
                         {/* Chat Area */}
-                        <ScrollArea className="flex-1 p-4 sm:p-8 bg-zinc-950">
-                            {/* ... existing chat content ... */}
+                        <ScrollArea className="flex-1 p-4 bg-[#0A0A0A]">
                             {/* Background Pattern */}
-                            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                            <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
-                            <div className="space-y-4 max-w-3xl mx-auto relative z-10">
-                                <div className="flex justify-center"><span className="bg-zinc-200/50 text-zinc-500 text-[10px] font-medium px-2 py-1 rounded shadow-sm">TODAY</span></div>
+                            <div className="space-y-6 max-w-3xl mx-auto relative z-10 py-4">
+                                <div className="flex justify-center mb-6">
+                                    <span className="bg-zinc-900/80 border border-zinc-800 text-zinc-500 text-[10px] font-medium px-3 py-1 rounded-full backdrop-blur-sm">
+                                        Today
+                                    </span>
+                                </div>
 
                                 {activeLead.messages.map((msg) => (
                                     <div key={msg.id} className={`flex w-full ${msg.from === 'me' ? 'justify-end' : 'justify-start'}`}>
-                                        {msg.from === 'sys' ? (
-                                            <div className="w-full flex justify-center my-2">
-                                                <div className="bg-yellow-50 text-yellow-800 border border-yellow-100 text-[10px] px-3 py-1 rounded-md shadow-sm flex items-center gap-1.5">
-                                                    <Zap className="w-3 h-3 text-yellow-600" /> {msg.text}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="max-w-[75%] group relative">
-                                                <div className={`px-4 py-3 text-sm shadow-sm ${msg.from === 'me'
-                                                    ? 'bg-gradient-to-br from-zinc-800 to-black text-white rounded-[18px_18px_4px_18px]'
-                                                    : 'bg-white border text-zinc-800 border-zinc-100 rounded-[18px_18px_18px_4px] shadow-[0_2px_4px_rgba(0,0,0,0.02)]'
-                                                    }`}>
-                                                    {msg.type === 'product' ? (
-                                                        <div className="w-[200px] bg-white text-black rounded-md overflow-hidden border border-zinc-100">
-                                                            <div className="h-24 bg-zinc-100 flex items-center justify-center">
-                                                                <ShoppingBag className="w-8 h-8 text-zinc-400" />
-                                                            </div>
-                                                            <div className="p-3">
-                                                                <div className="font-bold text-sm">{msg.title}</div>
-                                                                <div className="text-green-600 font-bold text-sm mt-1">{msg.price}</div>
-                                                                <Button size="sm" className="w-full mt-2 h-7 text-xs">Buy Now</Button>
-                                                            </div>
+                                        <div className={`flex max-w-[80%] ${msg.from === 'me' ? 'flex-row-reverse' : 'flex-row'} items-end gap-2`}>
+                                            {/* Avatar only for 'them' */}
+                                            {msg.from === 'them' && (
+                                                <Avatar className="w-6 h-6 border border-zinc-800 mb-1">
+                                                    <AvatarImage src={activeLead.avatar} />
+                                                    <AvatarFallback>{activeLead.name[0]}</AvatarFallback>
+                                                </Avatar>
+                                            )}
+
+                                            <div className={`
+                                                relative px-4 py-2.5 text-sm shadow-sm
+                                                ${msg.from === 'me'
+                                                    ? 'bg-zinc-100 text-black rounded-[20px_20px_4px_20px]'
+                                                    : 'bg-zinc-800 text-zinc-100 border border-zinc-700 rounded-[20px_20px_20px_4px]'}
+                                            `}>
+                                                {msg.type === 'product' ? (
+                                                    <div className="w-[220px] bg-white text-black rounded-lg overflow-hidden border border-zinc-200">
+                                                        <div className="h-28 bg-zinc-50 flex items-center justify-center border-b border-zinc-100">
+                                                            <ShoppingBag className="w-10 h-10 text-zinc-300" />
                                                         </div>
-                                                    ) : msg.type === 'audio' ? (
-                                                        <div className="flex items-center gap-2 min-w-[160px]">
-                                                            <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center cursor-pointer">
-                                                                <Play className="w-3 h-3 fill-current" />
-                                                            </div>
-                                                            <div className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden">
-                                                                <div className="h-full w-1/3 bg-white"></div>
-                                                            </div>
-                                                            <span className="text-[10px]">0:05</span>
+                                                        <div className="p-3">
+                                                            <div className="font-bold text-sm leading-tight mb-1">{msg.title}</div>
+                                                            <div className="text-emerald-600 font-bold text-sm">{msg.price}</div>
+                                                            <Button size="sm" className="w-full mt-3 h-8 text-xs font-semibold bg-black hover:bg-zinc-800 text-white">View Product</Button>
                                                         </div>
-                                                    ) : (
-                                                        <p>{msg.text}</p>
-                                                    )}
-                                                </div>
-                                                <span className={`text-[10px] text-zinc-400 mt-1 block ${msg.from === 'me' ? 'text-right' : 'text-left'}`}>
+                                                    </div>
+                                                ) : (
+                                                    <p className="leading-relaxed">{msg.text}</p>
+                                                )}
+
+                                                <span className={`text-[10px] absolute -bottom-5 ${msg.from === 'me' ? 'right-1' : 'left-1'} text-zinc-500 font-medium whitespace-nowrap`}>
                                                     {msg.time}
                                                 </span>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         </ScrollArea>
 
                         {/* Input Area */}
-                        <div className="p-4 bg-transparent shrink-0">
-                            {/* Actions / Inputs */}
-                            <div className="flex items-center gap-2 max-w-4xl mx-auto bg-white p-2 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-zinc-100">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="text-muted-foreground"><Paperclip className="w-4 h-4" /></Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start">
-                                        <DropdownMenuItem onClick={() => setQuoteModalOpen(true)}>
-                                            <FileText className="w-4 h-4 mr-2" /> Send Quote/Invoice
-                                        </DropdownMenuItem>
-                                        {!isPersonalMode && (
-                                            <DropdownMenuItem onClick={() => handleSendMessage('product', 'MOCK PRODUCT')}>
-                                                <ShoppingBag className="w-4 h-4 mr-2" /> Share Product
-                                            </DropdownMenuItem>
-                                        )}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-
-                                {!isPersonalMode && (
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="text-yellow-500"><Zap className="w-4 h-4" /></Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start" className="w-56">
-                                            <DropdownMenuItem onClick={() => insertTemplate("Price list attached below.")}>
-                                                <Tag className="w-4 h-4 mr-2" /> Send Price List
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => insertTemplate("Here is our office location.")}>
-                                                <MapPin className="w-4 h-4 mr-2" /> Share Location
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                )}
-
-                                <div className="flex-1 relative">
-                                    <Input
-                                        value={chatInput}
-                                        onChange={(e) => setChatInput(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                                        placeholder="Type a message..."
-                                        className="pr-10 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent placeholder:text-zinc-400 font-medium"
-                                    />
-                                    <Button size="icon" variant="ghost" className="absolute right-0 top-0 h-full text-muted-foreground hover:text-foreground">
-                                        <Smile className="w-4 h-4" />
+                        <div className="p-4 bg-zinc-900 border-t border-zinc-800 shrink-0">
+                            <div className="max-w-4xl mx-auto flex items-end gap-2 bg-zinc-950 p-2 rounded-xl border border-zinc-800 focus-within:border-zinc-700 transition-colors shadow-sm">
+                                <Button size="icon" variant="ghost" className="h-10 w-10 text-zinc-400 hover:text-white rounded-lg">
+                                    <Plus className="w-5 h-5" />
+                                </Button>
+                                <Textarea
+                                    value={chatInput}
+                                    onChange={(e) => setChatInput(e.target.value)}
+                                    placeholder="Type a message..."
+                                    className="flex-1 min-h-[40px] max-h-[120px] bg-transparent border-0 focus-visible:ring-0 resize-none py-2.5 text-zinc-200 placeholder:text-zinc-600"
+                                    rows={1}
+                                />
+                                <div className="flex items-center gap-1 pb-1">
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-500 hover:text-zinc-300">
+                                        <Smile className="w-5 h-5" />
+                                    </Button>
+                                    <Button
+                                        size="icon"
+                                        className="h-9 w-9 bg-zinc-100 text-black hover:bg-white rounded-lg ml-1 shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all hover:scale-105"
+                                        onClick={() => handleSendMessage('text')}
+                                    >
+                                        <Send className="w-4 h-4" />
                                     </Button>
                                 </div>
-
-                                <Button size="icon" variant="outline" onClick={() => handleSendMessage('audio')}>
-                                    <Mic className="w-4 h-4 text-red-500" />
-                                </Button>
-                                <Button size="icon" onClick={() => handleSendMessage('text')}>
-                                    <Send className="w-4 h-4" />
-                                </Button>
                             </div>
                         </div>
-
                     </div>
                 ) : (
                     // EMPTY STATE
@@ -808,217 +908,175 @@ const Enquiries = () => {
                 {/* --- RIGHT PANEL: INFO SIDEBAR - Store Mode Only --- */}
                 {activeLead && !isPersonalMode && (
                     <div
-                        className={`absolute top-0 right-0 h-full w-[350px] bg-background border-l border-border shadow-xl transform transition-transform duration-300 z-50 flex flex-col
+                        className={`absolute top-0 right-0 h-full w-[350px] bg-zinc-900 border-l border-zinc-800 shadow-xl transform transition-transform duration-300 z-50 flex flex-col
                         ${isInfoPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}
                     >
-                        <div className="h-14 px-4 border-b border-border flex items-center justify-between shrink-0 bg-zinc-50/50">
-                            <span className="text-sm font-semibold text-foreground">Proprietary Insights</span>
-                            <Button variant="ghost" size="icon" onClick={() => setIsInfoPanelOpen(false)}>
+                        <div className="h-16 px-5 border-b border-zinc-800 flex items-center justify-between shrink-0 bg-zinc-900/95 backdrop-blur-sm">
+                            <span className="text-sm font-semibold text-zinc-100 uppercase tracking-widest">Lead Intelligence</span>
+                            <Button variant="ghost" size="icon" onClick={() => setIsInfoPanelOpen(false)} className="text-zinc-500 hover:text-white">
                                 <X className="w-4 h-4" />
                             </Button>
                         </div>
 
-                        <div className="flex border-b border-border">
-                            <button
-                                onClick={() => setActiveTab('info')}
-                                className={`flex-1 py-3 text-xs font-medium transition ${activeTab === 'info' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground'}`}
-                            >
-                                Visitor Insights
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('crm')}
-                                className={`flex-1 py-3 text-xs font-medium transition ${activeTab === 'crm' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground'}`}
-                            >
-                                CRM & Actions
-                            </button>
-                        </div>
+                        <Tabs defaultValue="info" value={activeTab} onValueChange={(v) => setActiveTab(v as 'info' | 'crm')} className="flex flex-col h-[calc(100%-4rem)]">
+                            <TabsList className="w-full justify-start rounded-none border-b border-zinc-800 bg-zinc-900 p-0 h-10">
+                                <TabsTrigger
+                                    value="info"
+                                    className="flex-1 h-full text-[11px] font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-zinc-800 data-[state=active]:text-emerald-400 uppercase tracking-wider text-zinc-500 hover:bg-zinc-800/50"
+                                >
+                                    Insights
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="crm"
+                                    className="flex-1 h-full text-[11px] font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-zinc-800 data-[state=active]:text-emerald-400 uppercase tracking-wider text-zinc-500 hover:bg-zinc-800/50"
+                                >
+                                    Actions & CRM
+                                </TabsTrigger>
+                            </TabsList>
 
-                        <ScrollArea className="flex-1 p-6 bg-white">
-                            {activeTab === 'info' ? (
-                                <div className="space-y-6">
-                                    {/* Algorithm Analysis Banner */}
-                                    {activeLead.score >= 70 && (
-                                        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-lg p-3 flex items-center gap-2">
-                                            <div className="flex items-center gap-1">
-                                                <Zap className="w-4 h-4 text-yellow-600 fill-yellow-600" />
-                                                <Zap className="w-4 h-4 text-yellow-600 fill-yellow-600" />
+                            <ScrollArea className="flex-1 bg-zinc-950">
+                                <div className="p-5">
+                                    <TabsContent value="info" className="mt-0 focus-visible:ring-0 space-y-6">
+
+                                        {/* Score Widget */}
+                                        <div className="bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-xl p-5 relative overflow-hidden group">
+                                            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                                                <Zap className="w-20 h-20" />
                                             </div>
-                                            <span className="text-xs font-bold text-yellow-900 tracking-wide">Algorithm Analys</span>
-                                        </div>
-                                    )}
 
-                                    {/* Profile */}
-                                    <div className="flex flex-col items-center">
-                                        <div className="relative mb-4">
-                                            {/* Large emoji/icon for source */}
-                                            <div className="text-5xl mb-2 flex items-center justify-center">
-                                                {getSourceBadge(activeLead.source).emoji || '👤'}
-                                            </div>
-                                        </div>
-
-                                        <h2 className="text-xl font-bold text-zinc-900">{activeLead.name}</h2>
-
-                                        {/* Company/Business ID Badge */}
-                                        {activeLead.email && (
-                                            <div className="mt-2 flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md">
-                                                <span className="text-sm">🆔</span>
-                                                <span className="text-[10px] font-medium text-blue-900">
-                                                    ID: {activeLead.name} {activeLead.source.toLowerCase().includes('indiamart') ? 'Pvt Ltd' : ''}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        {/* Visitor Type Badge */}
-                                        <div className="mt-1 flex items-center gap-2">
-                                            <Badge variant="outline" className="text-[10px] px-2 py-0.5 font-medium">
-                                                {activeLead.role === 'visitor' ? 'VISITOR' : 'USER'}
-                                            </Badge>
-                                        </div>
-
-                                        {/* Truecaller / Spam Check */}
-                                        {activeLead.truecaller !== "Unknown" && (
-                                            <div className={`mt-2 px-2 py-0.5 rounded text-[10px] font-medium border flex items-center gap-1 ${activeLead.isSpam ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
-                                                {activeLead.isSpam ? <AlertTriangle className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
-                                                {activeLead.isSpam ? 'SPAM LIKELY' : `✓ Verified Number`}
-                                            </div>
-                                        )}
-
-                                        {/* BIOLINK AI SCORE - Prominent Display */}
-                                        <div className="mt-5 w-full bg-green-50 border-2 border-green-200 rounded-xl p-4">
-                                            <div className="flex justify-between items-center mb-3">
-                                                <span className="text-[11px] font-bold text-green-800 uppercase tracking-wider">BIOLINK AI SCORE</span>
-                                                <span className="text-4xl font-black text-green-700">{activeLead.score}</span>
-                                            </div>
-                                            {activeLead.scoreFactors.length > 0 && (
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {activeLead.scoreFactors.map((f, i) => (
-                                                        <span key={i} className="text-[10px] bg-white border border-green-300 text-green-800 px-2 py-1 rounded-md flex items-center gap-1 font-medium">
-                                                            <Check className="w-2.5 h-2.5" /> {f}
-                                                        </span>
-                                                    ))}
+                                            <div className="flex justify-between items-start mb-4 relative z-10">
+                                                <div>
+                                                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-1 block">Lead Score</span>
+                                                    <div className="text-4xl font-black text-white tracking-tighter shadow-glow">{activeLead.score}</div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Data Cards */}
-                                    <div className="border-2 rounded-xl overflow-hidden">
-                                        <div className="bg-blue-50 px-4 py-3 border-b border-blue-100 flex justify-between items-center">
-                                            <span className="text-[11px] font-bold uppercase text-blue-900 tracking-wider">TRAFFIC INTELLIGENCE</span>
-                                            <Globe className="w-4 h-4 text-blue-600" />
-                                        </div>
-                                        <div className="p-4 bg-white">
-                                            <div className="mb-3">
-                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wide">Origin Source</span>
-                                                <div className="mt-1 flex items-center gap-2">
-                                                    {(() => {
-                                                        const badge = getSourceBadge(activeLead.source);
-                                                        return (
-                                                            <>
-                                                                <span className="text-2xl">{badge.emoji || '🌐'}</span>
-                                                                <span className="text-base font-bold text-zinc-900">{badge.label.toLowerCase()}</span>
-                                                            </>
-                                                        );
-                                                    })()}
+                                                <div className={`px-2 py-1 rounded text-[10px] font-bold border uppercase tracking-wider ${activeLead.score >= 70 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`}>
+                                                    {activeLead.score >= 70 ? 'High Intent' : 'Moderate'}
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    <div className="border rounded-lg overflow-hidden">
-                                        <div className="bg-muted/30 px-3 py-2 border-b flex justify-between items-center">
-                                            <span className="text-[10px] font-bold uppercase text-muted-foreground">Device Fingerprint</span>
-                                            <Smartphone className="w-3 h-3 text-purple-500" />
-                                        </div>
-                                        <div className="p-3 space-y-2 text-xs">
-                                            <div className="flex justify-between"><span className="text-muted-foreground">Device</span><span className="font-medium">{activeLead.device}</span></div>
-                                            <div className="flex justify-between"><span className="text-muted-foreground">OS</span><span className="font-medium">{activeLead.os}</span></div>
-                                            <div className="flex justify-between"><span className="text-muted-foreground">IP Location</span><span className="font-medium">{activeLead.location}</span></div>
-                                            <div className="flex justify-between pt-2 border-t border-dashed mt-2"><span className="text-muted-foreground">Visit Count</span><span className="font-bold text-blue-600">{activeLead.visits}</span></div>
-                                        </div>
-                                    </div>
-
-                                    {/* Journey */}
-                                    <div>
-                                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Journey Analysis</h3>
-                                        <div className="space-y-6 ml-2 pl-4 border-l">
-                                            {activeLead.journey.map((step, i) => (
-                                                <div key={i} className="relative">
-                                                    <div className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full border border-border bg-white ring-2 ring-white"></div>
-                                                    <div className="flex justify-between items-start">
-                                                        <p className="text-xs font-medium text-foreground">{step.text}</p>
-                                                        <span className="text-[9px] text-muted-foreground font-mono bg-muted px-1 rounded">{step.time}</span>
+                                            <div className="space-y-2 relative z-10">
+                                                {activeLead.scoreFactors?.slice(0, 2).map((f, i) => (
+                                                    <div key={i} className="flex items-center gap-2 text-xs text-zinc-400">
+                                                        <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> {f}
                                                     </div>
-                                                    <p className={`text-[10px] text-muted-foreground flex items-center gap-1 ${step.color || ''}`}>
-                                                        <step.icon className="w-3 h-3" /> {step.sub}
-                                                    </p>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Identity Card */}
+                                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
+                                            <div className="flex items-center gap-3 border-b border-zinc-800 pb-3">
+                                                <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xl">
+                                                    {getSourceBadge(activeLead.source).emoji || '👤'}
+                                                </div>
+                                                <div>
+                                                    <div className="text-xs font-medium text-zinc-500 uppercase">Source</div>
+                                                    <div className="font-bold text-zinc-200">{activeLead.source}</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="bg-zinc-950 p-2 rounded border border-zinc-800/50">
+                                                    <div className="text-[10px] text-zinc-500 uppercase">Device</div>
+                                                    <div className="text-xs font-medium text-zinc-300 truncate" title={activeLead.device}>{activeLead.device}</div>
+                                                </div>
+                                                <div className="bg-zinc-950 p-2 rounded border border-zinc-800/50">
+                                                    <div className="text-[10px] text-zinc-500 uppercase">Location</div>
+                                                    <div className="text-xs font-medium text-zinc-300 truncate" title={activeLead.location}>{activeLead.location}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Journey Timeline */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Customer Journey</h4>
+                                            <div className="relative pl-4 border-l border-zinc-800 space-y-6 ml-2">
+                                                {activeLead.journey.map((step, i) => (
+                                                    <div key={i} className="relative group">
+                                                        <div className={`absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full border-2 border-zinc-950 ${i === activeLead.journey.length - 1 ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-600'}`}></div>
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <div className="text-xs font-semibold text-zinc-200 group-hover:text-emerald-400 transition-colors">{step.text}</div>
+                                                            <div className="text-[10px] text-zinc-500 flex items-center gap-1.5">
+                                                                <Clock className="w-3 h-3" /> {step.time}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                    </TabsContent>
+
+                                    <TabsContent value="crm" className="mt-0 focus-visible:ring-0 space-y-6">
+
+                                        {/* Status Control */}
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Pipeline Status</label>
+                                            <Select
+                                                value={activeLead.crmStatus}
+                                                onValueChange={(val) => handleCRMUpdate(activeLead.id, val)}
+                                            >
+                                                <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-200 h-9">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-200">
+                                                    <SelectItem value="New">New Lead</SelectItem>
+                                                    <SelectItem value="Contacted">Contacted</SelectItem>
+                                                    <SelectItem value="Negotiating">Negotiating</SelectItem>
+                                                    <SelectItem value="Closed">Closed Won</SelectItem>
+                                                    <SelectItem value="Lost">Closed Lost</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        {/* Quick Actions */}
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Quick Actions</label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <Button variant="outline" className="h-9 text-xs border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white justify-start" onClick={() => setQuoteModalOpen(true)}>
+                                                    <FileText className="w-3.5 h-3.5 mr-2 text-emerald-500" /> Quote
+                                                </Button>
+                                                <Button variant="outline" className="h-9 text-xs border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white justify-start" onClick={() => toast("Contact Saved")}>
+                                                    <Users className="w-3.5 h-3.5 mr-2 text-blue-500" /> Save Contact
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        {/* Notes Section */}
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Internal Notes</label>
+                                            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 focus-within:ring-1 focus-within:ring-zinc-700 transition-all">
+                                                <Textarea
+                                                    placeholder="Add a private note..."
+                                                    className="min-h-[80px] bg-transparent border-0 focus-visible:ring-0 text-xs text-zinc-300 resize-none"
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                                            e.preventDefault();
+                                                            handleCRMUpdate(activeLead.id, undefined, e.currentTarget.value);
+                                                            e.currentTarget.value = '';
+                                                        }
+                                                    }}
+                                                />
+                                                <div className="flex justify-end px-2 pb-2">
+                                                    <span className="text-[9px] text-zinc-600">Press Enter to save</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Recent Notes List */}
+                                        <div className="space-y-3 pt-2">
+                                            {activeLead.internalNotes.length > 0 && activeLead.internalNotes.map((n, i) => (
+                                                <div key={i} className="bg-zinc-900/50 p-3 rounded-lg border border-zinc-800/50">
+                                                    <p className="text-xs text-zinc-300 leading-relaxed">{n.text}</p>
+                                                    <p className="text-[9px] text-zinc-600 text-right mt-1.5">{n.date}</p>
                                                 </div>
                                             ))}
                                         </div>
-                                    </div>
+
+                                    </TabsContent>
                                 </div>
-                            ) : (
-                                <div className="space-y-6">
-                                    {/* Commerce Actions */}
-                                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-                                        <h3 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-3">Commerce Actions</h3>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <Button variant="outline" className="h-8 text-xs border-blue-200 text-blue-700 bg-white hover:bg-blue-50" onClick={() => toast("UPI Link Copied")}>
-                                                <CreditCard className="w-3 h-3 mr-2" /> Copy UPI
-                                            </Button>
-                                            <Button variant="outline" className="h-8 text-xs border-blue-200 text-blue-700 bg-white hover:bg-blue-50" onClick={() => setQuoteModalOpen(true)}>
-                                                <FileText className="w-3 h-3 mr-2" /> Create Quote
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-2">Lead Status</label>
-                                        <Select
-                                            value={activeLead.crmStatus}
-                                            onValueChange={(val) => handleCRMUpdate(activeLead.id, val)}
-                                        >
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="New">New Lead</SelectItem>
-                                                <SelectItem value="Contacted">Contacted</SelectItem>
-                                                <SelectItem value="Negotiating">Negotiating</SelectItem>
-                                                <SelectItem value="Closed">Closed</SelectItem>
-                                                <SelectItem value="Lost">Lost</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-2">Internal Notes</label>
-                                        <Textarea placeholder="Add private team notes here..." className="min-h-[100px]" onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                e.preventDefault();
-                                                handleCRMUpdate(activeLead.id, undefined, e.currentTarget.value);
-                                                e.currentTarget.value = '';
-                                            }
-                                        }} />
-                                        <span className="text-[10px] text-muted-foreground mt-1 block">Press Enter to save note</span>
-                                    </div>
-
-                                    <div className="pt-4 border-t border-border">
-                                        <h4 className="text-xs font-semibold text-muted-foreground mb-3">Note History</h4>
-                                        <div className="space-y-3">
-                                            {activeLead.internalNotes.length === 0 ? (
-                                                <p className="text-xs text-muted-foreground italic">No notes added yet.</p>
-                                            ) : (
-                                                activeLead.internalNotes.map((n, i) => (
-                                                    <div key={i} className="bg-muted/50 p-2 rounded border">
-                                                        <p className="text-xs text-zinc-700">{n.text}</p>
-                                                        <p className="text-[10px] text-zinc-400 text-right mt-1">{n.date}</p>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </ScrollArea>
+                            </ScrollArea>
+                        </Tabs>
                     </div>
                 )}
             </div>
@@ -1044,7 +1102,7 @@ const Enquiries = () => {
                 </DialogContent>
             </Dialog>
 
-        </div>
+        </div >
     );
 };
 

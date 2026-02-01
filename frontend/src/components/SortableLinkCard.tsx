@@ -125,16 +125,16 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
 
                     {/* Text Content */}
                     <div className="flex-1 min-w-0">
-                        <input
+                        <Input
                             type="text"
-                            className="w-full font-semibold text-[15px] text-white bg-transparent border-0 p-0 focus:outline-none focus:ring-0 placeholder:text-zinc-600"
+                            className="w-full font-semibold text-[15px] text-white bg-transparent border-0 p-0 h-auto focus-visible:ring-0 placeholder:text-zinc-600 shadow-none"
                             value={link.title}
                             placeholder="Title"
                             onChange={(e) => onUpdate(link.id, 'title', e.target.value)}
                         />
-                        <input
+                        <Input
                             type="text"
-                            className="w-full text-[13px] text-zinc-400 bg-transparent border-0 p-0 mt-0.5 focus:outline-none focus:ring-0 placeholder:text-zinc-600"
+                            className="w-full text-[13px] text-zinc-400 bg-transparent border-0 p-0 h-auto mt-0.5 focus-visible:ring-0 placeholder:text-zinc-600 shadow-none"
                             value={link.url}
                             placeholder="URL"
                             onChange={(e) => onUpdate(link.id, 'url', e.target.value)}
@@ -152,18 +152,21 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                         )}
 
                         {/* Star Button */}
-                        <button
+                        {/* Star Button */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => onUpdate(link.id, 'isFeatured', !link.isFeatured)}
                             className={`
-                                w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-150
+                                w-8 h-8 rounded-lg transition-all duration-150
                                 ${link.isFeatured
-                                    ? 'text-yellow-500 bg-yellow-500/10'
+                                    ? 'text-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20'
                                     : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800'
                                 }
                             `}
                         >
                             <Star className={`w-[18px] h-[18px] ${link.isFeatured ? 'fill-yellow-500' : ''}`} />
-                        </button>
+                        </Button>
 
                         {/* Toggle */}
                         <Switch
@@ -175,9 +178,9 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                         {/* More Menu */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <button className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors">
+                                <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors">
                                     <MoreHorizontal className="w-5 h-5" />
-                                </button>
+                                </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" sideOffset={8} className="w-40 rounded-xl shadow-lg border-gray-100 p-1">
                                 {onEdit && (

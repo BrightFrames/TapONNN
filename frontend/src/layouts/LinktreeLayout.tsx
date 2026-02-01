@@ -219,9 +219,9 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                     />
                     <NavItem
                         icon={MessageCircle}
-                        label={isStoreMode ? t('nav.lead') : t('nav.message')}
+                        label={isStoreMode ? t('nav.enquiries') : t('nav.message')}
                         active={location.pathname === '/messages' || location.pathname === '/enquiries'}
-                        onClick={() => handleNav('/messages')}
+                        onClick={() => handleNav(isStoreMode ? '/enquiries' : '/messages')}
                         badge={unreadMessageCount}
                     />
                     <NavItem
@@ -264,8 +264,9 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
             {/* Footer */}
             <div className="p-3 border-t border-[#1A1A1A] bg-[#050505]">
                 <div className="flex items-center justify-between px-2 py-2">
-                    <button
-                        className="flex items-center gap-2 group"
+                    <Button
+                        variant="ghost"
+                        className="flex items-center gap-2 group h-auto py-2 px-3 hover:bg-[#1A1A1A] w-auto justify-start"
                         onClick={toggleTheme}
                     >
                         <div className="w-8 h-8 rounded-full bg-[#111] border border-[#222] flex items-center justify-center text-zinc-500 group-hover:text-zinc-200 group-hover:border-zinc-600 transition-all">
@@ -274,15 +275,16 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                         <span className="text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors">
                             {isDark ? "Dark" : "Light"}
                         </span>
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={onLogout}
-                        className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-[#1A1A1A]"
+                        className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1.5 px-3 py-2 rounded-md hover:bg-[#1A1A1A] h-auto"
                     >
                         <LogOut className="w-3.5 h-3.5" />
                         <span>{t('nav.logout')}</span>
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>
