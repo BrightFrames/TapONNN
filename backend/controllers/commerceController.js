@@ -9,6 +9,19 @@ const { createAvatar } = require('@dicebear/core');
 const { initials } = require('@dicebear/collection');
 const { sendWelcomeEmail } = require('../services/msg91Service');
 
+
+// Helper for Real-time Updates
+const notifyUpdate = async (req, userId) => {
+    try {
+        const profile = await Profile.findOne({ user_id: userId });
+        if (profile && req.io) {
+            req.io.to(profile.username.toLowerCase()).emit('profileUpdated', { type: 'products' });
+        }
+    } catch (e) {
+        console.error("Socket emit error", e);
+    }
+};
+
 // Get user's products
 const getProducts = async (req, res) => {
     try {
@@ -72,6 +85,7 @@ const createProduct = async (req, res) => {
         });
 
         await newProduct.save();
+        notifyUpdate(req, userId);
         res.json({ product: newProduct });
     } catch (err) {
         console.error('Error creating product:', err);
@@ -90,6 +104,10 @@ const deleteProduct = async (req, res) => {
         if (!result) {
             return res.status(404).json({ error: 'Product not found' });
         }
+
+
+
+        notifyUpdate(req, userId);
 
         res.json({ success: true });
     } catch (err) {
@@ -119,6 +137,10 @@ const updateProduct = async (req, res) => {
         if (!product) {
             return res.status(404).json({ error: 'Product not found or unauthorized' });
         }
+
+
+
+        notifyUpdate(req, userId);
 
         res.json(product);
     } catch (err) {

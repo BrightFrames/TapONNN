@@ -1,4 +1,29 @@
 const Block = require('../models/Block');
+const Profile = require('../models/Profile');
+
+// Helper for Real-time Updates
+const notifyUpdate = async (req, userId) => {
+    console.error(`[SocketDebug] Block notifyUpdate called for userId: ${userId}`);
+    try {
+        const profile = await Profile.findOne({ user_id: userId });
+        if (!profile) {
+            console.error('[SocketDebug] Profile not found for userId:', userId);
+            return;
+        }
+
+        const roomName = profile.username.toLowerCase();
+        console.error(`[SocketDebug] Emitting 'profileUpdated' (blocks) to room: '${roomName}'`);
+
+        if (req.io) {
+            req.io.to(roomName).emit('profileUpdated', { type: 'blocks' });
+            console.error('[SocketDebug] Emit successful');
+        } else {
+            console.error('[SocketDebug] req.io is UNDEFINED');
+        }
+    } catch (e) {
+        console.error("[SocketDebug] Socket emit error", e);
+    }
+};
 
 // Get all blocks for a user
 const getBlocks = async (req, res) => {
@@ -73,6 +98,8 @@ const createBlock = async (req, res) => {
         });
 
         await newBlock.save();
+        await newBlock.save();
+        notifyUpdate(req, userId);
         res.json(newBlock);
     } catch (err) {
         console.error('Error creating block:', err);
@@ -103,6 +130,7 @@ const updateBlock = async (req, res) => {
         }
 
         res.json(block);
+        notifyUpdate(req, userId);
     } catch (err) {
         console.error('Error updating block:', err);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -121,6 +149,7 @@ const deleteBlock = async (req, res) => {
             return res.status(404).json({ error: 'Block not found' });
         }
 
+        notifyUpdate(req, userId);
         res.json({ success: true });
     } catch (err) {
         console.error('Error deleting block:', err);
@@ -149,6 +178,7 @@ const reorderBlocks = async (req, res) => {
         await Block.bulkWrite(bulkOps);
 
         res.json({ success: true });
+        notifyUpdate(req, userId);
     } catch (err) {
         console.error('Error reordering blocks:', err);
         res.status(500).json({ error: 'Internal Server Error' });

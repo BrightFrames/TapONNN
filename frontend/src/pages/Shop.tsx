@@ -407,10 +407,15 @@ const Shop = () => {
                                     {/* Profile Link */}
                                     <div className="relative group w-full sm:w-auto">
                                         <div
-                                            onClick={() => window.open(`/s/${username}`, '_blank')}
-                                            className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 pr-10 border border-gray-200 cursor-pointer truncate"
+                                            onClick={() => {
+                                                const url = `${window.location.origin}/s/${username}`;
+                                                window.open(url, '_blank');
+                                            }}
+                                            className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 pr-10 border border-gray-200 cursor-pointer truncate max-w-[200px]"
+                                            title="Click to open store"
                                         >
-                                            tap2.me/s/{username}
+                                            {/* Show localhost if on localhost, else tap2.me */}
+                                            {window.location.hostname === 'localhost' ? 'localhost' : 'tap2.me'}/s/{username}
                                         </div>
                                         <Button
                                             size="icon"

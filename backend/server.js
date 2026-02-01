@@ -1,9 +1,12 @@
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
+const { Server } = require("socket.io");
 require('dotenv').config();
 
 // Initialize express
 const app = express();
+const server = http.createServer(app);
 const port = process.env.PORT || 5000;
 
 // Global Error Handlers to prevent silent exits
@@ -39,6 +42,38 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+app.use((req, res, next) => {
+    console.error(`[ReqDebug] ${req.method} ${req.url}`);
+    next();
+});
+
+// Socket.io Setup
+const io = new Server(server, {
+    cors: corsOptions
+});
+
+io.on("connection", (socket) => {
+    // console.log("New client connected", socket.id);
+
+    socket.on("joinProfile", (username) => {
+        if (username) {
+            const roomName = username.toLowerCase();
+            socket.join(roomName);
+            console.error(`[SocketDebug] Socket ${socket.id} joined ${roomName}`);
+        }
+    });
+
+    socket.on("disconnect", () => {
+        // console.log("Client disconnected", socket.id);
+    });
+});
+
+// Make io available in routes
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
 
 // Initialize database connection (runs on import)
 require('./config/db');
@@ -98,8 +133,11 @@ app.get('/api/my-links', authMiddleware, linksController.getMyLinks);
 
 
 // Start Server
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+console.log('Attempting to start server on port:', port);
+server.listen(port, () => {
+    console.log(`Server successfully running on port ${port}`);
     // Run migration in background
-
+});
+server.on('error', (e) => {
+    console.error('SERVER LISTEN ERROR:', e);
 });

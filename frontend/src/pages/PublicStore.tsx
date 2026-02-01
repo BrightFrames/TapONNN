@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { io } from "socket.io-client"; // Add Socket.io
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ const PublicStore = () => {
     // Modal State
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
     useEffect(() => {
         const fetchStore = async () => {
@@ -64,6 +65,33 @@ const PublicStore = () => {
         };
 
         fetchStore();
+
+        // Socket.io Connection
+        // Socket.io Connection
+        const socketUrl = (import.meta.env.VITE_API_URL || "http://localhost:5001").replace(/\/api\/?$/, '');
+        console.log("Store: Connecting to socket at:", socketUrl);
+        const socket = io(socketUrl);
+
+        socket.on("connect", () => {
+            console.log("Store: Socket connected:", socket.id);
+            if (username) {
+                console.log("Store: Joining profile room:", username);
+                socket.emit("joinProfile", username);
+            }
+        });
+
+        socket.on("connect_error", (err) => {
+            console.error("Store: Socket connection error:", err);
+        });
+
+        socket.on("profileUpdated", (data) => {
+            console.log("Store: Real-time update received:", data);
+            fetchStore();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, [username]);
 
     // Handle scroll to update current product index
@@ -247,8 +275,8 @@ const PublicStore = () => {
                                     key={index}
                                     onClick={() => scrollToProduct(index)}
                                     className={`w-2 h-2 rounded-full transition-all ${currentProductIndex === index
-                                            ? 'bg-white scale-125'
-                                            : 'bg-white/30 hover:bg-white/60'
+                                        ? 'bg-white scale-125'
+                                        : 'bg-white/30 hover:bg-white/60'
                                         }`}
                                 />
                             ))}

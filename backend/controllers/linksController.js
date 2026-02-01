@@ -2,6 +2,29 @@ const Link = require('../models/Link');
 const Profile = require('../models/Profile');
 
 // Get user's links
+const notifyUpdate = async (req, userId) => {
+    console.error(`[SocketDebug] notifyUpdate called for userId: ${userId}`);
+    try {
+        const profile = await Profile.findOne({ user_id: userId });
+        if (!profile) {
+            console.error('[SocketDebug] Profile not found for userId:', userId);
+            return;
+        }
+
+        const roomName = profile.username.toLowerCase();
+        console.error(`[SocketDebug] Emitting 'profileUpdated' to room: '${roomName}'`);
+
+        if (req.io) {
+            req.io.to(roomName).emit('profileUpdated', { type: 'links' });
+            console.error('[SocketDebug] Emit successful');
+        } else {
+            console.error('[SocketDebug] req.io is UNDEFINED');
+        }
+    } catch (e) {
+        console.error("[SocketDebug] Socket emit error", e);
+    }
+};
+
 const getMyLinks = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -66,6 +89,7 @@ const getPublicLinks = async (req, res) => {
 
 // Create a single link
 const createLink = async (req, res) => {
+    console.error('[ReqDebug] createLink controller hit');
     try {
         const userId = req.user.id;
         const { title, url, isActive, thumbnail } = req.body;
@@ -86,6 +110,8 @@ const createLink = async (req, res) => {
             { user_id: userId, _id: { $ne: newLink._id } },
             { $inc: { position: 1 } }
         );
+
+        notifyUpdate(req, userId);
 
         res.json({
             id: newLink._id,
@@ -149,6 +175,8 @@ const syncLinks = async (req, res) => {
             }
         }
 
+        notifyUpdate(req, userId);
+
         res.json({ success: true });
     } catch (err) {
         console.error('Error syncing links:', err);
@@ -167,6 +195,8 @@ const deleteLink = async (req, res) => {
         if (!result) {
             return res.status(404).json({ error: 'Link not found' });
         }
+
+        notifyUpdate(req, userId);
 
         res.json({ success: true });
     } catch (err) {

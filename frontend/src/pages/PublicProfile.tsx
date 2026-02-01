@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { io } from "socket.io-client"; // Add Socket.io
 import { useAuth } from "@/contexts/AuthContext";
 import { templates } from "@/data/templates";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,7 +36,7 @@ const PublicProfile = () => {
     const [profile, setProfile] = useState<any>(null);
     const [blocks, setBlocks] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState<'links' | 'offerings'>('links');
+    const [activeTab, setActiveTab] = useState<'links' | 'offerings' | 'explore'>('links');
     const [searchQuery, setSearchQuery] = useState('');
     const [notFound, setNotFound] = useState(false);
 
@@ -50,11 +51,37 @@ const PublicProfile = () => {
     const { trackClick } = useAnalytics(profile?.id);
 
 
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
     // Initialize Profile & Blocks
     useEffect(() => {
         fetchPublicProfile();
+
+        // Socket.io Connection
+        const socketUrl = (import.meta.env.VITE_API_URL || "http://localhost:5001").replace(/\/api\/?$/, '');
+        console.log("Connecting to socket at:", socketUrl);
+        const socket = io(socketUrl);
+
+        socket.on("connect", () => {
+            console.log("Socket connected:", socket.id);
+            if (username) {
+                console.log("Joining profile room:", username);
+                socket.emit("joinProfile", username);
+            }
+        });
+
+        socket.on("connect_error", (err) => {
+            console.error("Socket connection error:", err);
+        });
+
+        socket.on("profileUpdated", (data) => {
+            console.log("Real-time update received:", data);
+            fetchPublicProfile();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, [username, isStoreRoute]);
 
     // Check for pending intent after login
@@ -92,6 +119,7 @@ const PublicProfile = () => {
 
             const profileRes = await fetch(profileEndpoint);
             if (!profileRes.ok) {
+                console.error(`Profile fetch failed: ${profileRes.status} ${profileRes.statusText} for URL: ${profileEndpoint}`);
                 setNotFound(true);
                 return;
             }
