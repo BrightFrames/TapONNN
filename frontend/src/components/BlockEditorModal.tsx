@@ -167,6 +167,17 @@ const BlockEditorModal = ({
             case 'service':
                 return (
                     <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Product File (optional)</Label>
+                            <FileUpload
+                                value={formData.content.file_url}
+                                onChange={(url) => updateContent('file_url', url)}
+                                label="Upload File"
+                                maxSizeMB={15}
+                                type="product_file"
+                            />
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Price</Label>
@@ -205,26 +216,6 @@ const BlockEditorModal = ({
                                 rows={3}
                             />
                         </div>
-
-                        {formData.content.product_type === 'digital_product' && (
-                            <div className="space-y-2">
-                                <Label>Product File (Max 15MB)</Label>
-                                <FileUpload
-                                    value={formData.content.file_url}
-                                    onChange={(url) => updateContent('file_url', url)}
-                                    label="Upload Digital Product"
-                                    maxSizeMB={15}
-                                    type="product_file"
-                                />
-                                <div className="text-xs text-center text-muted-foreground">- OR -</div>
-                                <Input
-                                    type="url"
-                                    placeholder="https://drive.google.com/..."
-                                    value={formData.content.file_url || ''}
-                                    onChange={(e) => updateContent('file_url', e.target.value)}
-                                />
-                            </div>
-                        )}
 
                         <div className="space-y-2">
                             <Label>Product Image</Label>
