@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import LinktreeLayout from '@/layouts/LinktreeLayout';
 import { Loader2, Heart, ExternalLink, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from "@/components/ui/button";
 
 interface Product {
     _id: string;

@@ -2,6 +2,7 @@ import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { Button } from "@/components/ui/button";
 import { Settings, BookOpen, Calendar, CloudDownload, ArrowRight, Video, Users, FileText, Sparkles } from "lucide-react";
 
+
 const EarnOverview = () => {
     return (
         <LinktreeLayout>

@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 
+
 // Chart config
 const chartConfig = {
     visitors: {
@@ -359,7 +360,6 @@ const Analytics = () => {
     return (
         <LinktreeLayout>
             <div className="p-6 md:p-10 max-w-7xl mx-auto font-sans text-gray-900 bg-gray-50/50 min-h-full">
-
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div className="flex items-center gap-3">
@@ -402,8 +402,8 @@ const Analytics = () => {
                 ) : (
                     <div className="space-y-6">
                         {/* Metrics Overview */}
-                        <Card className="border-gray-200 shadow-sm bg-white overflow-hidden">
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-x divide-y md:divide-y-0 divide-gray-100">
+                        <Card className="border-gray-200 shadow-sm bg-white overflow-hidden relative">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-x divide-y md:divide-y-0 divide-gray-100 relative z-10">
                                 <MetricsCard
                                     title={t('analytics.uniqueVisitors')}
                                     value={overview.uniqueVisitors.toLocaleString()}
@@ -432,7 +432,7 @@ const Analytics = () => {
                             </div>
 
                             {/* Main Chart */}
-                            <div className="p-6 border-t border-gray-100 bg-white">
+                            <div className="p-6 border-t border-gray-100 bg-white relative z-10">
                                 <div className="h-[350px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={data?.chart || []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
