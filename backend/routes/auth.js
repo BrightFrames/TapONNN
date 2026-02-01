@@ -12,6 +12,12 @@ router.post('/signup/send-otp', authController.signupSendOTP);
 // POST /api/auth/signup/verify - Step 2: Verify OTP and complete signup
 router.post('/signup/verify', authController.signupVerifyOTP);
 
+// POST /api/auth/quick-signup/send-otp - Step 1: Validate and send OTP (Message Modal)
+router.post('/quick-signup/send-otp', authController.quickSignupSendOTP);
+
+// POST /api/auth/quick-signup/verify - Step 2: Verify OTP and create account (Message Modal)
+router.post('/quick-signup/verify', authController.quickSignupVerify);
+
 // POST /api/auth/login
 router.post('/login', authController.login);
 

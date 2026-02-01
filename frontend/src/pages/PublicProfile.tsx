@@ -11,7 +11,9 @@ import EnquiryModal from "@/components/EnquiryModal";
 import PaymentModal from "@/components/PaymentModal";
 import LoginToContinueModal from "@/components/LoginToContinueModal";
 import ShareModal from "@/components/ShareModal";
+
 import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
+import { MessageSignupModal } from "@/components/MessageSignupModal";
 import useIntent, { getPendingIntent, clearPendingIntent } from "@/hooks/useIntent";
 import { toast } from "sonner";
 import { getIconForThumbnail } from "@/utils/socialIcons";
@@ -46,6 +48,7 @@ const PublicProfile = () => {
     const [paymentModal, setPaymentModal] = useState({ open: false, blockId: '', blockTitle: '', price: 0, intentId: '', sellerId: '' });
     const [loginModal, setLoginModal] = useState({ open: false, intentId: '', ctaType: '', blockTitle: '' });
     const [connectModal, setConnectModal] = useState<{ open: boolean; product: any; seller: any }>({ open: false, product: null, seller: null });
+    const [messageSignupOpen, setMessageSignupOpen] = useState(false);
 
     // Initialize Analytics
     const { trackClick } = useAnalytics(profile?.id);
@@ -601,9 +604,8 @@ const PublicProfile = () => {
                             if (authUser) {
                                 navigate(`/messages?with=${profile.username}`);
                             } else {
-                                // Store redirect info and go to login
-                                sessionStorage.setItem('tap2_redirect_after_login', `/messages?with=${profile.username}`);
-                                navigate('/login');
+                                // Open Quick Signup Modal
+                                setMessageSignupOpen(true);
                             }
                         }}
                         className="group w-full relative overflow-hidden rounded-full h-14 shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 active:scale-95"
@@ -646,6 +648,14 @@ const PublicProfile = () => {
                 ctaType={loginModal.ctaType}
                 blockTitle={loginModal.blockTitle}
                 onContinueAsGuest={handleGuestContinue}
+            />
+
+            {/* Message Signup Modal */}
+            <MessageSignupModal
+                open={messageSignupOpen}
+                onOpenChange={setMessageSignupOpen}
+                intentUsername={username || ''}
+                intentName={profile?.name || profile?.username || 'User'}
             />
 
             <EnquiryModal
