@@ -39,7 +39,7 @@ export const ExploreSection = ({ className, hideHeader = false }: ExploreSection
     useEffect(() => {
         const fetchBusinesses = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/explore/all`);
+                const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/explore/all`);
                 setBusinesses(response.data);
                 setFilteredBusinesses(response.data);
             } catch (err) {

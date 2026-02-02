@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Mail, Phone, KeyRound, Lock, CheckCircle } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 type Step = "email" | "otp" | "reset" | "success";
 
@@ -201,8 +201,8 @@ const ForgotPassword = () => {
                                 <div
                                     key={s}
                                     className={`h-2 w-8 rounded-full transition-colors ${["email", "otp", "reset"].indexOf(step) >= index
-                                            ? "bg-primary"
-                                            : "bg-muted"
+                                        ? "bg-primary"
+                                        : "bg-muted"
                                         }`}
                                 />
                             ))}

@@ -7,7 +7,7 @@ require('dotenv').config();
 // Initialize express
 const app = express();
 const server = http.createServer(app);
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5000; // Updated to 5001 via .env
 
 // Global Error Handlers to prevent silent exits
 process.on('uncaughtException', (err) => {
@@ -29,9 +29,9 @@ const corsOptions = {
         'http://localhost:8083',
         'https://tap-onnn.vercel.app',
         'https://taponn.vercel.app',
-        'http://tapx.bio',
-        'https://tapx.bio',
-        'https://www.tapx.bio'
+        'http://taponn.me',
+        'https://taponn.me',
+        'https://www.taponn.me'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -130,7 +130,7 @@ const chatRoutes = require('./routes/chat');
 
 // Health check
 app.get('/', (req, res) => {
-    res.send('Tap2 Backend is running (MongoDB)');
+    res.send('TapONN Backend is running (MongoDB)');
 });
 
 // Mount Routes

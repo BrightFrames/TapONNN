@@ -83,7 +83,7 @@ const BlockTypeSelector = ({ open, onOpenChange, onSelect }: BlockTypeSelectorPr
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
     useEffect(() => {
         if (open && !library) {

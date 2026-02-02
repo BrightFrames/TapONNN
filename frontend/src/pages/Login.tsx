@@ -42,7 +42,7 @@ const Login = () => {
 
     // Get the redirect path: first check sessionStorage (from Message button click), then location state, default to /dashboard
     const getRedirectPath = () => {
-        const sessionRedirect = sessionStorage.getItem('tap2_redirect_after_login');
+        const sessionRedirect = sessionStorage.getItem('taponn_redirect_after_login');
         if (sessionRedirect) {
             return sessionRedirect;
         }
@@ -63,7 +63,7 @@ const Login = () => {
     useEffect(() => {
         if (!isLoading && isAuthenticated) {
             // Clear the redirect from sessionStorage after using it
-            sessionStorage.removeItem('tap2_redirect_after_login');
+            sessionStorage.removeItem('taponn_redirect_after_login');
             navigate(from, { replace: true });
         }
     }, [isAuthenticated, isLoading, navigate, from]);
@@ -101,7 +101,7 @@ const Login = () => {
                 if (success) {
                     toast.success("Welcome back!");
                     // Clear redirect after using it
-                    sessionStorage.removeItem('tap2_redirect_after_login');
+                    sessionStorage.removeItem('taponn_redirect_after_login');
                     navigate(from, { replace: true });
                 } else {
                     toast.error(error || "Invalid credentials");
@@ -243,7 +243,7 @@ const Login = () => {
                 <CardHeader className="space-y-1">
                     <div className="flex justify-center mb-4">
                         <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground font-bold text-lg">
-                            T2
+                            TO
                         </div>
                     </div>
                     <CardTitle className="text-2xl text-center font-bold tracking-tight">
@@ -309,7 +309,7 @@ const Login = () => {
                                             {!checkingUsername && usernameAvailability && !usernameAvailability.available && <X className="w-4 h-4 text-red-600" />}
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-muted-foreground">tap2.me/{username || 'username'}</p>
+                                    <p className="text-[10px] text-muted-foreground">taponn.me/{username || 'username'}</p>
                                     {usernameAvailability && username.length >= 3 && (
                                         <p className={`text-[10px] ${usernameAvailability.available ? 'text-green-600' : 'text-red-600'}`}>
                                             {usernameAvailability.message}

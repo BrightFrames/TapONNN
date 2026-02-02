@@ -17,10 +17,10 @@ interface ShareModalProps {
 const ShareModal = ({ open, onOpenChange, username, url, type = 'profile' }: ShareModalProps) => {
     const [copied, setCopied] = useState(false);
 
-    const title = type === 'store' ? 'Share your Store' : 'Share your Tap2';
+    const title = type === 'store' ? 'Share your Store' : 'Share your TapONN';
     const shareMessage = type === 'store'
         ? `Check out my store: ${url}`
-        : `Check out my Tap2 profile: ${url}`;
+        : `Check out my TapONN profile: ${url}`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(url);
@@ -45,7 +45,7 @@ const ShareModal = ({ open, onOpenChange, username, url, type = 'profile' }: Sha
             const pngFile = canvas.toDataURL("image/png");
 
             const downloadLink = document.createElement("a");
-            downloadLink.download = `tap2-${username}-${type}-qr.png`;
+            downloadLink.download = `taponn-${username}-${type}-qr.png`;
             downloadLink.href = pngFile;
             downloadLink.click();
             toast.success("QR Code downloaded");

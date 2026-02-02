@@ -74,7 +74,7 @@ const Earnings = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
     const fetchEarnings = async () => {
         const token = localStorage.getItem('auth_token');

@@ -46,9 +46,10 @@ interface SortableLinkCardProps {
     onUpdate: (id: string, field: keyof Link, value: any) => void;
     onDelete: (id: string) => void;
     onEdit?: () => void;
+    onDuplicate?: () => void;
 }
 
-const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCardProps) => {
+const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit, onDuplicate }: SortableLinkCardProps) => {
     const {
         attributes,
         listeners,
@@ -188,9 +189,11 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit }: SortableLinkCard
                                         <PenLine className="w-4 h-4 mr-2 text-gray-500" /> Edit
                                     </DropdownMenuItem>
                                 )}
-                                <DropdownMenuItem onClick={copyUrl} className="rounded-lg text-[13px] py-2 cursor-pointer">
-                                    <Copy className="w-4 h-4 mr-2 text-gray-500" /> Copy
-                                </DropdownMenuItem>
+                                {onDuplicate && (
+                                    <DropdownMenuItem onClick={onDuplicate} className="rounded-lg text-[13px] py-2 cursor-pointer">
+                                        <Copy className="w-4 h-4 mr-2 text-gray-500" /> Duplicate
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem
                                     onClick={() => {
                                         if (link.url) {

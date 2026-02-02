@@ -66,7 +66,7 @@ const Settings = () => {
     const [savingStore, setSavingStore] = useState(false);
     const [installedPlugins, setInstalledPlugins] = useState<Plugin[]>([]);
 
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
     // Load profile data
     useEffect(() => {

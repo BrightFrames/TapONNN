@@ -53,9 +53,23 @@ const SOCIAL_PLATFORMS = [
     { id: 'whatsapp', icon: Phone, label: 'WhatsApp', placeholder: 'wa.me/number' },
 ];
 
+// Basic regex patterns for validation
+const URL_PATTERNS: Record<string, RegExp> = {
+    instagram: /instagram\.com/,
+    facebook: /facebook\.com/,
+    twitter: /(twitter\.com|x\.com)/,
+    linkedin: /linkedin\.com/,
+    youtube: /youtube\.com/,
+    tiktok: /tiktok\.com/,
+    email: /^[^@]+@[^@]+\.[^@]+$/,
+    website: /^https?:\/\//, // Basic check for website
+    whatsapp: /(wa\.me|whatsapp\.com)/
+};
+
 export const SocialLinksDialog = ({ initialLinks, onSave, onLinksChange, onOpenChange, children }: SocialLinksDialogProps) => {
     const [open, setOpen] = useState(false);
     const [links, setLinks] = useState<Record<string, string>>(initialLinks || {});
+    const [errors, setErrors] = useState<Record<string, boolean>>({}); // Track errors
     const [loading, setLoading] = useState(false);
     const [selectedPlatform, setSelectedPlatform] = useState<string>("");
 
@@ -68,6 +82,7 @@ export const SocialLinksDialog = ({ initialLinks, onSave, onLinksChange, onOpenC
     useEffect(() => {
         if (open) {
             setLinks(initialLinks || {});
+            setErrors({}); // Reset errors on open
         }
     }, [open, initialLinks]);
 
@@ -76,8 +91,21 @@ export const SocialLinksDialog = ({ initialLinks, onSave, onLinksChange, onOpenC
         onOpenChange?.(newOpen);
     }
 
+    const validateUrl = (id: string, value: string) => {
+        if (!value) return true; // Empty is valid (or removed)
+        const pattern = URL_PATTERNS[id];
+        if (pattern && !pattern.test(value)) {
+            return false;
+        }
+        return true;
+    };
+
     const handleChange = (id: string, value: string) => {
         setLinks(prev => ({ ...prev, [id]: value }));
+
+        // Real-time validation
+        const isValid = validateUrl(id, value);
+        setErrors(prev => ({ ...prev, [id]: !isValid }));
     };
 
     const handleAddPlatform = () => {
@@ -90,9 +118,30 @@ export const SocialLinksDialog = ({ initialLinks, onSave, onLinksChange, onOpenC
         const newLinks = { ...links };
         delete newLinks[id];
         setLinks(newLinks);
+        // Clear error
+        const newErrors = { ...errors };
+        delete newErrors[id];
+        setErrors(newErrors);
     };
 
     const handleSave = async () => {
+        // Validate all before saving
+        const newErrors: Record<string, boolean> = {};
+        let hasError = false;
+
+        for (const [id, value] of Object.entries(links)) {
+            if (value && !validateUrl(id, value)) {
+                newErrors[id] = true;
+                hasError = true;
+            }
+        }
+
+        if (hasError) {
+            setErrors(newErrors);
+            toast.error("Please fix the red flagged links before saving");
+            return;
+        }
+
         setLoading(true);
         try {
             await onSave(links);
@@ -125,23 +174,28 @@ export const SocialLinksDialog = ({ initialLinks, onSave, onLinksChange, onOpenC
                     {/* Active Links List */}
                     <div className="space-y-4">
                         {activePlatforms.map(({ id, icon: Icon, label, placeholder }) => (
-                            <div key={id} className="flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 text-gray-600">
+                            <div key={id} className="flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                                <div className="w-10 h-10 mt-0.5 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 text-gray-600">
                                     <Icon className="w-5 h-5" />
                                 </div>
-                                <div className="flex-1">
+                                <div className="flex-1 space-y-1">
                                     <Input
                                         value={links[id] || ''}
                                         onChange={(e) => handleChange(id, e.target.value)}
                                         placeholder={placeholder}
-                                        className="h-10"
+                                        className={`h-10 ${errors[id] ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                                     />
+                                    {errors[id] && (
+                                        <p className="text-xs text-red-500 ml-1">
+                                            Invalid URL
+                                        </p>
+                                    )}
                                 </div>
                                 <Button
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => handleRemovePlatform(id)}
-                                    className="text-gray-400 hover:text-red-500 shrink-0"
+                                    className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </Button>

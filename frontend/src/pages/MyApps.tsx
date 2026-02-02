@@ -92,7 +92,7 @@ const MyApps = () => {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
     useEffect(() => {
         fetchUserPlugins();

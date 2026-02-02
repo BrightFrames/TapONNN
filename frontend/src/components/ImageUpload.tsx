@@ -13,7 +13,7 @@ interface ImageUploadProps {
 export function ImageUpload({ value, onChange, label = "Upload Image", className = "" }: ImageUploadProps) {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

@@ -17,13 +17,13 @@ const CTASection = () => {
         </h2>
 
         <p className="text-lg text-card/70 max-w-xl mx-auto">
-          Get started in seconds. No credit card required. Create your free Tap2
+          Get started in seconds. No credit card required. Create your free TapONN
           today and start connecting your audience to everything you share.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Button variant="default" size="xl" className="group">
-            Create your free Tap2
+            Create your free TapONN
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Button>
           <Button variant="ghost" size="xl" className="text-card/80 hover:text-card hover:bg-card/10">

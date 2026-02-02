@@ -29,7 +29,7 @@ const Footer = () => {
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <Sparkles className="w-6 h-6 text-primary" />
-              <span className="text-xl font-bold text-white">Tap2</span>
+              <span className="text-xl font-bold text-white">TapONN</span>
             </Link>
             <p className="text-slate-400 text-sm">
               The only link you'll ever need to share everything.
@@ -72,7 +72,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-slate-500 text-sm">
-            © 2024 Tap2. All rights reserved.
+            © 2024 TapONN. All rights reserved.
           </p>
 
           <div className="flex items-center gap-4">

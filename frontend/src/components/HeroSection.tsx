@@ -128,7 +128,7 @@ const HeroSection = () => {
           <div className="relative flex items-center bg-zinc-900/90 backdrop-blur-xl rounded-full border border-zinc-700 shadow-2xl p-2 transition-all focus-within:ring-2 focus-within:ring-green-500/50 focus-within:bg-black">
 
             <div className="pl-6 pr-2 text-zinc-400 font-semibold select-none hidden sm:block">
-              tap2.me/
+              taponn.me/
             </div>
 
             <input

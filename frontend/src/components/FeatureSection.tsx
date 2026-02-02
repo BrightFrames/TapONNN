@@ -60,12 +60,12 @@ const FeatureSection = () => {
           {/* Right - Content */}
           <div className="space-y-8 order-1 lg:order-2">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-white tracking-tight">
-              Create and customize your Tap2 in minutes
+              Create and customize your TapONN in minutes
             </h2>
 
             <p className="text-lg text-zinc-400 max-w-lg leading-relaxed">
               Connect all your content across social media, websites, stores and more in
-              one link in bio. Customize every detail or let Tap2 automatically enhance
+              one link in bio. Customize every detail or let TapONN automatically enhance
               it to match your brand and drive more clicks.
             </p>
 

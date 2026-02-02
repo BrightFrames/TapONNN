@@ -105,7 +105,6 @@ const LinkCard = ({ link, onUpdate, onDelete }: LinkCardProps) => {
                                 <Switch
                                     checked={link.isActive}
                                     onCheckedChange={(c) => onUpdate(link.id, 'isActive', c)}
-                                    className="data-[state=checked]:bg-green-500"
                                 />
                             </div>
                         </div>

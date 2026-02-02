@@ -137,7 +137,8 @@ const PublicProfile = () => {
                 selectedTheme: userProfile.selected_theme,
                 payment_instructions: userProfile.payment_instructions,
                 social_links: userProfile.social_links || {},
-                is_store_identity: userProfile.is_store_identity
+                is_store_identity: userProfile.is_store_identity,
+                design_config: userProfile.design_config // Add design_config
             });
 
             // 2. Fetch Blocks
@@ -355,9 +356,11 @@ const PublicProfile = () => {
     const currentTemplate = templates.find(t => t.id === themeId) || templates[0];
 
     // Background style - Match Dashboard phone preview
-    const bgStyle = currentTemplate.bgImage
-        ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-        : {};
+    const bgStyle = profile.design_config?.bgImageUrl
+        ? { backgroundImage: `url(${profile.design_config.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+        : currentTemplate.bgImage
+            ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+            : {};
 
     const userInitial = (profile.name?.[0] || profile.username?.[0] || "U").toUpperCase();
 
@@ -643,7 +646,7 @@ const PublicProfile = () => {
                     className="inline-flex items-center gap-2 px-5 py-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full text-xs font-medium text-current/60 hover:text-current hover:bg-white/10 hover:border-white/20 transition-all hover:scale-105 shadow-sm"
                 >
                     <Sparkles className="w-3 h-3 text-purple-500" />
-                    <span>Create your own Tap2</span>
+                    <span>Create your own TapONN</span>
                 </a>
             </div>
 

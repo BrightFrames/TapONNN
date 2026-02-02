@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { toast } from "sonner";
+import axios from "axios";
 import {
     Select,
     SelectContent,
@@ -22,6 +23,8 @@ import { useTranslation } from "react-i18next";
 const Design = () => {
     const { user, selectedTheme, updateTheme, updateProfile, links: authLinks } = useAuth();
     const { t } = useTranslation();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
     // Local state for configuration to allow debounced updates (optional) or direct updates
     // For now, we sync directly with user.design_config
@@ -53,11 +56,43 @@ const Design = () => {
         });
     };
 
+    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const toastId = toast.loading("Uploading image...");
+
+        try {
+            const token = localStorage.getItem('token'); // or auth token
+            const res = await axios.post(`${API_URL}/upload`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    // 'Authorization': `Bearer ${token}` // If your upload endpoint is protected
+                }
+            });
+
+            if (res.data.success) {
+                toast.success("Image uploaded successfully!", { id: toastId });
+                handleConfigChange('bgImageUrl', res.data.url);
+            } else {
+                toast.error("Upload failed", { id: toastId });
+            }
+        } catch (error) {
+            console.error("Upload error:", error);
+            toast.error("Failed to upload image", { id: toastId });
+        }
+    };
+
     // Preview Helpers
     const currentTemplate = templates.find(t => t.id === selectedTheme) || templates[0];
-    const bgStyle = currentTemplate.bgImage
-        ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-        : {};
+    const bgStyle = config.bgImageUrl
+        ? { backgroundImage: `url(${config.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+        : currentTemplate.bgImage
+            ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+            : {};
 
     const getProfileSizeClass = () => {
         switch (config.profileSize) {
@@ -191,9 +226,19 @@ const Design = () => {
                                 <div className="space-y-6">
                                     <h2 className="text-lg font-semibold">{t('design.themes')}</h2>
 
+                                    {/* Hidden File Input */}
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                    />
+
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                         <div
                                             className="aspect-[4/5] rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-500 hover:border-gray-400 hover:bg-gray-50 cursor-pointer transition-colors"
+                                            onClick={() => fileInputRef.current?.click()}
                                         >
                                             <Sparkles className="w-6 h-6 mb-2" />
                                             <span className="text-xs font-medium">{t('common.custom')}</span>

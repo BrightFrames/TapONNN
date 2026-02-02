@@ -20,7 +20,7 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center gap-6">
             <Link to="/" className="flex items-center gap-2">
-              <img src="/logotap2.png" alt="Tap2" className="w-9 h-9" />
+              <img src="/logotap2.png" alt="TapONN" className="w-9 h-9" />
             </Link>
 
             <Link to="/explore">

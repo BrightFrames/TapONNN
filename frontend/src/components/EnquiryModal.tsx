@@ -26,7 +26,7 @@ const EnquiryModal = ({ open, onOpenChange, sellerId, blockId, blockTitle, ctaTy
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
     const getToken = () => localStorage.getItem('auth_token');
 

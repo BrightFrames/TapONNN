@@ -39,7 +39,7 @@ const PricingSection = () => {
         }
     }, [location.search]);
 
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
     const pricingData = {
         profile: [
@@ -48,7 +48,7 @@ const PricingSection = () => {
                 title: "Free",
                 price: "₹0",
                 priceValue: 0,
-                description: "Get started with the basics. Perfect for trying out Tap2.",
+                description: "Get started with the basics. Perfect for trying out TapONN.",
                 bgColor: "bg-muted text-foreground border border-border",
                 buttonVariant: "outline",
                 buttonBg: "bg-foreground text-background hover:bg-foreground/90",

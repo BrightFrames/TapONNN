@@ -37,12 +37,7 @@ interface BlockEditorModalProps {
 }
 
 const ALL_BLOCK_TYPES = [
-    { value: 'link', label: '🔗 Link' },
-    { value: 'product', label: '🛍️ Product' },
-    { value: 'service', label: '💼 Service' },
-    { value: 'contact_card', label: '📞 Contact Card' },
-    { value: 'whatsapp', label: '💬 WhatsApp' },
-    { value: 'text', label: '📝 Text' }
+    { value: 'link', label: '🔗 Link' }
 ];
 
 const ctaOptions = [
@@ -344,31 +339,7 @@ const BlockEditorModal = ({
 
                 <div className="space-y-6 py-4">
                     {/* Block Type Selector - Hide if locked to single type */}
-                    {!(allowedTypes?.length === 1) && (
-                        <div className="space-y-2">
-                            <Label>Block Type *</Label>
-                            <Select
-                                value={formData.block_type}
-                                onValueChange={(value) => setFormData(prev => ({ ...prev, block_type: value }))}
-                                disabled={!!block?._id}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select block type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ALL_BLOCK_TYPES
-                                        .filter(t => !allowedTypes || allowedTypes.includes(t.value))
-                                        .map(t => (
-                                            <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                                        ))
-                                    }
-                                </SelectContent>
-                            </Select>
-                            {block?._id && (
-                                <p className="text-xs text-muted-foreground">Block type cannot be changed after creation</p>
-                            )}
-                        </div>
-                    )}
+
 
                     {/* Title */}
                     <div className="space-y-2">
@@ -380,27 +351,7 @@ const BlockEditorModal = ({
                         />
                     </div>
 
-                    {/* Thumbnail Preview/Input - Hide for Product since it uses ImageUpload */}
-                    {formData.block_type !== 'product' && (
-                        <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                            <div className="shrink-0 w-12 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden relative shadow-sm">
-                                {formData.thumbnail ? (
-                                    <img src={formData.thumbnail} alt="Thumbnail" className="w-full h-full object-cover" />
-                                ) : (
-                                    <span className="text-[10px] text-slate-400 font-medium">Icon</span>
-                                )}
-                            </div>
-                            <div className="flex-1 space-y-1">
-                                <Label className="text-xs">Thumbnail URL</Label>
-                                <Input
-                                    className="h-8 text-xs bg-white"
-                                    placeholder="https://..."
-                                    value={formData.thumbnail || ''}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, thumbnail: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-                    )}
+
 
                     {/* Content Fields (dynamic based on block_type) */}
                     {renderContentFields()}
