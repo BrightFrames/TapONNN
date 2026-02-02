@@ -29,9 +29,6 @@ const corsOptions = {
         'http://localhost:8083',
         'https://tap-onnn.vercel.app',
         'https://taponn.vercel.app',
-        'http://taponn.me',
-        'https://taponn.me',
-        'https://www.taponn.me',
         'https://tapx.bio',
         'https://www.tapx.bio'
     ],
