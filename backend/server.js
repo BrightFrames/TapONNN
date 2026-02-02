@@ -31,7 +31,9 @@ const corsOptions = {
         'https://taponn.vercel.app',
         'http://taponn.me',
         'https://taponn.me',
-        'https://www.taponn.me'
+        'https://www.taponn.me',
+        'https://tapx.bio',
+        'https://www.tapx.bio'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

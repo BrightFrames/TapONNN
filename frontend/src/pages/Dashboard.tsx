@@ -786,7 +786,7 @@ const Dashboard = () => {
                                         </TabsContent>
 
                                         {/* Footer - Connect Button */}
-                                        <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-30">
+                                        <div className="mt-8 mb-4 w-full px-6 z-30">
                                             <Button className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100 hover:bg-gray-50">
                                                 <span>
                                                     {previewTab === 'shop'
