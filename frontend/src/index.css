@@ -65,48 +65,67 @@ html {
     --nav-pill: var(--sidebar-accent);
   }
 
+  /* PREMIUM DARK THEME OVERHAUL */
   .dark {
-    --background: #09090b;
-    --foreground: #f4f4f5;
+    --background: #020202;
+    /* Deeper black for perceived depth */
+    --foreground: #fafafa;
     --card: #09090b;
     --card-foreground: #fafafa;
     --popover: #09090b;
     --popover-foreground: #fafafa;
-    --primary: #fafafa;
-    --primary-foreground: #18181b;
-    --secondary: #27272a;
+    /* Clean white-ish primary for high contrast */
+    --primary: #ffffff;
+    --primary-foreground: #000000;
+
+    --secondary: #18181b;
+    /* Zinc-900 */
     --secondary-foreground: #fafafa;
+
     --muted: #18181b;
     --muted-foreground: #a1a1aa;
+    /* Zinc-400 */
+
     --accent: #27272a;
+    /* Zinc-800 */
     --accent-foreground: #fafafa;
+
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
+
     --border: #27272a;
+    /* Zinc-800 */
     --input: #27272a;
-    --ring: #3b82f6;
+    --ring: #ffffff;
+    /* White ring for focus states */
+
     --chart-1: #265dd9;
     --chart-2: #2eaf80;
     --chart-3: #f28526;
     --chart-4: #b052e0;
     --chart-5: #e82669;
-    --sidebar: #18181b;
-    --sidebar-foreground: #f4f4f5;
-    --sidebar-primary: #2563eb;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #27272a;
-    --sidebar-accent-foreground: #f4f4f5;
-    --sidebar-border: #27272a;
-    --sidebar-ring: #3b82f6;
-    --radius: 0.5rem;
-    --shadow-2xs: 0 1px 2px 0 rgb(255 255 255 / 0.05);
+
+    --sidebar: #010101;
+    --sidebar-foreground: #a1a1aa;
+    --sidebar-primary: #ffffff;
+    --sidebar-primary-foreground: #000000;
+    --sidebar-accent: #18181b;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #18181b;
+    --sidebar-ring: #ffffff;
+
+    --radius: 0.75rem;
+    /* More rounded premium feel */
+
+    /* Stronger, sharper shadows for dark mode */
+    --shadow-2xs: 0 1px 2px 0 rgb(0 0 0 / 0.5);
     --shadow-xs: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
     --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
-    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
-    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.75);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.6);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.6);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.6);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.85);
 
     /* Mappings for missing variables */
     --hero: var(--background);
@@ -132,7 +151,7 @@ html {
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-500/30 dark:selection:text-blue-50;
     font-family: 'Inter', sans-serif;
     /* Safe area for notched phones */
     padding-left: env(safe-area-inset-left);
@@ -174,18 +193,28 @@ html {
     background-image: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--muted-foreground)) 100%);
   }
 
-  .section-hero {
-    background-color: hsl(var(--hero));
+  /* Glassmorphism Utilities */
+  .glass-panel {
+    @apply bg-zinc-900/40 backdrop-blur-md border border-white/5;
   }
 
-  .section-feature {
-    background-color: hsl(var(--feature));
+  .glass-card {
+    @apply bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/60 shadow-lg;
   }
 
-  .section-share {
-    background-color: hsl(var(--share));
+  .glass-button {
+    @apply bg-white/5 hover:bg-white/10 border border-white/10 backdrop-blur-sm transition-all duration-300;
   }
 
+  .premium-shadow {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+  }
+
+  .premium-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400;
+  }
+
+  /* Animation Utilities */
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
@@ -259,37 +288,6 @@ html {
     padding-bottom: env(safe-area-inset-bottom) !important;
   }
 
-  /* Responsive text sizing */
-  .text-responsive-sm {
-    @apply text-xs sm:text-sm;
-  }
-
-  .text-responsive-base {
-    @apply text-sm sm:text-base;
-  }
-
-  .text-responsive-lg {
-    @apply text-base sm:text-lg md:text-xl;
-  }
-
-  .text-responsive-xl {
-    @apply text-lg sm:text-xl md:text-2xl;
-  }
-
-  .text-responsive-2xl {
-    @apply text-xl sm:text-2xl md:text-3xl;
-  }
-
-  /* Responsive gap utilities */
-  .gap-responsive {
-    @apply gap-2 sm:gap-4 md:gap-6;
-  }
-
-  /* Card responsive padding */
-  .card-padding-responsive {
-    @apply p-4 sm:p-6;
-  }
-
   /* Custom scrollbar utilities */
   .scrollbar-thin {
     scrollbar-width: thin;
@@ -310,13 +308,9 @@ html {
     border-radius: 3px;
   }
 
-  .scrollbar-thumb-gray-200:hover::-webkit-scrollbar-thumb,
-  .hover\:scrollbar-thumb-gray-300:hover::-webkit-scrollbar-thumb {
-    background-color: #d1d5db;
-  }
-
   .scrollbar-thin:hover {
-    scrollbar-color: #d1d5db transparent;
+    scrollbar-color: #3f3f46 transparent;
+    /* Zinc-700 */
   }
 }
 
@@ -329,23 +323,11 @@ html {
     padding-right: 1rem !important;
   }
 
-  /* Make cards full width on mobile */
-  .card {
-    border-radius: 0.75rem;
-  }
-
   /* Ensure inputs don't zoom on iOS */
   input,
   select,
   textarea {
     font-size: 16px !important;
-  }
-
-  /* Reduce spacing in forms */
-  .space-y-6 {
-    --tw-space-y-reverse: 0;
-    margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
-    margin-bottom: calc(1rem * var(--tw-space-y-reverse));
   }
 }
 
@@ -363,7 +345,6 @@ html {
     font-size: 1.25rem !important;
   }
 }
-
 
 @layer utilities {
   .animate-border-beam {

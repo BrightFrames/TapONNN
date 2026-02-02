@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
 import { PluginConfigModal } from "@/components/marketplace/PluginConfigModal";
+import { useTranslation } from "react-i18next";
 import {
     Search,
     Plus,
@@ -36,7 +37,9 @@ import {
     Settings,
     Truck,
     Box,
-    CreditCard
+    CreditCard,
+    Trash2,
+    Download
 } from "lucide-react";
 
 interface Plugin {
@@ -109,6 +112,7 @@ const getIconComponent = (iconName: string) => {
 };
 
 const Marketplace = () => {
+    const { t } = useTranslation();
     const [plugins, setPlugins] = useState<Plugin[]>([]);
     const [installedPlugins, setInstalledPlugins] = useState<UserPlugin[]>([]);
     const [loading, setLoading] = useState(true);
@@ -270,8 +274,10 @@ const Marketplace = () => {
     if (loading) {
         return (
             <LinktreeLayout>
-                <div className="flex items-center justify-center h-[60vh]">
-                    <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                <div className="flex flex-col items-center justify-center min-h-screen bg-transparent p-6 text-center">
+                    <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Loading Marketplace...</h2>
+                    <p className="text-gray-500 dark:text-zinc-500 max-w-md mt-2">Discover tools to grow your audience</p>
                 </div>
             </LinktreeLayout>
         );
@@ -279,144 +285,137 @@ const Marketplace = () => {
 
     return (
         <LinktreeLayout>
-            <div className="py-8 px-6 md:px-10 max-w-6xl mx-auto">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-card to-muted border border-border flex items-center justify-center shadow-lg shadow-black/20">
-                            <Sparkles className="w-5 h-5 text-foreground" />
-                        </div>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground">App Marketplace</h1>
-                    </div>
-                    <p className="text-muted-foreground ml-13">Discover and install apps to enhance your profile</p>
-                </div>
+            <div className="min-h-screen bg-transparent font-sans text-gray-900 dark:text-zinc-100">
+                {/* Hero Section */}
+                <div className="relative border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40">
+                    <div className="absolute inset-0 bg-grid-black/[0.02] dark:bg-grid-white/[0.02] bg-[size:20px_20px]" />
+                    <div className="max-w-7xl mx-auto px-6 py-16 relative z-10">
+                        <div className="max-w-3xl">
+                            <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-4 sm:text-5xl">
+                                {t('marketplace.title')}
+                            </h1>
+                            <p className="text-lg text-gray-600 dark:text-zinc-400 mb-8 max-w-2xl leading-relaxed">
+                                {t('marketplace.subtitle')}
+                            </p>
 
-                {/* Search */}
-                <div className="relative mb-6">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                        placeholder="Search apps..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-12 h-12 rounded-xl bg-card/50 border-border focus:border-ring focus:ring-ring placeholder:text-muted-foreground text-foreground"
-                    />
-                </div>
-
-                {/* Category Tabs */}
-                <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-8">
-                    <TabsList className="h-auto p-1 bg-card border border-border rounded-xl flex flex-wrap gap-1">
-                        {CATEGORIES.map(cat => (
-                            <TabsTrigger
-                                key={cat.id}
-                                value={cat.id}
-                                className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2 transition-all hover:text-foreground"
-                            >
-                                <cat.icon className="w-4 h-4 opacity-70" />
-                                <span className="hidden sm:inline">{cat.label}</span>
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
-                </Tabs>
-
-                {/* Apps Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredPlugins.map(plugin => {
-                        const IconComponent = getIconComponent(plugin.icon);
-                        const installedPlugin = installedPlugins.find(p => p.plugin_id._id === plugin._id);
-                        const isInstalled = !!installedPlugin;
-                        const isLoading = installing === plugin._id;
-
-                        // 21st.dev inspired card design
-                        return (
-                            <div
-                                key={plugin._id}
-                                className="group relative flex flex-col gap-3 rounded-[2rem] overflow-hidden transition-all duration-300 hover:z-10"
-                            >
-                                {/* Card Body */}
-                                <div className="aspect-[16/10] w-full bg-card rounded-[2rem] border border-border/40 relative overflow-hidden group-hover:border-border/80 transition-colors">
-                                    {/* Background Gradient/Mesh */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent" />
-
-                                    {/* Inner Glow on Hover */}
-                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
-
-                                    {/* Header: Icon + Title */}
-                                    <div className="absolute top-5 left-5 right-5 flex items-start justify-between z-10">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-background border border-border/50 flex items-center justify-center shadow-lg">
-                                                <IconComponent className="w-4 h-4 text-foreground/80" />
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-foreground tracking-tight leading-none">{plugin.name}</span>
-                                                <span className="text-[10px] text-muted-foreground mt-1">{plugin.category} • Default</span>
-                                            </div>
-                                        </div>
-
-                                        {plugin.is_premium && (
-                                            <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[10px] px-2 h-5">PRO</Badge>
-                                        )}
-                                    </div>
-
-                                    {/* Center Content / Preview Visualization */}
-                                    <div className="absolute inset-0 flex items-center justify-center p-8 mt-8">
-                                        <div className="text-center">
-                                            <h3 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/40 tracking-tighter leading-tight select-none">
-                                                {plugin.name}
-                                            </h3>
-                                            <p className="text-xs text-muted-foreground/60 mt-2 line-clamp-1 max-w-[200px] mx-auto">
-                                                {plugin.description}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* Bottom Status Status */}
-                                    {isInstalled && (
-                                        <div className="absolute bottom-5 right-5 z-10">
-                                            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                                <span className="text-[10px] font-medium text-primary">Active</span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Hover Overlay & Actions */}
-                                    <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3 z-20">
-                                        <Button
-                                            onClick={() => isInstalled ? handleUninstall(plugin._id) : handleInstall(plugin._id)}
-                                            disabled={isLoading}
-                                            variant={isInstalled ? "destructive" : "default"}
-                                            className={`rounded-full px-6 font-medium shadow-2xl scale-95 group-hover:scale-100 transition-transform duration-200 ${isInstalled ? '' : 'bg-foreground text-background hover:bg-foreground/90'}`}
-                                        >
-                                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : isInstalled ? "Uninstall" : "Install"}
-                                        </Button>
-
-                                        {isInstalled && plugin.config_schema && (
-                                            <Button
-                                                onClick={() => handleConfigure(plugin, installedPlugin.config)}
-                                                variant="outline"
-                                                size="icon"
-                                                className="rounded-full w-10 h-10 bg-background border-border"
-                                            >
-                                                <Settings className="w-4 h-4" />
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
+                            {/* Search Bar */}
+                            <div className="relative max-w-xl group">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-zinc-500 group-focus-within:text-indigo-500 dark:group-focus-within:text-indigo-400 transition-colors" />
+                                <Input
+                                    type="text"
+                                    placeholder={t('marketplace.searchPlaceholder')}
+                                    className="pl-12 pr-4 h-12 bg-white dark:bg-zinc-900/80 border-gray-200 dark:border-zinc-800 text-lg rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-600"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
                             </div>
-                        );
-                    })}
+                        </div>
+                    </div>
                 </div>
 
-                {/* Empty State */}
-                {filteredPlugins.length === 0 && (
-                    <div className="text-center py-24">
-                        <div className="w-16 h-16 bg-neutral-900 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-neutral-800">
-                            <Search className="w-8 h-8 text-neutral-600" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-white mb-2">No apps found</h3>
-                        <p className="text-neutral-500">Try adjusting your search or filter</p>
+                <div className="max-w-7xl mx-auto px-6 py-8">
+                    {/* Category Tabs */}
+                    <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-8">
+                        <TabsList className="h-auto p-1 bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl flex flex-wrap gap-1">
+                            {CATEGORIES.map(cat => (
+                                <TabsTrigger
+                                    key={cat.id}
+                                    value={cat.id}
+                                    className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 dark:text-zinc-400 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm flex items-center gap-2 transition-all hover:text-gray-900 dark:hover:text-zinc-200"
+                                >
+                                    <cat.icon className="w-4 h-4 opacity-70" />
+                                    <span className="hidden sm:inline">{cat.label}</span>
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </Tabs>
+
+                    {/* Apps Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredPlugins.map(plugin => {
+                            const IconComponent = getIconComponent(plugin.icon);
+                            const installedPlugin = installedPlugins.find(p => p.plugin_id._id === plugin._id);
+                            const isInstalled = !!installedPlugin;
+                            const isLoading = installing === plugin._id;
+
+                            return (
+                                <Card
+                                    key={plugin._id}
+                                    className={`group relative overflow-hidden border transition-all duration-300 hover:shadow-lg bg-white dark:bg-zinc-900/50 backdrop-blur-sm ${isInstalled
+                                        ? "border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-950/10"
+                                        : "border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700"
+                                        }`}
+                                >
+                                    <CardContent className="p-6">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className={`p-3 rounded-2xl ${isInstalled ? 'bg-green-100 dark:bg-green-500/20' : 'bg-gray-100 dark:bg-zinc-800'} transition-colors group-hover:scale-110 duration-300`}>
+                                                <IconComponent className={`w-6 h-6 ${isInstalled ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-zinc-400'}`} />
+                                            </div>
+                                            {isInstalled && (
+                                                <Badge variant="secondary" className="bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 flex items-center gap-1 font-medium border-green-200 dark:border-green-500/20">
+                                                    <Check className="w-3 h-3" />
+                                                    {t('marketplace.installedBadge')}
+                                                </Badge>
+                                            )}
+                                        </div>
+
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                            {plugin.name}
+                                        </h3>
+                                        <p className="text-gray-500 dark:text-zinc-400 text-sm mb-6 line-clamp-2 h-10 leading-relaxed">
+                                            {plugin.description}
+                                        </p>
+
+                                        <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-zinc-800/50">
+                                            <Button
+                                                onClick={() => isInstalled ? handleUninstall(plugin._id) : handleInstall(plugin._id)}
+                                                variant={isInstalled ? "outline" : "default"}
+                                                className={`w-full ${isInstalled
+                                                    ? "border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700 dark:hover:text-red-300 hover:border-red-300 dark:hover:border-red-800"
+                                                    : "bg-gray-900 text-white dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-zinc-200"
+                                                    }`}
+                                                disabled={isLoading}
+                                            >
+                                                {isLoading ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                                ) : isInstalled ? (
+                                                    <span className="flex items-center gap-2">
+                                                        <Trash2 className="w-4 h-4" /> {t('marketplace.uninstall')}
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-2">
+                                                        <Download className="w-4 h-4" /> {t('marketplace.install')}
+                                                    </span>
+                                                )}
+                                            </Button>
+
+                                            {isInstalled && plugin.config_schema && (
+                                                <Button
+                                                    onClick={() => handleConfigure(plugin, installedPlugin.config)}
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="ml-2 text-gray-400 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800"
+                                                    title="Configure"
+                                                >
+                                                    <Settings className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
                     </div>
-                )}
+
+                    {/* Empty State */}
+                    {filteredPlugins.length === 0 && (
+                        <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
+                            <Search className="w-12 h-12 text-gray-300 dark:text-zinc-700 mb-4" />
+                            <h3 className="text-xl font-semibold text-gray-900 dark:text-zinc-300 mb-2">{t('marketplace.noAppsFound')}</h3>
+                            <p className="text-gray-500 dark:text-zinc-500 max-w-sm">{t('marketplace.noAppsDesc')}</p>
+                        </div>
+                    )}
+                </div>
 
                 <PluginConfigModal
                     isOpen={configModalOpen}

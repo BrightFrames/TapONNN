@@ -26,7 +26,6 @@ import {
     AtSign,
 
     ShoppingBag,
-    ShoppingBag,
     Share2,
     Truck,
     CreditCard,
@@ -303,274 +302,257 @@ const Settings = () => {
     };
 
     return (
-        <>
-            <LinktreeLayout>
-                <div className="flex-1 py-4 sm:py-8 px-4 sm:px-6 md:px-10 overflow-y-auto">
-                    <div className="max-w-3xl mx-auto">
-                        {/* Header */}
-                        <div className="mb-4 sm:mb-8">
-                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('settings.title')}</h1>
-                            <p className="text-gray-500 text-xs sm:text-sm mt-1">{t('settings.subtitle')}</p>
+        <LinktreeLayout>
+            <div className="min-h-screen bg-transparent p-6 text-gray-900 dark:text-zinc-100">
+                <div className="max-w-4xl mx-auto space-y-8">
+                    {/* Header */}
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm">
+                            <SettingsIcon className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
                         </div>
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{t('settings.title')}</h1>
+                            <p className="text-gray-500 dark:text-zinc-400">{t('settings.subtitle')}</p>
+                        </div>
+                    </div>
 
-                        <Tabs defaultValue="profile" className="space-y-4 sm:space-y-6">
-                            <TabsList className="grid w-full grid-cols-4 h-auto gap-1 sm:gap-2 bg-transparent p-0">
-                                <TabsTrigger
-                                    value="profile"
-                                    className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 rounded-xl py-3 px-4 gap-2"
-                                >
-                                    <User className="w-4 h-4" />
-                                    <span className="hidden sm:inline">{t('settings.profile')}</span>
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="security"
-                                    className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 rounded-xl py-3 px-4 gap-2"
-                                >
-                                    <Lock className="w-4 h-4" />
-                                    <span className="hidden sm:inline">{t('settings.security')}</span>
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="notifications"
-                                    className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 rounded-xl py-3 px-4 gap-2"
-                                >
-                                    <Bell className="w-4 h-4" />
-                                    <span className="hidden sm:inline">{t('settings.notifications')}</span>
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="danger"
-                                    className="data-[state=active]:bg-red-100 data-[state=active]:text-red-700 rounded-xl py-3 px-4 gap-2"
-                                >
-                                    <Shield className="w-4 h-4" />
-                                    <span className="hidden sm:inline">{t('settings.dangerZone')}</span>
-                                </TabsTrigger>
-                            </TabsList>
+                    <Tabs defaultValue="profile" className="space-y-6">
+                        <TabsList className="bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 p-1 rounded-xl w-full sm:w-auto inline-flex">
+                            <TabsTrigger
+                                value="profile"
+                                className="px-4 py-2 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 transition-all flex items-center gap-2"
+                            >
+                                <User className="w-4 h-4" />
+                                <span className="hidden sm:inline">{t('settings.profile')}</span>
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="security"
+                                className="px-4 py-2 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 transition-all flex items-center gap-2"
+                            >
+                                <Lock className="w-4 h-4" />
+                                <span className="hidden sm:inline">{t('settings.security')}</span>
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="notifications"
+                                className="px-4 py-2 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 transition-all flex items-center gap-2"
+                            >
+                                <Bell className="w-4 h-4" />
+                                <span className="hidden sm:inline">{t('settings.notifications')}</span>
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="danger"
+                                className="px-4 py-2 rounded-lg data-[state=active]:bg-red-50 dark:data-[state=active]:bg-red-950/20 data-[state=active]:text-red-600 dark:data-[state=active]:text-red-400 text-gray-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-300 transition-all flex items-center gap-2"
+                            >
+                                <Shield className="w-4 h-4" />
+                                <span className="hidden sm:inline">{t('settings.dangerZone')}</span>
+                            </TabsTrigger>
+                        </TabsList>
 
-                            {/* Profile Tab */}
-                            <TabsContent value="profile" className="space-y-4 sm:space-y-6">
-                                <Card className="border-0 shadow-sm">
-                                    <CardHeader className="p-4 sm:p-6">
-                                        <CardTitle className="text-base sm:text-lg">{t('settings.profileInfo')}</CardTitle>
-                                        <CardDescription className="text-xs sm:text-sm">{t('settings.profileDesc')}</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0 sm:pt-0">
-                                        {/* Avatar Upload */}
-                                        <AvatarUpload
-                                            currentAvatarUrl={avatarUrl}
-                                            userName={fullName}
-                                            onUploadComplete={handleAvatarUpload}
-                                        />
+                        {/* Profile Tab */}
+                        <TabsContent value="profile" className="space-y-6">
+                            <Card className="border-gray-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
+                                <CardHeader>
+                                    <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">{t('settings.profile')}</CardTitle>
+                                    <CardDescription className="text-gray-500 dark:text-zinc-400">{t('settings.profileDesc')}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    <AvatarUpload
+                                        currentAvatarUrl={avatarUrl}
+                                        userName={fullName}
+                                        onUploadComplete={handleAvatarUpload}
+                                    />
 
-                                        {/* Form Fields */}
-                                        <div className="grid gap-4 sm:grid-cols-2">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="fullName" className="flex items-center gap-2">
-                                                    <User className="w-4 h-4 text-gray-400" />
-                                                    {t('settings.fullName')}
-                                                </Label>
-                                                <Input
-                                                    id="fullName"
-                                                    value={fullName}
-                                                    onChange={(e) => setFullName(e.target.value)}
-                                                    placeholder={t('settings.fullName')}
-                                                    className="rounded-xl"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="username" className="flex items-center gap-2">
-                                                    <AtSign className="w-4 h-4 text-gray-400" />
-                                                    {t('settings.username')}
-                                                </Label>
-                                                <Input
-                                                    id="username"
-                                                    value={username}
-                                                    disabled
-                                                    className="rounded-xl bg-gray-50"
-                                                />
-                                                <p className="text-xs text-gray-500">{t('settings.usernameImmutable')}</p>
-                                            </div>
-                                        </div>
-
+                                    <div className="grid gap-6 sm:grid-cols-2">
                                         <div className="space-y-2">
-                                            <Label htmlFor="email" className="flex items-center gap-2">
-                                                <Mail className="w-4 h-4 text-gray-400" />
-                                                {t('settings.email')}
+                                            <Label className="text-gray-700 dark:text-zinc-300 flex items-center gap-2">
+                                                <User className="w-4 h-4 text-gray-400 dark:text-zinc-500" />
+                                                {t('settings.fullName')}
                                             </Label>
                                             <Input
-                                                id="email"
-                                                value={user?.email || ""}
+                                                value={fullName}
+                                                onChange={(e) => setFullName(e.target.value)}
+                                                className="bg-white dark:bg-zinc-950/50 border-gray-300 dark:border-zinc-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-600 focus:border-indigo-500 focus:ring-indigo-500/20"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-gray-700 dark:text-zinc-300 flex items-center gap-2">
+                                                <AtSign className="w-4 h-4 text-gray-400 dark:text-zinc-500" />
+                                                {t('settings.username')}
+                                            </Label>
+                                            <Input
+                                                value={username}
                                                 disabled
-                                                className="rounded-xl bg-gray-50"
+                                                className="bg-gray-100 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-500 cursor-not-allowed"
                                             />
-                                            <p className="text-xs text-gray-500">{t('settings.emailNote')}</p>
+                                            <p className="text-xs text-gray-500 dark:text-zinc-500">{t('settings.usernameImmutable')}</p>
                                         </div>
+                                    </div>
 
+                                    <div className="space-y-2">
+                                        <Label className="text-gray-700 dark:text-zinc-300 flex items-center gap-2">
+                                            <Mail className="w-4 h-4 text-gray-400 dark:text-zinc-500" />
+                                            {t('settings.email')}
+                                        </Label>
+                                        <Input
+                                            value={user?.email || ""}
+                                            disabled
+                                            className="bg-gray-100 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-500 cursor-not-allowed"
+                                        />
+                                        <p className="text-xs text-gray-500 dark:text-zinc-500">{t('settings.emailNote')}</p>
+                                    </div>
 
+                                    <Button
+                                        onClick={handleSaveProfile}
+                                        disabled={saving}
+                                        className="bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-zinc-200 w-full sm:w-auto"
+                                    >
+                                        {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                                        {t('settings.saveChanges')}
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
 
+                        {/* Security Tab */}
+                        <TabsContent value="security" className="space-y-6">
+                            <EmailVerification
+                                email={user?.email || ""}
+                                isVerified={user?.email_confirmed_at ? true : false}
+                            />
+
+                            <Card className="border-gray-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
+                                <CardHeader>
+                                    <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">{t('settings.changePassword')}</CardTitle>
+                                    <CardDescription className="text-gray-500 dark:text-zinc-400">{t('settings.changePasswordDesc')}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label className="text-gray-700 dark:text-zinc-300">{t('settings.newPassword')}</Label>
+                                        <Input
+                                            type="password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            className="bg-white dark:bg-zinc-950/50 border-gray-300 dark:border-zinc-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-600"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-gray-700 dark:text-zinc-300">{t('settings.confirmPassword')}</Label>
+                                        <Input
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            className="bg-white dark:bg-zinc-950/50 border-gray-300 dark:border-zinc-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-600"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
                                         <Button
-                                            onClick={handleSaveProfile}
-                                            disabled={saving}
-                                            className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-xl gap-2"
+                                            onClick={handleChangePassword}
+                                            disabled={saving || !newPassword}
+                                            className="bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-zinc-200"
                                         >
-                                            {saving ? (
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                <Save className="w-4 h-4" />
-                                            )}
-                                            {t('settings.saveChanges')}
+                                            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+                                            {t('settings.updatePassword')}
                                         </Button>
-                                    </CardContent>
-                                </Card>
-
-
-                            </TabsContent>
-
-                            {/* Security Tab */}
-                            <TabsContent value="security" className="space-y-6">
-                                {/* Email Verification */}
-                                <EmailVerification
-                                    email={user?.email || ""}
-                                    isVerified={user?.email_confirmed_at ? true : false}
-                                />
-
-                                <Card className="border-0 shadow-sm">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">{t('settings.changePassword')}</CardTitle>
-                                        <CardDescription>{t('settings.changePasswordDesc')}</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="newPassword">{t('settings.newPassword')}</Label>
-                                            <Input
-                                                id="newPassword"
-                                                type="password"
-                                                value={newPassword}
-                                                onChange={(e) => setNewPassword(e.target.value)}
-                                                placeholder={t('settings.newPassword')}
-                                                className="rounded-xl"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="confirmPassword">{t('settings.confirmPassword')}</Label>
-                                            <Input
-                                                id="confirmPassword"
-                                                type="password"
-                                                value={confirmPassword}
-                                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                                placeholder={t('settings.confirmPassword')}
-                                                className="rounded-xl"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col sm:flex-row gap-3">
-                                            <Button
-                                                onClick={handleChangePassword}
-                                                disabled={saving || !newPassword}
-                                                className="rounded-xl gap-2"
-                                            >
-                                                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                                                {t('settings.updatePassword')}
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                onClick={handleResetPassword}
-                                                className="rounded-xl"
-                                            >
-                                                {t('settings.sendResetEmail')}
-                                            </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                <Card className="border-0 shadow-sm">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">{t('settings.twoFactor')}</CardTitle>
-                                        <CardDescription>{t('settings.twoFactorDesc')}</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="font-medium">{t('settings.enable2FA')}</p>
-                                                <p className="text-sm text-gray-500">{t('settings.enable2FADesc')}</p>
-                                            </div>
-                                            <Switch disabled />
-                                        </div>
-                                        <p className="text-xs text-gray-400 mt-2">{t('settings.comingSoon')}</p>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-
-                            {/* Notifications Tab */}
-                            <TabsContent value="notifications" className="space-y-6">
-                                <Card className="border-0 shadow-sm">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">{t('settings.emailNotifications')}</CardTitle>
-                                        <CardDescription>{t('settings.emailNotificationsDesc')}</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="font-medium">{t('settings.weeklyAnalytics')}</p>
-                                                <p className="text-sm text-gray-500">{t('settings.weeklyAnalyticsDesc')}</p>
-                                            </div>
-                                            <Switch defaultChecked />
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="font-medium">{t('settings.newFeatures')}</p>
-                                                <p className="text-sm text-gray-500">{t('settings.newFeaturesDesc')}</p>
-                                            </div>
-                                            <Switch defaultChecked />
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="font-medium">{t('settings.marketingEmails')}</p>
-                                                <p className="text-sm text-gray-500">{t('settings.marketingEmailsDesc')}</p>
-                                            </div>
-                                            <Switch />
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-
-                            {/* Danger Zone Tab */}
-                            <TabsContent value="danger" className="space-y-6">
-                                <Card className="border-0 shadow-sm border-red-200 bg-red-50/50">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg text-red-700">{t('settings.deleteAccount')}</CardTitle>
-                                        <CardDescription className="text-red-600">
-                                            {t('settings.deleteAccountDesc')}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-gray-600 mb-4">
-                                            {t('settings.deleteWarning')}
-                                        </p>
-                                        <ul className="list-disc list-inside text-sm text-gray-600 mb-6 space-y-1">
-                                            <li>{t('settings.deleteItem1')}</li>
-                                            <li>{t('settings.deleteItem2')}</li>
-                                            <li>{t('settings.deleteItem3')}</li>
-                                        </ul>
                                         <Button
-                                            variant="destructive"
-                                            onClick={handleDeleteAccount}
-                                            disabled={deleting}
-                                            className="rounded-xl gap-2"
+                                            variant="outline"
+                                            onClick={handleResetPassword}
+                                            className="border-gray-300 dark:border-zinc-700 text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white"
                                         >
-                                            {deleting ? (
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                <Trash2 className="w-4 h-4" />
-                                            )}
-                                            {deleting ? t('settings.deleting') : t('settings.deleteButton')}
+                                            {t('settings.sendResetEmail')}
                                         </Button>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                        </Tabs>
-                    </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-gray-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
+                                <CardHeader>
+                                    <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">{t('settings.twoFactor')}</CardTitle>
+                                    <CardDescription className="text-gray-500 dark:text-zinc-400">{t('settings.twoFactorDesc')}</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="font-medium text-gray-900 dark:text-zinc-200">{t('settings.enable2FA')}</p>
+                                            <p className="text-sm text-gray-500 dark:text-zinc-500">{t('settings.enable2FADesc')}</p>
+                                        </div>
+                                        <Switch disabled className="data-[state=checked]:bg-indigo-500" />
+                                    </div>
+                                    <p className="text-xs text-gray-500 dark:text-zinc-600 mt-2">{t('settings.comingSoon')}</p>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {/* Notifications Tab */}
+                        <TabsContent value="notifications" className="space-y-6">
+                            <Card className="border-gray-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
+                                <CardHeader>
+                                    <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">{t('settings.emailNotifications')}</CardTitle>
+                                    <CardDescription className="text-gray-500 dark:text-zinc-400">{t('settings.emailNotificationsDesc')}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="font-medium text-gray-900 dark:text-zinc-200">{t('settings.weeklyAnalytics')}</p>
+                                            <p className="text-sm text-gray-500 dark:text-zinc-500">{t('settings.weeklyAnalyticsDesc')}</p>
+                                        </div>
+                                        <Switch defaultChecked className="data-[state=checked]:bg-indigo-500" />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="font-medium text-gray-900 dark:text-zinc-200">{t('settings.newFeatures')}</p>
+                                            <p className="text-sm text-gray-500 dark:text-zinc-500">{t('settings.newFeaturesDesc')}</p>
+                                        </div>
+                                        <Switch defaultChecked className="data-[state=checked]:bg-indigo-500" />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="font-medium text-gray-900 dark:text-zinc-200">{t('settings.marketingEmails')}</p>
+                                            <p className="text-sm text-gray-500 dark:text-zinc-500">{t('settings.marketingEmailsDesc')}</p>
+                                        </div>
+                                        <Switch className="data-[state=checked]:bg-indigo-500" />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {/* Danger Zone Tab */}
+                        <TabsContent value="danger" className="space-y-6">
+                            <Card className="border-red-200 dark:border-red-900/20 shadow-sm bg-red-50 dark:bg-red-950/10 backdrop-blur-sm">
+                                <CardHeader>
+                                    <CardTitle className="text-lg text-red-600 dark:text-red-500">{t('settings.deleteAccount')}</CardTitle>
+                                    <CardDescription className="text-red-500/70 dark:text-red-400/70">
+                                        {t('settings.deleteAccountDesc')}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm text-gray-500 dark:text-zinc-400 mb-4">
+                                        {t('settings.deleteWarning')}
+                                    </p>
+                                    <ul className="list-disc list-inside text-sm text-gray-600 dark:text-zinc-500 mb-6 space-y-1">
+                                        <li>{t('settings.deleteItem1')}</li>
+                                        <li>{t('settings.deleteItem2')}</li>
+                                        <li>{t('settings.deleteItem3')}</li>
+                                    </ul>
+                                    <Button
+                                        variant="destructive"
+                                        onClick={handleDeleteAccount}
+                                        disabled={deleting}
+                                        className="bg-red-600 hover:bg-red-700 text-white"
+                                    >
+                                        {deleting ? (
+                                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                        ) : (
+                                            <Trash2 className="w-4 h-4 mr-2" />
+                                        )}
+                                        {deleting ? t('settings.deleting') : t('settings.deleteButton')}
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
                 </div>
-            </LinktreeLayout>
+            </div>
 
-            {/* Store Share Modal */}
             <ShareModal
                 open={storeShareOpen}
                 onOpenChange={setStoreShareOpen}
@@ -578,7 +560,7 @@ const Settings = () => {
                 url={`${window.location.origin}/${username}/store`}
                 type="store"
             />
-        </>
+        </LinktreeLayout>
     );
 };
 

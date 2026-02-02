@@ -63,8 +63,8 @@ const NavItem = ({ icon: Icon, label, active = false, count, badge, isNew, onCli
         className={cn(
             "group flex items-center justify-between px-2 py-1.5 text-[15px] rounded-md transition-all cursor-pointer select-none mx-2",
             active
-                ? "text-white font-medium bg-[#1A1A1A]/80"
-                : "text-zinc-500 hover:text-zinc-100 hover:bg-[#1A1A1A]/40",
+                ? "text-zinc-900 dark:text-white font-medium bg-zinc-100 dark:bg-[#1A1A1A]/80"
+                : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-[#1A1A1A]/40",
         )}
         onClick={onClick}
     >
@@ -138,14 +138,14 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
     const isStoreMode = user?.active_profile_mode === 'store';
 
     return (
-        <div className="flex flex-col h-full bg-[#050505] text-zinc-100 font-sans">
+        <div className="flex flex-col h-full bg-white dark:bg-[#050505] text-zinc-900 dark:text-zinc-100 font-sans border-r border-zinc-200 dark:border-[#1A1A1A]">
             {/* Header */}
             <div className="p-4 pt-5 pb-2 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="bg-zinc-100 text-black w-8 h-8 flex items-center justify-center rounded-sm font-bold text-lg">
+                    <div className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black w-8 h-8 flex items-center justify-center rounded-sm font-bold text-lg">
                         T
                     </div>
-                    <span className="text-zinc-100 font-bold text-lg tracking-tight">TapONNN</span>
+                    <span className="text-zinc-900 dark:text-zinc-100 font-bold text-lg tracking-tight">TapONNN</span>
                 </div>
             </div>
 
@@ -240,7 +240,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
             </nav>
 
             {/* Fixed System Section with Separator */}
-            <div className="border-t border-[#1A1A1A] px-1 pt-2 pb-1 bg-[#050505]">
+            <div className="border-t border-zinc-200 dark:border-[#1A1A1A] px-1 pt-2 pb-1 bg-white dark:bg-[#050505]">
                 <SidebarSectionTitle>{t('nav.system')}</SidebarSectionTitle>
                 <div className="space-y-[1px]">
                     <NavItem
@@ -262,17 +262,17 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
             <LanguageSelectorDialog open={isLanguageOpen} onOpenChange={setIsLanguageOpen} />
 
             {/* Footer */}
-            <div className="p-3 border-t border-[#1A1A1A] bg-[#050505]">
+            <div className="p-3 border-t border-zinc-200 dark:border-[#1A1A1A] bg-white dark:bg-[#050505]">
                 <div className="flex items-center justify-between px-2 py-2">
                     <Button
                         variant="ghost"
-                        className="flex items-center gap-2 group h-auto py-2 px-3 hover:bg-[#1A1A1A] w-auto justify-start"
+                        className="flex items-center gap-2 group h-auto py-2 px-3 hover:bg-zinc-100 dark:hover:bg-[#1A1A1A] w-auto justify-start"
                         onClick={toggleTheme}
                     >
-                        <div className="w-8 h-8 rounded-full bg-[#111] border border-[#222] flex items-center justify-center text-zinc-500 group-hover:text-zinc-200 group-hover:border-zinc-600 transition-all">
+                        <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-[#111] border border-zinc-200 dark:border-[#222] flex items-center justify-center text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-200 group-hover:border-zinc-300 dark:group-hover:border-zinc-600 transition-all">
                             {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
                         </div>
-                        <span className="text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                        <span className="text-xs text-zinc-600 dark:text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-300 transition-colors">
                             {isDark ? "Dark" : "Light"}
                         </span>
                     </Button>
@@ -280,7 +280,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                     <Button
                         variant="ghost"
                         onClick={onLogout}
-                        className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1.5 px-3 py-2 rounded-md hover:bg-[#1A1A1A] h-auto"
+                        className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors flex items-center gap-1.5 px-3 py-2 rounded-md hover:bg-zinc-100 dark:hover:bg-[#1A1A1A] h-auto"
                     >
                         <LogOut className="w-3.5 h-3.5" />
                         <span>{t('nav.logout')}</span>
@@ -416,12 +416,12 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
                 </header>
 
                 {/* Desktop Sidebar - 21st.dev Style */}
-                <aside className="w-[280px] bg-[#050505] border-r border-[#1A1A1A] hidden lg:flex flex-col h-full overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 hover:scrollbar-thumb-zinc-700">
+                <aside className="w-[280px] bg-white dark:bg-[#050505] border-r border-zinc-200 dark:border-[#1A1A1A] hidden lg:flex flex-col h-full overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 hover:scrollbar-thumb-zinc-400 dark:hover:scrollbar-thumb-zinc-700">
                     <SidebarContent navigate={navigate} location={location} onShare={() => setShareOpen(true)} onLogout={handleLogout} unreadMessageCount={unreadMessageCount} />
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="flex-1 min-w-0 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 hover:scrollbar-thumb-zinc-700 bg-[#0A0A0A] transition-colors duration-300">
+                <main className="flex-1 min-w-0 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 hover:scrollbar-thumb-zinc-400 dark:hover:scrollbar-thumb-zinc-700 bg-gray-50 dark:bg-[#0A0A0A] transition-colors duration-300">
                     {children}
                 </main>
             </div>

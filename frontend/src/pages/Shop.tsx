@@ -401,8 +401,8 @@ const Shop = () => {
 
 
     if (isLoading) {
-        return <div className="h-screen w-full flex items-center justify-center bg-gray-50">
-            <div className="animate-spin w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full"></div>
+        return <div className="h-screen w-full flex items-center justify-center bg-white dark:bg-[#050505]">
+            <div className="animate-spin w-8 h-8 border-4 border-gray-200 dark:border-white border-t-purple-600 dark:border-t-transparent rounded-full"></div>
         </div>;
     }
 
@@ -432,8 +432,8 @@ const Shop = () => {
                             {/* Title Row */}
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                 <div>
-                                    <h1 className="text-xl sm:text-2xl font-bold text-white">Shop</h1>
-                                    <p className="text-zinc-400 text-xs sm:text-sm mt-1 hidden sm:block">Manage your products • Drag to reorder</p>
+                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Shop</h1>
+                                    <p className="text-gray-500 dark:text-zinc-400 text-xs sm:text-sm mt-1 hidden sm:block">Manage your products • Drag to reorder</p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     {/* Profile Link */}
@@ -577,7 +577,7 @@ const Shop = () => {
                             >
                                 <Button
                                     variant="outline"
-                                    className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-white font-medium gap-1.5 sm:gap-2"
+                                    className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-900 hover:text-black dark:hover:text-white font-medium gap-1.5 sm:gap-2 text-sm sm:text-base"
                                 >
                                     <Instagram className="w-4 h-4 sm:w-5 sm:h-5" />
                                     <span className="hidden sm:inline">{t('dashboard.socials')}</span>
@@ -599,7 +599,7 @@ const Shop = () => {
                                 <div className="flex justify-center py-10"><Loader2 className="animate-spin text-gray-400" /></div>
                             ) : filteredProducts.length > 0 ? (
                                 filteredProducts.map((product) => (
-                                    <div key={product._id} className="bg-zinc-900 p-4 rounded-xl sm:rounded-2xl border border-zinc-800 shadow-sm flex items-center justify-between group hover:shadow-md transition-shadow">
+                                    <div key={product._id} className="bg-white dark:bg-zinc-900 p-4 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm flex items-center justify-between group hover:shadow-md transition-shadow">
                                         <div className="flex items-center gap-3 sm:gap-4">
                                             {/* Drag Handle */}
                                             <div className="text-zinc-500 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
@@ -615,7 +615,7 @@ const Shop = () => {
                                             </div>
                                             {/* Product Info */}
                                             <div>
-                                                <h3 className="font-semibold text-white text-sm sm:text-base">{product.title}</h3>
+                                                <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{product.title}</h3>
                                                 <div className="flex items-center gap-2 mt-0.5">
                                                     <span className="text-xs sm:text-sm font-bold text-green-400">₹{product.price}</span>
                                                     <span className="text-zinc-600">•</span>
@@ -637,13 +637,13 @@ const Shop = () => {
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-center py-10 sm:py-16 bg-zinc-900/50 rounded-xl sm:rounded-2xl border-2 border-dashed border-zinc-800 px-4">
-                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-zinc-800 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                                        <Package className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-500" />
+                                <div className="text-center py-10 sm:py-16 bg-white dark:bg-zinc-900/50 rounded-xl sm:rounded-2xl border-2 border-dashed border-gray-200 dark:border-zinc-800 px-4">
+                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 dark:bg-zinc-800 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                                        <Package className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 dark:text-zinc-500" />
                                     </div>
-                                    <h3 className="text-base sm:text-lg font-semibold text-white mb-2">{t('shop.noProducts')}</h3>
-                                    <p className="text-zinc-400 text-xs sm:text-sm mb-4 sm:mb-6">{t('shop.noProductsDesc')}</p>
-                                    <Button onClick={() => setIsAddOpen(true)} variant="outline" className="rounded-full gap-2 text-sm bg-zinc-800 border-zinc-700 text-zinc-200 hover:bg-zinc-700 hover:text-white">
+                                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('shop.noProducts')}</h3>
+                                    <p className="text-gray-500 dark:text-zinc-400 text-xs sm:text-sm mb-4 sm:mb-6">{t('shop.noProductsDesc')}</p>
+                                    <Button onClick={() => setIsAddOpen(true)} variant="outline" className="rounded-full gap-2 text-sm bg-gray-900 dark:bg-zinc-800 border-transparent dark:border-zinc-700 text-white dark:text-zinc-200 hover:bg-gray-800 dark:hover:bg-zinc-700 hover:text-white">
                                         <Plus className="w-4 h-4" /> {t('shop.addFirstProduct')}
                                     </Button>
                                 </div>
@@ -653,7 +653,7 @@ const Shop = () => {
                 </div>
 
                 {/* Phone Preview - Right Side */}
-                <div className="w-[400px] border-l border-zinc-800 hidden xl:flex items-center justify-center bg-[#0A0A0A] sticky top-0 h-full">
+                <div className="w-[400px] border-l border-zinc-200 dark:border-zinc-800 hidden xl:flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0A] sticky top-0 h-full">
                     <div className="py-8 px-8 flex flex-col items-center">
                         {/* Phone Frame */}
                         <div className="w-[300px] h-[620px] bg-black rounded-[3rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">
@@ -805,7 +805,7 @@ const Shop = () => {
 
             {/* Mobile Preview Sheet */}
             <Sheet open={showPreview} onOpenChange={setShowPreview}>
-                <SheetContent side="right" className="w-full sm:max-w-lg p-0 bg-gradient-to-b from-gray-50 to-white">
+                <SheetContent side="right" className="w-full sm:max-w-lg p-0 bg-zinc-950 border-l border-zinc-800">
                     <div className="h-full flex flex-col items-center justify-center p-6">
                         {/* Phone Frame - Mobile */}
                         <div className="w-[280px] h-[560px] bg-black rounded-[2.5rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">
@@ -831,7 +831,7 @@ const Shop = () => {
                                 <div className="flex flex-col items-center mt-6 space-y-2 relative z-10">
                                     <Avatar className="w-20 h-20 border-3 border-white/20 shadow-lg">
                                         <AvatarImage src={user?.avatar} />
-                                        <AvatarFallback className="bg-gray-400 text-white text-2xl font-bold">
+                                        <AvatarFallback className="bg-zinc-800 text-white text-2xl font-bold">
                                             {userInitial}
                                         </AvatarFallback>
                                     </Avatar>
@@ -894,9 +894,9 @@ const Shop = () => {
 
                                 {/* Bottom Message Button */}
                                 <div className="absolute bottom-3 left-3 right-3 z-20">
-                                    <button className="w-full bg-white text-black h-10 rounded-full font-bold text-xs flex items-center justify-between px-4 shadow-lg border border-gray-100">
+                                    <button className="w-full bg-white text-black h-10 rounded-full font-bold text-xs flex items-center justify-between px-4 shadow-lg hover:bg-zinc-200 transition-colors">
                                         <span>Message {user?.name?.split(' ')[0] || 'User'}</span>
-                                        <MessageCircle className="w-4 h-4 text-gray-600" />
+                                        <MessageCircle className="w-4 h-4 text-black" />
                                     </button>
                                 </div>
                             </div>

@@ -104,13 +104,13 @@ const Design = () => {
 
     return (
         <LinktreeLayout>
-            <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-gray-50">
+            <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white">
 
                 {/* Left Panel - Settings */}
-                <div className="flex-1 overflow-y-auto border-r border-gray-200 bg-white">
+                <div className="flex-1 overflow-y-auto border-r border-gray-200 dark:border-zinc-900 bg-white/50 dark:bg-black/40 backdrop-blur-xl custom-scrollbar">
                     <div className="p-8 pb-32 max-w-2xl mx-auto">
                         <div className="flex items-center justify-between mb-8">
-                            <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t('design.title')}</h1>
+                            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">{t('design.title')}</h1>
                             <Button variant="outline" className="gap-2">
                                 <Sparkles className="w-4 h-4" /> {t('design.enhance')}
                             </Button>
@@ -118,16 +118,16 @@ const Design = () => {
 
                         <Tabs defaultValue="header" className="w-full">
                             <TabsList className="flex flex-wrap h-auto gap-2 bg-transparent justify-start mb-8 p-0">
-                                <TabsTrigger value="header" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-full px-4 py-2 border border-gray-200">
+                                <TabsTrigger value="header" className="data-[state=active]:bg-gray-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition-all">
                                     <UserCircle className="w-4 h-4 mr-2" /> {t('design.header')}
                                 </TabsTrigger>
-                                <TabsTrigger value="theme" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-full px-4 py-2 border border-gray-200">
+                                <TabsTrigger value="theme" className="data-[state=active]:bg-gray-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition-all">
                                     <Layout className="w-4 h-4 mr-2" /> {t('design.theme')}
                                 </TabsTrigger>
-                                <TabsTrigger value="wallpaper" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-full px-4 py-2 border border-gray-200">
+                                <TabsTrigger value="wallpaper" className="data-[state=active]:bg-gray-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition-all">
                                     <ImageIcon className="w-4 h-4 mr-2" /> {t('design.wallpaper')}
                                 </TabsTrigger>
-                                <TabsTrigger value="text" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-full px-4 py-2 border border-gray-200">
+                                <TabsTrigger value="text" className="data-[state=active]:bg-gray-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition-all">
                                     <Type className="w-4 h-4 mr-2" /> {t('design.text')}
                                 </TabsTrigger>
                             </TabsList>
@@ -136,27 +136,27 @@ const Design = () => {
                             <TabsContent value="header" className="space-y-10">
                                 {/* Profile Image Section */}
                                 <div className="space-y-4">
-                                    <h2 className="text-lg font-semibold">Header</h2>
-                                    <div className="bg-gray-100 p-8 rounded-2xl flex items-center justify-center">
+                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Header</h2>
+                                    <div className="bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800 p-8 rounded-2xl flex items-center justify-center">
                                         {user?.avatar ? (
                                             <img src={user.avatar} alt="Profile" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-sm" />
                                         ) : (
-                                            <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-4xl text-gray-500 font-bold">
+                                            <div className="w-24 h-24 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-4xl text-gray-400 dark:text-zinc-500 font-bold">
                                                 {(user?.name || "U")[0].toUpperCase()}
                                             </div>
                                         )}
-                                        <Button className="ml-6 bg-black text-white hover:bg-gray-800 rounded-full px-6">+ {t('common.add')}</Button>
+                                        <Button className="ml-6 bg-white text-black hover:bg-zinc-200 rounded-full px-6">+ {t('common.add')}</Button>
                                     </div>
                                 </div>
 
                                 {/* Layout Section */}
                                 <div className="space-y-4">
-                                    <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Profile image layout</h2>
+                                    <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Profile image layout</h2>
                                     <div className="grid grid-cols-2 gap-4">
                                         <Button
                                             variant="outline"
                                             onClick={() => handleConfigChange('headerLayout', 'classic')}
-                                            className={`h-auto p-4 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 hover:bg-gray-50 transition-all ${config.headerLayout === 'classic' ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
+                                            className={`h-auto p-4 border-2 rounded-xl flex flex-col items-center gap-2 hover:bg-gray-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 transition-all ${config.headerLayout === 'classic' ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-zinc-900 text-white ring-2 ring-gray-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-black' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400'}`}
                                         >
                                             <div className="w-full flex justify-center pb-2">
                                                 <div className="w-8 h-8 rounded-full border-2 border-current"></div>
@@ -166,7 +166,7 @@ const Design = () => {
                                         <Button
                                             variant="outline"
                                             onClick={() => handleConfigChange('headerLayout', 'hero')}
-                                            className={`h-auto p-4 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 hover:bg-gray-50 transition-all ${config.headerLayout === 'hero' ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
+                                            className={`h-auto p-4 border-2 rounded-xl flex flex-col items-center gap-2 hover:bg-gray-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 transition-all ${config.headerLayout === 'hero' ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-zinc-900 text-white ring-2 ring-gray-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-black' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400'}`}
                                         >
                                             <div className="w-full h-8 border-2 border-dashed border-current rounded-md flex items-center justify-center">
                                                 <div className="w-4 h-4 rounded-full border-2 border-current"></div>
@@ -178,12 +178,12 @@ const Design = () => {
 
                                 {/* Title Style */}
                                 <div className="space-y-4">
-                                    <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Title style</h2>
+                                    <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Title style</h2>
                                     <div className="grid grid-cols-2 gap-4">
                                         <Button
                                             variant="outline"
                                             onClick={() => handleConfigChange('titleStyle', 'text')}
-                                            className={`h-auto p-6 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 hover:bg-gray-50 transition-all ${config.titleStyle === 'text' ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
+                                            className={`h-auto p-6 border-2 rounded-xl flex flex-col items-center gap-2 hover:bg-gray-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 transition-all ${config.titleStyle === 'text' ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-zinc-900 text-white ring-2 ring-gray-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-black' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400'}`}
                                         >
                                             <span className="font-serif text-xl">Aa</span>
                                             <span className="text-xs font-medium mt-1">Text</span>
@@ -191,7 +191,7 @@ const Design = () => {
                                         <Button
                                             variant="outline"
                                             onClick={() => handleConfigChange('titleStyle', 'logo')}
-                                            className={`h-auto p-6 border-2 rounded-xl flex flex-col items-center gap-2 hover:border-gray-300 hover:bg-gray-50 transition-all ${config.titleStyle === 'logo' ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
+                                            className={`h-auto p-6 border-2 rounded-xl flex flex-col items-center gap-2 hover:bg-gray-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 transition-all ${config.titleStyle === 'logo' ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-zinc-900 text-white ring-2 ring-gray-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-black' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400'}`}
                                         >
                                             <ImageIcon className="w-6 h-6" />
                                             <span className="text-xs font-medium mt-1">{t('design.logo')}</span>
@@ -201,19 +201,19 @@ const Design = () => {
 
                                 {/* Size */}
                                 <div className="space-y-4">
-                                    <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('design.size')}</h2>
+                                    <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{t('design.size')}</h2>
                                     <div className="grid grid-cols-2 gap-4">
                                         <Button
                                             variant="outline"
                                             onClick={() => handleConfigChange('profileSize', 'small')}
-                                            className={`h-auto py-3 px-4 border-2 rounded-full font-medium text-sm transition-all hover:bg-gray-50 ${config.profileSize === 'small' ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
+                                            className={`h-auto py-3 px-4 border-2 rounded-full font-medium text-sm transition-all hover:bg-gray-100 dark:hover:bg-zinc-800 ${config.profileSize === 'small' ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-zinc-900 text-white ring-2 ring-gray-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-black' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400'}`}
                                         >
                                             {t('design.small')}
                                         </Button>
                                         <Button
                                             variant="outline"
                                             onClick={() => handleConfigChange('profileSize', 'large')}
-                                            className={`h-auto py-3 px-4 border-2 rounded-full font-medium text-sm transition-all hover:bg-gray-50 ${config.profileSize === 'large' ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
+                                            className={`h-auto py-3 px-4 border-2 rounded-full font-medium text-sm transition-all hover:bg-gray-100 dark:hover:bg-zinc-800 ${config.profileSize === 'large' ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-zinc-900 text-white ring-2 ring-gray-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-black' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400'}`}
                                         >
                                             {t('design.large')}
                                         </Button>
@@ -237,7 +237,7 @@ const Design = () => {
 
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                         <div
-                                            className="aspect-[4/5] rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-500 hover:border-gray-400 hover:bg-gray-50 cursor-pointer transition-colors"
+                                            className="aspect-[4/5] rounded-2xl border-2 border-dashed border-zinc-700 flex flex-col items-center justify-center text-zinc-500 hover:border-zinc-500 hover:bg-zinc-800 cursor-pointer transition-colors"
                                             onClick={() => fileInputRef.current?.click()}
                                         >
                                             <Sparkles className="w-6 h-6 mb-2" />
@@ -285,7 +285,7 @@ const Design = () => {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <span className="text-xs font-medium text-center text-gray-700">{t.name}</span>
+                                                <span className="text-xs font-medium text-center text-gray-600 dark:text-zinc-400 group-hover:text-gray-900 dark:group-hover:text-white">{t.name}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -298,14 +298,14 @@ const Design = () => {
 
                                     {/* Solid Color */}
                                     <div className="space-y-4">
-                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Solid Color</h3>
-                                        <div className="grid grid-cols-6 gap-3">
+                                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Solid Color</h3>
+                                        <div className="grid grid-cols-6 gap-3 p-1">
                                             {['#FFFFFF', '#F8FAFC', '#FEF3C7', '#DCFCE7', '#E0E7FF', '#FCE7F3', '#111827', '#1F2937', '#7C3AED', '#059669', '#DC2626', '#F59E0B'].map(color => (
                                                 <Button
                                                     key={color}
                                                     variant="ghost"
                                                     onClick={() => handleConfigChange('bgColor', color)}
-                                                    className={`w-10 h-10 rounded-xl border-2 p-0 transition-all hover:scale-110 ${config.bgColor === color ? 'ring-2 ring-purple-500 ring-offset-2' : 'border-gray-200'}`}
+                                                    className={`w-10 h-10 rounded-xl border-2 p-0 transition-all hover:scale-110 ${config.bgColor === color ? 'ring-2 ring-white ring-offset-2 ring-offset-black border-transparent' : 'border-zinc-800'}`}
                                                     style={{ backgroundColor: color }}
                                                 />
                                             ))}
@@ -314,7 +314,7 @@ const Design = () => {
 
                                     {/* Gradient Presets */}
                                     <div className="space-y-4">
-                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Gradient</h3>
+                                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Gradient</h3>
                                         <div className="grid grid-cols-3 gap-3">
                                             {[
                                                 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -328,7 +328,7 @@ const Design = () => {
                                                     key={i}
                                                     variant="ghost"
                                                     onClick={() => handleConfigChange('bgGradient', gradient)}
-                                                    className={`h-16 w-full rounded-xl border-2 p-0 transition-all hover:scale-105 ${config.bgGradient === gradient ? 'ring-2 ring-purple-500 ring-offset-2' : 'border-gray-200'}`}
+                                                    className={`h-16 w-full rounded-xl border-2 p-0 transition-all hover:scale-105 ${config.bgGradient === gradient ? 'ring-2 ring-white ring-offset-2 ring-offset-black border-transparent' : 'border-zinc-800'}`}
                                                     style={{ background: gradient }}
                                                 />
                                             ))}
@@ -337,13 +337,13 @@ const Design = () => {
 
                                     {/* Custom Image URL */}
                                     <div className="space-y-4">
-                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('design.customImageUrl')}</h3>
+                                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{t('design.customImageUrl')}</h3>
                                         <input
                                             type="url"
                                             placeholder="https://example.com/image.jpg"
                                             value={config.bgImageUrl || ''}
                                             onChange={(e) => handleConfigChange('bgImageUrl', e.target.value)}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl focus:ring-2 focus:ring-white/20 focus:border-white/20 text-white placeholder:text-zinc-600 outline-none"
                                         />
                                     </div>
                                 </div>
@@ -355,7 +355,7 @@ const Design = () => {
 
                                     {/* Font Family */}
                                     <div className="space-y-4">
-                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Font Family</h3>
+                                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Font Family</h3>
                                         <div className="grid grid-cols-2 gap-3">
                                             {[
                                                 { name: 'Inter', className: 'font-sans' },
@@ -367,10 +367,10 @@ const Design = () => {
                                                     key={font.name}
                                                     variant="outline"
                                                     onClick={() => handleConfigChange('fontFamily', font.name)}
-                                                    className={`h-auto p-4 border-2 rounded-xl transition-all hover:border-gray-300 hover:bg-gray-50 flex flex-col items-center gap-1 ${config.fontFamily === font.name ? 'border-black bg-gray-50 ring-2 ring-black ring-offset-1' : 'border-gray-200 bg-white'}`}
+                                                    className={`h-auto p-4 border-2 rounded-xl transition-all hover:border-zinc-600 hover:bg-zinc-800 flex flex-col items-center gap-1 ${config.fontFamily === font.name ? 'border-white bg-zinc-900 text-white ring-2 ring-white ring-offset-1 ring-offset-black' : 'border-zinc-800 bg-zinc-900/50 text-zinc-400'}`}
                                                 >
                                                     <span className={`text-xl ${font.className}`}>Aa</span>
-                                                    <p className="text-xs mt-1 text-gray-600">{font.name}</p>
+                                                    <p className="text-xs mt-1 text-zinc-500">{font.name}</p>
                                                 </Button>
                                             ))}
                                         </div>
@@ -378,14 +378,14 @@ const Design = () => {
 
                                     {/* Text Color */}
                                     <div className="space-y-4">
-                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('design.textColor')}</h3>
+                                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{t('design.textColor')}</h3>
                                         <div className="grid grid-cols-6 gap-3">
                                             {['#111827', '#374151', '#6B7280', '#FFFFFF', '#7C3AED', '#059669'].map(color => (
                                                 <Button
                                                     key={color}
                                                     variant="ghost"
                                                     onClick={() => handleConfigChange('textColor', color)}
-                                                    className={`w-10 h-10 rounded-xl border-2 p-0 transition-all hover:scale-110 flex items-center justify-center ${config.textColor === color ? 'ring-2 ring-purple-500 ring-offset-2' : 'border-gray-200'}`}
+                                                    className={`w-10 h-10 rounded-xl border-2 p-0 transition-all hover:scale-110 flex items-center justify-center ${config.textColor === color ? 'ring-2 ring-white ring-offset-2 ring-offset-black border-transparent' : 'border-zinc-800'}`}
                                                     style={{ backgroundColor: color === '#FFFFFF' ? '#000' : '#FFF' }}
                                                 >
                                                     <span style={{ color }} className="font-bold">A</span>
@@ -400,10 +400,10 @@ const Design = () => {
                 </div>
 
                 {/* Right Panel - Preview */}
-                <div className="hidden lg:flex flex-1 bg-white items-center justify-center p-8 border-l border-gray-100">
+                <div className="hidden lg:flex flex-1 bg-gray-50 dark:bg-black/5 items-center justify-center p-8 border-l border-gray-200 dark:border-zinc-800/50">
                     <div className="sticky top-8">
-                        <div className="flex items-center justify-center gap-2 mb-6 text-gray-500 text-sm">
-                            <span className="bg-gray-100 px-3 py-1 rounded-full text-xs font-mono">
+                        <div className="flex items-center justify-center gap-2 mb-6 text-gray-500 dark:text-zinc-500 text-sm">
+                            <span className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 px-3 py-1 rounded-full text-xs font-mono">
                                 tap2.me/{user?.username}
                             </span>
                             <Monitor className="w-4 h-4" />
@@ -413,7 +413,7 @@ const Design = () => {
                         <div className="w-[320px] h-[650px] bg-black rounded-[3rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">
                             {/* Content */}
                             <div
-                                className={`h-full w-full overflow-y-auto ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor} scrollbar-hide`}
+                                className={`h-full w-full overflow-y-auto ${currentTemplate.bgClass || 'bg-zinc-900'} ${currentTemplate.textColor} scrollbar-hide`}
                                 style={bgStyle}
                             >
                                 {currentTemplate.bgImage && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}

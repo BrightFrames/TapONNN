@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import SortableLinkCard from "@/components/SortableLinkCard";
-import BlockEditorModal from "@/components/BlockEditorModal"; // Import BlockEditor
+// import BlockEditorModal from "@/components/BlockEditorModal"; // Unused import
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,18 +28,13 @@ import {
 } from "@dnd-kit/sortable";
 import {
     Plus,
-    Sparkles,
     Copy,
     ExternalLink,
     Link2,
-    Smartphone,
     Instagram,
-    Globe,
     Trash2,
     Search,
-    Heart,
     X,
-    Share,
     MessageCircle,
     Settings,
     Truck,
@@ -48,7 +43,7 @@ import {
 
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { SocialLinksDialog } from "@/components/SocialLinksDialog";
-import { PluginConfigModal } from "@/components/marketplace/PluginConfigModal";
+// import { PluginConfigModal } from "@/components/marketplace/PluginConfigModal"; // Unused import
 
 interface Plugin {
     _id: string;
@@ -97,14 +92,12 @@ interface Product {
 
 const Dashboard = () => {
     const { t } = useTranslation();
-    const { user, blocks, addBlock, updateBlock, deleteBlock, reorderBlocks, selectedTheme, updateProfile } = useAuth(); // Use blocks instead of links
-    // Removed local links state to rely on context or separate local state if needed (using context for now)
+    const { user, blocks, addBlock, updateBlock, deleteBlock, reorderBlocks, selectedTheme, updateProfile } = useAuth();
     const [isAddingBlock, setIsAddingBlock] = useState(false);
-    const [editingBlock, setEditingBlock] = useState<any>(null); // For editing
+    const [editingBlock, setEditingBlock] = useState<any>(null);
     const [socialPreview, setSocialPreview] = useState<Record<string, string> | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [previewTab, setPreviewTab] = useState<'links' | 'shop'>('links');
-
     const [searchQuery, setSearchQuery] = useState("");
 
     // Plugin State
@@ -117,11 +110,10 @@ const Dashboard = () => {
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
-    // Sensors for drag and drop
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 8, // 8px movement before drag starts
+                distance: 8,
             },
         }),
         useSensor(KeyboardSensor, {
@@ -164,81 +156,12 @@ const Dashboard = () => {
         }
     };
 
-    const handlePluginInstall = async (pluginId: string) => {
-        setInstallingPluginId(pluginId);
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.access_token) {
-                toast.error('Please log in to install apps');
-                return;
-            }
-
-            const response = await fetch(`${API_URL}/marketplace/install/${pluginId}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
-            });
-
-            if (response.ok) {
-                const newUserPlugin = await response.json();
-                setInstalledPlugins(prev => [...prev, newUserPlugin]);
-                toast.success('App connected!');
-
-                // Open config modal immediately
-                if (newUserPlugin.plugin_id.config_schema && newUserPlugin.plugin_id.config_schema.length > 0) {
-                    handleConfigurePlugin(newUserPlugin.plugin_id, {});
-                }
-            } else {
-                const error = await response.json();
-                toast.error(error.error || 'Failed to install app');
-            }
-        } catch (error) {
-            console.error('Error installing plugin:', error);
-            toast.error('Failed to install app');
-        } finally {
-            setInstallingPluginId(null);
-        }
-    };
-
     const handleConfigurePlugin = (plugin: Plugin, config: Record<string, any>) => {
         setSelectedPlugin(plugin);
         setSelectedConfig(config || {});
         setConfigModalOpen(true);
     };
 
-    const savePluginConfig = async (config: Record<string, any>) => {
-        if (!selectedPlugin) return;
-
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.access_token) return;
-
-            const response = await fetch(`${API_URL}/marketplace/config/${selectedPlugin._id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({ config })
-            });
-
-            if (response.ok) {
-                toast.success('Configuration saved');
-                setInstalledPlugins(prev => prev.map(up =>
-                    up.plugin_id._id === selectedPlugin._id
-                        ? { ...up, config }
-                        : up
-                ));
-            } else {
-                toast.error('Failed to save configuration');
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to save configuration');
-        }
-    };
-    // No need for local links useEffect syncing if we use blocks directly from context, 
-    // but dnd-kit might want a local state for smooth dragging.
-    // Let's create a local state for blocks to handle drag smoothly
     const [localBlocks, setLocalBlocks] = useState(blocks);
 
     useEffect(() => {
@@ -247,11 +170,16 @@ const Dashboard = () => {
 
     useEffect(() => {
         const fetchProducts = async () => {
-            const token = localStorage.getItem('auth_token');
-            if (!token) return;
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            // Fallback to localStorage if session token is missing, but usually session is source of truth
+            const localToken = localStorage.getItem('token');
+            const finalToken = token || localToken;
+
+            if (!finalToken) return;
             try {
                 const res = await fetch(`${API_URL}/products`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${finalToken}` }
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -267,77 +195,44 @@ const Dashboard = () => {
     const userName = user?.name || "Creator";
     const username = user?.username || "user";
     const userInitial = userName[0]?.toUpperCase() || "U";
-
-    // Get current template based on theme
     const currentTemplate = templates.find(t => t.id === selectedTheme) || templates[0];
-
-    // Background style
     const bgStyle = currentTemplate.bgImage
         ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
         : {};
-
-    const handleSaveBlock = async (blockData: any) => {
-        if (blockData._id) {
-            await updateBlock(blockData._id, blockData);
-        } else {
-            await addBlock(blockData);
-        }
-        setIsAddingBlock(false);
-        setEditingBlock(null);
-    };
 
     const handleDeleteBlock = async (id: string) => {
         if (!confirm(t('common.delete') + "?")) return;
         await deleteBlock(id);
     };
 
-    // Adapt Update for SortableLinkCard
-    // Adapt Update for SortableLinkCard
     const handleUpdateBlockField = (id: string, field: string, value: any) => {
-        // Map legacy fields if necessary
         const fieldMap: Record<string, string> = {
             'isActive': 'is_active',
             'isFeatured': 'is_featured'
         };
-
         const backendField = fieldMap[field] || field;
 
-        // Optimistic update first to prevent flicker
         updateBlock(id, { [backendField]: value });
 
-        // If toggling Featured status, we need to reorder
         if (field === 'isFeatured') {
             setLocalBlocks(currentBlocks => {
                 const blockIndex = currentBlocks.findIndex(b => b._id === id);
                 if (blockIndex === -1) return currentBlocks;
 
-                const blockToMove = { ...currentBlocks[blockIndex], [backendField]: value }; // Optimistic update
+                const blockToMove = { ...currentBlocks[blockIndex], [backendField]: value };
                 const otherBlocks = currentBlocks.filter(b => b._id !== id);
-
                 let newOrder = [];
 
                 if (value === true) {
-                    // Moving TO Featured
-                    // Logic: Append to end of EXISTING featured items (FIFO)
-                    // 1. Get all currently featured items (excluding the one being moved)
                     const existingFeatured = otherBlocks.filter(b => (b as any).is_featured);
                     const unfeatured = otherBlocks.filter(b => !(b as any).is_featured);
-
-                    // 2. Insert new block at the TOP (First Priority)
                     newOrder = [blockToMove, ...existingFeatured, ...unfeatured];
                 } else {
-                    // Moving FROM Featured (Unstarring)
-                    // Logic: Move to top of Unfeatured list (or restore position? Top of unfeatured is safest)
                     const existingFeatured = otherBlocks.filter(b => (b as any).is_featured);
                     const unfeatured = otherBlocks.filter(b => !(b as any).is_featured);
-
-                    // Insert at the start of unfeatured list
                     newOrder = [...existingFeatured, blockToMove, ...unfeatured];
                 }
-
-                // Call backend to save new order
                 reorderBlocks(newOrder);
-
                 return newOrder;
             });
         }
@@ -345,16 +240,12 @@ const Dashboard = () => {
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
-
         if (over && active.id !== over.id) {
             setLocalBlocks((items) => {
                 const oldIndex = items.findIndex((item) => item._id === active.id);
                 const newIndex = items.findIndex((item) => item._id === over.id);
                 const newItems = arrayMove(items, oldIndex, newIndex);
-
-                // Trigger context update
                 reorderBlocks(newItems);
-
                 return newItems;
             });
         }
@@ -369,17 +260,10 @@ const Dashboard = () => {
 
     const saveSocialLinks = async (updatedLinks: Record<string, string>) => {
         try {
-            // Use updateProfile from AuthContext to get optimistic updates
             await updateProfile({ social_links: updatedLinks });
-
-            // Access token check is handled inside updateProfile now (or we assume logged in)
-            // If we needed to check token specifically before call, useAuth usually handles that.
-
-            // Reset preview mode - the optimistic update ensures icons stay visible
             setSocialPreview(null);
         } catch (err) {
             console.error("Error saving socials:", err);
-            // toast handled in updateProfile
         }
     };
 
@@ -393,17 +277,12 @@ const Dashboard = () => {
     const handleDuplicateBlock = async (blockId: string) => {
         const blockToDuplicate = blocks.find(b => b._id === blockId);
         if (!blockToDuplicate) return;
-
-        // Create deep copy and remove ID
         const { _id, ...rest } = blockToDuplicate;
         const newBlock = {
             ...rest,
             title: `${rest.title} (Copy)`,
-            // Let backend handle position or append to top/bottom
-            // Content might need deep copy if it has nested objects
             content: { ...rest.content }
         };
-
         const toastId = toast.loading("Duplicating...");
         try {
             await addBlock(newBlock);
@@ -415,27 +294,20 @@ const Dashboard = () => {
 
     return (
         <LinktreeLayout>
-            <div className="flex h-full">
+            <div className="flex h-full font-sans">
                 {/* Main Editor */}
-                <div className="flex-1 py-8 px-6 md:px-10">
-                    <div className="max-w-2xl mx-auto">
-
-
+                <div className="flex-1 py-12 px-6 md:px-12 bg-gray-50 dark:bg-black/40 overflow-y-auto custom-scrollbar">
+                    <div className="max-w-3xl mx-auto space-y-8">
 
                         {/* Header */}
-                        <div className="flex flex-col gap-4 mb-6">
+                        <div className="flex flex-col gap-6">
                             {/* Title Row */}
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div>
-                                    <h1 className="text-xl sm:text-2xl font-bold text-white">{t('dashboard.title')}</h1>
-                                    <p className="text-zinc-400 text-xs sm:text-sm mt-1 hidden sm:block">{t('dashboard.subtitle')}</p>
+                                    <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-2">{t('dashboard.title') || "Dashboard"}</h1>
+                                    <p className="text-gray-500 dark:text-zinc-400 text-sm sm:text-base font-medium">Manage your links and content.</p>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <div className="hidden sm:flex items-center gap-3">
-
-
-                                    </div>
-
                                     {/* Profile Link - Mobile responsive */}
                                     <div className="relative group w-full sm:w-auto">
                                         <div
@@ -444,36 +316,37 @@ const Dashboard = () => {
                                                 const url = `${window.location.origin}${path}`;
                                                 window.open(url, '_blank');
                                             }}
-                                            className="bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-zinc-300 pr-10 border border-zinc-800 cursor-pointer truncate max-w-[200px]"
+                                            className="bg-gray-100 dark:bg-zinc-900/80 hover:bg-gray-200 dark:hover:bg-zinc-800 transition-all rounded-full px-4 py-2.5 text-sm text-gray-700 dark:text-zinc-300 pr-12 border border-gray-200 dark:border-zinc-800 cursor-pointer truncate max-w-[220px] shadow-sm dark:shadow-lg backdrop-blur-sm"
                                             title="Click to open public profile"
                                         >
-                                            {/* Show localhost if on localhost, else tap2.me */}
-                                            {window.location.hostname === 'localhost' ? 'localhost' : 'taponn.me'}/{user?.active_profile_mode === 'store' ? `s/${username}` : username}
+                                            <span className="opacity-60 mr-1">{window.location.hostname === 'localhost' ? 'localhost' : 'taponn.me'}/</span>
+                                            <span className="font-semibold text-gray-900 dark:text-white">{user?.active_profile_mode === 'store' ? `s/${username}` : username}</span>
                                         </div>
                                         <Button
                                             size="icon"
                                             variant="ghost"
-                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 rounded-full hover:bg-zinc-700 text-zinc-400"
-                                            onClick={copyProfileLink}
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full hover:bg-zinc-700 text-zinc-400 transition-colors"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                copyProfileLink();
+                                            }}
                                         >
-                                            <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                            <Copy className="w-3.5 h-3.5" />
                                         </Button>
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Action Buttons Row - Scrollable on mobile */}
-
                         </div>
 
-                        {/* Add Link Button, Socials & Clear All */}
-                        <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8">
+                        {/* Action Bar */}
+                        <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-4">
                             <Button
                                 onClick={() => setIsAddingBlock(true)}
-                                className="w-3/4 bg-white hover:bg-zinc-200 text-black rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-zinc-900/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
+                                className="w-full bg-white hover:bg-gray-100 text-black rounded-xl h-14 text-base font-bold shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-all hover:scale-[1.01] active:scale-[0.99] gap-2.5"
                             >
-                                <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> {t('dashboard.addContent')}
+                                <Plus className="w-5 h-5" /> {t('dashboard.addContent')}
                             </Button>
+
                             <SocialLinksDialog
                                 initialLinks={user?.social_links || {}}
                                 onSave={saveSocialLinks}
@@ -482,38 +355,40 @@ const Dashboard = () => {
                             >
                                 <Button
                                     variant="outline"
-                                    className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-white font-medium gap-1.5 sm:gap-2"
+                                    className="w-full h-14 rounded-xl border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-black dark:hover:text-white hover:border-gray-300 dark:hover:border-zinc-700 backdrop-blur-sm transition-all gap-2"
                                 >
-                                    <Instagram className="w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span className="hidden sm:inline">{t('dashboard.socials')}</span>
+                                    <Instagram className="w-5 h-5 opacity-70" />
+                                    <span className="font-medium">{t('dashboard.socials')}</span>
                                 </Button>
                             </SocialLinksDialog>
+
                             <Button
                                 onClick={handleClearAll}
                                 variant="outline"
-                                className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-red-900/30 text-red-400 hover:bg-red-950/30 hover:text-red-300 font-medium"
+                                className="w-full h-14 rounded-xl border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-300 hover:border-red-200 dark:hover:border-red-900/50 backdrop-blur-sm transition-all gap-2"
                             >
-                                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                                <span className="hidden sm:inline">{t('dashboard.clearAll')}</span>
+                                <Trash2 className="w-5 h-5 opacity-70" />
+                                <span className="font-medium">{t('dashboard.clearAll')}</span>
                             </Button>
                         </div>
+
                         {/* Connected Apps Section (Store Mode Only) */}
                         {user?.active_profile_mode === 'store' && installedPlugins.length > 0 && (
-                            <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 px-1 ml-1">{t('dashboard.connectedApps') || 'Connected Apps'}</h3>
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-4 px-1 ml-1">{t('dashboard.connectedApps') || 'Connected Apps'}</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                                     {installedPlugins.map((plugin) => (
-                                        <div key={plugin._id} className="group flex items-center justify-between p-3 bg-white border border-zinc-200/60 rounded-2xl shadow-sm hover:shadow-md hover:border-zinc-300 transition-all duration-300">
+                                        <div key={plugin._id} className="group flex items-center justify-between p-4 bg-zinc-900/40 border border-zinc-800/60 rounded-2xl hover:bg-zinc-900/60 hover:border-zinc-700 transition-all duration-300 backdrop-blur-sm">
                                             <div className="flex items-center gap-3 overflow-hidden">
-                                                <div className="shrink-0 w-10 h-10 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-500 group-hover:bg-zinc-100 group-hover:text-zinc-700 transition-colors">
+                                                <div className="shrink-0 w-10 h-10 rounded-xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-zinc-400 group-hover:text-zinc-200 transition-colors">
                                                     {plugin.plugin_id.icon === 'truck' ? <Truck className="w-5 h-5" /> :
                                                         plugin.plugin_id.icon === 'credit-card' ? <CreditCard className="w-5 h-5" /> :
                                                             <div className="font-bold text-sm">⚡</div>}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <h4 className="text-sm font-semibold text-zinc-100 truncate">{plugin.plugin_id.name}</h4>
-                                                    <p className="text-[11px] text-zinc-400 truncate flex items-center gap-1.5">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    <h4 className="text-sm font-semibold text-zinc-200 truncate">{plugin.plugin_id.name}</h4>
+                                                    <p className="text-[11px] text-zinc-500 truncate flex items-center gap-1.5 mt-0.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
                                                         Active
                                                     </p>
                                                 </div>
@@ -521,7 +396,7 @@ const Dashboard = () => {
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-8 w-8 rounded-lg text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100"
+                                                className="h-8 w-8 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800"
                                                 onClick={() => handleConfigurePlugin(plugin.plugin_id, plugin.config)}
                                             >
                                                 <Settings className="w-4 h-4" />
@@ -533,15 +408,15 @@ const Dashboard = () => {
                         )}
 
 
-                        <div className="space-y-3 sm:space-y-4 pb-6">
+                        <div className="space-y-4 pb-20">
                             {(localBlocks || []).length === 0 && (
-                                <div className="text-center py-10 sm:py-16 bg-zinc-900/50 rounded-xl sm:rounded-2xl border-2 border-dashed border-zinc-800 px-4">
-                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-zinc-800 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                                        <Link2 className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-500" />
+                                <div className="text-center py-16 bg-white dark:bg-zinc-900/30 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-800/60 px-4 mt-8">
+                                    <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        <Link2 className="w-8 h-8 text-zinc-400 dark:text-zinc-600" />
                                     </div>
-                                    <h3 className="text-base sm:text-lg font-semibold text-white mb-2">{t('dashboard.noLinks')}</h3>
-                                    <p className="text-zinc-400 text-xs sm:text-sm mb-4 sm:mb-6">{t('dashboard.noLinksDesc')}</p>
-                                    <Button onClick={() => setIsAddingBlock(true)} variant="outline" className="rounded-full gap-2 text-sm bg-zinc-800 border-zinc-700 text-zinc-200 hover:bg-zinc-700 hover:text-white">
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('dashboard.noLinks')}</h3>
+                                    <p className="text-gray-500 dark:text-zinc-500 text-sm mb-6 max-w-sm mx-auto">{t('dashboard.noLinksDesc')}</p>
+                                    <Button onClick={() => setIsAddingBlock(true)} variant="outline" className="rounded-full gap-2 text-sm bg-gray-900 dark:bg-zinc-900 border-transparent dark:border-zinc-700 text-white dark:text-zinc-300 hover:bg-gray-800 dark:hover:bg-zinc-800 hover:text-white px-6">
                                         <Plus className="w-4 h-4" /> {t('dashboard.addFirstBlock')}
                                     </Button>
                                 </div>
@@ -556,43 +431,39 @@ const Dashboard = () => {
                                     items={localBlocks.map(b => b._id)}
                                     strategy={verticalListSortingStrategy}
                                 >
-                                    {localBlocks.map(block => (
-                                        <SortableLinkCard
-                                            key={block._id}
-                                            // Adapter to make Block look like Link for the component
-                                            link={{
-                                                id: block._id,
-                                                title: block.title,
-                                                url: block.content.url || block.content.price || '', // Fallback
-                                                isActive: block.is_active,
-                                                clicks: 0, // TODO: Add tracking
-                                                thumbnail: block.thumbnail,
-                                                isFeatured: (block as any).is_featured || false,
-                                                // Add missing properties that SortableLinkCard expects
-                                            }}
-                                            onUpdate={handleUpdateBlockField}
-                                            onDelete={handleDeleteBlock}
-                                            // Pass real block for editing if we enhance component
-                                            onEdit={() => setEditingBlock(block)}
-                                            onDuplicate={() => handleDuplicateBlock(block._id)}
-                                        />
-                                    ))}
+                                    <div className="space-y-4">
+                                        {localBlocks.map(block => (
+                                            <SortableLinkCard
+                                                key={block._id}
+                                                link={{
+                                                    id: block._id,
+                                                    title: block.title,
+                                                    url: block.content.url || block.content.price || '',
+                                                    isActive: block.is_active,
+                                                    clicks: 0,
+                                                    thumbnail: block.thumbnail,
+                                                    isFeatured: (block as any).is_featured || false,
+                                                }}
+                                                onUpdate={handleUpdateBlockField}
+                                                onDelete={handleDeleteBlock}
+                                                onEdit={() => setEditingBlock(block)}
+                                                onDuplicate={() => handleDuplicateBlock(block._id)}
+                                            />
+                                        ))}
+                                    </div>
                                 </SortableContext>
                             </DndContext>
                         </div>
-
-                        {/* Archived Links Section */}
-                        {/* Archived/Inactive blocks would go here */}
                     </div>
                 </div>
 
                 {/* Phone Preview - Right Side */}
-                <div className="w-[400px] border-l border-zinc-800 hidden xl:flex items-center justify-center bg-[#0A0A0A] sticky top-0 h-full">
-                    <div className="py-8 px-8 flex flex-col items-center">
+                <div className="w-[400px] border-l border-zinc-200 dark:border-zinc-800/50 hidden xl:flex items-center justify-center bg-gray-50 dark:bg-[#050505] sticky top-0 h-full">
+                    <div className="py-8 px-8 flex flex-col items-center scale-[0.85] 2xl:scale-100 transition-transform origin-top">
                         {/* Phone Frame */}
-                        <div className="w-[300px] h-[620px] bg-black rounded-[3rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">
+                        <div className="w-[300px] h-[620px] bg-black rounded-[3rem] border-[10px] border-zinc-900/90 shadow-2xl overflow-hidden relative ring-4 ring-black/50">
                             {/* Notch */}
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-2xl z-20" />
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-7 bg-black rounded-b-2xl z-20" />
 
                             {/* Status Bar */}
                             <div className="h-8 w-full bg-black flex items-center justify-between px-8 text-[10px] text-white font-medium pt-1 z-30 relative">
@@ -612,12 +483,11 @@ const Dashboard = () => {
                                 </div>
                             </div>
 
-                            {/* Screen Content - Dynamic Style Applied Here */}
+                            {/* Screen Content */}
                             <div
-                                className={`h-full w-full overflow-y-auto p-6 pb-20 ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor}`}
+                                className={`h-full w-full overflow-y-auto p-6 pb-20 ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor} scrollbar-hide`}
                                 style={bgStyle}
                             >
-                                {/* Overlay for readibility overlay if needed */}
                                 {currentTemplate.bgImage && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
 
                                 {/* Share Button */}
@@ -626,16 +496,20 @@ const Dashboard = () => {
                                 </div>
 
                                 <div className="flex flex-col items-center mt-8 space-y-3 relative z-10">
-                                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
-                                        <AvatarImage src={user?.avatar} />
-                                        <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
-                                            {userInitial}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <h2 className="text-xl font-bold tracking-tight">@{username}</h2>
+                                    <div className="w-24 h-24 rounded-full border-4 border-white/20 shadow-xl overflow-hidden relative">
+                                        {user?.avatar ? (
+                                            <img src={user.avatar} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-white text-3xl font-bold">
+                                                {userInitial}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <h2 className="text-xl font-bold tracking-tight shadow-black/10 drop-shadow-sm">@{username}</h2>
+
                                     <div className="flex gap-3 flex-wrap justify-center px-4">
                                         {(socialPreview || user?.social_links ? Object.entries(socialPreview || user?.social_links || {}) : [])?.map(([platform, url]) => {
-                                            // Show icon if URL is defined (even if empty string)
                                             if (url === null || url === undefined) return null;
 
                                             const Icon = getIconForThumbnail(platform);
@@ -651,20 +525,17 @@ const Dashboard = () => {
                                                 </a>
                                             ) : null;
                                         })}
-                                        {(!user?.social_links || Object.values(user.social_links).every(v => !v)) && (
-                                            <div className="text-xs text-white/50 italic"></div>
-                                        )}
                                     </div>
 
-                                    {/* Preview Tabs (Links | Shop) */}
+                                    {/* Preview Tabs */}
                                     <Tabs defaultValue="links" value={previewTab} onValueChange={(v) => setPreviewTab(v as 'links' | 'shop')} className="w-full">
                                         <div className="flex justify-center mt-4">
-                                            <TabsList className="bg-black/10 backdrop-blur-sm h-9 rounded-full p-1 w-auto">
-                                                <TabsTrigger value="links" className="rounded-full text-xs h-7 px-4 data-[state=active]:bg-white data-[state=active]:text-black">
+                                            <TabsList className="bg-black/20 backdrop-blur-md h-9 rounded-full p-1 w-auto border border-white/5">
+                                                <TabsTrigger value="links" className="rounded-full text-xs h-7 px-4 data-[state=active]:bg-white/90 data-[state=active]:text-black transition-all">
                                                     {t('dashboard.links')}
                                                 </TabsTrigger>
                                                 {user?.active_profile_mode === 'store' && (
-                                                    <TabsTrigger value="shop" className="rounded-full text-xs h-7 px-4 data-[state=active]:bg-white data-[state=active]:text-black">
+                                                    <TabsTrigger value="shop" className="rounded-full text-xs h-7 px-4 data-[state=active]:bg-white/90 data-[state=active]:text-black transition-all">
                                                         Shop
                                                     </TabsTrigger>
                                                 )}
@@ -683,7 +554,7 @@ const Dashboard = () => {
                                                         href={block.content.url || '#'}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className={`block w-full flex items-center justify-center relative px-12 ${currentTemplate.buttonStyle}`}
+                                                        className={`block w-full flex items-center justify-center relative px-12 ${currentTemplate.buttonStyle || 'bg-white/10 backdrop-blur-sm hover:scale-[1.02] transition-transform rounded-xl py-3 border border-white/10'}`}
                                                     >
                                                         {Icon && (
                                                             <Icon className="absolute left-4 w-5 h-5 opacity-90" />
@@ -691,12 +562,12 @@ const Dashboard = () => {
                                                         {isUrlThumbnail && (
                                                             <img src={block.thumbnail} alt="" className="absolute left-4 w-5 h-5 rounded-full object-cover bg-white/10" />
                                                         )}
-                                                        <span className="truncate w-full text-left">{block.title}</span>
+                                                        <span className="truncate w-full text-left font-medium">{block.title}</span>
                                                     </a>
                                                 );
                                             })}
                                             {localBlocks.filter(b => b.is_active).length === 0 && (
-                                                <div className={`text-center text-sm py-8 ${currentTemplate.textColor} opacity-60`}>
+                                                <div className={`text-center text-sm py-8 opacity-60`}>
                                                     {t('dashboard.addLinksHere')}
                                                 </div>
                                             )}
@@ -706,19 +577,17 @@ const Dashboard = () => {
                                         <TabsContent value="shop" className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300 px-6 mt-4 data-[state=inactive]:hidden">
                                             {user?.active_profile_mode === 'store' && (
                                                 <>
-                                                    {/* Search Bar */}
                                                     <div className="relative w-full">
                                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-50 text-current" />
                                                         <Input
                                                             type="text"
-                                                            placeholder={t('shop.searchProducts') || `Search ${username}'s products`}
+                                                            placeholder={t('shop.searchProducts') || "Search..."}
                                                             className="w-full pl-8 pr-4 py-2 h-9 rounded-xl text-xs bg-white/10 backdrop-blur-md border-white/10 placeholder:text-current/50 focus-visible:ring-1 focus-visible:ring-white/30 transition-all font-medium text-inherit"
                                                             value={searchQuery}
                                                             onChange={(e) => setSearchQuery(e.target.value)}
                                                         />
                                                     </div>
 
-                                                    {/* Product Grid */}
                                                     {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
                                                         <div className="grid gap-3">
                                                             {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).map((product, index) => (
@@ -726,50 +595,19 @@ const Dashboard = () => {
                                                                     key={product._id || `product-${index}`}
                                                                     className="relative aspect-square w-full rounded-2xl overflow-hidden group shadow-md"
                                                                 >
-                                                                    {/* Background Image */}
                                                                     {product.image_url ? (
                                                                         <img src={product.image_url} alt={product.title} className="absolute inset-0 w-full h-full object-cover" />
                                                                     ) : (
                                                                         <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-black w-full h-full flex items-center justify-center">
-                                                                            <div className="text-4xl opacity-20">✨</div>
+                                                                            <span className="text-2xl">🛍️</span>
                                                                         </div>
                                                                     )}
-
-                                                                    {/* Overlay */}
                                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
-                                                                    {/* Top Actions */}
-                                                                    <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10">
-                                                                        <Button size="icon" variant="ghost" className="w-6 h-6 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 hover:text-white transition-colors p-0">
-                                                                            <X className="w-3 h-3" />
-                                                                        </Button>
-                                                                    </div>
-
-                                                                    {/* Bottom Content */}
                                                                     <div className="absolute bottom-0 left-0 right-0 p-3 z-20 text-white">
-                                                                        <div className="inline-flex items-center gap-1 bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-full text-[8px] font-medium mb-2 border border-white/10">
-                                                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                                                                            <span>{user?.name || "User"}</span>
-                                                                        </div>
-
                                                                         <h3 className="text-sm font-bold leading-tight mb-1 text-white">{product.title}</h3>
-                                                                        <p className="text-[10px] text-gray-300 line-clamp-1 mb-2 font-light">{product.description}</p>
-
-                                                                        <div className="flex items-center gap-2">
-                                                                            {product.file_url && (
-                                                                                <a
-                                                                                    href={product.file_url ? (product.file_url.startsWith('http') ? product.file_url : `https://${product.file_url}`) : '#'}
-                                                                                    target="_blank"
-                                                                                    rel="noopener noreferrer"
-                                                                                    className="flex-1"
-                                                                                >
-                                                                                    <Button size="sm" className="w-full bg-white text-black h-7 rounded-full font-bold text-[10px] hover:bg-gray-100">
-                                                                                        Buy Now
-                                                                                    </Button>
-                                                                                </a>
-                                                                            )}
-                                                                            <Button size="sm" className="flex-1 bg-white/10 backdrop-blur-md border border-white/20 text-white h-7 rounded-full font-bold text-[10px] hover:bg-white/20 hover:text-white">
-                                                                                Enquire Now
+                                                                        <div className="flex items-center gap-2 mt-2">
+                                                                            <Button size="sm" className="w-full bg-white text-black h-7 rounded-full font-bold text-[10px] hover:bg-gray-100">
+                                                                                Buy Now
                                                                             </Button>
                                                                         </div>
                                                                     </div>
@@ -786,8 +624,8 @@ const Dashboard = () => {
                                         </TabsContent>
 
                                         {/* Footer - Connect Button */}
-                                        <div className="mt-8 mb-4 w-full px-6 z-30">
-                                            <Button className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100 hover:bg-gray-50">
+                                        <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-30">
+                                            <Button className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100 hover:bg-gray-50 scale-95 hover:scale-100 duration-200">
                                                 <span>
                                                     {previewTab === 'shop'
                                                         ? 'Connect with Seller'
@@ -800,48 +638,10 @@ const Dashboard = () => {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Preview Label */}
-                        <div className="text-center mt-6">
-                            <div className="flex items-center justify-center gap-2 text-sm font-medium text-zinc-400">
-                                <Smartphone className="w-4 h-4" /> {t('dashboard.livePreview')}
-                            </div>
-                            <p className="text-xs text-zinc-600 mt-1">{t('dashboard.previewDesc')}</p>
-                        </div>
                     </div>
                 </div>
             </div>
-
-
-            <BlockEditorModal
-                open={isAddingBlock || !!editingBlock}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        setIsAddingBlock(false);
-                        setEditingBlock(null);
-                    }
-                }}
-                block={editingBlock}
-                onSave={handleSaveBlock}
-                allowedTypes={user?.active_profile_mode === 'store' ? ['product'] : undefined}
-                plugins={plugins}
-                installedPlugins={installedPlugins}
-                onInstallPlugin={handlePluginInstall}
-                onConfigurePlugin={(plugin) => {
-                    const userPlugin = installedPlugins.find(p => p.plugin_id._id === plugin._id);
-                    handleConfigurePlugin(plugin, userPlugin?.config || {});
-                }}
-                installingPluginId={installingPluginId}
-            />
-
-            <PluginConfigModal
-                open={configModalOpen}
-                onOpenChange={setConfigModalOpen}
-                plugin={selectedPlugin}
-                config={selectedConfig}
-                onSave={savePluginConfig}
-            />
-        </LinktreeLayout >
+        </LinktreeLayout>
     );
 };
 

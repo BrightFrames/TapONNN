@@ -123,27 +123,27 @@ const LinktreeMarketplace = () => {
                                 <Sparkles className="w-5 h-5 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900">App Marketplace</h1>
-                                <p className="text-sm text-gray-500">{appRegistry.length}+ apps to power up your profile</p>
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">App Marketplace</h1>
+                                <p className="text-sm text-gray-500 dark:text-zinc-400">{appRegistry.length}+ apps to power up your profile</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Search Bar */}
                     <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-zinc-500" />
                         <Input
                             placeholder="Search apps..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-12 h-12 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200 bg-white"
+                            className="pl-12 h-12 rounded-xl border-gray-200 dark:border-zinc-800 focus:border-purple-300 focus:ring-purple-200 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-600"
                         />
                         {searchQuery && (
                             <Button
                                 size="icon"
                                 variant="ghost"
                                 onClick={() => setSearchQuery("")}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-400 hover:text-gray-600 rounded-full"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-400 hover:text-gray-600 dark:text-zinc-500 dark:hover:text-zinc-300 rounded-full"
                             >
                                 <span className="sr-only">Clear search</span>
                                 ✕
@@ -169,15 +169,15 @@ const LinktreeMarketplace = () => {
                                             w-full px-4 py-8 rounded-xl text-left font-medium
                                             transition-all duration-200 flex items-center justify-between h-auto
                                             ${isActive
-                                                ? 'bg-gray-900 text-white shadow-lg focus:ring-0 hover:bg-gray-800 hover:text-white'
-                                                : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg focus:ring-0 hover:bg-gray-800 dark:hover:bg-zinc-200'
+                                                : 'bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-300 border border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800'
                                             }
                                         `}
                                     >
                                         <span className="text-sm">{category}</span>
                                         <span className={`
                                             text-xs px-2 py-0.5 rounded-full
-                                            ${isActive ? 'bg-white/20' : 'bg-gray-100 text-gray-500'}
+                                            ${isActive ? 'bg-white/20 dark:bg-black/10' : 'bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400'}
                                         `}>
                                             {count}
                                         </span>
@@ -210,8 +210,8 @@ const LinktreeMarketplace = () => {
                                     <div
                                         key={app.id}
                                         className={`
-                                            bg-white rounded-2xl border p-5 transition-all duration-200
-                                            ${installed ? 'border-green-200 bg-green-50/30' : 'border-gray-100 hover:border-gray-200 hover:shadow-md'}
+                                            bg-white dark:bg-zinc-900 rounded-2xl border p-5 transition-all duration-200
+                                            ${installed ? 'border-green-200 dark:border-green-900/30 bg-green-50/30 dark:bg-green-900/10' : 'border-gray-100 dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700 hover:shadow-md'}
                                             ${isComingSoon ? 'opacity-70' : ''}
                                         `}
                                     >
@@ -219,15 +219,15 @@ const LinktreeMarketplace = () => {
                                         <div className="flex items-start gap-4 mb-4">
                                             <div className={`
                                                 w-12 h-12 rounded-xl flex items-center justify-center text-2xl
-                                                ${installed ? 'bg-green-100' : 'bg-gray-100'}
+                                                ${installed ? 'bg-green-100 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-zinc-800'}
                                             `}>
                                                 {app.icon}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <h3 className="font-semibold text-gray-900 truncate">{app.name}</h3>
+                                                    <h3 className="font-semibold text-gray-900 dark:text-white truncate">{app.name}</h3>
                                                     {app.category.includes("Featured") && (
-                                                        <Badge variant="secondary" className="bg-amber-100 text-amber-700 text-xs gap-1">
+                                                        <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs gap-1">
                                                             <Star className="w-3 h-3" /> Featured
                                                         </Badge>
                                                     )}
@@ -237,17 +237,17 @@ const LinktreeMarketplace = () => {
                                                         </Badge>
                                                     )}
                                                     {app.isNative && (
-                                                        <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
+                                                        <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-xs">
                                                             Native
                                                         </Badge>
                                                     )}
                                                     {isComingSoon && (
-                                                        <Badge variant="outline" className="text-amber-600 border-amber-200 text-xs gap-1">
+                                                        <Badge variant="outline" className="text-amber-600 dark:text-amber-500 border-amber-200 dark:border-amber-900/50 text-xs gap-1">
                                                             <Clock className="w-3 h-3" /> Soon
                                                         </Badge>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-gray-500 line-clamp-2 mt-1">
+                                                <p className="text-sm text-gray-500 dark:text-zinc-400 line-clamp-2 mt-1">
                                                     {app.description}
                                                 </p>
                                             </div>
@@ -257,7 +257,7 @@ const LinktreeMarketplace = () => {
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 {app.rendersOnProfile && (
-                                                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                                                    <span className="text-xs text-gray-400 dark:text-zinc-500 flex items-center gap-1">
                                                         <ExternalLink className="w-3 h-3" />
                                                         Shows on profile
                                                     </span>
@@ -273,7 +273,7 @@ const LinktreeMarketplace = () => {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="text-gray-400 hover:text-gray-600"
+                                                        className="text-gray-400 hover:text-gray-600 dark:text-zinc-500 dark:hover:text-zinc-300"
                                                     >
                                                         <Settings className="w-4 h-4" />
                                                     </Button>
@@ -286,8 +286,8 @@ const LinktreeMarketplace = () => {
                                                     className={`
                                                         rounded-full gap-2
                                                         ${isComingSoon
-                                                            ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                                                            : 'bg-gray-900 text-white hover:bg-gray-800'
+                                                            ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50'
+                                                            : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200'
                                                         }
                                                     `}
                                                 >
@@ -322,8 +322,8 @@ const LinktreeMarketplace = () => {
 
                         {/* Recommended Section - Always visible */}
                         {selectedCategory !== "All" && displayedApps.length < 4 && (
-                            <div className="mt-8 pt-8 border-t border-gray-200">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <div className="mt-8 pt-8 border-t border-gray-200 dark:border-zinc-800">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Zap className="w-5 h-5 text-amber-500" />
                                     Popular Apps You Might Like
                                 </h3>
@@ -334,19 +334,19 @@ const LinktreeMarketplace = () => {
                                         .map((app) => (
                                             <div
                                                 key={app.id}
-                                                className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-100 p-4 flex items-center gap-3"
+                                                className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 rounded-xl border border-amber-100 dark:border-amber-900/50 p-4 flex items-center gap-3"
                                             >
-                                                <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-xl">
+                                                <div className="w-10 h-10 rounded-lg bg-white dark:bg-zinc-900 flex items-center justify-center text-xl">
                                                     {app.icon}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <h4 className="font-medium text-gray-900">{app.name}</h4>
-                                                    <p className="text-xs text-gray-500 line-clamp-1">{app.description}</p>
+                                                    <h4 className="font-medium text-gray-900 dark:text-white">{app.name}</h4>
+                                                    <p className="text-xs text-gray-500 dark:text-zinc-400 line-clamp-1">{app.description}</p>
                                                 </div>
                                                 <Button
                                                     size="sm"
                                                     variant="ghost"
-                                                    className="text-amber-600 hover:text-amber-700"
+                                                    className="text-amber-600 hover:text-amber-700 dark:text-amber-500 dark:hover:text-amber-400"
                                                     onClick={() => handleInstall(app)}
                                                 >
                                                     <ChevronRight className="w-4 h-4" />

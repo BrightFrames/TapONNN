@@ -93,42 +93,42 @@ const Analytics = () => {
     };
 
     const MetricsCard = ({ title, value, subtext }: { title: string, value: string | number, subtext?: React.ReactNode }) => (
-        <div className="flex flex-col p-4">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{title}</span>
+        <div className="flex flex-col p-4 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl shadow-sm">
+            <span className="text-xs font-semibold text-gray-500 dark:text-zinc-500 uppercase tracking-wider mb-1">{title}</span>
             <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-gray-900">{value}</span>
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">{value}</span>
                 {subtext}
             </div>
         </div>
     );
 
     const BreakdownTable = ({ title, data, icon: Icon }: { title: string, data: any[], icon: any }) => (
-        <Card className="border-gray-100 shadow-sm h-full">
-            <CardHeader className="pb-2 border-b border-gray-50">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-700">
-                    <Icon className="w-4 h-4 text-gray-400" /> {title}
+        <Card className="border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm h-full backdrop-blur-sm">
+            <CardHeader className="pb-2 border-b border-gray-100 dark:border-zinc-800/50">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-800 dark:text-zinc-300">
+                    <Icon className="w-4 h-4 text-gray-500 dark:text-zinc-500" /> {title}
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
                 {data && data.length > 0 ? (
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y divide-gray-100 dark:divide-zinc-800/50">
                         {data.map((item, i) => (
                             <div key={i} className="flex items-center justify-between px-4 py-3 text-sm">
-                                <span className="truncate max-w-[200px] text-gray-700" title={item._id}>{item._id || 'Unknown'}</span>
+                                <span className="truncate max-w-[200px] text-gray-700 dark:text-zinc-300" title={item._id}>{item._id || 'Unknown'}</span>
                                 <div className="flex items-center gap-3">
-                                    <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div className="w-24 h-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-indigo-500 rounded-full"
                                             style={{ width: `${(item.count / Math.max(...data.map((d: any) => d.count))) * 100}%` }}
                                         />
                                     </div>
-                                    <span className="font-medium w-8 text-right text-gray-600">{item.count}</span>
+                                    <span className="font-medium w-8 text-right text-gray-500 dark:text-zinc-500">{item.count}</span>
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="p-8 text-center text-xs text-gray-400">{t('common.noDataAvailable')}</div>
+                    <div className="p-8 text-center text-xs text-gray-500 dark:text-zinc-600">{t('common.noDataAvailable')}</div>
                 )}
             </CardContent>
         </Card>
@@ -174,25 +174,25 @@ const Analytics = () => {
     if (user && !user.has_store) {
         return (
             <LinktreeLayout>
-                <div className="p-6 md:p-10 max-w-4xl mx-auto font-sans text-gray-900 bg-gray-50/50 min-h-full">
+                <div className="p-6 md:p-10 max-w-4xl mx-auto font-sans text-gray-900 dark:text-zinc-100 bg-transparent min-h-full">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm">
-                                <Zap className="w-5 h-5 text-indigo-600 fill-indigo-100" />
+                            <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 flex items-center justify-center shadow-sm">
+                                <Zap className="w-5 h-5 text-indigo-500 dark:text-indigo-400 fill-indigo-100 dark:fill-indigo-900" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('analytics.growthInsights')}</h1>
-                                <p className="text-sm text-gray-500">{t('analytics.trackPerformance')}</p>
+                                <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{t('analytics.growthInsights')}</h1>
+                                <p className="text-sm text-gray-500 dark:text-zinc-400">{t('analytics.trackPerformance')}</p>
                             </div>
                         </div>
 
                         <Select value={period} onValueChange={setPeriod}>
-                            <SelectTrigger className="w-[140px] bg-white border-gray-200 shadow-sm font-medium">
-                                <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                            <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300 shadow-sm font-medium">
+                                <Clock className="w-4 h-4 mr-2 text-gray-400 dark:text-zinc-500" />
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300">
                                 <SelectItem value="24h">{t('analytics.last24Hours')}</SelectItem>
                                 <SelectItem value="7d">{t('analytics.last7Days')}</SelectItem>
                                 <SelectItem value="30d">{t('analytics.last30Days')}</SelectItem>
@@ -209,65 +209,65 @@ const Analytics = () => {
                             {/* Main Stats Grid */}
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 {/* Total Views */}
-                                <Card className="border-gray-100 shadow-sm bg-white">
+                                <Card className="border-gray-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
                                     <CardContent className="p-6">
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                                                <Monitor className="w-5 h-5 text-blue-600" />
+                                            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                                                <Monitor className="w-5 h-5 text-blue-400" />
                                             </div>
                                         </div>
-                                        <p className="text-sm font-medium text-gray-500 mb-1">{t('analytics.totalViews')}</p>
-                                        <p className="text-3xl font-bold text-gray-900">{personalData?.totalViews?.toLocaleString() || 0}</p>
+                                        <p className="text-sm font-medium text-gray-500 dark:text-zinc-400 mb-1">{t('analytics.totalViews')}</p>
+                                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{personalData?.totalViews?.toLocaleString() || 0}</p>
                                     </CardContent>
                                 </Card>
 
                                 {/* Unique Visitors */}
-                                <Card className="border-gray-100 shadow-sm bg-white">
+                                <Card className="border-gray-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
                                     <CardContent className="p-6">
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-                                                <Globe className="w-5 h-5 text-green-600" />
+                                            <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                                                <Globe className="w-5 h-5 text-green-400" />
                                             </div>
                                         </div>
-                                        <p className="text-sm font-medium text-gray-500 mb-1">{t('analytics.uniqueVisitors')}</p>
-                                        <p className="text-3xl font-bold text-gray-900">{personalData?.uniqueVisitors?.toLocaleString() || 0}</p>
+                                        <p className="text-sm font-medium text-gray-500 dark:text-zinc-400 mb-1">{t('analytics.uniqueVisitors')}</p>
+                                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{personalData?.uniqueVisitors?.toLocaleString() || 0}</p>
                                     </CardContent>
                                 </Card>
 
                                 {/* Active Visitors */}
-                                <Card className="border-gray-100 shadow-sm bg-white">
+                                <Card className="border-gray-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
                                     <CardContent className="p-6">
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+                                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
                                                 <div className="relative">
                                                     <span className="absolute inline-flex h-3 w-3 rounded-full bg-amber-400 animate-ping opacity-75"></span>
                                                     <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <p className="text-sm font-medium text-gray-500 mb-1">{t('analytics.activeNow')}</p>
-                                        <p className="text-3xl font-bold text-gray-900">{personalData?.activeVisitors || 0}</p>
+                                        <p className="text-sm font-medium text-gray-500 dark:text-zinc-400 mb-1">{t('analytics.activeNow')}</p>
+                                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{personalData?.activeVisitors || 0}</p>
                                     </CardContent>
                                 </Card>
 
                                 {/* Highest Visited Link */}
-                                <Card className="border-gray-100 shadow-sm bg-white">
+                                <Card className="border-gray-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
                                     <CardContent className="p-6">
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-                                                <ArrowUpRight className="w-5 h-5 text-purple-600" />
+                                            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                                                <ArrowUpRight className="w-5 h-5 text-purple-400" />
                                             </div>
                                         </div>
-                                        <p className="text-sm font-medium text-gray-500 mb-1">{t('analytics.topLink')}</p>
+                                        <p className="text-sm font-medium text-zinc-400 mb-1">{t('analytics.topLink')}</p>
                                         {personalData?.highestVisitedLink ? (
                                             <div>
-                                                <p className="text-lg font-bold text-gray-900 truncate" title={personalData.highestVisitedLink.title}>
+                                                <p className="text-lg font-bold text-gray-900 dark:text-white truncate" title={personalData.highestVisitedLink.title}>
                                                     {personalData.highestVisitedLink.title}
                                                 </p>
-                                                <p className="text-sm text-gray-500">{personalData.highestVisitedLink.clicks} clicks</p>
+                                                <p className="text-sm text-gray-500 dark:text-zinc-500">{personalData.highestVisitedLink.clicks} clicks</p>
                                             </div>
                                         ) : (
-                                            <p className="text-lg text-gray-400">—</p>
+                                            <p className="text-lg text-gray-500 dark:text-zinc-600">—</p>
                                         )}
                                     </CardContent>
                                 </Card>
@@ -276,36 +276,37 @@ const Analytics = () => {
                             {/* Top Links and Referrers */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Top Clicked Links */}
-                                <Card className="border-gray-100 shadow-sm bg-white">
-                                    <CardHeader className="pb-3 border-b border-gray-50">
-                                        <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-800">
-                                            <ArrowUpRight className="w-4 h-4 text-gray-400" />
+                                {/* Top Clicked Links */}
+                                <Card className="border-gray-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
+                                    <CardHeader className="pb-3 border-b border-gray-100 dark:border-zinc-800/50">
+                                        <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-800 dark:text-zinc-200">
+                                            <ArrowUpRight className="w-4 h-4 text-zinc-500" />
                                             {t('analytics.topClickedLinks')}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="p-0">
                                         {personalData?.topLinks?.length > 0 ? (
-                                            <div className="divide-y divide-gray-50">
+                                            <div className="divide-y divide-zinc-800/50">
                                                 {personalData.topLinks.map((link: any, i: number) => (
                                                     <div key={i} className="flex items-center justify-between px-4 py-3">
                                                         <div className="flex items-center gap-3 min-w-0">
-                                                            <span className="text-xs font-bold text-gray-400 w-5">{i + 1}</span>
-                                                            <span className="text-sm text-gray-700 truncate">{link.title}</span>
+                                                            <span className="text-xs font-bold text-gray-500 dark:text-zinc-600 w-5">{i + 1}</span>
+                                                            <span className="text-sm text-gray-700 dark:text-zinc-300 truncate">{link.title}</span>
                                                         </div>
                                                         <div className="flex items-center gap-3 flex-shrink-0">
-                                                            <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div className="w-20 h-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                                                                 <div
                                                                     className="h-full bg-indigo-500 rounded-full"
                                                                     style={{ width: `${(link.clicks / personalData.topLinks[0].clicks) * 100}%` }}
                                                                 />
                                                             </div>
-                                                            <span className="text-sm font-semibold text-gray-600 w-10 text-right">{link.clicks}</span>
+                                                            <span className="text-sm font-semibold text-gray-500 dark:text-zinc-500 w-10 text-right">{link.clicks}</span>
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="p-8 text-center text-sm text-gray-400">
+                                            <div className="p-8 text-center text-sm text-gray-500 dark:text-zinc-600">
                                                 {t('analytics.noLinkClicks')}
                                             </div>
                                         )}
@@ -313,9 +314,9 @@ const Analytics = () => {
                                 </Card>
 
                                 {/* Referrer Sources */}
-                                <Card className="border-gray-100 shadow-sm bg-white">
-                                    <CardHeader className="pb-3 border-b border-gray-50">
-                                        <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-800">
+                                <Card className="border-gray-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
+                                    <CardHeader className="pb-3 border-b border-gray-100 dark:border-gray-50">
+                                        <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-800 dark:text-gray-200">
                                             <Globe className="w-4 h-4 text-gray-400" />
                                             {t('analytics.trafficSources')}
                                         </CardTitle>
@@ -327,16 +328,16 @@ const Analytics = () => {
                                                     <div key={i} className="flex items-center justify-between px-4 py-3">
                                                         <div className="flex items-center gap-3 min-w-0">
                                                             <span className="text-xs font-bold text-gray-400 w-5">{i + 1}</span>
-                                                            <span className="text-sm text-gray-700">{ref.source}</span>
+                                                            <span className="text-sm text-gray-700 dark:text-gray-300">{ref.source}</span>
                                                         </div>
                                                         <div className="flex items-center gap-3 flex-shrink-0">
-                                                            <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div className="w-20 h-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                                                                 <div
                                                                     className="h-full bg-green-500 rounded-full"
                                                                     style={{ width: `${(ref.count / personalData.referrers[0].count) * 100}%` }}
                                                                 />
                                                             </div>
-                                                            <span className="text-sm font-semibold text-gray-600 w-10 text-right">{ref.count}</span>
+                                                            <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 w-10 text-right">{ref.count}</span>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -402,8 +403,8 @@ const Analytics = () => {
                 ) : (
                     <div className="space-y-6">
                         {/* Metrics Overview */}
-                        <Card className="border-gray-200 shadow-sm bg-white overflow-hidden relative">
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-x divide-y md:divide-y-0 divide-gray-100 relative z-10">
+                        <Card className="border-gray-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900 overflow-hidden relative">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-x divide-y md:divide-y-0 divide-gray-100 dark:divide-zinc-800 relative z-10">
                                 <MetricsCard
                                     title={t('analytics.uniqueVisitors')}
                                     value={overview.uniqueVisitors.toLocaleString()}
@@ -432,7 +433,7 @@ const Analytics = () => {
                             </div>
 
                             {/* Main Chart */}
-                            <div className="p-6 border-t border-gray-100 bg-white relative z-10">
+                            <div className="p-6 border-t border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 relative z-10">
                                 <div className="h-[350px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={data?.chart || []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
