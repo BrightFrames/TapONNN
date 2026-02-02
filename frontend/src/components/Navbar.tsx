@@ -1,10 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Sparkles, Compass } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Menu, X, Compass } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
+  const isHome = location.pathname === "/";
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navLinks = [
     { name: "Templates", href: "/templates" },
@@ -13,18 +25,50 @@ const Navbar = () => {
     { name: "Pricing", href: "/pricing" },
   ];
 
+  // Logic: 
+  // Home: Always White Text. 
+  //   - Top: Transparent BG.
+  //   - Scrolled: Dark Glass BG.
+  // Other: Standard Theme.
+
+  const isHomeTop = isHome && !scrolled;
+  const isHomeScrolled = isHome && scrolled;
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border shadow-sm">
+    <nav
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
+        isHomeTop
+          ? "bg-transparent border-transparent text-white"
+          : isHomeScrolled
+            ? "bg-black/50 backdrop-blur-xl border-white/10 text-white shadow-lg supports-[backdrop-filter]:bg-black/20"
+            : "bg-background/80 backdrop-blur-md border-border text-foreground shadow-sm"
+      )}
+    >
       <div className="w-full px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-6">
             <Link to="/" className="flex items-center gap-2">
-              <img src="/logotap2.png" alt="TapONN" className="w-9 h-9" />
+              {/* Logo: Invert if on Home (since Home is always dark/white text) */}
+              <img
+                src="/logotap2.png"
+                alt="TapONN"
+                className={cn(
+                  "w-9 h-9 transition-all",
+                  isHome ? "brightness-0 invert" : ""
+                )}
+              />
             </Link>
 
             <Link to="/explore">
-              <Button variant="ghost" className="flex items-center gap-2 font-medium text-lg px-3 py-2 h-auto">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "flex items-center gap-2 font-medium text-lg px-3 py-2 h-auto",
+                  isHome ? "hover:bg-white/10 text-white hover:text-white" : ""
+                )}
+              >
                 <Compass className="w-5 h-5" />
                 Explore
               </Button>
@@ -35,7 +79,14 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
               <Link key={link.name} to={link.href}>
-                <Button variant="navGhost" size="default" className="text-base font-medium">
+                <Button
+                  variant="ghost"
+                  size="default"
+                  className={cn(
+                    "text-base font-medium",
+                    isHome ? "hover:bg-white/10 text-white hover:text-white" : ""
+                  )}
+                >
                   {link.name}
                 </Button>
               </Link>
@@ -45,12 +96,30 @@ const Navbar = () => {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
             <Link to="/login">
-              <Button variant="navGhost" size="default" className="text-base font-medium">
+              <Button
+                variant="ghost"
+                size="default"
+                className={cn(
+                  "text-base font-medium",
+                  isHome ? "hover:bg-white/10 text-white hover:text-white" : ""
+                )}
+              >
                 Log in
               </Button>
             </Link>
             <Link to="/signup">
-              <Button variant="nav" size="lg" className="px-8 bg-black text-white hover:bg-gray-800 rounded-full font-bold">
+              <Button
+                variant="default"
+                size="lg"
+                className={cn(
+                  "px-8 rounded-full font-bold transition-all",
+                  // Home: White button with Black text (High Contrast)
+                  // Other: Standard Black/White
+                  isHome
+                    ? "bg-white text-black hover:bg-white/90 shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                    : "bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black"
+                )}
+              >
                 Sign up free
               </Button>
             </Link>
@@ -69,23 +138,23 @@ const Navbar = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden pt-4 pb-2 border-t border-border mt-4">
+          <div className="md:hidden pt-4 pb-2 border-t border-border mt-4 bg-background rounded-b-xl shadow-xl p-4 absolute left-0 right-0 top-full">
             <div className="flex flex-col gap-2">
               {navLinks.map((link) => (
                 <Link key={link.name} to={link.href} onClick={() => setIsOpen(false)}>
-                  <Button variant="navGhost" size="lg" className="w-full justify-start text-lg">
+                  <Button variant="ghost" size="lg" className="w-full justify-start text-lg">
                     {link.name}
                   </Button>
                 </Link>
               ))}
               <div className="flex flex-col gap-3 mt-4">
                 <Link to="/login" className="w-full">
-                  <Button variant="navGhost" size="lg" className="w-full font-medium">
+                  <Button variant="ghost" size="lg" className="w-full font-medium">
                     Log in
                   </Button>
                 </Link>
                 <Link to="/signup" className="w-full">
-                  <Button variant="nav" size="lg" className="w-full bg-black text-white rounded-full font-bold">
+                  <Button variant="default" size="lg" className="w-full rounded-full font-bold">
                     Sign up free
                   </Button>
                 </Link>

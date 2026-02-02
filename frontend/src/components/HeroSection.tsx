@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Check, X, Loader2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { HeroAurora } from "@/components/ui/hero-aurora";
 
 // Placeholder images in case API fails or is empty, to ensure layout always looks good
 const PLACEHOLDERS = [
@@ -79,18 +80,16 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-black flex flex-col justify-center items-center">
-
-      {/* 1. Scrolling Masonry Background - Increased Opacity (60%) */}
-      <div className="absolute inset-0 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 px-4 opacity-60 pointer-events-none select-none">
+    <HeroAurora className="justify-start pt-28 md:pt-40">
+      <div className="absolute inset-0 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 px-4 opacity-40 pointer-events-none select-none">
         {[0, 1, 2, 3, 4, 5].map((colIndex) => (
-          <div key={colIndex} className="relative h-[200vh] -top-[50vh] flex flex-col gap-4 overflow-hidden">
+          <div key={colIndex} className="relative h-[200vh] -top-[40vh] md:-top-[50vh] flex flex-col gap-4 overflow-hidden">
             {/* Scrolling Container */}
             <div className={`flex flex-col gap-4 w-full ${colIndex % 2 === 0 ? 'animate-marquee-up' : 'animate-marquee-down'}`}>
               {/* Duplicate content x2 for seamless loop */}
               {[...getColumnImages(colIndex, 6), ...getColumnImages(colIndex, 6)].map((src, i) => (
                 <div key={i} className="w-full rounded-2xl overflow-hidden aspect-[3/4] md:aspect-auto">
-                  <img src={src} alt="" className="w-full h-full object-cover rounded-2xl shadow-lg hover:scale-105 transition-transform duration-700" />
+                  <img src={src} alt="" className="w-full h-full object-cover rounded-2xl shadow-lg" />
                 </div>
               ))}
             </div>
@@ -98,36 +97,33 @@ const HeroSection = () => {
         ))}
       </div>
 
-      {/* 2. Gradient Overlay - Lighter center (40%) to reveal images */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/40 to-black/80 z-10" />
-
-      {/* 3. Hero Content */}
+      {/* Hero Content */}
       <div className="relative z-20 w-full max-w-4xl mx-auto px-6 text-center animate-fade-in-up">
 
-        {/* Floating Pills Decoration (New) */}
-        <div className="absolute top-0 left-10 md:left-20 animate-float-slow hidden lg:block opacity-60">
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full transform -rotate-6">🎨 Design</div>
-        </div>
-        <div className="absolute bottom-20 right-10 md:right-20 animate-float-delayed hidden lg:block opacity-60">
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full transform rotate-12">👗 Fashion</div>
+        {/* Decorative badge */}
+        <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80 backdrop-blur-xl mb-8">
+          <span className="flex h-2 w-2 rounded-full bg-emerald-500 mr-2"></span>
+          Claim your link today
         </div>
 
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white mb-6 drop-shadow-2xl">
+        <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white mb-6 drop-shadow-sm">
           Get your <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-400 to-green-600 animate-pulse-slow">next idea.</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 animate-pulse-slow">
+            next idea.
+          </span>
         </h1>
 
-        <p className="text-lg md:text-2xl text-zinc-200 mb-10 max-w-2xl mx-auto font-medium leading-relaxed drop-shadow-md">
+        <p className="text-lg md:text-2xl text-slate-300 mb-10 max-w-2xl mx-auto font-medium leading-relaxed drop-shadow-md">
           The best place to explore, collect, and share your favorite products.
-          Claim your link and start curating today.
+          One link to rule them all.
         </p>
 
-        {/* Search / Username Input - Brighter Background */}
+        {/* Search / Username Input */}
         <div className="max-w-xl mx-auto relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full blur opacity-40 group-hover:opacity-70 transition duration-1000"></div>
-          <div className="relative flex items-center bg-zinc-900/90 backdrop-blur-xl rounded-full border border-zinc-700 shadow-2xl p-2 transition-all focus-within:ring-2 focus-within:ring-green-500/50 focus-within:bg-black">
+          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full blur opacity-40 group-hover:opacity-60 transition duration-1000"></div>
+          <div className="relative flex items-center bg-slate-900/90 backdrop-blur-xl rounded-full border border-slate-700 shadow-2xl p-2 transition-all focus-within:ring-2 focus-within:ring-emerald-500/50 focus-within:border-emerald-500/50">
 
-            <div className="pl-6 pr-2 text-zinc-400 font-semibold select-none hidden sm:block">
+            <div className="pl-6 pr-2 text-slate-400 font-semibold select-none hidden sm:block">
               taponn.me/
             </div>
 
@@ -136,22 +132,25 @@ const HeroSection = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
               placeholder="username"
-              className="flex-1 bg-transparent text-white placeholder:text-zinc-500 h-12 outline-none border-none font-medium text-lg min-w-[120px]"
+              className="flex-1 bg-transparent text-white placeholder:text-slate-500 h-12 outline-none border-none font-medium text-lg min-w-[120px]"
             />
 
             <div className="flex items-center gap-3 pr-2">
               {/* Status Icon */}
-              {checking && <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />}
-              {!checking && availability?.available && <Check className="w-5 h-5 text-green-500" />}
+              {checking && <Loader2 className="w-5 h-5 animate-spin text-slate-400" />}
+              {!checking && availability?.available && <Check className="w-5 h-5 text-emerald-500" />}
               {!checking && availability && !availability.available && <X className="w-5 h-5 text-red-500" />}
 
               <Button
                 onClick={handleGetStarted}
                 disabled={!availability?.available}
                 size="lg"
-                className={`rounded-full px-8 h-12 font-bold text-base transition-all duration-300 ${availability?.available ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/20 scale-105' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'}`}
+                className={`rounded-full px-6 h-12 font-bold text-base transition-all duration-300 ${availability?.available
+                  ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/20'
+                  : 'bg-slate-800 text-slate-500 hover:bg-slate-700'
+                  }`}
               >
-                Claim Link <ArrowRight className="w-4 h-4 ml-2" />
+                Claim <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>
@@ -160,7 +159,10 @@ const HeroSection = () => {
         {/* Availability Message */}
         <div className="h-8 mt-4 flex justify-center">
           {availability && username.length >= 3 && (
-            <p className={`text-sm font-medium px-4 py-1 rounded-full backdrop-blur-md ${availability.available ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'} animate-in fade-in slide-in-from-top-2`}>
+            <p className={`text-sm font-medium px-4 py-1 rounded-full backdrop-blur-md ${availability.available
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+              : 'bg-red-500/10 text-red-400 border border-red-500/20'
+              } animate-in fade-in slide-in-from-top-2`}>
               {availability.message}
             </p>
           )}
@@ -194,18 +196,8 @@ const HeroSection = () => {
         .animate-pulse-slow {
             animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
-        @keyframes keyframes-float {
-            0%, 100% { transform: translateY(0px) rotate(-6deg); }
-            50% { transform: translateY(-20px) rotate(-6deg); }
-        }
-        .animate-float-slow {
-            animation: keyframes-float 6s ease-in-out infinite;
-        }
-        .animate-float-delayed {
-            animation: keyframes-float 6s ease-in-out 3s infinite;
-        }
       `}</style>
-    </section>
+    </HeroAurora>
   );
 };
 
