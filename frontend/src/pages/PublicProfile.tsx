@@ -172,7 +172,7 @@ const PublicProfile = () => {
             if (!authUser) return;
             try {
                 const response = await fetch(`${API_URL}/products/liked`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -206,7 +206,7 @@ const PublicProfile = () => {
         try {
             await fetch(`${API_URL}/products/${productId}/like`, {
                 method: isLiked ? 'DELETE' : 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
             });
         } catch (error) {
             console.error('Error toggling like:', error);
@@ -436,6 +436,8 @@ const PublicProfile = () => {
 
     const headerLayout = profile.design_config?.headerLayout || 'classic';
     const isHero = headerLayout === 'hero';
+
+    const finalTextColorClass = currentTemplate.textColor || "text-gray-900";
 
     return (
         <div
