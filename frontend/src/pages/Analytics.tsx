@@ -360,15 +360,15 @@ const Analytics = () => {
 
     return (
         <LinktreeLayout>
-            <div className="p-6 md:p-10 max-w-7xl mx-auto font-sans text-gray-900 bg-gray-50/50 min-h-full">
+            <div className="p-6 md:p-10 max-w-7xl mx-auto font-sans text-gray-900 dark:text-gray-100 bg-gray-50/50 dark:bg-zinc-950 min-h-full">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm">
-                            <Zap className="w-5 h-5 text-indigo-600 fill-indigo-100" />
+                        <div className="w-10 h-10 rounded-lg bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 flex items-center justify-center shadow-sm">
+                            <Zap className="w-5 h-5 text-indigo-600 dark:text-indigo-400 fill-indigo-100 dark:fill-indigo-900/30" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('analytics.title')}</h1>
+                            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{t('analytics.title')}</h1>
                             <div className="flex items-center gap-2 text-sm mt-0.5">
                                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-medium animate-pulse">
                                     <span className="relative flex h-2 w-2">
@@ -383,8 +383,8 @@ const Analytics = () => {
 
                     <div className="flex items-center gap-3">
                         <Select value={period} onValueChange={setPeriod}>
-                            <SelectTrigger className="w-[140px] bg-white border-gray-200 shadow-sm font-medium">
-                                <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                            <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 shadow-sm font-medium text-gray-800 dark:text-zinc-300">
+                                <Clock className="w-4 h-4 mr-2 text-gray-400 dark:text-zinc-500" />
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -447,7 +447,7 @@ const Analytics = () => {
                                                     <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} stroke="currentColor" className="text-gray-500" />
                                             <XAxis
                                                 dataKey="date"
                                                 axisLine={false}
@@ -455,13 +455,14 @@ const Analytics = () => {
                                                 tick={{ fontSize: 12, fill: '#6b7280' }}
                                                 dy={10}
                                             />
+
                                             <YAxis
                                                 axisLine={false}
                                                 tickLine={false}
                                                 tick={{ fontSize: 12, fill: '#6b7280' }}
                                             />
                                             <Tooltip
-                                                contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                                contentStyle={{ backgroundColor: 'rgb(24 24 27)', borderRadius: '8px', border: '1px solid rgb(39 39 42)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', color: '#fff' }}
                                                 itemStyle={{ fontSize: '12px', fontWeight: 500 }}
                                             />
                                             <Area
@@ -511,10 +512,10 @@ const Analytics = () => {
                                 icon={Globe}
                             />
                         </div>
-                    </div>
+                    </div >
                 )}
-            </div>
-        </LinktreeLayout>
+            </div >
+        </LinktreeLayout >
     );
 };
 

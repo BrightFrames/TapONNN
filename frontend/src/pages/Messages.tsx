@@ -375,22 +375,22 @@ const Messages = () => {
 
     return (
         <LinktreeLayout>
-            <div className="flex h-full bg-[#0A0A0A]">
+            <div className="flex h-full bg-gray-50 dark:bg-black">
                 {/* Conversation List */}
                 <div className={cn(
-                    "w-full md:w-80 lg:w-96 border-r border-zinc-800 flex flex-col bg-[#050505]",
+                    "w-full md:w-80 lg:w-96 border-r border-gray-200 dark:border-zinc-800 flex flex-col bg-white dark:bg-zinc-900",
                     activeConversation ? "hidden md:flex" : "flex"
                 )}>
                     {/* Header */}
-                    <div className="p-4 border-b border-zinc-800">
-                        <h1 className="text-xl font-bold text-white mb-4">Messages</h1>
+                    <div className="p-4 border-b border-gray-200 dark:border-zinc-800">
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Messages</h1>
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-zinc-500" />
                             <Input
                                 placeholder="Search conversations..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 bg-zinc-900 border-zinc-800 text-white"
+                                className="pl-10 bg-gray-100 dark:bg-zinc-800 border-transparent dark:border-zinc-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-zinc-500 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-700"
                             />
                         </div>
                     </div>
@@ -416,18 +416,18 @@ const Messages = () => {
                                 <p className="text-sm mt-1">Start a chat from someone's profile</p>
                             </div>
                         ) : (
-                            <div className="divide-y divide-zinc-800/50">
+                            <div className="divide-y divide-gray-100 dark:divide-zinc-800/50">
                                 {filteredConversations.map(conv => (
                                     <Button
                                         key={conv.id}
                                         variant="ghost"
                                         onClick={() => selectConversation(conv)}
                                         className={cn(
-                                            "w-full p-4 h-auto flex items-center gap-3 hover:bg-zinc-800/50 transition-colors text-left justify-start rounded-none",
-                                            activeConversation?.id === conv.id && "bg-zinc-800/50"
+                                            "w-full p-4 h-auto flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors text-left justify-start rounded-none",
+                                            activeConversation?.id === conv.id && "bg-blue-50 dark:bg-zinc-800/50"
                                         )}
                                     >
-                                        <Avatar className="w-12 h-12">
+                                        <Avatar className="w-12 h-12 border border-gray-100 dark:border-zinc-800">
                                             <AvatarImage src={conv.participant.avatar} />
                                             <AvatarFallback className="bg-zinc-700 text-white">
                                                 {conv.participant.name?.[0] || '?'}
@@ -435,7 +435,7 @@ const Messages = () => {
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between">
-                                                <p className="font-medium text-white truncate">
+                                                <p className="font-medium text-gray-900 dark:text-white truncate">
                                                     {conv.participant.name}
                                                 </p>
                                                 <span className="text-xs text-zinc-500">
@@ -443,7 +443,7 @@ const Messages = () => {
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                <p className="text-sm text-zinc-400 truncate">
+                                                <p className="text-sm text-gray-500 dark:text-zinc-400 truncate">
                                                     {conv.lastMessage || 'No messages yet'}
                                                 </p>
                                                 {conv.unreadCount > 0 && (
@@ -468,7 +468,7 @@ const Messages = () => {
                     {activeConversation ? (
                         <>
                             {/* Chat Header */}
-                            <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-[#050505]">
+                            <div className="p-4 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between bg-white dark:bg-zinc-900">
                                 <div className="flex items-center gap-3">
                                     <Button
                                         variant="ghost"
@@ -485,7 +485,7 @@ const Messages = () => {
                                         </AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <p className="font-medium text-white">
+                                        <p className="font-medium text-gray-900 dark:text-white">
                                             {activeConversation.participant.name}
                                         </p>
                                         <p className="text-xs text-zinc-500">
@@ -535,7 +535,7 @@ const Messages = () => {
                                             return (
                                                 <div key={msg.id}>
                                                     {showTime && (
-                                                        <p className="text-center text-xs text-zinc-600 my-4">
+                                                        <p className="text-center text-xs text-gray-400 dark:text-zinc-600 my-4">
                                                             {formatMessageTime(msg.created_at)}
                                                         </p>
                                                     )}
@@ -544,7 +544,7 @@ const Messages = () => {
                                                             "max-w-[70%] px-4 py-2 rounded-2xl",
                                                             isMe
                                                                 ? "bg-blue-600 text-white rounded-br-md"
-                                                                : "bg-zinc-800 text-white rounded-bl-md"
+                                                                : "bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white rounded-bl-md"
                                                         )}>
                                                             <p className="text-sm whitespace-pre-wrap break-words">
                                                                 {msg.content}
@@ -571,7 +571,7 @@ const Messages = () => {
                             </ScrollArea>
 
                             {/* Message Input */}
-                            <div className="p-4 border-t border-zinc-800 bg-[#050505]">
+                            <div className="p-4 border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
                                 <form
                                     onSubmit={(e) => {
                                         e.preventDefault();
@@ -583,7 +583,7 @@ const Messages = () => {
                                         placeholder="Type a message..."
                                         value={newMessage}
                                         onChange={handleTyping}
-                                        className="flex-1 bg-zinc-900 border-zinc-800 text-white"
+                                        className="flex-1 bg-gray-100 dark:bg-zinc-800 border-transparent dark:border-zinc-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-zinc-500 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-700"
                                         disabled={sending}
                                     />
                                     <Button

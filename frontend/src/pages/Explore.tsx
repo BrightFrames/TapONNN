@@ -128,8 +128,8 @@ const Explore = () => {
     if (loading) {
         return (
             <LinktreeLayout>
-                <div className="flex items-center justify-center min-h-screen bg-black">
-                    <Loader2 className="w-8 h-8 animate-spin text-white" />
+                <div className="flex items-center justify-center min-h-screen bg-white dark:bg-black">
+                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-white" />
                 </div>
             </LinktreeLayout>
         );
@@ -137,9 +137,9 @@ const Explore = () => {
 
     return (
         <LinktreeLayout>
-            <div className="min-h-screen bg-black text-white p-4 md:p-8">
+            <div className="min-h-screen bg-gray-50 dark:bg-black text-gray-900 dark:text-white p-4 md:p-8">
                 {/* Pinterest-style Header */}
-                <div className="max-w-[1600px] mx-auto mb-8 flex flex-col md:flex-row gap-6 items-center justify-between sticky top-0 z-30 bg-black/80 backdrop-blur-xl py-4 transition-all">
+                <div className="max-w-[1600px] mx-auto mb-8 flex flex-col md:flex-row gap-6 items-center justify-between sticky top-0 z-30 bg-gray-50/80 dark:bg-black/80 backdrop-blur-xl py-4 transition-all">
                     <div className="flex-1 w-full md:w-auto">
                         <div className="relative group">
                             <input
@@ -147,9 +147,9 @@ const Explore = () => {
                                 placeholder="Search for ideas..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-zinc-900 text-white rounded-full pl-12 pr-4 py-3.5 border-none focus:ring-2 focus:ring-white/20 transition-all font-medium text-base shadow-sm group-hover:bg-zinc-800"
+                                className="w-full bg-white dark:bg-zinc-900 text-gray-900 dark:text-white rounded-full pl-12 pr-4 py-3.5 border border-gray-200 dark:border-transparent focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-white/20 transition-all font-medium text-base shadow-sm group-hover:bg-gray-50 dark:group-hover:bg-zinc-800 placeholder:text-gray-500 dark:placeholder:text-zinc-500"
                             />
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-hover:text-white transition-colors">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-400 group-hover:text-indigo-600 dark:group-hover:text-white transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
                             </div>
                         </div>
@@ -160,7 +160,7 @@ const Explore = () => {
                             <Button
                                 key={cat}
                                 variant="outline"
-                                className="px-5 py-2.5 h-auto rounded-full bg-zinc-900 hover:bg-white hover:text-black font-semibold transition-all whitespace-nowrap text-sm border-zinc-800 hover:border-transparent text-white"
+                                className="px-5 py-2.5 h-auto rounded-full bg-white dark:bg-zinc-900 hover:bg-gray-100 dark:hover:bg-white hover:text-gray-900 dark:hover:text-black font-semibold transition-all whitespace-nowrap text-sm border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-transparent text-gray-700 dark:text-white shadow-sm"
                             >
                                 {cat}
                             </Button>
@@ -175,7 +175,7 @@ const Explore = () => {
                         <Button
                             onClick={() => window.location.reload()}
                             variant="secondary"
-                            className="px-6 py-2 bg-zinc-800 rounded-full text-sm font-semibold hover:bg-zinc-700 transition-colors text-white h-auto"
+                            className="px-6 py-2 bg-gray-900 dark:bg-zinc-800 rounded-full text-sm font-semibold hover:bg-gray-700 dark:hover:bg-zinc-700 transition-colors text-white h-auto"
                         >
                             Retry
                         </Button>
@@ -190,7 +190,7 @@ const Explore = () => {
                             .map((product) => {
                                 const isLiked = likedProductIds.has(product._id);
                                 return (
-                                    <div key={product._id} className="break-inside-avoid relative group mb-4 rounded-3xl overflow-hidden bg-zinc-900 hover:shadow-2xl hover:shadow-white/5 transition-all duration-300 cursor-zoom-in">
+                                    <div key={product._id} className="break-inside-avoid relative group mb-4 rounded-3xl overflow-hidden bg-white dark:bg-zinc-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.2)] dark:hover:shadow-2xl dark:hover:shadow-white/5 transition-all duration-300 cursor-zoom-in border border-gray-300/80 dark:border-zinc-800/50">
                                         {/* Image */}
                                         <div className="relative w-full" onClick={() => handleProductClick(product)}>
                                             {product.image_url ? (
@@ -201,8 +201,8 @@ const Explore = () => {
                                                     loading="lazy"
                                                 />
                                             ) : (
-                                                <div className="w-full aspect-[4/5] flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
-                                                    <span className="text-4xl opacity-20">✨</span>
+                                                <div className="w-full aspect-[4/5] flex items-center justify-center bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200 dark:from-zinc-800 dark:to-zinc-900">
+                                                    <span className="text-4xl opacity-40 dark:opacity-20 grayscale brightness-90">✨</span>
                                                 </div>
                                             )}
                                             {/* Dark Gradient Overlay */}
@@ -255,9 +255,9 @@ const Explore = () => {
 
                 {/* Empty State */}
                 {!error && products.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-32 text-zinc-500">
+                    <div className="flex flex-col items-center justify-center py-32 text-gray-500 dark:text-zinc-500">
                         <ShoppingBag className="w-20 h-20 mb-6 opacity-20" />
-                        <p className="text-xl font-bold text-zinc-300">Nothing here yet</p>
+                        <p className="text-xl font-bold text-gray-900 dark:text-zinc-300">Nothing here yet</p>
                         <p className="text-base mt-2">Check back later for fresh ideas!</p>
                     </div>
                 )}
