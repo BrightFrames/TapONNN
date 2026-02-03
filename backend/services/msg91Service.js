@@ -207,7 +207,7 @@ const sendEmail = async (to, templateId, variables = {}) => {
             'https://control.msg91.com/api/v5/email/send',
             {
                 to: [{ email: to }],
-                from: { email: `noreply@${MSG91_EMAIL_DOMAIN}`, name: 'Tap2' },
+                from: { email: `noreply@${MSG91_EMAIL_DOMAIN}`, name: 'TapX' },
                 domain: MSG91_EMAIL_DOMAIN,
                 template_id: templateId,
                 variables: variables
@@ -254,7 +254,7 @@ const sendWelcomeEmail = async (email, username, fullName) => {
     return sendEmail(email, MSG91_WELCOME_TEMPLATE_ID, {
         name: fullName,
         username: username,
-        profile_url: `https://tap2.me/${username}`
+        profile_url: `https://tapx.bio/${username}`
     });
 };
 
@@ -318,13 +318,13 @@ const sendEmailOTP = async (email) => {
         console.log(`Generated OTP for ${email}: ${otp}`); // For debugging
 
         // Email configuration
-        const fromName = process.env.EMAIL_FROM_NAME || 'TapONN';
+        const fromName = process.env.EMAIL_FROM_NAME || 'TapX';
         const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER;
 
         const mailOptions = {
             from: `"${fromName}" <${fromEmail}>`,
             to: email,
-            subject: 'Your Verification Code - TapONN',
+            subject: 'Your Verification Code - TapX',
             html: `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #ffffff;">
                     <div style="text-align: center; margin-bottom: 40px;">

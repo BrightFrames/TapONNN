@@ -143,10 +143,9 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
             {/* Header */}
             <div className="p-4 pt-5 pb-2 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black w-8 h-8 flex items-center justify-center rounded-sm font-bold text-lg">
-                        T
+                    <div className="w-12 h-12 flex items-center justify-center">
+                        <img src="/logo.svg" alt="TapX" className="w-full h-full object-contain dark:invert" />
                     </div>
-                    <span className="text-zinc-900 dark:text-zinc-100 font-bold text-lg tracking-tight">TapONNN</span>
                 </div>
             </div>
 
@@ -227,9 +226,9 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                     />
                     <NavItem
                         icon={Smartphone}
-                        label={t('nav.nfcCards')}
-                        active={location.pathname === '/nfc-cards'}
-                        onClick={() => handleNav('/nfc-cards')}
+                        label="Connect Device"
+                        active={location.pathname === '/connect-device'}
+                        onClick={() => handleNav('/connect-device')}
                     />
                     <NavItem
                         icon={Sparkles}
@@ -408,10 +407,10 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
                             </SheetContent>
                         </Sheet>
                         <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-black dark:text-white text-xs font-bold">
-                                T
+                            <div className="w-6 h-6 flex items-center justify-center">
+                                <img src="/logo.svg" alt="TapX" className="w-full h-full object-contain" />
                             </div>
-                            <span className="font-bold text-lg tracking-tight">TapONNN</span>
+                            <span className="font-bold text-lg tracking-tight">TapX</span>
                         </div>
                     </div>
                 </header>

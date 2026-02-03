@@ -170,10 +170,9 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
                 {/* Header */}
                 <div className="p-4 pt-5 pb-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="bg-zinc-100 text-black w-8 h-8 flex items-center justify-center rounded-sm font-bold text-lg">
-                            T
+                        <div className="w-12 h-12 flex items-center justify-center">
+                            <img src="/logo.svg" alt="TapX" className="w-full h-full object-contain invert" />
                         </div>
-                        <span className="text-zinc-100 font-bold text-lg tracking-tight">TapONNN</span>
                     </div>
                 </div>
 
@@ -239,8 +238,8 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
                         />
                         <SidebarItem
                             icon={ShoppingCart}
-                            label="Order NFC Card"
-                            to="/shop"
+                            label="Connect Device"
+                            to="/connect-device"
                         />
                         <SidebarItem
                             icon={NFCCard}
@@ -294,7 +293,10 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
             <main className="flex-1 md:ml-[280px] overflow-auto bg-white dark:bg-black transition-colors duration-300">
                 {/* Mobile Header (visible only on small screens) */}
                 <header className="md:hidden h-14 bg-white dark:bg-[#050505] border-b border-gray-200 dark:border-[#1A1A1A] flex items-center justify-between px-4 sticky top-0 z-10">
-                    <span className="font-bold text-lg dark:text-white">TapONNN</span>
+                    <div className="flex items-center gap-2">
+                        <img src="/logo.svg" alt="TapX" className="w-6 h-6 object-contain dark:invert" />
+                        <span className="font-bold text-lg dark:text-white">TapX</span>
+                    </div>
                     <Button variant="ghost" size="icon" onClick={toggleTheme}>
                         {isDark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
                     </Button>

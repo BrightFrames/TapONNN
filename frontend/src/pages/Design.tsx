@@ -324,7 +324,7 @@ const Design = () => {
                             </div>
 
                             <div className="mt-12 flex justify-center">
-                                <span className="text-[10px] opacity-60 text-white font-medium tracking-widest uppercase">TapONNN</span>
+                                <span className="text-[10px] opacity-60 text-white font-medium tracking-widest uppercase">TapX</span>
                             </div>
                         </div>
 

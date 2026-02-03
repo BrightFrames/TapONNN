@@ -491,23 +491,7 @@ const Shop = () => {
                                     <p className="text-gray-500 dark:text-zinc-400 text-xs sm:text-sm mt-1 hidden sm:block">Manage your products • Drag to reorder</p>
                                 </div>
                                 <div className="flex items-center gap-2 sm:gap-3">
-                                    {/* Language Switcher */}
-                                    <Select value={t('lang')} onValueChange={(lang) => {
-                                        // Change language via i18n
-                                        const i18n = (window as any).i18n;
-                                        if (i18n) {
-                                            i18n.changeLanguage(lang);
-                                            toast.success(`Language changed to ${lang === 'en' ? 'English' : 'हिंदी'}`);
-                                        }
-                                    }}>
-                                        <SelectTrigger className="w-[90px] sm:w-[110px] h-9 bg-zinc-100 dark:bg-zinc-900 border-zinc-300 dark:border-zinc-800 rounded-lg text-xs sm:text-sm">
-                                            <SelectValue placeholder="Language" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="en">🇬🇧 English</SelectItem>
-                                            <SelectItem value="hi">🇮🇳 हिंदी</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+
                                     {/* Profile Link */}
                                     <div className="relative group w-full sm:w-auto">
                                         <div
@@ -519,7 +503,7 @@ const Shop = () => {
                                             title="Click to open store"
                                         >
                                             {/* Show localhost if on localhost, else tap2.me */}
-                                            {window.location.hostname === 'localhost' ? 'localhost' : 'tap2.me'}/s/{username}
+                                            {window.location.hostname === 'localhost' ? 'localhost' : 'tapx.bio'}/s/{username}
                                         </div>
                                         <Button
                                             size="icon"

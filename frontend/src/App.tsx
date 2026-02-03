@@ -27,6 +27,7 @@ import MyApps from "./pages/MyApps";
 import Enquiries from "./pages/Enquiries";
 import Media from "./pages/Media";
 import NFCCards from "./pages/NFCCards";
+import NfcStore from "./pages/NfcStore";
 import Explore from "./pages/Explore";
 import LikedProducts from "./pages/LikedProducts";
 import Messages from "./pages/Messages";
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/my-apps" element={<ProtectedRoute><MyApps /></ProtectedRoute>} />
             <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
             <Route path="/nfc-cards" element={<ProtectedRoute><NFCCards /></ProtectedRoute>} />
+            <Route path="/connect-device" element={<ProtectedRoute><NfcStore /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
 
             {/* Earn Routes */}

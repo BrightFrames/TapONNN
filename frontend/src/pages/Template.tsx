@@ -74,10 +74,10 @@ const Template = () => {
                 {/* Hero Section */}
                 <div className="text-center mb-24">
                     <h1 className="text-5xl md:text-7xl font-black mb-8 tracking-tight text-[#1E2330]">
-                        A Tap2 template to<br />suit every brand and<br />creator
+                        A TapX template to<br />suit every brand and<br />creator
                     </h1>
                     <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                        Different Link Apps, integrations and visual styles can help you create a Tap2 that looks and feels like you and your brand. Explore our library of custom templates to grow and connect with your audience even more easily!
+                        Different Link Apps, integrations and visual styles can help you create a TapX that looks and feels like you and your brand. Explore our library of custom templates to grow and connect with your audience even more easily!
                     </p>
                 </div>
 
@@ -91,8 +91,8 @@ const Template = () => {
                                     key={i}
                                     onClick={() => setSelectedCategory(cat)}
                                     className={`px-6 py-3 rounded-full border text-sm font-semibold transition-all text-left whitespace-nowrap ${selectedCategory === cat
-                                            ? 'bg-[#1E2330] text-white border-[#1E2330] shadow-lg'
-                                            : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'
+                                        ? 'bg-[#1E2330] text-white border-[#1E2330] shadow-lg'
+                                        : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'
                                         }`}
                                 >
                                     {cat}

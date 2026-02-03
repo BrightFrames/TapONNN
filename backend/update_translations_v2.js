@@ -77,7 +77,7 @@ const newTranslations = {
     },
     explore: {
         title: { hi: "खोजें", mr: "शोधा", default: "Explore" },
-        desc: { hi: "Tap2 पर रचनाकारों और व्यवसायों की खोज करें", mr: "Tap2 वर निर्माते आणि व्यवसाय शोधा", default: "Discover creators and businesses on Tap2" },
+        desc: { hi: "TapX पर रचनाकारों और व्यवसायों की खोज करें", mr: "TapX वर निर्माते आणि व्यवसाय शोधा", default: "Discover creators and businesses on TapX" },
         search: { hi: "उपयोगकर्ता नाम खोजें...", mr: "वापरकर्तानाव शोधा...", default: "Search username..." },
         viewProfile: { hi: "प्रोफाइल देखें", mr: "प्रोफाइल पहा", default: "View Profile" },
         noResults: { hi: "कोई निर्माता नहीं मिला", mr: "कोणीही निर्माता सापडला नाही", default: "No creators found matching" }

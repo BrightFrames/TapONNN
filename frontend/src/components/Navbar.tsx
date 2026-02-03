@@ -52,10 +52,10 @@ const Navbar = () => {
             <Link to="/" className="flex items-center gap-2">
               {/* Logo: Invert if on Home (since Home is always dark/white text) */}
               <img
-                src="/logotap2.png"
-                alt="TapONN"
+                src="/logo.svg"
+                alt="TapX"
                 className={cn(
-                  "w-9 h-9 transition-all",
+                  "w-12 h-12 transition-all",
                   isHome ? "brightness-0 invert" : ""
                 )}
               />

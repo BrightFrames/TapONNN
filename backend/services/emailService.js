@@ -27,27 +27,27 @@ const sendWelcomeEmail = async (to, username, fullName) => {
         return { success: false, error: 'Email not configured' };
     }
 
-    const fromName = process.env.EMAIL_FROM_NAME || 'Tap2';
+    const fromName = process.env.EMAIL_FROM_NAME || 'TapX';
     const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER;
 
     const mailOptions = {
         from: `"${fromName}" <${fromEmail}>`,
         to: to,
-        subject: `Welcome to TapONN, ${fullName}! 🎉`,
+        subject: `Welcome to TapX, ${fullName}! 🎉`,
         html: `
             <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
                 <div style="text-align: center; margin-bottom: 40px;">
                     <div style="display: inline-block; width: 60px; height: 60px; background: linear-gradient(135deg, #7C3AED, #9333EA); border-radius: 16px; line-height: 60px; color: white; font-size: 24px; font-weight: bold;">TO</div>
                 </div>
                 
-                <h1 style="color: #1F2937; font-size: 28px; margin-bottom: 20px; text-align: center;">Welcome to TapONN! 🚀</h1>
+                <h1 style="color: #1F2937; font-size: 28px; margin-bottom: 20px; text-align: center;">Welcome to TapX! 🚀</h1>
                 
                 <p style="color: #4B5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
                     Hey ${fullName},
                 </p>
                 
                 <p style="color: #4B5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-                    Thanks for signing up! Your TapONN profile is ready. Share all your important links in one place.
+                    Thanks for signing up! Your TapX profile is ready. Share all your important links in one place.
                 </p>
                 
                 <p style="color: #4B5563; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
@@ -61,7 +61,7 @@ const sendWelcomeEmail = async (to, username, fullName) => {
                 </div>
                 
                 <p style="color: #9CA3AF; font-size: 14px; text-align: center; border-top: 1px solid #E5E7EB; padding-top: 20px;">
-                    © ${new Date().getFullYear()} TapONN. All rights reserved.
+                    © ${new Date().getFullYear()} TapX. All rights reserved.
                 </p>
             </div>
         `
@@ -85,7 +85,7 @@ const sendSubscriptionEmail = async (to, fullName, planName, amount, expiresAt) 
         return { success: false, error: 'Email not configured' };
     }
 
-    const fromName = process.env.EMAIL_FROM_NAME || 'TapONN';
+    const fromName = process.env.EMAIL_FROM_NAME || 'TapX';
     const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER;
 
     const mailOptions = {
@@ -105,7 +105,7 @@ const sendSubscriptionEmail = async (to, fullName, planName, amount, expiresAt) 
                 </p>
                 
                 <p style="color: #4B5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-                    Thank you for subscribing to TapONN <strong>${planName}</strong>!
+                    Thank you for subscribing to TapX <strong>${planName}</strong>!
                 </p>
                 
                 <div style="background: #F3F4F6; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
@@ -121,7 +121,7 @@ const sendSubscriptionEmail = async (to, fullName, planName, amount, expiresAt) 
                 </div>
                 
                 <p style="color: #9CA3AF; font-size: 14px; text-align: center; border-top: 1px solid #E5E7EB; padding-top: 20px;">
-                    © ${new Date().getFullYear()} TapONN. All rights reserved.
+                    © ${new Date().getFullYear()} TapX. All rights reserved.
                 </p>
             </div>
         `
@@ -145,13 +145,13 @@ const sendPasswordResetEmail = async (to, fullName, resetLink) => {
         return { success: false, error: 'Email not configured' };
     }
 
-    const fromName = process.env.EMAIL_FROM_NAME || 'TapONN';
+    const fromName = process.env.EMAIL_FROM_NAME || 'TapX';
     const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER;
 
     const mailOptions = {
         from: `"${fromName}" <${fromEmail}>`,
         to: to,
-        subject: `Reset your TapONN password`,
+        subject: `Reset your TapX password`,
         html: `
             <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
                 <div style="text-align: center; margin-bottom: 40px;">
@@ -179,7 +179,7 @@ const sendPasswordResetEmail = async (to, fullName, resetLink) => {
                 </p>
                 
                 <p style="color: #9CA3AF; font-size: 14px; text-align: center; border-top: 1px solid #E5E7EB; padding-top: 20px;">
-                    © ${new Date().getFullYear()} TapONN. All rights reserved.
+                    © ${new Date().getFullYear()} TapX. All rights reserved.
                 </p>
             </div>
         `
@@ -202,7 +202,7 @@ const sendEmail = async (to, subject, htmlContent) => {
         return { success: false, error: 'Email not configured' };
     }
 
-    const fromName = process.env.EMAIL_FROM_NAME || 'TapONN';
+    const fromName = process.env.EMAIL_FROM_NAME || 'TapX';
     const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER;
 
     try {

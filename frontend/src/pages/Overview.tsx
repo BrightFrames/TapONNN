@@ -388,7 +388,7 @@ const Overview = () => {
                                 {/* Footer */}
                                 <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-10">
                                     <button className="bg-white/10 backdrop-blur-md border border-white/20 text-current px-5 py-2.5 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-shadow">
-                                        Join @{username} on Tap2
+                                        Join @{username} on TapX
                                     </button>
                                 </div>
                             </div>

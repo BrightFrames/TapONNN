@@ -242,8 +242,8 @@ const Login = () => {
             <Card className="w-full max-w-[420px] shadow-lg border-border/50">
                 <CardHeader className="space-y-1">
                     <div className="flex justify-center mb-4">
-                        <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground font-bold text-lg">
-                            TO
+                        <div className="h-12 w-12 flex items-center justify-center">
+                            <img src="/logo.svg" alt="TapX" className="w-full h-full object-contain" />
                         </div>
                     </div>
                     <CardTitle className="text-2xl text-center font-bold tracking-tight">
@@ -309,7 +309,7 @@ const Login = () => {
                                             {!checkingUsername && usernameAvailability && !usernameAvailability.available && <X className="w-4 h-4 text-red-600" />}
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-muted-foreground">taponn.me/{username || 'username'}</p>
+                                    <p className="text-[10px] text-muted-foreground">tapx.bio/{username || 'username'}</p>
                                     {usernameAvailability && username.length >= 3 && (
                                         <p className={`text-[10px] ${usernameAvailability.available ? 'text-green-600' : 'text-red-600'}`}>
                                             {usernameAvailability.message}

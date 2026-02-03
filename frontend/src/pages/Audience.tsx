@@ -78,7 +78,7 @@ const Audience = () => {
                     </div>
 
                     <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                        Let visitors subscribe to your Tap2 for updates
+                        Let visitors subscribe to your TapX for updates
                     </h2>
                     <p className="text-gray-500 mb-8 font-medium">
                         Let's start growing your contact list.

@@ -44,7 +44,7 @@
         "connect": "Connect",
         "live": "Live",
         "deep": "Deep",
-        "joinOnTap2": "Join @{{username}} on TapONN",
+        "joinOnTapX": "Join @{{username}} on TapX",
         "buy": "Buy"
     },
     "settings": {
@@ -285,7 +285,7 @@
     },
     "explore": {
         "title": "Explore",
-        "desc": "Discover creators and businesses on TapONN",
+        "desc": "Discover creators and businesses on TapX",
         "search": "Search username...",
         "viewProfile": "View Profile",
         "noResults": "No creators found matching"
