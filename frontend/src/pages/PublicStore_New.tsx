@@ -58,7 +58,6 @@ const PublicStore_New = () => {
                 }
 
                 const data = await res.json();
-                const data = await res.json();
                 setStore(data);
 
                 // Fetch Store Blocks

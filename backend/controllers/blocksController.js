@@ -29,8 +29,10 @@ const notifyUpdate = async (req, userId) => {
 const getBlocks = async (req, res) => {
     try {
         const userId = req.user.id;
-        // Default to 'personal' if undefined (backend should populate, but safe fallback)
-        const activeMode = req.user.active_profile_mode || 'personal';
+
+        // Fetch fresh profile data to get real-time active mode
+        const profile = await Profile.findOne({ user_id: userId });
+        const activeMode = profile?.active_profile_mode || 'personal';
 
         // Filter blocks ensuring they match current mode
         const blocks = await Block.find({
@@ -52,11 +54,6 @@ const getPublicBlocks = async (req, res) => {
     try {
         const { userId } = req.params;
         // Allow optional query param 'context' to filter (default to 'personal' if not specified)
-        // Does PublicProfile or PublicStore send this param? 
-        // PublicProfile (Personal) usually wants personal blocks.
-        // PublicStore usually displays products, but if it displayed blocks it would want "store" blocks.
-        // PublicProfile is the MAIN place blocks are shown.
-        // Let's check query param.
         const context = req.query.context || 'personal';
 
         const blocks = await Block.find({
@@ -88,7 +85,10 @@ const createBlock = async (req, res) => {
     try {
         const userId = req.user.id;
         const { block_type, title, content, cta_type, cta_label, cta_requires_login, styles, thumbnail } = req.body;
-        const activeMode = req.user.active_profile_mode || 'personal';
+
+        // Fetch fresh profile data to get real-time active mode
+        const profile = await Profile.findOne({ user_id: userId });
+        const activeMode = profile?.active_profile_mode || 'personal';
 
         if (!block_type || !title) {
             return res.status(400).json({ error: 'Block type and title are required' });
