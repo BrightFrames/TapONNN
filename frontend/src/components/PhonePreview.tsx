@@ -157,7 +157,7 @@ const PhonePreview = ({
                     )}
                 </div>
 
-                <div className="mt-auto absolute bottom-8 w-full left-0 flex flex-col items-center gap-2">
+                <div className="mt-8 mb-4 w-full flex flex-col items-center gap-2">
                     <Button variant="secondary" className="bg-white text-black px-4 py-2 h-auto rounded-full text-xs font-bold hover:bg-white/90">
                         {t('common.joinOnTap2', { username })}
                     </Button>

@@ -59,12 +59,21 @@ const Design = () => {
     const handleConfigChange = (key: string, value: any) => {
         const newConfig = { ...config, [key]: value };
         setConfig(newConfig);
+        // Auto-save removed in favor of manual save button
+    };
 
-        // Debounce or immediate persist? Immediate for now to see live changes if we were doing it side-by-side,
-        // but since it's a drawer, maybe we want to save on change too.
-        updateProfile({
-            design_config: newConfig
-        });
+    const handleSave = async () => {
+        const toastId = toast.loading("Saving changes...");
+        try {
+            await updateProfile({
+                design_config: config
+            });
+            toast.success("Changes saved successfully!", { id: toastId });
+            setIsEditOpen(false);
+        } catch (error) {
+            console.error("Save error:", error);
+            toast.error("Failed to save changes", { id: toastId });
+        }
     };
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video', isCover = false) => {
@@ -88,7 +97,9 @@ const Design = () => {
             if (res.data.success) {
                 toast.success(`${type === 'image' ? 'Image' : 'Video'} uploaded successfully!`, { id: toastId });
                 if (isCover) {
-                    handleConfigChange('coverUrl', res.data.url);
+                    const newUrl = res.data.url;
+                    // Update state directly + config
+                    handleConfigChange('coverUrl', newUrl);
                     handleConfigChange('coverType', type);
                 } else {
                     if (type === 'image') {
@@ -521,6 +532,11 @@ const Design = () => {
                                 </SheetDescription>
                             </SheetHeader>
                             <ConfigurationContent />
+                            <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800 mt-6 sticky bottom-0 bg-white dark:bg-zinc-950 pb-6 z-20">
+                                <Button size="lg" className="w-full bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 rounded-xl font-bold h-12" onClick={handleSave}>
+                                    Save Changes
+                                </Button>
+                            </div>
                         </SheetContent>
                     </Sheet>
                 </div>

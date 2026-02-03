@@ -435,6 +435,18 @@ const PublicProfile = () => {
 
     const userInitial = (profile.name?.[0] || profile.username?.[0] || "U").toUpperCase();
 
+
+    const getProfileSizeClass = () => {
+        switch (profile.design_config?.profileSize) {
+            case 'small': return 'w-16 h-16';
+            case 'large': return 'w-32 h-32';
+            default: return 'w-24 h-24';
+        }
+    };
+
+    const headerLayout = profile.design_config?.headerLayout || 'classic';
+    const isHero = headerLayout === 'hero';
+
     return (
         <div
             className={`min-h-screen w-full ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor || ''} relative`}
@@ -452,11 +464,11 @@ const PublicProfile = () => {
                 </Button>
             </div>
 
-            {/* Main Content - Matches Phone Preview Layout */}
+            {/* Main Content */}
             <div className="relative z-10 max-w-md mx-auto px-6 pt-12 pb-32">
 
                 {/* Profile Header - Card Style */}
-                <div className={`flex flex-col items-center mb-6 relative w-full bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg border border-white/5`}>
+                <div className={`flex flex-col mb-6 relative w-full bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg border border-white/5`}>
                     {/* Cover Media */}
                     {renderCoverMedia() && (
                         <div className="w-full relative">
@@ -464,23 +476,26 @@ const PublicProfile = () => {
                         </div>
                     )}
 
-                    <div className={`flex flex-col items-center p-6 w-full ${renderCoverMedia() ? '-mt-16 z-10' : ''}`}>
-                        <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
+                    <div className={`flex flex-col w-full p-6 ${isHero ? 'items-start text-left' : 'items-center text-center'} ${renderCoverMedia() ? '-mt-16 z-10' : ''}`}>
+                        <Avatar className={`${getProfileSizeClass()} border-4 border-white/20 shadow-xl`}>
                             <AvatarImage src={profile.avatar} className="object-cover" />
                             <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
                                 {userInitial}
                             </AvatarFallback>
                         </Avatar>
-                        <h2 className="text-xl font-bold tracking-tight">@{profile.username}</h2>
 
-                        {/* Bio - if present */}
-                        {profile.bio && (
-                            <p className="text-sm text-center opacity-80 max-w-xs">{profile.bio}</p>
-                        )}
+                        <div className={`mt-4 ${isHero ? 'w-full' : ''}`}>
+                            <h2 className="text-xl font-bold tracking-tight">@{profile.username}</h2>
 
-                        {/* Social Links - Match Phone Preview Design */}
+                            {/* Bio */}
+                            {profile.bio && (
+                                <p className={`text-sm opacity-80 mt-1 ${isHero ? '' : 'max-w-xs mx-auto'}`}>{profile.bio}</p>
+                            )}
+                        </div>
+
+                        {/* Social Links */}
                         {profile.social_links && Object.keys(profile.social_links).length > 0 && (
-                            <div className="flex gap-3 flex-wrap justify-center px-4 mt-2">
+                            <div className={`flex gap-3 flex-wrap mt-4 ${isHero ? 'justify-start' : 'justify-center'}`}>
                                 {Object.entries(profile.social_links).map(([platform, url]: [string, any]) => {
                                     if (!url) return null;
                                     const Icon = getIconForThumbnail(platform);
@@ -501,8 +516,8 @@ const PublicProfile = () => {
                             </div>
                         )}
 
-                        {/* Tab Switcher - Match Phone Preview Design */}
-                        <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
+                        {/* Tab Switcher */}
+                        <div className={`mt-6 flex bg-black/10 backdrop-blur-sm p-1 rounded-full ${isHero ? 'self-start' : 'self-center'}`}>
                             <Button
                                 variant="ghost"
                                 onClick={() => setActiveTab('links')}
