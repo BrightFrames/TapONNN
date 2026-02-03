@@ -530,15 +530,15 @@ const Enquiries = () => {
     const isPersonalMode = user?.active_profile_mode === 'personal';
 
     return (
-        <div className="h-screen w-full bg-zinc-950 flex items-center justify-center p-0 sm:p-2 overflow-hidden font-sans">
+        <div className="h-screen w-full bg-gray-50 dark:bg-zinc-950 flex items-center justify-center p-0 sm:p-2 overflow-hidden font-sans">
             {/* Main Window */}
-            <div className="w-full h-full sm:h-[95vh] sm:w-[98vw] max-w-[1700px] bg-zinc-900 rounded-none sm:rounded-xl shadow-2xl border border-zinc-800 flex overflow-hidden relative">
+            <div className="w-full h-full sm:h-[95vh] sm:w-[98vw] max-w-[1700px] bg-white dark:bg-zinc-900 rounded-none sm:rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-800 flex overflow-hidden relative">
 
                 {/* --- LEFT PANEL: LEADS LIST --- */}
-                <div className="w-full sm:w-[380px] flex flex-col border-r border-zinc-800 bg-zinc-900/95 backdrop-blur-xl z-20 shrink-0">
+                <div className="w-full sm:w-[380px] flex flex-col border-r border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl z-20 shrink-0">
 
                     {/* Header */}
-                    <div className="h-16 px-5 border-b border-zinc-800 flex items-center justify-between shrink-0">
+                    <div className="h-16 px-5 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-3">
                             <div className="relative">
                                 <Avatar className="w-9 h-9 border border-zinc-700 shadow-sm">
@@ -548,7 +548,7 @@ const Enquiries = () => {
                                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-zinc-900 rounded-full"></span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="font-semibold text-sm text-zinc-100">{isPersonalMode ? 'Messages' : 'Inbox'}</span>
+                                <span className="font-semibold text-sm text-gray-900 dark:text-zinc-100">{isPersonalMode ? 'Messages' : 'Inbox'}</span>
                                 <span className="text-[10px] text-zinc-500 font-medium">
                                     {isPersonalMode ? 'Personal Chats' : 'All Enquiries'}
                                 </span>
@@ -579,12 +579,12 @@ const Enquiries = () => {
                     </div>
 
                     {/* Search & Tabs */}
-                    <div className="p-3 border-b border-zinc-800 space-y-3 bg-zinc-900/50">
+                    <div className="p-3 border-b border-gray-200 dark:border-zinc-800 space-y-3 bg-gray-50/50 dark:bg-zinc-900/50">
                         <div className="relative group">
                             <Search className="absolute left-3 top-2.5 text-zinc-500 w-4 h-4 group-focus-within:text-zinc-300 transition-colors" />
                             <Input
                                 placeholder={isPersonalMode ? "Search conversations..." : "Search leads, email, phone..."}
-                                className="pl-9 h-10 bg-zinc-950 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-zinc-700 transition-all rounded-lg"
+                                className="pl-9 h-10 bg-white dark:bg-zinc-950 border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-zinc-200 placeholder:text-gray-500 dark:placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-zinc-700 transition-all rounded-lg"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -615,7 +615,7 @@ const Enquiries = () => {
                     </div>
 
                     {/* Leads List */}
-                    <ScrollArea className="flex-1 bg-zinc-900/30">
+                    <ScrollArea className="flex-1 bg-gray-50/30 dark:bg-zinc-900/30">
                         {isLoading ? (
                             <div className="flex flex-col items-center justify-center h-40 space-y-3">
                                 <div className="w-6 h-6 border-2 border-zinc-600 border-t-transparent rounded-full animate-spin"></div>
@@ -638,8 +638,8 @@ const Enquiries = () => {
                                         key={lead.id}
                                         onClick={() => isBulkMode ? toggleSelect(lead.id) : setActiveId(lead.id)}
                                         className={`
-                                            group flex items-start gap-4 p-4 cursor-pointer border-b border-zinc-800/50 hover:bg-zinc-800/40 transition-all duration-200 relative
-                                            ${activeId === lead.id && !isBulkMode ? 'bg-zinc-800/80 border-l-2 border-l-emerald-500' : 'border-l-2 border-l-transparent'}
+                                            group flex items-start gap-4 p-4 cursor-pointer border-b border-gray-100 dark:border-zinc-800/50 hover:bg-gray-50 dark:hover:bg-zinc-800/40 transition-all duration-200 relative
+                                            ${activeId === lead.id && !isBulkMode ? 'bg-blue-50 dark:bg-zinc-800/80 border-l-2 border-l-blue-500 dark:border-l-emerald-500' : 'border-l-2 border-l-transparent'}
                                         `}
                                     >
                                         {isBulkMode && (
@@ -672,7 +672,7 @@ const Enquiries = () => {
 
                                         <div className={`flex-1 min-w-0 flex flex-col gap-0.5 ${isBulkMode ? 'pl-8' : ''} transition-all`}>
                                             <div className="flex justify-between items-start">
-                                                <span className={`text-sm truncate ${lead.status === 'unread' ? 'font-bold text-white' : 'font-medium text-zinc-300 group-hover:text-zinc-200'}`}>
+                                                <span className={`text-sm truncate ${lead.status === 'unread' ? 'font-bold text-gray-900 dark:text-white' : 'font-medium text-gray-700 dark:text-zinc-300 group-hover:text-black dark:group-hover:text-zinc-200'}`}>
                                                     {lead.name}
                                                 </span>
                                                 <span className={`text-[10px] whitespace-nowrap ${lead.status === 'unread' ? 'text-emerald-500 font-bold' : 'text-zinc-500'}`}>
@@ -680,7 +680,7 @@ const Enquiries = () => {
                                                 </span>
                                             </div>
 
-                                            <p className={`text-xs truncate leading-relaxed ${lead.status === 'unread' ? 'text-zinc-300' : 'text-zinc-500 group-hover:text-zinc-400'}`}>
+                                            <p className={`text-xs truncate leading-relaxed ${lead.status === 'unread' ? 'text-gray-800 dark:text-zinc-300' : 'text-gray-500 dark:text-zinc-500 group-hover:text-gray-600 dark:group-hover:text-zinc-400'}`}>
                                                 {lead.from === 'me' && <span className="text-zinc-600 mr-1">You:</span>}
                                                 {lead.preview}
                                             </p>
@@ -727,16 +727,16 @@ const Enquiries = () => {
 
                 {/* --- MIDDLE PANEL: ACTIVE CHAT --- */}
                 {activeLead ? (
-                    <div className="flex flex-col flex-1 h-full w-full relative bg-zinc-950/50 backdrop-blur-sm">
+                    <div className="flex flex-col flex-1 h-full w-full relative bg-gray-50/50 dark:bg-zinc-950/50 backdrop-blur-sm">
                         {/* Chat Header */}
-                        <div className="h-16 px-6 border-b border-zinc-800 flex items-center justify-between shrink-0 bg-zinc-900/80 backdrop-blur-md z-20">
+                        <div className="h-16 px-6 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between shrink-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md z-20">
                             <div className="flex items-center gap-3">
                                 <Avatar className="w-10 h-10 border border-zinc-700">
                                     <AvatarImage src={activeLead.avatar} />
                                     <AvatarFallback>{activeLead.name[0]}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <h2 className="font-semibold text-sm text-zinc-100 flex items-center gap-2">
+                                    <h2 className="font-semibold text-sm text-gray-900 dark:text-zinc-100 flex items-center gap-2">
                                         {activeLead.name}
                                         {!isPersonalMode && activeLead.score >= 70 && <Badge variant="destructive" className="h-4 px-1 text-[10px]">HOT</Badge>}
                                     </h2>
@@ -755,13 +755,13 @@ const Enquiries = () => {
                         </div>
 
                         {/* Chat Area */}
-                        <ScrollArea className="flex-1 p-4 bg-[#0A0A0A]">
+                        <ScrollArea className="flex-1 p-4 bg-gray-50 dark:bg-[#0A0A0A]">
                             {/* Background Pattern */}
                             <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
                             <div className="space-y-6 max-w-3xl mx-auto relative z-10 py-4">
                                 <div className="flex justify-center mb-6">
-                                    <span className="bg-zinc-900/80 border border-zinc-800 text-zinc-500 text-[10px] font-medium px-3 py-1 rounded-full backdrop-blur-sm">
+                                    <span className="bg-white/80 dark:bg-zinc-900/80 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-500 text-[10px] font-medium px-3 py-1 rounded-full backdrop-blur-sm">
                                         Today
                                     </span>
                                 </div>
@@ -780,8 +780,8 @@ const Enquiries = () => {
                                             <div className={`
                                                 relative px-4 py-2.5 text-sm shadow-sm
                                                 ${msg.from === 'me'
-                                                    ? 'bg-zinc-100 text-black rounded-[20px_20px_4px_20px]'
-                                                    : 'bg-zinc-800 text-zinc-100 border border-zinc-700 rounded-[20px_20px_20px_4px]'}
+                                                    ? 'bg-blue-600 dark:bg-zinc-100 text-white dark:text-black rounded-[20px_20px_4px_20px]'
+                                                    : 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 rounded-[20px_20px_20px_4px]'}
                                             `}>
                                                 {msg.type === 'product' ? (
                                                     <div className="w-[220px] bg-white text-black rounded-lg overflow-hidden border border-zinc-200">
@@ -809,8 +809,8 @@ const Enquiries = () => {
                         </ScrollArea>
 
                         {/* Input Area */}
-                        <div className="p-4 bg-zinc-900 border-t border-zinc-800 shrink-0">
-                            <div className="max-w-4xl mx-auto flex items-end gap-2 bg-zinc-950 p-2 rounded-xl border border-zinc-800 focus-within:border-zinc-700 transition-colors shadow-sm">
+                        <div className="p-4 bg-white dark:bg-zinc-900 border-t border-gray-200 dark:border-zinc-800 shrink-0">
+                            <div className="max-w-4xl mx-auto flex items-end gap-2 bg-gray-50 dark:bg-zinc-950 p-2 rounded-xl border border-gray-200 dark:border-zinc-800 focus-within:border-zinc-400 dark:focus-within:border-zinc-700 transition-colors shadow-sm">
                                 <Button size="icon" variant="ghost" className="h-10 w-10 text-zinc-400 hover:text-white rounded-lg">
                                     <Plus className="w-5 h-5" />
                                 </Button>
@@ -818,7 +818,7 @@ const Enquiries = () => {
                                     value={chatInput}
                                     onChange={(e) => setChatInput(e.target.value)}
                                     placeholder="Type a message..."
-                                    className="flex-1 min-h-[40px] max-h-[120px] bg-transparent border-0 focus-visible:ring-0 resize-none py-2.5 text-zinc-200 placeholder:text-zinc-600"
+                                    className="flex-1 min-h-[40px] max-h-[120px] bg-transparent border-0 focus-visible:ring-0 resize-none py-2.5 text-gray-900 dark:text-zinc-200 placeholder:text-gray-500 dark:placeholder:text-zinc-600"
                                     rows={1}
                                 />
                                 <div className="flex items-center gap-1 pb-1">
@@ -840,21 +840,21 @@ const Enquiries = () => {
                     // EMPTY STATE
                     isPersonalMode ? (
                         // Personal Mode Empty State
-                        <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-zinc-900 text-center p-8">
-                            <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-6">
-                                <MessageSquare className="w-8 h-8 text-zinc-400" />
+                        <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-gray-50 dark:bg-zinc-900 text-center p-8">
+                            <div className="w-16 h-16 bg-white dark:bg-zinc-100 rounded-full flex items-center justify-center mb-6 shadow-sm border border-gray-100 dark:border-transparent">
+                                <MessageSquare className="w-8 h-8 text-gray-400 dark:text-zinc-400" />
                             </div>
-                            <h2 className="text-2xl font-semibold text-white">Your Conversations</h2>
-                            <p className="text-zinc-400 mt-2 max-w-sm">Select a chat from the sidebar to view messages.</p>
+                            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Your Conversations</h2>
+                            <p className="text-gray-500 dark:text-zinc-400 mt-2 max-w-sm">Select a chat from the sidebar to view messages.</p>
                         </div>
                     ) : (
                         // Store Mode Empty State - DASHBOARD OVERVIEW
-                        <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-zinc-900 text-center p-8">
-                            <div className="w-20 h-20 bg-zinc-100 rounded-2xl flex items-center justify-center mb-4">
-                                <PieChart className="w-10 h-10 text-zinc-400" />
+                        <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-gray-50 dark:bg-zinc-900 text-center p-8">
+                            <div className="w-20 h-20 bg-white dark:bg-zinc-100 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-gray-100 dark:border-transparent">
+                                <PieChart className="w-10 h-10 text-gray-400 dark:text-zinc-400" />
                             </div>
-                            <h1 className="text-2xl font-normal text-white">Dashboard Overview</h1>
-                            <p className="text-zinc-400 text-sm mt-1 max-w-md">Platform Intelligence Summary</p>
+                            <h1 className="text-2xl font-normal text-gray-900 dark:text-white">Dashboard Overview</h1>
+                            <p className="text-gray-500 dark:text-zinc-400 text-sm mt-1 max-w-md">Platform Intelligence Summary</p>
 
                             <div className="grid grid-cols-3 gap-6 mt-12 w-full max-w-4xl px-4">
                                 {[
@@ -886,20 +886,20 @@ const Enquiries = () => {
                                         desc: 'Average specific'
                                     }
                                 ].map((stat, i) => (
-                                    <div key={i} className={`p-6 rounded-2xl bg-zinc-800 border ${stat.border} shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group`}>
+                                    <div key={i} className={`p-6 rounded-2xl bg-white dark:bg-zinc-800 border ${stat.border} shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group`}>
                                         <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110`}>
                                             <stat.icon className="w-6 h-6" />
                                         </div>
-                                        <div className="text-3xl font-bold text-white mb-1 tracking-tight">{stat.val}</div>
-                                        <div className="font-semibold text-zinc-200 text-sm">{stat.label}</div>
-                                        <div className="text-xs text-zinc-500 mt-2 font-medium">{stat.desc}</div>
+                                        <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1 tracking-tight">{stat.val}</div>
+                                        <div className="font-semibold text-gray-700 dark:text-zinc-200 text-sm">{stat.label}</div>
+                                        <div className="text-xs text-gray-500 dark:text-zinc-500 mt-2 font-medium">{stat.desc}</div>
                                     </div>
                                 ))}
                             </div>
 
                             <div className="mt-16 flex flex-col items-center opacity-40">
-                                <Smartphone className="w-12 h-12 mb-4 text-zinc-300 stroke-1" />
-                                <p className="text-zinc-500 text-sm max-w-sm">Select a conversation from the sidebar to view full history, visitor analytics, and smart insights.</p>
+                                <Smartphone className="w-12 h-12 mb-4 text-gray-400 dark:text-zinc-300 stroke-1" />
+                                <p className="text-gray-500 dark:text-zinc-500 text-sm max-w-sm">Select a conversation from the sidebar to view full history, visitor analytics, and smart insights.</p>
                             </div>
                         </div>
                     )
@@ -908,38 +908,38 @@ const Enquiries = () => {
                 {/* --- RIGHT PANEL: INFO SIDEBAR - Store Mode Only --- */}
                 {activeLead && !isPersonalMode && (
                     <div
-                        className={`absolute top-0 right-0 h-full w-[350px] bg-zinc-900 border-l border-zinc-800 shadow-xl transform transition-transform duration-300 z-50 flex flex-col
+                        className={`absolute top-0 right-0 h-full w-[350px] bg-white dark:bg-zinc-900 border-l border-gray-200 dark:border-zinc-800 shadow-xl transform transition-transform duration-300 z-50 flex flex-col
                         ${isInfoPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}
                     >
-                        <div className="h-16 px-5 border-b border-zinc-800 flex items-center justify-between shrink-0 bg-zinc-900/95 backdrop-blur-sm">
-                            <span className="text-sm font-semibold text-zinc-100 uppercase tracking-widest">Lead Intelligence</span>
+                        <div className="h-16 px-5 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between shrink-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm">
+                            <span className="text-sm font-semibold text-gray-900 dark:text-zinc-100 uppercase tracking-widest">Lead Intelligence</span>
                             <Button variant="ghost" size="icon" onClick={() => setIsInfoPanelOpen(false)} className="text-zinc-500 hover:text-white">
                                 <X className="w-4 h-4" />
                             </Button>
                         </div>
 
                         <Tabs defaultValue="info" value={activeTab} onValueChange={(v) => setActiveTab(v as 'info' | 'crm')} className="flex flex-col h-[calc(100%-4rem)]">
-                            <TabsList className="w-full justify-start rounded-none border-b border-zinc-800 bg-zinc-900 p-0 h-10">
+                            <TabsList className="w-full justify-start rounded-none border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0 h-10">
                                 <TabsTrigger
                                     value="info"
-                                    className="flex-1 h-full text-[11px] font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-zinc-800 data-[state=active]:text-emerald-400 uppercase tracking-wider text-zinc-500 hover:bg-zinc-800/50"
+                                    className="flex-1 h-full text-[11px] font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 uppercase tracking-wider text-gray-500 dark:text-zinc-500 hover:bg-gray-50 dark:hover:bg-zinc-800/50"
                                 >
                                     Insights
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="crm"
-                                    className="flex-1 h-full text-[11px] font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-zinc-800 data-[state=active]:text-emerald-400 uppercase tracking-wider text-zinc-500 hover:bg-zinc-800/50"
+                                    className="flex-1 h-full text-[11px] font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 uppercase tracking-wider text-gray-500 dark:text-zinc-500 hover:bg-gray-50 dark:hover:bg-zinc-800/50"
                                 >
                                     Actions & CRM
                                 </TabsTrigger>
                             </TabsList>
 
-                            <ScrollArea className="flex-1 bg-zinc-950">
+                            <ScrollArea className="flex-1 bg-gray-50 dark:bg-zinc-950">
                                 <div className="p-5">
                                     <TabsContent value="info" className="mt-0 focus-visible:ring-0 space-y-6">
 
                                         {/* Score Widget */}
-                                        <div className="bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-xl p-5 relative overflow-hidden group">
+                                        <div className="bg-gradient-to-br from-white to-gray-50 dark:from-zinc-900 dark:to-black border border-gray-200 dark:border-zinc-800 rounded-xl p-5 relative overflow-hidden group">
                                             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                                                 <Zap className="w-20 h-20" />
                                             </div>
@@ -947,7 +947,7 @@ const Enquiries = () => {
                                             <div className="flex justify-between items-start mb-4 relative z-10">
                                                 <div>
                                                     <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-1 block">Lead Score</span>
-                                                    <div className="text-4xl font-black text-white tracking-tighter shadow-glow">{activeLead.score}</div>
+                                                    <div className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter shadow-glow">{activeLead.score}</div>
                                                 </div>
                                                 <div className={`px-2 py-1 rounded text-[10px] font-bold border uppercase tracking-wider ${activeLead.score >= 70 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`}>
                                                     {activeLead.score >= 70 ? 'High Intent' : 'Moderate'}
@@ -956,7 +956,7 @@ const Enquiries = () => {
 
                                             <div className="space-y-2 relative z-10">
                                                 {activeLead.scoreFactors?.slice(0, 2).map((f, i) => (
-                                                    <div key={i} className="flex items-center gap-2 text-xs text-zinc-400">
+                                                    <div key={i} className="flex items-center gap-2 text-xs text-gray-500 dark:text-zinc-400">
                                                         <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> {f}
                                                     </div>
                                                 ))}
@@ -964,39 +964,39 @@ const Enquiries = () => {
                                         </div>
 
                                         {/* Identity Card */}
-                                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
-                                            <div className="flex items-center gap-3 border-b border-zinc-800 pb-3">
-                                                <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xl">
+                                        <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-4 space-y-4">
+                                            <div className="flex items-center gap-3 border-b border-gray-100 dark:border-zinc-800 pb-3">
+                                                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-xl">
                                                     {getSourceBadge(activeLead.source).emoji || '👤'}
                                                 </div>
                                                 <div>
-                                                    <div className="text-xs font-medium text-zinc-500 uppercase">Source</div>
-                                                    <div className="font-bold text-zinc-200">{activeLead.source}</div>
+                                                    <div className="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase">Source</div>
+                                                    <div className="font-bold text-gray-900 dark:text-zinc-200">{activeLead.source}</div>
                                                 </div>
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-3">
-                                                <div className="bg-zinc-950 p-2 rounded border border-zinc-800/50">
-                                                    <div className="text-[10px] text-zinc-500 uppercase">Device</div>
-                                                    <div className="text-xs font-medium text-zinc-300 truncate" title={activeLead.device}>{activeLead.device}</div>
+                                                <div className="bg-gray-50 dark:bg-zinc-950 p-2 rounded border border-gray-200 dark:border-zinc-800/50">
+                                                    <div className="text-[10px] text-gray-500 dark:text-zinc-500 uppercase">Device</div>
+                                                    <div className="text-xs font-medium text-gray-700 dark:text-zinc-300 truncate" title={activeLead.device}>{activeLead.device}</div>
                                                 </div>
-                                                <div className="bg-zinc-950 p-2 rounded border border-zinc-800/50">
-                                                    <div className="text-[10px] text-zinc-500 uppercase">Location</div>
-                                                    <div className="text-xs font-medium text-zinc-300 truncate" title={activeLead.location}>{activeLead.location}</div>
+                                                <div className="bg-gray-50 dark:bg-zinc-950 p-2 rounded border border-gray-200 dark:border-zinc-800/50">
+                                                    <div className="text-[10px] text-gray-500 dark:text-zinc-500 uppercase">Location</div>
+                                                    <div className="text-xs font-medium text-gray-700 dark:text-zinc-300 truncate" title={activeLead.location}>{activeLead.location}</div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Journey Timeline */}
                                         <div className="space-y-4">
-                                            <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Customer Journey</h4>
-                                            <div className="relative pl-4 border-l border-zinc-800 space-y-6 ml-2">
+                                            <h4 className="text-[11px] font-bold text-gray-500 dark:text-zinc-500 uppercase tracking-widest pl-1">Customer Journey</h4>
+                                            <div className="relative pl-4 border-l border-gray-200 dark:border-zinc-800 space-y-6 ml-2">
                                                 {activeLead.journey.map((step, i) => (
                                                     <div key={i} className="relative group">
-                                                        <div className={`absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full border-2 border-zinc-950 ${i === activeLead.journey.length - 1 ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-600'}`}></div>
+                                                        <div className={`absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full border-2 border-gray-50 dark:border-zinc-950 ${i === activeLead.journey.length - 1 ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300 dark:bg-zinc-600'}`}></div>
                                                         <div className="flex flex-col gap-0.5">
-                                                            <div className="text-xs font-semibold text-zinc-200 group-hover:text-emerald-400 transition-colors">{step.text}</div>
-                                                            <div className="text-[10px] text-zinc-500 flex items-center gap-1.5">
+                                                            <div className="text-xs font-semibold text-gray-900 dark:text-zinc-200 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors">{step.text}</div>
+                                                            <div className="text-[10px] text-gray-500 dark:text-zinc-500 flex items-center gap-1.5">
                                                                 <Clock className="w-3 h-3" /> {step.time}
                                                             </div>
                                                         </div>
@@ -1016,10 +1016,10 @@ const Enquiries = () => {
                                                 value={activeLead.crmStatus}
                                                 onValueChange={(val) => handleCRMUpdate(activeLead.id, val)}
                                             >
-                                                <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-200 h-9">
+                                                <SelectTrigger className="bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-200 h-9">
                                                     <SelectValue />
                                                 </SelectTrigger>
-                                                <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-200">
+                                                <SelectContent className="bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-200">
                                                     <SelectItem value="New">New Lead</SelectItem>
                                                     <SelectItem value="Contacted">Contacted</SelectItem>
                                                     <SelectItem value="Negotiating">Negotiating</SelectItem>
@@ -1033,10 +1033,10 @@ const Enquiries = () => {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Quick Actions</label>
                                             <div className="grid grid-cols-2 gap-2">
-                                                <Button variant="outline" className="h-9 text-xs border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white justify-start" onClick={() => setQuoteModalOpen(true)}>
+                                                <Button variant="outline" className="h-9 text-xs border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-black dark:hover:text-white justify-start" onClick={() => setQuoteModalOpen(true)}>
                                                     <FileText className="w-3.5 h-3.5 mr-2 text-emerald-500" /> Quote
                                                 </Button>
-                                                <Button variant="outline" className="h-9 text-xs border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white justify-start" onClick={() => toast("Contact Saved")}>
+                                                <Button variant="outline" className="h-9 text-xs border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-black dark:hover:text-white justify-start" onClick={() => toast("Contact Saved")}>
                                                     <Users className="w-3.5 h-3.5 mr-2 text-blue-500" /> Save Contact
                                                 </Button>
                                             </div>
@@ -1044,11 +1044,11 @@ const Enquiries = () => {
 
                                         {/* Notes Section */}
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Internal Notes</label>
-                                            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 focus-within:ring-1 focus-within:ring-zinc-700 transition-all">
+                                            <label className="text-[10px] font-bold text-gray-500 dark:text-zinc-500 uppercase tracking-widest">Internal Notes</label>
+                                            <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg p-1 focus-within:ring-1 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-700 transition-all">
                                                 <Textarea
                                                     placeholder="Add a private note..."
-                                                    className="min-h-[80px] bg-transparent border-0 focus-visible:ring-0 text-xs text-zinc-300 resize-none"
+                                                    className="min-h-[80px] bg-transparent border-0 focus-visible:ring-0 text-xs text-gray-900 dark:text-zinc-300 resize-none"
                                                     onKeyDown={(e) => {
                                                         if (e.key === 'Enter' && !e.shiftKey) {
                                                             e.preventDefault();
@@ -1066,9 +1066,9 @@ const Enquiries = () => {
                                         {/* Recent Notes List */}
                                         <div className="space-y-3 pt-2">
                                             {activeLead.internalNotes.length > 0 && activeLead.internalNotes.map((n, i) => (
-                                                <div key={i} className="bg-zinc-900/50 p-3 rounded-lg border border-zinc-800/50">
-                                                    <p className="text-xs text-zinc-300 leading-relaxed">{n.text}</p>
-                                                    <p className="text-[9px] text-zinc-600 text-right mt-1.5">{n.date}</p>
+                                                <div key={i} className="bg-gray-50 dark:bg-zinc-900/50 p-3 rounded-lg border border-gray-200 dark:border-zinc-800/50">
+                                                    <p className="text-xs text-gray-700 dark:text-zinc-300 leading-relaxed">{n.text}</p>
+                                                    <p className="text-[9px] text-gray-500 dark:text-zinc-600 text-right mt-1.5">{n.date}</p>
                                                 </div>
                                             ))}
                                         </div>

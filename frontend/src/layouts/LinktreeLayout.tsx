@@ -71,7 +71,7 @@ const NavItem = ({ icon: Icon, label, active = false, count, badge, isNew, onCli
     >
         <div className="flex items-center gap-3">
             <div className="relative">
-                <Icon className={cn("w-4 h-4", active ? "text-zinc-100" : "text-zinc-500 group-hover:text-zinc-300")} />
+                <Icon className={cn("w-4 h-4", active ? "text-zinc-900 dark:text-white" : "text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-100")} />
                 {badge !== undefined && badge > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] px-1 rounded-full font-bold flex items-center justify-center animate-pulse">
                         {badge > 99 ? '99+' : badge}
