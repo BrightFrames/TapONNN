@@ -28,7 +28,8 @@ import {
     Sun,
     Grid,
     ChevronRight,
-    Heart
+    Heart,
+    User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -168,8 +169,8 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                         />
                     )}
                     <NavItem
-                        icon={Palette}
-                        label={t('nav.design')}
+                        icon={User}
+                        label="Profile"
                         active={location.pathname === '/design'}
                         onClick={() => handleNav('/design')}
                     />
@@ -221,7 +222,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                     />
                     <NavItem
                         icon={MessageCircle}
-                        label={isStoreMode ? t('nav.enquiries') : t('nav.message')}
+                        label={isStoreMode ? "Enquiry" : t('nav.message')}
                         active={location.pathname === '/messages' || location.pathname === '/enquiries'}
                         onClick={() => handleNav(isStoreMode ? '/enquiries' : '/messages')}
                         badge={unreadMessageCount}

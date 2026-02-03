@@ -5,7 +5,7 @@ import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { UserCircle, Layout, Image as ImageIcon, Type, Sparkles, Monitor, Video, Youtube, Play } from "lucide-react";
+import { UserCircle, Layout, Image as ImageIcon, Type, Sparkles, Monitor, Video, Youtube, Play, X, User, Pencil } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -13,29 +13,34 @@ import { getIconForThumbnail } from "@/utils/socialIcons";
 import { toast } from "sonner";
 import axios from "axios";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
 const Design = () => {
     const { user, selectedTheme, updateTheme, updateProfile, links: authLinks } = useAuth();
     const { t } = useTranslation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+    const [isEditOpen, setIsEditOpen] = useState(false);
 
-    // Local state for configuration to allow debounced updates (optional) or direct updates
-    // For now, we sync directly with user.design_config
+    // Local state for configuration
     const [config, setConfig] = useState<any>({
-        headerLayout: 'classic', // classic | hero
-        titleStyle: 'text', // text | logo
-        profileSize: 'medium', // small | medium | large
-        bgType: 'color', // color | gradient | image | video | youtube
+        headerLayout: 'classic',
+        titleStyle: 'text',
+        profileSize: 'medium',
+        bgType: 'color',
         bgVideoUrl: '',
         bgYoutubeUrl: '',
+        coverType: 'none', // none | image | video | youtube
+        coverUrl: '',
+        coverYoutubeUrl: '',
         ...user?.design_config
     });
 
@@ -55,44 +60,44 @@ const Design = () => {
         const newConfig = { ...config, [key]: value };
         setConfig(newConfig);
 
-        // Persist to backend
+        // Debounce or immediate persist? Immediate for now to see live changes if we were doing it side-by-side,
+        // but since it's a drawer, maybe we want to save on change too.
         updateProfile({
             design_config: newConfig
         });
     };
 
-    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video', isCover = false) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
-        // Basic validation
-        if (type === 'video' && file.size > 50 * 1024 * 1024) { // 50MB limit example
+        if (type === 'video' && file.size > 50 * 1024 * 1024) {
             toast.error("Video file is too large (max 50MB)");
             return;
         }
 
         const formData = new FormData();
         formData.append('file', file);
-
         const toastId = toast.loading(`Uploading ${type}...`);
 
         try {
-            const token = localStorage.getItem('token'); // or auth token
             const res = await axios.post(`${API_URL}/upload`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    // 'Authorization': `Bearer ${token}` // If your upload endpoint is protected
-                }
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
 
             if (res.data.success) {
                 toast.success(`${type === 'image' ? 'Image' : 'Video'} uploaded successfully!`, { id: toastId });
-                if (type === 'image') {
-                    handleConfigChange('bgImageUrl', res.data.url);
-                    handleConfigChange('bgType', 'image');
+                if (isCover) {
+                    handleConfigChange('coverUrl', res.data.url);
+                    handleConfigChange('coverType', type);
                 } else {
-                    handleConfigChange('bgVideoUrl', res.data.url);
-                    handleConfigChange('bgType', 'video');
+                    if (type === 'image') {
+                        handleConfigChange('bgImageUrl', res.data.url);
+                        handleConfigChange('bgType', 'image');
+                    } else {
+                        handleConfigChange('bgVideoUrl', res.data.url);
+                        handleConfigChange('bgType', 'video');
+                    }
                 }
             } else {
                 toast.error("Upload failed", { id: toastId });
@@ -111,7 +116,7 @@ const Design = () => {
 
     const handleYouTubeChange = (url: string) => {
         const id = getYouTubeId(url);
-        handleConfigChange('bgYoutubeUrl', url); // store full url
+        handleConfigChange('bgYoutubeUrl', url);
         if (id) {
             handleConfigChange('bgType', 'youtube');
         }
@@ -131,21 +136,14 @@ const Design = () => {
     } else if (bgType === 'gradient' && config.bgGradient) {
         bgStyle = { background: config.bgGradient };
     } else if (bgType === 'video' || bgType === 'youtube') {
-        // Video/YouTube handled via rendered element, mostly transparent bg here if needed
         bgStyle = { backgroundColor: 'black' };
     } else {
-        // Fallback to template defaults
         if (currentTemplate.bgImage) {
             bgStyle = { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-        } else if (currentTemplate.bgClass) {
-            // bgClass usually handles it via className, but we might want a fallback
         }
     }
 
-    // Check if we are using a custom background override (Image, Video, YouTube, Solid Color that isn't default)
-    // Actually, simple logic: if config has specific overrides set and active type matches
-
-    // Legacy support check: if user has bgImageUrl but no bgType set, assume image
+    // Fallback if no bgType but image exists
     if (!config.bgType && config.bgImageUrl) {
         bgStyle = { backgroundImage: `url(${config.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' };
     }
@@ -158,468 +156,345 @@ const Design = () => {
         }
     };
 
-    return (
-        <LinktreeLayout>
-            <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white">
+    // The Preview Content (Card)
+    const PreviewContent = () => (
+        <div className="relative z-10 w-full max-w-sm mx-auto">
+            {/* Profile Card Container - Glassmorphism */}
+            <div className={cn(
+                "backdrop-blur-xl bg-white/10 dark:bg-black/20 border border-white/20 dark:border-white/10 shadow-2xl rounded-[2.5rem] overflow-hidden transition-all duration-300",
+                "flex flex-col min-h-[600px]" // Fixed height for consistency
+            )}>
+                {/* Inner Scrollable Area */}
+                <div className={cn(
+                    "h-full w-full overflow-y-auto scrollbar-hide flex-1",
+                    !config.bgType && currentTemplate.bgClass // Apply class if no override
+                )} style={bgStyle}>
 
-                {/* Left Panel - Settings */}
-                <div className="flex-1 overflow-y-auto border-r border-gray-200 dark:border-zinc-900 bg-white/50 dark:bg-black/40 backdrop-blur-xl custom-scrollbar">
-                    <div className="p-8 pb-32 max-w-2xl mx-auto">
-                        <div className="flex items-center justify-between mb-8">
-                            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">{t('design.title')}</h1>
-                            <Button variant="outline" className="gap-2">
-                                <Sparkles className="w-4 h-4" /> {t('design.enhance')}
-                            </Button>
+                    {currentTemplate.bgImage && !bgType && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
+
+                    {/* Video/YouTube Background Rendering w/ Overlay */}
+                    {(bgType === 'video' && config.bgVideoUrl) && (
+                        <video src={config.bgVideoUrl} autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover z-0" />
+                    )}
+                    {(bgType === 'youtube' && config.bgYoutubeUrl) && (
+                        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                            <iframe
+                                src={`https://www.youtube.com/embed/${getYouTubeId(config.bgYoutubeUrl)}?autoplay=1&mute=1&controls=0&loop=1&playlist=${getYouTubeId(config.bgYoutubeUrl)}&playsinline=1`}
+                                className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2 opacity-80"
+                                allow="autoplay; encrypted-media"
+                            />
+                        </div>
+                    )}
+
+                    {/* COVER MEDIA SECTION - Top of the Card */}
+                    {config.coverType !== 'none' && (
+                        <div className="w-full aspect-[2/1] sm:aspect-[3/1] relative overflow-hidden bg-black/10">
+                            {config.coverType === 'image' && config.coverUrl && (
+                                <img src={config.coverUrl} className="w-full h-full object-cover" alt="Cover" />
+                            )}
+                            {config.coverType === 'video' && config.coverUrl && (
+                                <video src={config.coverUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                            )}
+                            {config.coverType === 'youtube' && config.coverYoutubeUrl && (
+                                <div className="absolute inset-0 pointer-events-none overflow-hidden bg-black">
+                                    <iframe
+                                        src={`https://www.youtube.com/embed/${getYouTubeId(config.coverYoutubeUrl)}?autoplay=1&mute=1&controls=0&loop=1&playlist=${getYouTubeId(config.coverYoutubeUrl)}&playsinline=1`}
+                                        className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2 opacity-90"
+                                        allow="autoplay; encrypted-media"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Content Overlay */}
+                    <div className={cn(
+                        "relative z-10 p-8 flex flex-col items-center",
+                        config.coverType !== 'none' ? "-mt-16" : "pt-16" // Overlap effect if cover exists
+                    )}>
+
+                        {/* Profile Picture */}
+                        {config.titleStyle !== 'logo' && (
+                            <div className={cn(
+                                "relative mb-4 rounded-full border-4 border-white/20 shadow-xl overflow-hidden",
+                                getProfileSizeClass()
+                            )}>
+                                {user?.avatar ? (
+                                    <img src={user.avatar} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white font-bold text-2xl">
+                                        {(user?.name || "U")[0].toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Name & Handle */}
+                        <div className="text-center mb-8">
+                            <h2 className={cn(
+                                "text-2xl font-bold tracking-tight mb-1",
+                                currentTemplate.textColor === 'text-black' || config.textColor === '#000000' || config.textColor === '#111827' ? "text-gray-900" : "text-white"
+                            )} style={{ color: config.textColor !== '#111827' ? config.textColor : undefined }}>
+                                {user?.name || user?.username}
+                            </h2>
+                            <p className={cn(
+                                "text-sm font-medium opacity-80",
+                                currentTemplate.textColor === 'text-black' || config.textColor === '#000000' || config.textColor === '#111827' ? "text-gray-600" : "text-white/80"
+                            )} style={{ color: config.textColor !== '#111827' ? config.textColor : undefined }}>
+                                @{user?.username}
+                            </p>
                         </div>
 
-                        <Tabs defaultValue="header" className="w-full">
-                            <TabsList className="flex flex-wrap h-auto gap-2 bg-transparent justify-start mb-8 p-0">
-                                <TabsTrigger value="header" className="data-[state=active]:bg-gray-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition-all">
-                                    <UserCircle className="w-4 h-4 mr-2" /> {t('design.header')}
-                                </TabsTrigger>
-                                <TabsTrigger value="theme" className="data-[state=active]:bg-gray-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition-all">
-                                    <Layout className="w-4 h-4 mr-2" /> {t('design.theme')}
-                                </TabsTrigger>
-                                <TabsTrigger value="wallpaper" className="data-[state=active]:bg-gray-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition-all">
-                                    <ImageIcon className="w-4 h-4 mr-2" /> {t('design.wallpaper')}
-                                </TabsTrigger>
-                                <TabsTrigger value="text" className="data-[state=active]:bg-gray-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition-all">
-                                    <Type className="w-4 h-4 mr-2" /> {t('design.text')}
-                                </TabsTrigger>
+                        {/* Social Icons */}
+                        <div className="flex gap-4 flex-wrap justify-center mb-8">
+                            {user?.social_links && Object.entries(user.social_links).map(([platform, url]) => {
+                                if (!url) return null;
+                                const Icon = getIconForThumbnail(platform);
+                                return Icon ? (
+                                    <a key={platform} className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/30 backdrop-blur-sm text-white transition-all hover:scale-110">
+                                        <Icon className="w-5 h-5" />
+                                    </a>
+                                ) : null;
+                            })}
+                        </div>
+
+                        {/* Links */}
+                        <div className="space-y-4 w-full">
+                            {authLinks.filter(l => l.isActive).map((link) => {
+                                const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
+                                return (
+                                    <a
+                                        key={link.id}
+                                        href={link.url || '#'}
+                                        className={cn(
+                                            "group block w-full flex items-center justify-center relative min-h-[56px] px-6 transition-all duration-300 hover:scale-[1.02]",
+                                            currentTemplate.buttonStyle || "bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white hover:bg-white/20"
+                                        )}
+                                    >
+                                        {Icon && (
+                                            <Icon className="absolute left-6 w-5 h-5 opacity-90 transition-transform group-hover:rotate-12" />
+                                        )}
+                                        <span className="truncate max-w-[200px] text-sm font-medium">{link.title}</span>
+                                    </a>
+                                );
+                            })}
+                        </div>
+
+                        <div className="mt-12 flex justify-center">
+                            <span className="text-[10px] opacity-60 text-white font-medium tracking-widest uppercase">TapONNN</span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Configuration Sheet Content
+    const ConfigurationContent = () => (
+        <div className="space-y-8 pb-20">
+            <Tabs defaultValue="header" className="w-full">
+                <TabsList className="flex flex-wrap h-auto gap-2 bg-transparent justify-start mb-8 p-0 sticky top-0 bg-white dark:bg-zinc-950 z-20 py-4 border-b border-zinc-200 dark:border-zinc-800">
+                    <TabsTrigger value="header" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
+                        <UserCircle className="w-4 h-4 mr-2" /> {t('design.header')}
+                    </TabsTrigger>
+                    <TabsTrigger value="theme" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
+                        <Layout className="w-4 h-4 mr-2" /> {t('design.theme')}
+                    </TabsTrigger>
+                    <TabsTrigger value="wallpaper" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
+                        <ImageIcon className="w-4 h-4 mr-2" /> {t('design.wallpaper')}
+                    </TabsTrigger>
+                    <TabsTrigger value="text" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
+                        <Type className="w-4 h-4 mr-2" /> {t('design.text')}
+                    </TabsTrigger>
+                </TabsList>
+
+                {/* HEADER TAB */}
+                <TabsContent value="header" className="space-y-10">
+
+                    {/* Cover Media Selection */}
+                    <div className="space-y-4">
+                        <Label>Profile Cover</Label>
+                        <Tabs value={config.coverType || 'none'} onValueChange={(v) => handleConfigChange('coverType', v)} className="w-full">
+                            <TabsList className="w-full grid grid-cols-4 bg-zinc-100 dark:bg-zinc-800 p-1">
+                                <TabsTrigger value="none" className="text-xs">None</TabsTrigger>
+                                <TabsTrigger value="image"><ImageIcon className="w-4 h-4" /></TabsTrigger>
+                                <TabsTrigger value="video"><Video className="w-4 h-4" /></TabsTrigger>
+                                <TabsTrigger value="youtube"><Youtube className="w-4 h-4" /></TabsTrigger>
                             </TabsList>
 
-                            {/* HEADER TAB */}
-                            <TabsContent value="header" className="space-y-10">
-                                {/* Profile Image Section */}
-                                <div className="space-y-4">
-                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Header</h2>
-                                    <div className="bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800 p-8 rounded-2xl flex items-center justify-center">
-                                        {user?.avatar ? (
-                                            <img src={user.avatar} alt="Profile" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-sm" />
-                                        ) : (
-                                            <div className="w-24 h-24 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-4xl text-gray-400 dark:text-zinc-500 font-bold">
-                                                {(user?.name || "U")[0].toUpperCase()}
-                                            </div>
-                                        )}
-                                        <Button className="ml-6 bg-white text-black hover:bg-zinc-200 rounded-full px-6">+ {t('common.add')}</Button>
-                                    </div>
-                                </div>
-
-                                {/* Layout Section */}
-                                <div className="space-y-4">
-                                    <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Profile image layout</h2>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => handleConfigChange('headerLayout', 'classic')}
-                                            className={`h-auto p-4 border-2 rounded-xl flex flex-col items-center gap-2 hover:bg-gray-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 transition-all ${config.headerLayout === 'classic' ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-zinc-900 text-white ring-2 ring-gray-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-black' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400'}`}
-                                        >
-                                            <div className="w-full flex justify-center pb-2">
-                                                <div className="w-8 h-8 rounded-full border-2 border-current"></div>
-                                            </div>
-                                            <span className="text-sm font-medium">Classic</span>
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => handleConfigChange('headerLayout', 'hero')}
-                                            className={`h-auto p-4 border-2 rounded-xl flex flex-col items-center gap-2 hover:bg-gray-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 transition-all ${config.headerLayout === 'hero' ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-zinc-900 text-white ring-2 ring-gray-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-black' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400'}`}
-                                        >
-                                            <div className="w-full h-8 border-2 border-dashed border-current rounded-md flex items-center justify-center">
-                                                <div className="w-4 h-4 rounded-full border-2 border-current"></div>
-                                            </div>
-                                            <span className="text-sm font-medium">Hero</span>
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                {/* Title Style */}
-                                <div className="space-y-4">
-                                    <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Title style</h2>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => handleConfigChange('titleStyle', 'text')}
-                                            className={`h-auto p-6 border-2 rounded-xl flex flex-col items-center gap-2 hover:bg-gray-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 transition-all ${config.titleStyle === 'text' ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-zinc-900 text-white ring-2 ring-gray-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-black' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400'}`}
-                                        >
-                                            <span className="font-serif text-xl">Aa</span>
-                                            <span className="text-xs font-medium mt-1">Text</span>
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => handleConfigChange('titleStyle', 'logo')}
-                                            className={`h-auto p-6 border-2 rounded-xl flex flex-col items-center gap-2 hover:bg-gray-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 transition-all ${config.titleStyle === 'logo' ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-zinc-900 text-white ring-2 ring-gray-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-black' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400'}`}
-                                        >
-                                            <ImageIcon className="w-6 h-6" />
-                                            <span className="text-xs font-medium mt-1">{t('design.logo')}</span>
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                {/* Size */}
-                                <div className="space-y-4">
-                                    <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{t('design.size')}</h2>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => handleConfigChange('profileSize', 'small')}
-                                            className={`h-auto py-3 px-4 border-2 rounded-full font-medium text-sm transition-all hover:bg-gray-100 dark:hover:bg-zinc-800 ${config.profileSize === 'small' ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-zinc-900 text-white ring-2 ring-gray-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-black' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400'}`}
-                                        >
-                                            {t('design.small')}
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => handleConfigChange('profileSize', 'large')}
-                                            className={`h-auto py-3 px-4 border-2 rounded-full font-medium text-sm transition-all hover:bg-gray-100 dark:hover:bg-zinc-800 ${config.profileSize === 'large' ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-zinc-900 text-white ring-2 ring-gray-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-black' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400'}`}
-                                        >
-                                            {t('design.large')}
-                                        </Button>
-                                    </div>
+                            <TabsContent value="image" className="pt-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-muted-foreground">Upload Cover Image</Label>
+                                    <input type="file" id="cover-image-upload" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'image', true)} />
+                                    <Button variant="outline" className="w-full h-20 border-dashed" onClick={() => document.getElementById('cover-image-upload')?.click()}>
+                                        <div className="flex flex-col items-center text-zinc-500">
+                                            {config.coverUrl ? <img src={config.coverUrl} className="h-12 w-full object-cover rounded opacity-50" /> : <ImageIcon className="w-6 h-6 mb-1" />}
+                                            {!config.coverUrl && <span className="text-xs">Upload</span>}
+                                        </div>
+                                    </Button>
                                 </div>
                             </TabsContent>
 
-                            {/* THEME TAB */}
-                            <TabsContent value="theme">
-                                <div className="space-y-6">
-                                    <h2 className="text-lg font-semibold">{t('design.themes')}</h2>
-
-                                    <div className="flex flex-col gap-4 mb-6">
-                                        <Label>Background Type</Label>
-                                        <Tabs value={config.bgType || 'color'} onValueChange={(v) => handleConfigChange('bgType', v)} className="w-full">
-                                            <TabsList className="w-full grid grid-cols-5">
-                                                <TabsTrigger value="color" title="Color"><div className="w-4 h-4 bg-blue-500 rounded-full"></div></TabsTrigger>
-                                                <TabsTrigger value="gradient" title="Gradient"><div className="w-4 h-4 bg-gradient-to-tr from-blue-400 to-purple-500 rounded-full"></div></TabsTrigger>
-                                                <TabsTrigger value="image" title="Image"><ImageIcon className="w-4 h-4" /></TabsTrigger>
-                                                <TabsTrigger value="video" title="Video"><Video className="w-4 h-4" /></TabsTrigger>
-                                                <TabsTrigger value="youtube" title="YouTube"><Youtube className="w-4 h-4" /></TabsTrigger>
-                                            </TabsList>
-
-                                            <TabsContent value="color" className="pt-4">
-                                                {/* Logic moved to Wallpaper tab content for consistent UI, but we can render quick picker here or redirection */}
-                                                <p className="text-sm text-muted-foreground mb-2">Select a solid color in the <b>Wallpaper</b> tab.</p>
-                                            </TabsContent>
-
-                                            <TabsContent value="image" className="pt-4">
-                                                {/* Hidden File Input */}
-                                                <input
-                                                    type="file"
-                                                    ref={fileInputRef}
-                                                    className="hidden"
-                                                    accept="image/*"
-                                                    onChange={(e) => handleFileUpload(e, 'image')}
-                                                />
-                                                <div
-                                                    className="aspect-video w-full rounded-xl border-2 border-dashed border-zinc-700 flex flex-col items-center justify-center text-zinc-500 hover:border-zinc-500 hover:bg-zinc-800 cursor-pointer transition-colors bg-zinc-900/50"
-                                                    onClick={() => fileInputRef.current?.click()}
-                                                >
-                                                    {config.bgImageUrl ? (
-                                                        <img src={config.bgImageUrl} className="h-full w-full object-cover rounded-xl opacity-50 hover:opacity-100 transition-opacity" />
-                                                    ) : (
-                                                        <>
-                                                            <ImageIcon className="w-8 h-8 mb-2" />
-                                                            <span className="text-sm font-medium">Upload Image</span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </TabsContent>
-
-                                            <TabsContent value="video" className="pt-4">
-                                                <div className="space-y-4">
-                                                    <Label>Upload Video (mp4, webm)</Label>
-                                                    <Input
-                                                        type="file"
-                                                        accept="video/mp4,video/webm"
-                                                        onChange={(e) => handleFileUpload(e, 'video')}
-                                                        className="cursor-pointer"
-                                                    />
-                                                    {config.bgVideoUrl && (
-                                                        <div className="text-xs text-green-500 flex items-center gap-1">
-                                                            <Play className="w-3 h-3" /> Video uploaded
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </TabsContent>
-
-                                            <TabsContent value="youtube" className="pt-4">
-                                                <div className="space-y-4">
-                                                    <Label>YouTube URL</Label>
-                                                    <Input
-                                                        placeholder="https://youtube.com/watch?v=..."
-                                                        value={config.bgYoutubeUrl || ''}
-                                                        onChange={(e) => handleYouTubeChange(e.target.value)}
-                                                    />
-                                                    <p className="text-xs text-muted-foreground">Video will auto-play muted.</p>
-                                                </div>
-                                            </TabsContent>
-                                        </Tabs>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-
-                                        {templates.map((t) => (
-                                            <div
-                                                key={t.id}
-                                                onClick={() => updateTheme(t.id)}
-                                                className={`cursor-pointer group flex flex-col gap-2`}
-                                            >
-                                                <div className={`relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-sm transition-all ${selectedTheme === t.id ? 'ring-4 ring-purple-600 ring-offset-2' : ''}`}>
-                                                    <div
-                                                        className="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                                                        style={t.bgImage ? { backgroundImage: `url(${t.bgImage})` } : { backgroundColor: t.id === 'blocks' ? '#7F00FF' : undefined }}
-                                                    >
-                                                        {!t.bgImage && (
-                                                            <div className={`w-full h-full ${t.bgClass}`} />
-                                                        )}
-                                                    </div>
-
-                                                    {/* "Aa" Text Overlay for Premium themes */}
-                                                    {(t.id === 'aura' || t.id === 'bliss' || t.id === 'blocks' || t.id === 'bloom' || t.id === 'breeze' || t.id === 'encore' || t.id === 'grid' || t.id === 'groove' || t.id === 'haven' || t.id === 'lake' || t.id === 'mineral' || t.id === 'nourish') && (
-                                                        <div className="absolute inset-0 flex flex-col p-4 justify-between">
-                                                            <span className={`text-3xl font-serif ${t.textColor === 'text-white' ? 'text-white' : 'text-black/80'}`}>Aa</span>
-                                                            {/* Mini Button Preview */}
-                                                            <div className={`w-full h-8 rounded-lg opacity-80 ${t.buttonStyle?.includes('bg-') ? '' : 'bg-white/20'}`} style={{ background: t.buttonStyle?.match(/bg-\[([^\]]+)\]/)?.[1] }} />
-                                                        </div>
-                                                    )}
-
-                                                    {/* Selection Check */}
-                                                    {selectedTheme === t.id && (
-                                                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-20">
-                                                            <div className="bg-white rounded-full p-1.5">
-                                                                <div className="w-3 h-3 bg-purple-600 rounded-full" />
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Premium Icon (mock) */}
-                                                    {(t.id === 'aura' || t.id === 'bliss' || t.id === 'blocks' || t.id === 'grid') && (
-                                                        <div className="absolute top-2 right-2 w-5 h-5 bg-black/30 backdrop-blur-sm p-1 rounded-full text-white flex items-center justify-center">
-                                                            <Sparkles className="w-3 h-3" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <span className="text-xs font-medium text-center text-gray-600 dark:text-zinc-400 group-hover:text-gray-900 dark:group-hover:text-white">{t.name}</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                            <TabsContent value="video" className="pt-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-muted-foreground">Upload Cover Video (Max 50MB)</Label>
+                                    <Input type="file" accept="video/mp4,video/webm" onChange={(e) => handleFileUpload(e, 'video', true)} />
                                 </div>
                             </TabsContent>
 
-                            <TabsContent value="wallpaper">
-                                <div className="space-y-8">
-                                    <h2 className="text-lg font-semibold">Background</h2>
-
-                                    {/* Solid Color */}
-                                    <div className="space-y-4">
-                                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Solid Color</h3>
-                                        <div className="grid grid-cols-6 gap-3 p-1">
-                                            {['#FFFFFF', '#F8FAFC', '#FEF3C7', '#DCFCE7', '#E0E7FF', '#FCE7F3', '#111827', '#1F2937', '#7C3AED', '#059669', '#DC2626', '#F59E0B'].map(color => (
-                                                <Button
-                                                    key={color}
-                                                    variant="ghost"
-                                                    onClick={() => handleConfigChange('bgColor', color)}
-                                                    className={`w-10 h-10 rounded-xl border-2 p-0 transition-all hover:scale-110 ${config.bgColor === color ? 'ring-2 ring-white ring-offset-2 ring-offset-black border-transparent' : 'border-zinc-800'}`}
-                                                    style={{ backgroundColor: color }}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Gradient Presets */}
-                                    <div className="space-y-4">
-                                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Gradient</h3>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            {[
-                                                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                                                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                                                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-                                                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                                                'linear-gradient(135deg, #30cfd0 0%, #330867 100%)'
-                                            ].map((gradient, i) => (
-                                                <Button
-                                                    key={i}
-                                                    variant="ghost"
-                                                    onClick={() => handleConfigChange('bgGradient', gradient)}
-                                                    className={`h-16 w-full rounded-xl border-2 p-0 transition-all hover:scale-105 ${config.bgGradient === gradient ? 'ring-2 ring-white ring-offset-2 ring-offset-black border-transparent' : 'border-zinc-800'}`}
-                                                    style={{ background: gradient }}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Custom Image URL */}
-                                    <div className="space-y-4">
-                                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{t('design.customImageUrl')}</h3>
-                                        <input
-                                            type="url"
-                                            placeholder="https://example.com/image.jpg"
-                                            value={config.bgImageUrl || ''}
-                                            onChange={(e) => handleConfigChange('bgImageUrl', e.target.value)}
-                                            className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl focus:ring-2 focus:ring-white/20 focus:border-white/20 text-white placeholder:text-zinc-600 outline-none"
-                                        />
-                                    </div>
-                                </div>
-                            </TabsContent>
-
-                            <TabsContent value="text">
-                                <div className="space-y-8">
-                                    <h2 className="text-lg font-semibold">Typography</h2>
-
-                                    {/* Font Family */}
-                                    <div className="space-y-4">
-                                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Font Family</h3>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {[
-                                                { name: 'Inter', className: 'font-sans' },
-                                                { name: 'Poppins', className: 'font-sans' },
-                                                { name: 'Playfair Display', className: 'font-serif' },
-                                                { name: 'Roboto Mono', className: 'font-mono' }
-                                            ].map((font) => (
-                                                <Button
-                                                    key={font.name}
-                                                    variant="outline"
-                                                    onClick={() => handleConfigChange('fontFamily', font.name)}
-                                                    className={`h-auto p-4 border-2 rounded-xl transition-all hover:border-zinc-600 hover:bg-zinc-800 flex flex-col items-center gap-1 ${config.fontFamily === font.name ? 'border-white bg-zinc-900 text-white ring-2 ring-white ring-offset-1 ring-offset-black' : 'border-zinc-800 bg-zinc-900/50 text-zinc-400'}`}
-                                                >
-                                                    <span className={`text-xl ${font.className}`}>Aa</span>
-                                                    <p className="text-xs mt-1 text-zinc-500">{font.name}</p>
-                                                </Button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Text Color */}
-                                    <div className="space-y-4">
-                                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{t('design.textColor')}</h3>
-                                        <div className="grid grid-cols-6 gap-3">
-                                            {['#111827', '#374151', '#6B7280', '#FFFFFF', '#7C3AED', '#059669'].map(color => (
-                                                <Button
-                                                    key={color}
-                                                    variant="ghost"
-                                                    onClick={() => handleConfigChange('textColor', color)}
-                                                    className={`w-10 h-10 rounded-xl border-2 p-0 transition-all hover:scale-110 flex items-center justify-center ${config.textColor === color ? 'ring-2 ring-white ring-offset-2 ring-offset-black border-transparent' : 'border-zinc-800'}`}
-                                                    style={{ backgroundColor: color === '#FFFFFF' ? '#000' : '#FFF' }}
-                                                >
-                                                    <span style={{ color }} className="font-bold">A</span>
-                                                </Button>
-                                            ))}
-                                        </div>
-                                    </div>
+                            <TabsContent value="youtube" className="pt-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-muted-foreground">YouTube Cover URL</Label>
+                                    <Input
+                                        placeholder="https://youtube.com/watch?v=..."
+                                        value={config.coverYoutubeUrl || ''}
+                                        onChange={(e) => {
+                                            const url = e.target.value;
+                                            handleConfigChange('coverYoutubeUrl', url);
+                                            // Auto-detected logic not needed here strictly if we rely on input
+                                        }}
+                                    />
                                 </div>
                             </TabsContent>
                         </Tabs>
                     </div>
-                </div>
 
-                {/* Right Panel - Preview */}
-                <div className="hidden lg:flex flex-1 bg-gray-50 dark:bg-black/5 items-center justify-center p-8 border-l border-gray-200 dark:border-zinc-800/50">
-                    <div className="sticky top-8">
-                        <div className="flex items-center justify-center gap-2 mb-6 text-gray-500 dark:text-zinc-500 text-sm">
-                            <span className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 px-3 py-1 rounded-full text-xs font-mono">
-                                tap2.me/{user?.username}
-                            </span>
-                            <Monitor className="w-4 h-4" />
-                        </div>
-
-                        {/* Phone Frame */}
-                        <div className="w-[320px] h-[650px] bg-black rounded-[3rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">
-                            {/* Content */}
-                            <div
-                                className={`h-full w-full overflow-y-auto ${currentTemplate.bgClass || 'bg-zinc-900'} ${currentTemplate.textColor} scrollbar-hide`}
-                                style={bgStyle}
-                            >
-                                {currentTemplate.bgImage && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
-
-                                <div className="relative z-10 p-6 pt-8 min-h-full flex flex-col">
-
-                                    {/* Configurable Header / Card */}
-                                    <div className={`flex flex-col items-center mb-8 relative w-full bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg`}>
-
-                                        {/* Cover Media - Only show if cover media exists */}
-                                        {(config.bgType === 'video' || config.bgType === 'youtube' || config.bgType === 'image') && (
-                                            <div className="w-full aspect-video">
-                                                {config.bgType === 'video' && config.bgVideoUrl && (
-                                                    <video
-                                                        src={config.bgVideoUrl}
-                                                        autoPlay
-                                                        muted
-                                                        loop
-                                                        playsInline
-                                                        className="w-full h-full object-cover bg-black"
-                                                    />
-                                                )}
-                                                {config.bgType === 'youtube' && config.bgYoutubeUrl && (
-                                                    <div className="w-full h-full relative overflow-hidden pointer-events-none bg-black">
-                                                        <iframe
-                                                            src={`https://www.youtube.com/embed/${getYouTubeId(config.bgYoutubeUrl)}?autoplay=1&mute=1&controls=0&loop=1&playlist=${getYouTubeId(config.bgYoutubeUrl)}&playsinline=1`}
-                                                            className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2"
-                                                            allow="autoplay; encrypted-media"
-                                                        />
-                                                    </div>
-                                                )}
-                                                {config.bgType === 'image' && config.bgImageUrl && (
-                                                    <img src={config.bgImageUrl} className="w-full h-full object-cover" alt="Cover" />
-                                                )}
-                                            </div>
-                                        )}
-
-                                        <div className={`flex flex-col items-center p-6 ${(config.bgType === 'video' || config.bgType === 'youtube' || config.bgType === 'image') ? '-mt-16 z-10' : ''}`}>
-
-                                            {config.titleStyle !== 'logo' && (
-                                                <div className={`mb-4 relative ${getProfileSizeClass()} rounded-full border-4 border-white/20 shadow-xl overflow-hidden`}>
-                                                    {user?.avatar ? (
-                                                        <img src={user.avatar} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white font-bold text-2xl">
-                                                            {(user?.name || "U")[0].toUpperCase()}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            <h2 className="text-xl font-bold tracking-tight text-center">@{user?.username}</h2>
-
-                                            {/* Social Icons (if any) */}
-                                            <div className="flex gap-3 flex-wrap justify-center mt-4">
-                                                {user?.social_links && Object.entries(user.social_links).map(([platform, url]) => {
-                                                    if (!url) return null;
-                                                    const Icon = getIconForThumbnail(platform);
-                                                    return Icon ? (
-                                                        <a key={platform} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 backdrop-blur-sm">
-                                                            <Icon className="w-4 h-4" />
-                                                        </a>
-                                                    ) : null;
-                                                })}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Links */}
-                                    <div className="space-y-3 w-full">
-                                        {authLinks.filter(l => l.isActive).map((link) => {
-                                            const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
-                                            return (
-                                                <a
-                                                    key={link.id}
-                                                    href={link.url || '#'}
-                                                    target="_blank" // Disable for preview?
-                                                    className={`block w-full flex items-center justify-center relative min-h-[50px] ${currentTemplate.buttonStyle}`}
-                                                >
-                                                    {Icon && (
-                                                        <Icon className="absolute left-4 w-5 h-5 opacity-90" />
-                                                    )}
-                                                    <span className="truncate max-w-[200px] text-sm font-medium">{link.title}</span>
-                                                </a>
-                                            );
-                                        })}
-                                    </div>
-
-                                    <div className="mt-auto pt-8 flex justify-center">
-                                        <span className="text-[10px] opacity-60">Tap2</span>
-                                    </div>
-                                </div>
-                            </div>
+                    {/* Header Controls (Existing Logic) */}
+                    <div className="space-y-4">
+                        <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Profile image layout</h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Button variant="outline" onClick={() => handleConfigChange('headerLayout', 'classic')} className={cn("h-auto p-4 border-2 rounded-xl flex flex-col items-center gap-2", config.headerLayout === 'classic' && "border-zinc-900 dark:border-white bg-zinc-50 dark:bg-zinc-900")}>
+                                <div className="w-8 h-8 rounded-full border-2 border-current"></div>
+                                <span className="text-sm font-medium">Classic</span>
+                            </Button>
+                            <Button variant="outline" onClick={() => handleConfigChange('headerLayout', 'hero')} className={cn("h-auto p-4 border-2 rounded-xl flex flex-col items-center gap-2", config.headerLayout === 'hero' && "border-zinc-900 dark:border-white bg-zinc-50 dark:bg-zinc-900")}>
+                                <div className="w-full h-8 border-2 border-dashed border-current rounded-md"></div>
+                                <span className="text-sm font-medium">Hero</span>
+                            </Button>
                         </div>
                     </div>
+                    <div className="space-y-4">
+                        <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{t('design.size')}</h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Button variant="outline" onClick={() => handleConfigChange('profileSize', 'small')} className={cn("rounded-full", config.profileSize === 'small' && "border-black dark:border-white ring-1 ring-black")}>{t('design.small')}</Button>
+                            <Button variant="outline" onClick={() => handleConfigChange('profileSize', 'large')} className={cn("rounded-full", config.profileSize === 'large' && "border-black dark:border-white ring-1 ring-black")}>{t('design.large')}</Button>
+                        </div>
+                    </div>
+                </TabsContent>
+
+                {/* THEME TAB */}
+                <TabsContent value="theme" className="space-y-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {templates.map((t) => (
+                            <div key={t.id} onClick={() => updateTheme(t.id)} className="cursor-pointer group flex flex-col gap-2">
+                                <div className={cn("relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-sm transition-all", selectedTheme === t.id && "ring-4 ring-purple-600 ring-offset-2")}>
+                                    <div className="absolute inset-0 w-full h-full bg-cover bg-center" style={t.bgImage ? { backgroundImage: `url(${t.bgImage})` } : { backgroundColor: t.id === 'blocks' ? '#7F00FF' : undefined }}>
+                                        {!t.bgImage && <div className={`w-full h-full ${t.bgClass}`} />}
+                                    </div>
+                                    {selectedTheme === t.id && <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-20"><div className="bg-white rounded-full p-1.5"><div className="w-3 h-3 bg-purple-600 rounded-full" /></div></div>}
+                                </div>
+                                <span className="text-xs font-medium text-center">{t.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </TabsContent>
+
+                {/* Wallpaper Tab */}
+                <TabsContent value="wallpaper" className="space-y-6">
+                    <div className="space-y-4">
+                        <Label>Background Type</Label>
+                        <Tabs value={config.bgType || 'color'} onValueChange={(v) => handleConfigChange('bgType', v)} className="w-full">
+                            <TabsList className="w-full grid grid-cols-5">
+                                <TabsTrigger value="color"><div className="w-4 h-4 bg-blue-500 rounded-full"></div></TabsTrigger>
+                                <TabsTrigger value="gradient"><div className="w-4 h-4 bg-gradient-to-tr from-blue-400 to-purple-500 rounded-full"></div></TabsTrigger>
+                                <TabsTrigger value="image"><ImageIcon className="w-4 h-4" /></TabsTrigger>
+                                <TabsTrigger value="video"><Video className="w-4 h-4" /></TabsTrigger>
+                                <TabsTrigger value="youtube"><Youtube className="w-4 h-4" /></TabsTrigger>
+                            </TabsList>
+                            {/* Inner content for each type */}
+                            <TabsContent value="image" className="pt-4">
+                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'image')} />
+                                <Button variant="outline" className="w-full h-24 border-dashed" onClick={() => fileInputRef.current?.click()}>
+                                    <div className="flex flex-col items-center">
+                                        <ImageIcon className="w-6 h-6 mb-2" />
+                                        <span>Upload Image</span>
+                                    </div>
+                                </Button>
+                            </TabsContent>
+                            <TabsContent value="video" className="pt-4">
+                                <Input type="file" accept="video/mp4,video/webm" onChange={(e) => handleFileUpload(e, 'video')} />
+                            </TabsContent>
+                            <TabsContent value="youtube" className="pt-4">
+                                <Input placeholder="YouTube URL" value={config.bgYoutubeUrl || ''} onChange={(e) => handleYouTubeChange(e.target.value)} />
+                            </TabsContent>
+                            <TabsContent value="color" className="pt-4">
+                                <div className="grid grid-cols-6 gap-2">
+                                    {['#FFFFFF', '#F8FAFC', '#FEF3C7', '#DCFCE7', '#E0E7FF', '#FCE7F3', '#111827', '#1F2937', '#7C3AED', '#059669', '#DC2626', '#F59E0B'].map(color => (
+                                        <button key={color} onClick={() => handleConfigChange('bgColor', color)} className="w-8 h-8 rounded-full border border-gray-200" style={{ backgroundColor: color }} />
+                                    ))}
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="gradient" className="pt-4">
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'].map((grad, i) => (
+                                        <button key={i} onClick={() => handleConfigChange('bgGradient', grad)} className="h-10 w-full rounded-md border border-gray-200" style={{ background: grad }} />
+                                    ))}
+                                </div>
+                            </TabsContent>
+                        </Tabs>
+                    </div>
+                </TabsContent>
+
+                {/* Text Tab */}
+                <TabsContent value="text" className="space-y-6">
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{t('design.textColor')}</h3>
+                        <div className="grid grid-cols-6 gap-3">
+                            {['#111827', '#374151', '#6B7280', '#FFFFFF', '#7C3AED', '#059669'].map(color => (
+                                <button key={color} onClick={() => handleConfigChange('textColor', color)} className={cn("w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold", config.textColor === color ? "border-purple-600" : "border-transparent bg-zinc-100 dark:bg-zinc-800")} style={{ color }}>A</button>
+                            ))}
+                        </div>
+                    </div>
+                </TabsContent>
+            </Tabs>
+        </div>
+    );
+
+    return (
+        <LinktreeLayout>
+            <div className="h-[calc(100vh-64px)] lg:h-screen w-full relative overflow-hidden bg-zinc-50/50 dark:bg-black flex items-center justify-center">
+
+                {/* Background Blurs for Atmosphere */}
+                <div className="absolute inset-0 z-0 opacity-30 dark:opacity-20 pointer-events-none">
+                    <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-500/30 rounded-full blur-[120px]" />
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/30 rounded-full blur-[120px]" />
+                </div>
+
+                {/* Top Right Action Button */}
+                <div className="absolute top-6 right-6 z-40">
+                    <Sheet open={isEditOpen} onOpenChange={setIsEditOpen}>
+                        <SheetTrigger asChild>
+                            <Button size="lg" className="rounded-full shadow-lg gap-2 bg-white text-black hover:bg-zinc-100 dark:bg-white dark:text-black font-semibold px-6 transition-all hover:scale-105">
+                                <Pencil className="w-4 h-4 text-purple-600" />
+                                Edit Profile
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent className="w-full sm:w-[500px] overflow-y-auto z-50 p-6 pt-12">
+                            <SheetHeader className="mb-6">
+                                <SheetTitle className="text-2xl font-bold">Edit Profile</SheetTitle>
+                                <SheetDescription>
+                                    Customize your profile appearance, theme, and layout.
+                                </SheetDescription>
+                            </SheetHeader>
+                            <ConfigurationContent />
+                        </SheetContent>
+                    </Sheet>
+                </div>
+
+                {/* Main Preview Area */}
+                <div className="relative z-10 w-full h-full max-w-4xl mx-auto flex items-center justify-center p-4 lg:p-10">
+                    <PreviewContent />
                 </div>
 
             </div>
