@@ -356,11 +356,80 @@ const PublicProfile = () => {
     const currentTemplate = templates.find(t => t.id === themeId) || templates[0];
 
     // Background style - Match Dashboard phone preview
-    const bgStyle = profile.design_config?.bgImageUrl
-        ? { backgroundImage: `url(${profile.design_config.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-        : currentTemplate.bgImage
-            ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-            : {};
+    // Background style - Match Dashboard phone preview
+    const bgType = profile.design_config?.bgType || 'color';
+    let bgStyle: any = {};
+
+    // Fallback for legacy data (if only bgImageUrl exists)
+    const hasCustomImage = !profile.design_config?.bgType && profile.design_config?.bgImageUrl;
+
+    if (bgType === 'image' || hasCustomImage) {
+        bgStyle = { backgroundImage: `url(${profile.design_config?.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' };
+    } else if (bgType === 'color' && profile.design_config?.bgColor) {
+        bgStyle = { backgroundColor: profile.design_config.bgColor };
+        // Prioritize template image if no custom color sets? No, custom overrides template.
+    } else if (bgType === 'gradient' && profile.design_config?.bgGradient) {
+        bgStyle = { background: profile.design_config.bgGradient };
+    } else {
+        // Template Fallback
+        if (currentTemplate.bgImage) {
+            bgStyle = { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' };
+        }
+    }
+
+    const getYouTubeId = (url: string) => {
+        if (!url) return null;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    };
+
+    // Check for cover media
+    const hasCover = bgType === 'image' || bgType === 'video' || bgType === 'youtube';
+
+    const renderCoverMedia = () => {
+        if (!hasCover) return null;
+
+        // Use aspect-video (16:9) for a prominent cover like the reference image
+        const coverHeightClass = "w-full aspect-video bg-black";
+        const contentClass = "w-full h-full object-cover";
+
+        if (bgType === 'video' && profile.design_config?.bgVideoUrl) {
+            return (
+                <div className={coverHeightClass}>
+                    <video
+                        src={profile.design_config.bgVideoUrl}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className={contentClass}
+                    />
+                </div>
+            );
+        }
+        if (bgType === 'youtube' && profile.design_config?.bgYoutubeUrl) {
+            const id = getYouTubeId(profile.design_config.bgYoutubeUrl);
+            return (
+                <div className={`${coverHeightClass} relative overflow-hidden pointer-events-none`}>
+                    <iframe
+                        src={`https://www.youtube.com/embed/${id}?autoplay=1&mute=1&controls=0&loop=1&playlist=${id}&playsinline=1`}
+                        className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2"
+                        allow="autoplay; encrypted-media"
+                    />
+                </div>
+            );
+        }
+        if (bgType === 'image' && profile.design_config?.bgImageUrl) {
+            // Image cover - no black background needed
+            return (
+                <div className="w-full aspect-video">
+                    <img src={profile.design_config.bgImageUrl} className={contentClass} alt="Cover" />
+                </div>
+            );
+        }
+        return null;
+    };
 
     const userInitial = (profile.name?.[0] || profile.username?.[0] || "U").toUpperCase();
 
@@ -369,9 +438,6 @@ const PublicProfile = () => {
             className={`min-h-screen w-full ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor || ''} relative`}
             style={bgStyle}
         >
-            {/* Overlay for readability */}
-            {currentTemplate.bgImage && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
-
             {/* Share Button - Top Right */}
             <div className="fixed top-6 right-6 z-50">
                 <Button
@@ -387,62 +453,71 @@ const PublicProfile = () => {
             {/* Main Content - Matches Phone Preview Layout */}
             <div className="relative z-10 max-w-md mx-auto px-6 pt-12 pb-32">
 
-                {/* Profile Header - Matches Phone Preview */}
-                <div className="flex flex-col items-center space-y-3">
-                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
-                        <AvatarImage src={profile.avatar} className="object-cover" />
-                        <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
-                            {userInitial}
-                        </AvatarFallback>
-                    </Avatar>
-                    <h2 className="text-xl font-bold tracking-tight">@{profile.username}</h2>
-
-                    {/* Bio - if present */}
-                    {profile.bio && (
-                        <p className="text-sm text-center opacity-80 max-w-xs">{profile.bio}</p>
-                    )}
-
-                    {/* Social Links - Match Phone Preview Design */}
-                    {profile.social_links && Object.keys(profile.social_links).length > 0 && (
-                        <div className="flex gap-3 flex-wrap justify-center px-4 mt-2">
-                            {Object.entries(profile.social_links).map(([platform, url]: [string, any]) => {
-                                if (!url) return null;
-                                const Icon = getIconForThumbnail(platform);
-                                const href = url.startsWith('http') ? url : `https://${url}`;
-                                return Icon ? (
-                                    <a
-                                        key={platform}
-                                        href={href}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer backdrop-blur-sm"
-                                        onClick={() => trackClick(null, href)}
-                                    >
-                                        <Icon className="w-5 h-5" />
-                                    </a>
-                                ) : null;
-                            })}
+                {/* Profile Header - Card Style */}
+                <div className={`flex flex-col items-center mb-6 relative w-full bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg border border-white/5`}>
+                    {/* Cover Media */}
+                    {renderCoverMedia() && (
+                        <div className="w-full relative">
+                            {renderCoverMedia()}
                         </div>
                     )}
 
-                    {/* Tab Switcher - Match Phone Preview Design */}
-                    <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
-                        <Button
-                            variant="ghost"
-                            onClick={() => setActiveTab('links')}
-                            className={`px-5 py-2 h-auto rounded-full text-sm font-semibold transition-all hover:bg-white/20 hover:text-white ${activeTab === 'links' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-current opacity-70 hover:opacity-100'}`}
-                        >
-                            Profile
-                        </Button>
-                        {profile?.is_store_identity && (
+                    <div className={`flex flex-col items-center p-6 w-full ${renderCoverMedia() ? '-mt-16 z-10' : ''}`}>
+                        <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
+                            <AvatarImage src={profile.avatar} className="object-cover" />
+                            <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
+                                {userInitial}
+                            </AvatarFallback>
+                        </Avatar>
+                        <h2 className="text-xl font-bold tracking-tight">@{profile.username}</h2>
+
+                        {/* Bio - if present */}
+                        {profile.bio && (
+                            <p className="text-sm text-center opacity-80 max-w-xs">{profile.bio}</p>
+                        )}
+
+                        {/* Social Links - Match Phone Preview Design */}
+                        {profile.social_links && Object.keys(profile.social_links).length > 0 && (
+                            <div className="flex gap-3 flex-wrap justify-center px-4 mt-2">
+                                {Object.entries(profile.social_links).map(([platform, url]: [string, any]) => {
+                                    if (!url) return null;
+                                    const Icon = getIconForThumbnail(platform);
+                                    const href = url.startsWith('http') ? url : `https://${url}`;
+                                    return Icon ? (
+                                        <a
+                                            key={platform}
+                                            href={href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer backdrop-blur-sm"
+                                            onClick={() => trackClick(null, href)}
+                                        >
+                                            <Icon className="w-5 h-5" />
+                                        </a>
+                                    ) : null;
+                                })}
+                            </div>
+                        )}
+
+                        {/* Tab Switcher - Match Phone Preview Design */}
+                        <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
                             <Button
                                 variant="ghost"
-                                onClick={() => setActiveTab('offerings')}
-                                className={`px-5 py-2 h-auto rounded-full text-sm font-semibold transition-all hover:bg-white/20 hover:text-white ${activeTab === 'offerings' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-current opacity-70 hover:opacity-100'}`}
+                                onClick={() => setActiveTab('links')}
+                                className={`px-5 py-2 h-auto rounded-full text-sm font-semibold transition-all hover:bg-white/20 hover:text-white ${activeTab === 'links' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-current opacity-70 hover:opacity-100'}`}
                             >
-                                Shop
+                                Profile
                             </Button>
-                        )}
+                            {profile?.is_store_identity && (
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setActiveTab('offerings')}
+                                    className={`px-5 py-2 h-auto rounded-full text-sm font-semibold transition-all hover:bg-white/20 hover:text-white ${activeTab === 'offerings' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-current opacity-70 hover:opacity-100'}`}
+                                >
+                                    Shop
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -518,9 +593,7 @@ const PublicProfile = () => {
 
                                         {/* Top Actions */}
                                         <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10">
-                                            <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors">
-                                                <X className="w-4 h-4" />
-                                            </Button>
+                                            {/* Empty or Add Share/Like button here later if needed */}
                                         </div>
 
                                         {/* Bottom Content */}
@@ -694,6 +767,8 @@ const PublicProfile = () => {
                 onOpenChange={setShareOpen}
                 username={profile.username}
                 url={window.location.href}
+                userAvatar={profile.avatar}
+                userName={profile.name}
             />
 
             <ConnectWithSupplierModal

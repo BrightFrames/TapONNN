@@ -6,6 +6,10 @@ interface DesignConfig {
     backgroundImage?: string;
     backgroundColor?: string;
     theme?: string;
+    bgType?: 'color' | 'gradient' | 'image' | 'video' | 'youtube';
+    bgVideoUrl?: string;
+    bgYoutubeUrl?: string;
+    bgGradient?: string;
 }
 
 interface ProfilePreviewCardProps {
@@ -47,7 +51,36 @@ export const ProfilePreviewCard = ({
             <div
                 className="absolute inset-0"
                 style={containerStyle}
-            />
+            >
+                {/* Video Background Support */}
+                {activeDesignConfig?.bgType === 'video' && activeDesignConfig.bgVideoUrl && (
+                    <video
+                        src={activeDesignConfig.bgVideoUrl}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-cover"
+                    />
+                )}
+                {activeDesignConfig?.bgType === 'youtube' && activeDesignConfig.bgYoutubeUrl && (
+                    <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
+                        {/* Static thumbnail for YouTube in small cards to save resources/performance ?? Or load iframe? 
+                            Let's try iframe but might be heavy for a list. 
+                            Actually, for cards, a thumbnail is better. 
+                            Let's use hqdefault for thumbnail.
+                        */}
+                        <img
+                            src={`https://img.youtube.com/vi/${(() => {
+                                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                                const match = activeDesignConfig.bgYoutubeUrl?.match(regExp);
+                                return (match && match[2].length === 11) ? match[2] : null;
+                            })()}/hqdefault.jpg`}
+                            className="absolute inset-0 w-full h-full object-cover"
+                        />
+                    </div>
+                )}
+            </div>
 
             {/* Overlay for contrast */}
             <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />

@@ -471,8 +471,24 @@ const resendOTP = async (req, res) => {
 // DELETE ACCOUNT
 const deleteAccount = async (req, res) => {
     const userId = req.user.id;
+    const { password } = req.body; // Expect password in body
+
+    if (!password) {
+        return res.status(400).json({ error: "Password is required to delete account" });
+    }
 
     try {
+        // Verify Password first
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        if (!isMatch) {
+            return res.status(401).json({ error: "Incorrect password. Account deletion failed." });
+        }
+
         // Import all models that have user data
         const Link = require('../models/Link');
         const Block = require('../models/Block');

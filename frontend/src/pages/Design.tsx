@@ -5,9 +5,10 @@ import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { UserCircle, Layout, Image as ImageIcon, Type, Sparkles, Monitor } from "lucide-react";
+import { UserCircle, Layout, Image as ImageIcon, Type, Sparkles, Monitor, Video, Youtube, Play } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { toast } from "sonner";
 import axios from "axios";
@@ -32,6 +33,9 @@ const Design = () => {
         headerLayout: 'classic', // classic | hero
         titleStyle: 'text', // text | logo
         profileSize: 'medium', // small | medium | large
+        bgType: 'color', // color | gradient | image | video | youtube
+        bgVideoUrl: '',
+        bgYoutubeUrl: '',
         ...user?.design_config
     });
 
@@ -41,6 +45,7 @@ const Design = () => {
                 headerLayout: 'classic',
                 titleStyle: 'text',
                 profileSize: 'medium',
+                bgType: 'color',
                 ...user.design_config
             });
         }
@@ -56,14 +61,20 @@ const Design = () => {
         });
     };
 
-    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
         const file = event.target.files?.[0];
         if (!file) return;
+
+        // Basic validation
+        if (type === 'video' && file.size > 50 * 1024 * 1024) { // 50MB limit example
+            toast.error("Video file is too large (max 50MB)");
+            return;
+        }
 
         const formData = new FormData();
         formData.append('file', file);
 
-        const toastId = toast.loading("Uploading image...");
+        const toastId = toast.loading(`Uploading ${type}...`);
 
         try {
             const token = localStorage.getItem('token'); // or auth token
@@ -75,24 +86,69 @@ const Design = () => {
             });
 
             if (res.data.success) {
-                toast.success("Image uploaded successfully!", { id: toastId });
-                handleConfigChange('bgImageUrl', res.data.url);
+                toast.success(`${type === 'image' ? 'Image' : 'Video'} uploaded successfully!`, { id: toastId });
+                if (type === 'image') {
+                    handleConfigChange('bgImageUrl', res.data.url);
+                    handleConfigChange('bgType', 'image');
+                } else {
+                    handleConfigChange('bgVideoUrl', res.data.url);
+                    handleConfigChange('bgType', 'video');
+                }
             } else {
                 toast.error("Upload failed", { id: toastId });
             }
         } catch (error) {
             console.error("Upload error:", error);
-            toast.error("Failed to upload image", { id: toastId });
+            toast.error(`Failed to upload ${type}`, { id: toastId });
+        }
+    };
+
+    const getYouTubeId = (url: string) => {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    };
+
+    const handleYouTubeChange = (url: string) => {
+        const id = getYouTubeId(url);
+        handleConfigChange('bgYoutubeUrl', url); // store full url
+        if (id) {
+            handleConfigChange('bgType', 'youtube');
         }
     };
 
     // Preview Helpers
     const currentTemplate = templates.find(t => t.id === selectedTheme) || templates[0];
-    const bgStyle = config.bgImageUrl
-        ? { backgroundImage: `url(${config.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-        : currentTemplate.bgImage
-            ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-            : {};
+
+    // Determine background styles
+    let bgStyle: any = {};
+    const bgType = config.bgType || 'color';
+
+    if (bgType === 'image' && config.bgImageUrl) {
+        bgStyle = { backgroundImage: `url(${config.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' };
+    } else if (bgType === 'color' && config.bgColor) {
+        bgStyle = { backgroundColor: config.bgColor };
+    } else if (bgType === 'gradient' && config.bgGradient) {
+        bgStyle = { background: config.bgGradient };
+    } else if (bgType === 'video' || bgType === 'youtube') {
+        // Video/YouTube handled via rendered element, mostly transparent bg here if needed
+        bgStyle = { backgroundColor: 'black' };
+    } else {
+        // Fallback to template defaults
+        if (currentTemplate.bgImage) {
+            bgStyle = { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' };
+        } else if (currentTemplate.bgClass) {
+            // bgClass usually handles it via className, but we might want a fallback
+        }
+    }
+
+    // Check if we are using a custom background override (Image, Video, YouTube, Solid Color that isn't default)
+    // Actually, simple logic: if config has specific overrides set and active type matches
+
+    // Legacy support check: if user has bgImageUrl but no bgType set, assume image
+    if (!config.bgType && config.bgImageUrl) {
+        bgStyle = { backgroundImage: `url(${config.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' };
+    }
 
     const getProfileSizeClass = () => {
         switch (config.profileSize) {
@@ -226,23 +282,78 @@ const Design = () => {
                                 <div className="space-y-6">
                                     <h2 className="text-lg font-semibold">{t('design.themes')}</h2>
 
-                                    {/* Hidden File Input */}
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                        accept="image/*"
-                                        onChange={handleImageUpload}
-                                    />
+                                    <div className="flex flex-col gap-4 mb-6">
+                                        <Label>Background Type</Label>
+                                        <Tabs value={config.bgType || 'color'} onValueChange={(v) => handleConfigChange('bgType', v)} className="w-full">
+                                            <TabsList className="w-full grid grid-cols-5">
+                                                <TabsTrigger value="color" title="Color"><div className="w-4 h-4 bg-blue-500 rounded-full"></div></TabsTrigger>
+                                                <TabsTrigger value="gradient" title="Gradient"><div className="w-4 h-4 bg-gradient-to-tr from-blue-400 to-purple-500 rounded-full"></div></TabsTrigger>
+                                                <TabsTrigger value="image" title="Image"><ImageIcon className="w-4 h-4" /></TabsTrigger>
+                                                <TabsTrigger value="video" title="Video"><Video className="w-4 h-4" /></TabsTrigger>
+                                                <TabsTrigger value="youtube" title="YouTube"><Youtube className="w-4 h-4" /></TabsTrigger>
+                                            </TabsList>
+
+                                            <TabsContent value="color" className="pt-4">
+                                                {/* Logic moved to Wallpaper tab content for consistent UI, but we can render quick picker here or redirection */}
+                                                <p className="text-sm text-muted-foreground mb-2">Select a solid color in the <b>Wallpaper</b> tab.</p>
+                                            </TabsContent>
+
+                                            <TabsContent value="image" className="pt-4">
+                                                {/* Hidden File Input */}
+                                                <input
+                                                    type="file"
+                                                    ref={fileInputRef}
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={(e) => handleFileUpload(e, 'image')}
+                                                />
+                                                <div
+                                                    className="aspect-video w-full rounded-xl border-2 border-dashed border-zinc-700 flex flex-col items-center justify-center text-zinc-500 hover:border-zinc-500 hover:bg-zinc-800 cursor-pointer transition-colors bg-zinc-900/50"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                >
+                                                    {config.bgImageUrl ? (
+                                                        <img src={config.bgImageUrl} className="h-full w-full object-cover rounded-xl opacity-50 hover:opacity-100 transition-opacity" />
+                                                    ) : (
+                                                        <>
+                                                            <ImageIcon className="w-8 h-8 mb-2" />
+                                                            <span className="text-sm font-medium">Upload Image</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </TabsContent>
+
+                                            <TabsContent value="video" className="pt-4">
+                                                <div className="space-y-4">
+                                                    <Label>Upload Video (mp4, webm)</Label>
+                                                    <Input
+                                                        type="file"
+                                                        accept="video/mp4,video/webm"
+                                                        onChange={(e) => handleFileUpload(e, 'video')}
+                                                        className="cursor-pointer"
+                                                    />
+                                                    {config.bgVideoUrl && (
+                                                        <div className="text-xs text-green-500 flex items-center gap-1">
+                                                            <Play className="w-3 h-3" /> Video uploaded
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </TabsContent>
+
+                                            <TabsContent value="youtube" className="pt-4">
+                                                <div className="space-y-4">
+                                                    <Label>YouTube URL</Label>
+                                                    <Input
+                                                        placeholder="https://youtube.com/watch?v=..."
+                                                        value={config.bgYoutubeUrl || ''}
+                                                        onChange={(e) => handleYouTubeChange(e.target.value)}
+                                                    />
+                                                    <p className="text-xs text-muted-foreground">Video will auto-play muted.</p>
+                                                </div>
+                                            </TabsContent>
+                                        </Tabs>
+                                    </div>
 
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                        <div
-                                            className="aspect-[4/5] rounded-2xl border-2 border-dashed border-zinc-700 flex flex-col items-center justify-center text-zinc-500 hover:border-zinc-500 hover:bg-zinc-800 cursor-pointer transition-colors"
-                                            onClick={() => fileInputRef.current?.click()}
-                                        >
-                                            <Sparkles className="w-6 h-6 mb-2" />
-                                            <span className="text-xs font-medium">{t('common.custom')}</span>
-                                        </div>
 
                                         {templates.map((t) => (
                                             <div
@@ -418,36 +529,67 @@ const Design = () => {
                             >
                                 {currentTemplate.bgImage && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
 
-                                <div className="relative z-10 p-6 pt-16 min-h-full flex flex-col">
+                                <div className="relative z-10 p-6 pt-8 min-h-full flex flex-col">
 
-                                    {/* Configurable Header */}
-                                    <div className={`flex flex-col items-center mb-8 ${config.headerLayout === 'hero' ? 'w-full bg-white/10 backdrop-blur-md rounded-2xl p-6' : ''}`}>
+                                    {/* Configurable Header / Card */}
+                                    <div className={`flex flex-col items-center mb-8 relative w-full bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg`}>
 
-                                        {config.titleStyle !== 'logo' && (
-                                            <div className={`mb-4 relative ${getProfileSizeClass()} rounded-full border-4 border-white/20 shadow-xl overflow-hidden`}>
-                                                {user?.avatar ? (
-                                                    <img src={user.avatar} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white font-bold text-2xl">
-                                                        {(user?.name || "U")[0].toUpperCase()}
+                                        {/* Cover Media - Only show if cover media exists */}
+                                        {(config.bgType === 'video' || config.bgType === 'youtube' || config.bgType === 'image') && (
+                                            <div className="w-full aspect-video">
+                                                {config.bgType === 'video' && config.bgVideoUrl && (
+                                                    <video
+                                                        src={config.bgVideoUrl}
+                                                        autoPlay
+                                                        muted
+                                                        loop
+                                                        playsInline
+                                                        className="w-full h-full object-cover bg-black"
+                                                    />
+                                                )}
+                                                {config.bgType === 'youtube' && config.bgYoutubeUrl && (
+                                                    <div className="w-full h-full relative overflow-hidden pointer-events-none bg-black">
+                                                        <iframe
+                                                            src={`https://www.youtube.com/embed/${getYouTubeId(config.bgYoutubeUrl)}?autoplay=1&mute=1&controls=0&loop=1&playlist=${getYouTubeId(config.bgYoutubeUrl)}&playsinline=1`}
+                                                            className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2"
+                                                            allow="autoplay; encrypted-media"
+                                                        />
                                                     </div>
+                                                )}
+                                                {config.bgType === 'image' && config.bgImageUrl && (
+                                                    <img src={config.bgImageUrl} className="w-full h-full object-cover" alt="Cover" />
                                                 )}
                                             </div>
                                         )}
 
-                                        <h2 className="text-xl font-bold tracking-tight text-center">@{user?.username}</h2>
+                                        <div className={`flex flex-col items-center p-6 ${(config.bgType === 'video' || config.bgType === 'youtube' || config.bgType === 'image') ? '-mt-16 z-10' : ''}`}>
 
-                                        {/* Social Icons (if any) */}
-                                        <div className="flex gap-3 flex-wrap justify-center mt-4">
-                                            {user?.social_links && Object.entries(user.social_links).map(([platform, url]) => {
-                                                if (!url) return null;
-                                                const Icon = getIconForThumbnail(platform);
-                                                return Icon ? (
-                                                    <a key={platform} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 backdrop-blur-sm">
-                                                        <Icon className="w-4 h-4" />
-                                                    </a>
-                                                ) : null;
-                                            })}
+                                            {config.titleStyle !== 'logo' && (
+                                                <div className={`mb-4 relative ${getProfileSizeClass()} rounded-full border-4 border-white/20 shadow-xl overflow-hidden`}>
+                                                    {user?.avatar ? (
+                                                        <img src={user.avatar} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white font-bold text-2xl">
+                                                            {(user?.name || "U")[0].toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <h2 className="text-xl font-bold tracking-tight text-center">@{user?.username}</h2>
+
+                                            {/* Social Icons (if any) */}
+                                            <div className="flex gap-3 flex-wrap justify-center mt-4">
+                                                {user?.social_links && Object.entries(user.social_links).map(([platform, url]) => {
+                                                    if (!url) return null;
+                                                    const Icon = getIconForThumbnail(platform);
+                                                    return Icon ? (
+                                                        <a key={platform} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 backdrop-blur-sm">
+                                                            <Icon className="w-4 h-4" />
+                                                        </a>
+                                                    ) : null;
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
 

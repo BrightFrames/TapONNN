@@ -159,12 +159,14 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
 
                 <SidebarSectionTitle>{t('nav.manage')}</SidebarSectionTitle>
                 <div className="space-y-[1px]">
-                    <NavItem
-                        icon={List}
-                        label={t('nav.links')}
-                        active={location.pathname === '/dashboard'}
-                        onClick={() => handleNav('/dashboard')}
-                    />
+                    {!isStoreMode && (
+                        <NavItem
+                            icon={List}
+                            label={t('nav.links')}
+                            active={location.pathname === '/dashboard'}
+                            onClick={() => handleNav('/dashboard')}
+                        />
+                    )}
                     <NavItem
                         icon={Palette}
                         label={t('nav.design')}
@@ -327,6 +329,12 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
     };
 
     // Fetch unread count on mount and set up socket listener
+    useEffect(() => {
+        if (user?.active_profile_mode === 'store' && location.pathname === '/dashboard') {
+            navigate('/dashboard/business?tab=shop');
+        }
+    }, [user?.active_profile_mode, location.pathname, navigate]);
+
     useEffect(() => {
         fetchUnreadCount();
 

@@ -20,7 +20,7 @@ import Earnings from "./pages/Earnings";
 import EarnOverview from "./pages/EarnOverview";
 import Settings from "./pages/Settings";
 import PublicProfile from "./pages/PublicProfile";
-import PublicStore from "./pages/PublicStore";
+import PublicStore from "./pages/PublicStore_New";
 import BusinessProfile from "./pages/BusinessProfile";
 import LinktreeMarketplace from "./pages/LinktreeMarketplace";
 import MyApps from "./pages/MyApps";

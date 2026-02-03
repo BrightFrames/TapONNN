@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import SortableLinkCard from "@/components/SortableLinkCard";
-// import BlockEditorModal from "@/components/BlockEditorModal"; // Unused import
+import BlockEditorModal from "@/components/BlockEditorModal";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -641,6 +641,28 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Block Editor Modals */}
+            <BlockEditorModal
+                open={isAddingBlock}
+                onOpenChange={setIsAddingBlock}
+                onSave={async (block) => {
+                    await addBlock(block);
+                    setIsAddingBlock(false);
+                }}
+            />
+
+            <BlockEditorModal
+                open={!!editingBlock}
+                onOpenChange={(open) => !open && setEditingBlock(null)}
+                block={editingBlock}
+                onSave={async (block) => {
+                    if (editingBlock) {
+                        await updateBlock(editingBlock._id, block);
+                        setEditingBlock(null);
+                    }
+                }}
+            />
         </LinktreeLayout>
     );
 };

@@ -3,7 +3,7 @@ import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Settings, Share, Plus, EyeOff, Eye, ExternalLink, Instagram, Globe, Search, GripVertical, Heart, MessageCircle, Smartphone } from "lucide-react";
+import { Settings, Share, Plus, EyeOff, Eye, ExternalLink, Instagram, Globe, Search, GripVertical, Heart, MessageCircle, Smartphone, Store } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -12,9 +12,17 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, Trash2, MessageSquare, Check, X, Clock, CreditCard, Package } from "lucide-react";
+import { Loader2, Trash2, MessageSquare, Check, X, Clock, CreditCard, Package, MoreHorizontal, Copy, Edit } from "lucide-react";
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -25,7 +33,7 @@ import { FileUpload } from "@/components/FileUpload";
 import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 import { useTranslation } from "react-i18next";
 import { SocialLinksDialog } from "@/components/SocialLinksDialog";
-import { Copy, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { ProductPluginSuggestions } from "@/components/shop/ProductPluginSuggestions";
 import { PluginConfigModal } from "@/components/marketplace/PluginConfigModal";
 import { supabase } from "@/lib/supabase";
@@ -85,6 +93,8 @@ const Shop = () => {
     const [loadingProducts, setLoadingProducts] = useState(true);
     const [loadingOrders, setLoadingOrders] = useState(false);
     const [isAddOpen, setIsAddOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [previewTab, setPreviewTab] = useState<'links' | 'shop'>('shop');
@@ -119,7 +129,11 @@ const Shop = () => {
 
     const fetchProducts = async () => {
         const token = localStorage.getItem('auth_token');
-        if (!token) return;
+        if (!token) {
+            console.log('No auth token found');
+            setLoadingProducts(false);
+            return;
+        }
 
         try {
             const res = await fetch(`${API_URL}/products`, {
@@ -128,9 +142,17 @@ const Shop = () => {
             if (res.ok) {
                 const data = await res.json();
                 setProducts(data);
+            } else if (res.status === 401) {
+                console.error('401 Unauthorized - token may be expired');
+                toast.error('Session expired. Please log in again.');
+                setProducts([]); // Set empty products array
+            } else {
+                console.error('Failed to fetch products:', res.status);
+                setProducts([]);
             }
         } catch (error) {
             console.error("Failed to fetch products", error);
+            setProducts([]); // Ensure products is set to empty array on error
         } finally {
             setLoadingProducts(false);
         }
@@ -316,7 +338,7 @@ const Shop = () => {
             const data = await res.json();
             setProducts([data.product, ...products]);
             setIsAddOpen(false);
-            setNewProduct({ title: "", price: "", description: "", type: "physical", image_url: "", file_url: "" });
+            setNewProduct({ title: "", price: "", description: "", type: "physical_product", image_url: "", file_url: "" });
             toast.success("Product created successfully");
         } catch (error) {
             toast.error("Error creating product");
@@ -338,6 +360,39 @@ const Shop = () => {
             toast.success("Product deleted");
         } catch (error) {
             toast.error("Failed to delete");
+        }
+    };
+
+    const handleDuplicateProduct = async (product: Product) => {
+        const token = localStorage.getItem('auth_token');
+        try {
+            const duplicatedProduct = {
+                title: `${product.title} (Copy)`,
+                price: product.price,
+                description: product.description,
+                product_type: product.type,
+                image_url: product.image_url,
+                file_url: product.file_url
+            };
+
+            const res = await fetch(`${API_URL}/products`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(duplicatedProduct)
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setProducts([data.product, ...products]);
+                toast.success('Product duplicated successfully!');
+            } else {
+                toast.error('Failed to duplicate product');
+            }
+        } catch (error) {
+            toast.error('Error duplicating product');
         }
     };
 
@@ -435,7 +490,24 @@ const Shop = () => {
                                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Shop</h1>
                                     <p className="text-gray-500 dark:text-zinc-400 text-xs sm:text-sm mt-1 hidden sm:block">Manage your products • Drag to reorder</p>
                                 </div>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    {/* Language Switcher */}
+                                    <Select value={t('lang')} onValueChange={(lang) => {
+                                        // Change language via i18n
+                                        const i18n = (window as any).i18n;
+                                        if (i18n) {
+                                            i18n.changeLanguage(lang);
+                                            toast.success(`Language changed to ${lang === 'en' ? 'English' : 'हिंदी'}`);
+                                        }
+                                    }}>
+                                        <SelectTrigger className="w-[90px] sm:w-[110px] h-9 bg-zinc-100 dark:bg-zinc-900 border-zinc-300 dark:border-zinc-800 rounded-lg text-xs sm:text-sm">
+                                            <SelectValue placeholder="Language" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="en">🇬🇧 English</SelectItem>
+                                            <SelectItem value="hi">🇮🇳 हिंदी</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                     {/* Profile Link */}
                                     <div className="relative group w-full sm:w-auto">
                                         <div
@@ -468,7 +540,7 @@ const Shop = () => {
 
                         {/* Add Button, Socials & Clear All */}
                         <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8">
-                            {/* <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                                 <DialogTrigger asChild>
                                     <Button
                                         className="w-3/4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-zinc-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
@@ -495,7 +567,7 @@ const Shop = () => {
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="grid gap-2">
-                                                <Label htmlFor="price">{t('shop.price')}</Label>
+                                                <Label htmlFor="price">Price (₹)</Label>
                                                 <Input
                                                     id="price"
                                                     type="number"
@@ -553,6 +625,29 @@ const Shop = () => {
                                                 </div>
                                             </>
                                         )}
+
+                                        {/* Marketplace Plugins - Only for non-digital products */}
+                                        {newProduct.type !== 'digital_product' && newProduct.type && (
+                                            <div className="grid gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                                <div className="flex items-center gap-2">
+                                                    <Store className="w-4 h-4 text-gray-600" />
+                                                    <Label className="text-sm font-semibold text-gray-900">Marketplace Plugins</Label>
+                                                </div>
+                                                <p className="text-xs text-gray-600">
+                                                    Enhance your {newProduct.type.replace('_', ' ')} with shipping, payment, and other plugins from the marketplace.
+                                                </p>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => window.location.href = '/marketplace'}
+                                                    className="w-full border-gray-300 hover:border-gray-900 hover:bg-gray-100"
+                                                >
+                                                    <Store className="w-4 h-4 mr-2" />
+                                                    Browse Marketplace
+                                                </Button>
+                                            </div>
+                                        )}
+
                                         <div className="grid gap-2">
                                             <Label>Product Image</Label>
                                             <ImageUpload
@@ -568,7 +663,7 @@ const Shop = () => {
                                         </DialogFooter>
                                     </form>
                                 </DialogContent>
-                            </Dialog> */}
+                            </Dialog>
                             <SocialLinksDialog
                                 initialLinks={user?.social_links || {}}
                                 onSave={async () => { }}
@@ -630,9 +725,41 @@ const Shop = () => {
                                                 onCheckedChange={() => handleToggleProduct(product._id, product.is_active)}
                                                 className="data-[state=checked]:bg-green-500"
                                             />
-                                            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full" onClick={() => handleDeleteProduct(product._id)}>
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
+
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-40 bg-zinc-900 border-zinc-800 text-zinc-300">
+                                                    <DropdownMenuItem
+                                                        onClick={() => {
+                                                            setEditingProduct(product);
+                                                            setIsEditOpen(true);
+                                                        }}
+                                                        className="cursor-pointer hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white"
+                                                    >
+                                                        <Settings className="mr-2 h-4 w-4" />
+                                                        <span>Edit</span>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleDuplicateProduct(product)}
+                                                        className="cursor-pointer hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white"
+                                                    >
+                                                        <Copy className="mr-2 h-4 w-4" />
+                                                        <span>Duplicate</span>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator className="bg-zinc-800" />
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleDeleteProduct(product._id)}
+                                                        className="cursor-pointer text-red-400 hover:text-red-300 hover:bg-red-950/30 focus:bg-red-950/30 focus:text-red-300"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        <span>Delete</span>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
                                     </div>
                                 ))

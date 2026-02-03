@@ -183,10 +183,12 @@ exports.getAllProducts = async (req, res) => {
         const { Product } = require('../models/Product');
 
         // Fetch all active products with their owner's profile info
+        // Exclude digital products from marketplace/explore
         const products = await Product.aggregate([
             {
                 $match: {
-                    is_active: true
+                    is_active: true,
+                    product_type: { $ne: 'digital_product' } // Exclude digital products from marketplace
                 }
             },
             {

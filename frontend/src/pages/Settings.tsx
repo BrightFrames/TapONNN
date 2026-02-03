@@ -3,6 +3,14 @@ import { toast } from "sonner";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 import AvatarUpload from "@/components/AvatarUpload";
 import SocialLinksManager from "@/components/SocialLinksManager";
@@ -246,24 +254,16 @@ const Settings = () => {
     };
 
     const [deleting, setDeleting] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deletePassword, setDeletePassword] = useState("");
 
-    const handleDeleteAccount = async () => {
-        const confirmed = window.confirm(
-            "Are you sure you want to delete your account? This action cannot be undone."
-        );
+    const handleDeleteAccount = () => {
+        setDeleteDialogOpen(true);
+    };
 
-        if (!confirmed) return;
-
-        // Double confirmation for safety
-        const doubleConfirmed = window.confirm(
-            "This will permanently delete:\n\n• Your profile and all links\n• All analytics and click data\n• All products and orders\n• Your username (may be claimed by others)\n\nType 'DELETE' in the next prompt to confirm."
-        );
-
-        if (!doubleConfirmed) return;
-
-        const finalConfirm = window.prompt("Type DELETE to confirm account deletion:");
-        if (finalConfirm !== "DELETE") {
-            toast.info("Account deletion cancelled.");
+    const confirmDeleteAccount = async () => {
+        if (!deletePassword) {
+            toast.error("Please enter your password");
             return;
         }
 
@@ -274,9 +274,12 @@ const Settings = () => {
             const response = await fetch(`${API_URL}/auth/delete-account`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ password: deletePassword })
             });
+
 
             const data = await response.json();
 
@@ -559,7 +562,44 @@ const Settings = () => {
                 username={username}
                 url={`${window.location.origin}/${username}/store`}
                 type="store"
+                userAvatar={avatarUrl}
+                userName={fullName}
             />
+
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-red-600">Delete Account</DialogTitle>
+                        <DialogDescription>
+                            This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                            <br /><br />
+                            Please enter your password to confirm.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                            id="password"
+                            type="password"
+                            value={deletePassword}
+                            onChange={(e) => setDeletePassword(e.target.value)}
+                            placeholder="Enter your password"
+                            className="mt-2"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+                        <Button
+                            variant="destructive"
+                            onClick={confirmDeleteAccount}
+                            disabled={deleting || !deletePassword}
+                        >
+                            {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                            Delete Account
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </LinktreeLayout>
     );
 };
