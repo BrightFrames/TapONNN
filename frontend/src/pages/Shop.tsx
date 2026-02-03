@@ -744,6 +744,17 @@ const Shop = () => {
                                                         <span>Edit</span>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
+                                                        onClick={() => {
+                                                            const url = `${window.location.origin}/${username}/store/product/${product._id}`;
+                                                            navigator.clipboard.writeText(url);
+                                                            toast.success("Product link copied!");
+                                                        }}
+                                                        className="cursor-pointer hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white"
+                                                    >
+                                                        <Share className="mr-2 h-4 w-4" />
+                                                        <span>Copy Link</span>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
                                                         onClick={() => handleDuplicateProduct(product)}
                                                         className="cursor-pointer hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white"
                                                     >

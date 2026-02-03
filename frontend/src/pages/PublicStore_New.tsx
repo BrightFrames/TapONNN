@@ -30,7 +30,7 @@ interface StoreProfile {
 }
 
 const PublicStore_New = () => {
-    const { username } = useParams();
+    const { username, productId } = useParams();
     const navigate = useNavigate();
     const [shareOpen, setShareOpen] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -76,6 +76,16 @@ const PublicStore_New = () => {
 
         fetchStore();
     }, [username]);
+
+    // Effect to handle deep linking to product
+    useEffect(() => {
+        if (store && productId && store.products) {
+            const product = store.products.find(p => p._id === productId);
+            if (product) {
+                setSelectedProduct(product);
+            }
+        }
+    }, [store, productId]);
 
     if (loading) {
         return (
@@ -250,7 +260,19 @@ const PublicStore_New = () => {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setShareOpen(true);
+                                                    // Ensure we share the specific product link
+                                                    const productUrl = `${window.location.origin}/${store.username}/store/product/${product._id}`;
+                                                    if (navigator.share) {
+                                                        navigator.share({
+                                                            title: product.title,
+                                                            text: `Check out ${product.title} on ${store.name || store.username}'s store`,
+                                                            url: productUrl,
+                                                        }).catch(console.error);
+                                                    } else {
+                                                        navigator.clipboard.writeText(productUrl);
+                                                        // toast.success("Link copied!"); // Need toast import if used here, or use existing ShareModal logic context
+                                                        setShareOpen(true); // Fallback to general share for now, or update ShareModal to accept custom URL
+                                                    }
                                                 }}
                                                 className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
                                             >

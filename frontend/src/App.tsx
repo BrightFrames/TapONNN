@@ -78,6 +78,7 @@ const App = () => (
             {/* Public Store - Must be before username catch-all */}
             <Route path="/s/:username" element={<PublicProfile />} />
             <Route path="/:username/store" element={<PublicStore />} />
+            <Route path="/:username/store/product/:productId" element={<PublicStore />} />
 
             {/* Public Profile - Must be last to avoid catching other routes */}
             <Route path="/:username" element={<PublicProfile />} />

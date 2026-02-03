@@ -36,11 +36,11 @@ const Design = () => {
         titleStyle: 'text',
         profileSize: 'medium',
         bgType: 'color',
-        bgVideoUrl: '',
         bgYoutubeUrl: '',
         coverType: 'none', // none | image | video | youtube
         coverUrl: '',
         coverYoutubeUrl: '',
+        showShopOnPersonal: true, // Default to true
         ...user?.design_config
     });
 
@@ -337,26 +337,44 @@ const Design = () => {
     // Configuration Sheet Content
     const ConfigurationContent = () => (
         <div className="space-y-8 pb-20">
-            <Tabs defaultValue="header" className="w-full">
+            <Tabs defaultValue="theme" className="w-full">
                 <TabsList className="flex flex-wrap h-auto gap-2 bg-transparent justify-start mb-8 p-0 sticky top-0 bg-white dark:bg-zinc-950 z-20 py-4 border-b border-zinc-200 dark:border-zinc-800">
-                    <TabsTrigger value="header" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                        <UserCircle className="w-4 h-4 mr-2" /> {t('design.header')}
-                    </TabsTrigger>
                     <TabsTrigger value="theme" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
                         <Layout className="w-4 h-4 mr-2" /> {t('design.theme')}
                     </TabsTrigger>
-                    <TabsTrigger value="wallpaper" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                        <ImageIcon className="w-4 h-4 mr-2" /> {t('design.wallpaper')}
+                    <TabsTrigger value="cover" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
+                        <ImageIcon className="w-4 h-4 mr-2" /> Cover
+                    </TabsTrigger>
+                    <TabsTrigger value="header" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
+                        <UserCircle className="w-4 h-4 mr-2" /> {t('design.header')}
                     </TabsTrigger>
                     <TabsTrigger value="text" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
                         <Type className="w-4 h-4 mr-2" /> {t('design.text')}
                     </TabsTrigger>
+                    <TabsTrigger value="wallpaper" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
+                        <Monitor className="w-4 h-4 mr-2" /> {t('design.wallpaper')}
+                    </TabsTrigger>
                 </TabsList>
 
-                {/* HEADER TAB */}
-                <TabsContent value="header" className="space-y-10">
+                {/* THEME TAB */}
+                <TabsContent value="theme" className="space-y-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {templates.map((t) => (
+                            <div key={t.id} onClick={() => updateTheme(t.id)} className="cursor-pointer group flex flex-col gap-2">
+                                <div className={cn("relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-sm transition-all", selectedTheme === t.id && "ring-4 ring-purple-600 ring-offset-2")}>
+                                    <div className="absolute inset-0 w-full h-full bg-cover bg-center" style={t.bgImage ? { backgroundImage: `url(${t.bgImage})` } : { backgroundColor: t.id === 'blocks' ? '#7F00FF' : undefined }}>
+                                        {!t.bgImage && <div className={`w-full h-full ${t.bgClass}`} />}
+                                    </div>
+                                    {selectedTheme === t.id && <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-20"><div className="bg-white rounded-full p-1.5"><div className="w-3 h-3 bg-purple-600 rounded-full" /></div></div>}
+                                </div>
+                                <span className="text-xs font-medium text-center">{t.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </TabsContent>
 
-                    {/* Cover Media Selection */}
+                {/* COVER TAB - Extracted from Header */}
+                <TabsContent value="cover" className="space-y-6">
                     <div className="space-y-4">
                         <Label>Profile Cover</Label>
                         <Tabs value={config.coverType || 'none'} onValueChange={(v) => handleConfigChange('coverType', v)} className="w-full">
@@ -396,15 +414,31 @@ const Design = () => {
                                         onChange={(e) => {
                                             const url = e.target.value;
                                             handleConfigChange('coverYoutubeUrl', url);
-                                            // Auto-detected logic not needed here strictly if we rely on input
                                         }}
                                     />
                                 </div>
                             </TabsContent>
                         </Tabs>
                     </div>
+                </TabsContent>
 
-                    {/* Header Controls (Existing Logic) */}
+                {/* HEADER TAB - Layout & Shop Toggle */}
+                <TabsContent value="header" className="space-y-10">
+
+                    {/* Show Shop Toggle */}
+                    {user?.is_store_identity && (
+                        <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                            <div className="space-y-0.5">
+                                <Label className="text-base font-semibold">Show Shop on Profile</Label>
+                                <p className="text-xs text-zinc-500">Display the Shop tab on your personal profile</p>
+                            </div>
+                            <Switch
+                                checked={config.showShopOnPersonal !== false}
+                                onCheckedChange={(c) => handleConfigChange('showShopOnPersonal', c)}
+                            />
+                        </div>
+                    )}
+
                     <div className="space-y-4">
                         <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Profile image layout</h2>
                         <div className="grid grid-cols-2 gap-4">
@@ -427,24 +461,19 @@ const Design = () => {
                     </div>
                 </TabsContent>
 
-                {/* THEME TAB */}
-                <TabsContent value="theme" className="space-y-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {templates.map((t) => (
-                            <div key={t.id} onClick={() => updateTheme(t.id)} className="cursor-pointer group flex flex-col gap-2">
-                                <div className={cn("relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-sm transition-all", selectedTheme === t.id && "ring-4 ring-purple-600 ring-offset-2")}>
-                                    <div className="absolute inset-0 w-full h-full bg-cover bg-center" style={t.bgImage ? { backgroundImage: `url(${t.bgImage})` } : { backgroundColor: t.id === 'blocks' ? '#7F00FF' : undefined }}>
-                                        {!t.bgImage && <div className={`w-full h-full ${t.bgClass}`} />}
-                                    </div>
-                                    {selectedTheme === t.id && <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-20"><div className="bg-white rounded-full p-1.5"><div className="w-3 h-3 bg-purple-600 rounded-full" /></div></div>}
-                                </div>
-                                <span className="text-xs font-medium text-center">{t.name}</span>
-                            </div>
-                        ))}
+                {/* TEXT TAB */}
+                <TabsContent value="text" className="space-y-6">
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{t('design.textColor')}</h3>
+                        <div className="grid grid-cols-6 gap-3">
+                            {['#111827', '#374151', '#6B7280', '#FFFFFF', '#7C3AED', '#059669'].map(color => (
+                                <button key={color} onClick={() => handleConfigChange('textColor', color)} className={cn("w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold", config.textColor === color ? "border-purple-600" : "border-transparent bg-zinc-100 dark:bg-zinc-800")} style={{ color }}>A</button>
+                            ))}
+                        </div>
                     </div>
                 </TabsContent>
 
-                {/* Wallpaper Tab */}
+                {/* WALLPAPER TAB */}
                 <TabsContent value="wallpaper" className="space-y-6">
                     <div className="space-y-4">
                         <Label>Background Type</Label>
@@ -487,18 +516,6 @@ const Design = () => {
                                 </div>
                             </TabsContent>
                         </Tabs>
-                    </div>
-                </TabsContent>
-
-                {/* Text Tab */}
-                <TabsContent value="text" className="space-y-6">
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{t('design.textColor')}</h3>
-                        <div className="grid grid-cols-6 gap-3">
-                            {['#111827', '#374151', '#6B7280', '#FFFFFF', '#7C3AED', '#059669'].map(color => (
-                                <button key={color} onClick={() => handleConfigChange('textColor', color)} className={cn("w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold", config.textColor === color ? "border-purple-600" : "border-transparent bg-zinc-100 dark:bg-zinc-800")} style={{ color }}>A</button>
-                            ))}
-                        </div>
                     </div>
                 </TabsContent>
             </Tabs>

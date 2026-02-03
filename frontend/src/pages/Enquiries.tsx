@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
     Search,
@@ -339,6 +340,7 @@ import { User, Settings } from 'lucide-react'; // Late import for mock usage
 
 const Enquiries = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     // State
     const [leads, setLeads] = useState<Lead[]>([]);
@@ -540,6 +542,14 @@ const Enquiries = () => {
                     {/* Header */}
                     <div className="h-16 px-5 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-3">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="-ml-2 mr-1 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                                onClick={() => navigate('/dashboard')}
+                            >
+                                <ArrowLeft className="w-5 h-5" />
+                            </Button>
                             <div className="relative">
                                 <Avatar className="w-9 h-9 border border-zinc-700 shadow-sm">
                                     <AvatarImage src={user?.avatar || user?.photo_url} />

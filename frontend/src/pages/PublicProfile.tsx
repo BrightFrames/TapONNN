@@ -387,48 +387,38 @@ const PublicProfile = () => {
     };
 
     // Check for cover media
-    const hasCover = bgType === 'image' || bgType === 'video' || bgType === 'youtube';
-
+    // Helper for rendering cover media
     const renderCoverMedia = () => {
-        if (!hasCover) return null;
+        const { coverType, coverUrl, coverYoutubeUrl } = designConfig;
 
-        // Use aspect-video (16:9) for a prominent cover like the reference image
-        const coverHeightClass = "w-full aspect-video bg-black";
-        const contentClass = "w-full h-full object-cover";
-
-        if (bgType === 'video' && profile.design_config?.bgVideoUrl) {
+        if (coverType === 'image' && coverUrl) {
+            return <img src={coverUrl} alt="Cover" className="w-full h-48 object-cover" />;
+        }
+        if (coverType === 'video' && coverUrl) {
             return (
-                <div className={coverHeightClass}>
-                    <video
-                        src={profile.design_config.bgVideoUrl}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        className={contentClass}
-                    />
-                </div>
+                <video
+                    src={coverUrl}
+                    className="w-full h-48 object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                />
             );
         }
-        if (bgType === 'youtube' && profile.design_config?.bgYoutubeUrl) {
-            const id = getYouTubeId(profile.design_config.bgYoutubeUrl);
-            return (
-                <div className={`${coverHeightClass} relative overflow-hidden pointer-events-none`}>
-                    <iframe
-                        src={`https://www.youtube.com/embed/${id}?autoplay=1&mute=1&controls=0&loop=1&playlist=${id}&playsinline=1`}
-                        className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2"
-                        allow="autoplay; encrypted-media"
-                    />
-                </div>
-            );
-        }
-        if (bgType === 'image' && profile.design_config?.bgImageUrl) {
-            // Image cover - no black background needed
-            return (
-                <div className="w-full aspect-video">
-                    <img src={profile.design_config.bgImageUrl} className={contentClass} alt="Cover" />
-                </div>
-            );
+        if (coverType === 'youtube' && coverYoutubeUrl) {
+            const videoId = getYouTubeId(coverYoutubeUrl);
+            if (videoId) {
+                return (
+                    <div className="w-full h-48 relative overflow-hidden bg-black">
+                        <iframe
+                            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&showinfo=0&modestbranding=1`}
+                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] pointer-events-none"
+                            allow="autoplay; encrypted-media"
+                        />
+                    </div>
+                );
+            }
         }
         return null;
     };
@@ -449,7 +439,7 @@ const PublicProfile = () => {
 
     return (
         <div
-            className={`min-h-screen w-full ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor || ''} relative`}
+            className={`min-h-screen w-full ${finalTextColorClass} relative transition-colors duration-300`}
             style={bgStyle}
         >
             {/* Share Button - Top Right */}
@@ -525,7 +515,7 @@ const PublicProfile = () => {
                             >
                                 Profile
                             </Button>
-                            {profile?.is_store_identity && (
+                            {profile?.is_store_identity && profile?.design_config?.showShopOnPersonal !== false && (
                                 <Button
                                     variant="ghost"
                                     onClick={() => setActiveTab('offerings')}
@@ -695,8 +685,8 @@ const PublicProfile = () => {
 
             </div>
 
-            {/* Footer - Connect Button - Match Phone Preview - ENHANCED UI */}
-            <div className="fixed bottom-6 left-0 right-0 flex flex-col items-center gap-3 px-6 z-40 translate-y-0 opacity-100 transition-all duration-500 delay-300">
+            {/* Footer - Connect Button - MOVED TO FLOW */}
+            <div className="mt-12 mb-8 w-full flex flex-col items-center gap-3 px-6 z-40 translate-y-0 opacity-100 transition-all duration-500 delay-300">
                 <div className="w-full max-w-md">
                     <Button
                         onClick={() => {
@@ -730,7 +720,7 @@ const PublicProfile = () => {
                     </Button>
                 </div>
 
-                {/* Tap2 Branding - ENHANCED UI */}
+                {/* Tap2 Branding */}
                 <a
                     href="/"
                     className="inline-flex items-center gap-2 px-5 py-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full text-xs font-medium text-current/60 hover:text-current hover:bg-white/10 hover:border-white/20 transition-all hover:scale-105 shadow-sm"
@@ -740,8 +730,10 @@ const PublicProfile = () => {
                 </a>
             </div>
 
+
+
             {/* Modals */}
-            <LoginToContinueModal
+            < LoginToContinueModal
                 open={loginModal.open}
                 onOpenChange={(open) => setLoginModal(prev => ({ ...prev, open }))}
                 intentId={loginModal.intentId}
@@ -751,14 +743,14 @@ const PublicProfile = () => {
             />
 
             {/* Message Signup Modal */}
-            <MessageSignupModal
+            < MessageSignupModal
                 open={messageSignupOpen}
                 onOpenChange={setMessageSignupOpen}
                 intentUsername={username || ''}
                 intentName={profile?.name || profile?.username || 'User'}
             />
 
-            <EnquiryModal
+            < EnquiryModal
                 open={enquiryModal.open}
                 onOpenChange={(open) => setEnquiryModal(prev => ({ ...prev, open }))}
                 sellerId={profile.id}
@@ -769,7 +761,7 @@ const PublicProfile = () => {
                 onComplete={() => clearPendingIntent()}
             />
 
-            <PaymentModal
+            < PaymentModal
                 open={paymentModal.open}
                 onOpenChange={(open) => setPaymentModal(prev => ({ ...prev, open }))}
                 intentId={paymentModal.intentId}
@@ -779,7 +771,7 @@ const PublicProfile = () => {
                 onComplete={() => clearPendingIntent()}
             />
 
-            <ShareModal
+            < ShareModal
                 open={shareOpen}
                 onOpenChange={setShareOpen}
                 username={profile.username}
@@ -797,7 +789,7 @@ const PublicProfile = () => {
                     toast.success(`Welcome, ${user.full_name}! You are now connected.`);
                 }}
             />
-        </div>
+        </div >
     );
 };
 

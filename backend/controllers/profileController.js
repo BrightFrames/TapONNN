@@ -23,9 +23,14 @@ const getPublicProfile = async (req, res) => {
         }
 
         const profileObj = profile.toObject();
-        const isStoreMatch = profileObj.store_username === normalizedUsername;
 
-        // If matched by store_username, return store data mapped to standard fields
+        // Fix: Prioritize Personal Username match. 
+        // Only return store data if the requested username matches store_username AND does NOT match personal username
+        // (unless separate routes are used, but for /:username, we prefer personal if ambiguous)
+        const isPersonalMatch = profileObj.username === normalizedUsername;
+        const isStoreMatch = !isPersonalMatch && profileObj.store_username === normalizedUsername;
+
+        // If matched by store_username only, return store data mapped to standard fields
         if (isStoreMatch) {
             res.json({
                 id: profileObj.user_id,
