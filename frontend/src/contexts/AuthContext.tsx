@@ -556,7 +556,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Auto-generate thumbnail for links if missing
         if (blockData.block_type === 'link' && blockData.content?.url && !blockData.thumbnail) {
             try {
-                const urlObj = new URL(blockData.content.url);
+                let urlStr = blockData.content.url;
+                if (!urlStr.startsWith('http')) {
+                    urlStr = 'https://' + urlStr;
+                }
+                const urlObj = new URL(urlStr);
                 blockData.thumbnail = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
             } catch (e) {
                 // Invalid URL, ignore
@@ -591,6 +595,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const updateBlock = async (blockId: string, updates: Partial<Block>) => {
+        // Auto-generate thumbnail for links on update if URL changed and no custom thumbnail
+        if (updates.block_type === 'link' && updates.content?.url) {
+            // Check if current block already has a custom thumbnail
+            const currentBlock = blocks.find(b => b._id === blockId);
+            const isAutoThumbnail = !currentBlock?.thumbnail || currentBlock.thumbnail.includes('google.com/s2/favicons');
+            const isNewThumbnailProvided = !!updates.thumbnail;
+
+            if (isAutoThumbnail && !isNewThumbnailProvided) {
+                try {
+                    let urlStr = updates.content.url;
+                    if (!urlStr.startsWith('http')) {
+                        urlStr = 'https://' + urlStr;
+                    }
+                    const urlObj = new URL(urlStr);
+                    updates.thumbnail = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
+                } catch (e) {
+                    // Invalid URL, ignore
+                }
+            }
+        }
+
         // Optimistic update
         setBlocks(prev => prev.map(b => b._id === blockId ? { ...b, ...updates } : b));
 

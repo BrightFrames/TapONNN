@@ -142,7 +142,9 @@ const PublicProfile = () => {
             });
 
             // 2. Fetch Blocks
-            const blocksRes = await fetch(`${API_URL}/blocks/public/${userProfile.id}`);
+            // Determine context based on route
+            const context = isStoreRoute ? 'store' : 'personal';
+            const blocksRes = await fetch(`${API_URL}/blocks/public/${userProfile.id}?context=${context}`);
             const publicBlocks = await blocksRes.json();
             setBlocks(publicBlocks || []);
 

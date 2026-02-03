@@ -99,7 +99,11 @@ const BlockEditorModal = ({
     useEffect(() => {
         if (formData.block_type === 'link' && formData.content.url) {
             try {
-                const urlObj = new URL(formData.content.url);
+                let urlStr = formData.content.url;
+                if (!urlStr.startsWith('http')) {
+                    urlStr = 'https://' + urlStr;
+                }
+                const urlObj = new URL(urlStr);
                 const faviconUrl = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
                 setFormData(prev => {
                     if (!prev.thumbnail || prev.thumbnail.includes('google.com/s2/favicons')) {

@@ -5,7 +5,7 @@ import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { UserCircle, Layout, Image as ImageIcon, Type, Sparkles, Monitor, Video, Youtube, Play, X, User, Pencil } from "lucide-react";
+import { UserCircle, Layout, Image as ImageIcon, Type, Sparkles, Monitor, Video, Youtube, Play, X, User, Pencil, Share2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -157,18 +157,29 @@ const Design = () => {
     };
 
     // The Preview Content (Card)
+    const [isScrolled, setIsScrolled] = useState(false);
+
     const PreviewContent = () => (
-        <div className="relative z-10 w-full max-w-sm mx-auto">
+        <div className="relative z-10 w-full max-w-[420px] mx-auto">
             {/* Profile Card Container - Glassmorphism */}
             <div className={cn(
                 "backdrop-blur-xl bg-white/10 dark:bg-black/20 border border-white/20 dark:border-white/10 shadow-2xl rounded-[2.5rem] overflow-hidden transition-all duration-300",
-                "flex flex-col min-h-[600px]" // Fixed height for consistency
+                "flex flex-col min-h-[600px] max-h-[750px] relative" // Fixed height frame
             )}>
+                {/* Share Button */}
+                <button className="absolute top-6 right-6 z-50 p-2 rounded-full bg-black/20 text-white backdrop-blur-md hover:bg-black/40 transition-colors border border-white/10">
+                    <Share2 className="w-5 h-5" />
+                </button>
+
                 {/* Inner Scrollable Area */}
-                <div className={cn(
-                    "h-full w-full overflow-y-auto scrollbar-hide flex-1",
-                    !config.bgType && currentTemplate.bgClass // Apply class if no override
-                )} style={bgStyle}>
+                <div
+                    className={cn(
+                        "h-full w-full overflow-y-auto scrollbar-hide flex-1 relative scroll-smooth",
+                        !config.bgType && currentTemplate.bgClass
+                    )}
+                    style={bgStyle}
+                    onScroll={(e) => setIsScrolled(e.currentTarget.scrollTop > 60)}
+                >
 
                     {currentTemplate.bgImage && !bgType && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
 
@@ -186,7 +197,7 @@ const Design = () => {
                         </div>
                     )}
 
-                    {/* COVER MEDIA SECTION - Top of the Card */}
+                    {/* COVER MEDIA SECTION */}
                     {config.coverType !== 'none' && (
                         <div className="w-full aspect-[2/1] sm:aspect-[3/1] relative overflow-hidden bg-black/10">
                             {config.coverType === 'image' && config.coverUrl && (
@@ -207,81 +218,103 @@ const Design = () => {
                         </div>
                     )}
 
-                    {/* Content Overlay */}
-                    <div className={cn(
-                        "relative z-10 p-8 flex flex-col items-center",
-                        config.coverType !== 'none' ? "-mt-16" : "pt-16" // Overlap effect if cover exists
-                    )}>
+                    {/* Content Overlay - Split Wrapper */}
+                    <div className="relative z-10">
 
-                        {/* Profile Picture */}
-                        {config.titleStyle !== 'logo' && (
+                        {/* Sticky Header Section (Profile Info) */}
+                        <div className={cn(
+                            "transition-all duration-500 ease-in-out px-8 w-full z-20",
+                            isScrolled
+                                ? "sticky top-0 bg-white/10 backdrop-blur-xl border-b border-white/10 flex flex-row items-center justify-start gap-4 py-3"
+                                : cn("flex flex-col items-center", config.coverType !== 'none' ? "-mt-16" : "pt-16")
+                        )}>
+                            {/* Profile Picture */}
+                            {config.titleStyle !== 'logo' && (
+                                <div className={cn(
+                                    "relative rounded-full overflow-hidden transition-all duration-500",
+                                    isScrolled
+                                        ? "w-10 h-10 border-2 border-white/20 mb-0 shadow-sm"
+                                        : cn("mb-4 border-4 border-white/20 shadow-xl", getProfileSizeClass())
+                                )}>
+                                    {user?.avatar ? (
+                                        <img src={user.avatar} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white font-bold text-lg">
+                                            {(user?.name || "U")[0].toUpperCase()}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Name & Handle */}
                             <div className={cn(
-                                "relative mb-4 rounded-full border-4 border-white/20 shadow-xl overflow-hidden",
-                                getProfileSizeClass()
+                                "transition-all duration-500",
+                                isScrolled ? "text-left" : "text-center mb-0"
                             )}>
-                                {user?.avatar ? (
-                                    <img src={user.avatar} className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white font-bold text-2xl">
-                                        {(user?.name || "U")[0].toUpperCase()}
-                                    </div>
+                                <h2 className={cn(
+                                    "font-bold tracking-tight transition-all",
+                                    isScrolled ? "text-sm mb-0" : "text-2xl mb-1",
+                                    currentTemplate.textColor === 'text-black' || config.textColor === '#000000' || config.textColor === '#111827' ? "text-gray-900" : "text-white"
+                                )} style={{ color: config.textColor !== '#111827' ? config.textColor : undefined }}>
+                                    {user?.name || user?.username}
+                                </h2>
+                                {!isScrolled && (
+                                    <p className={cn(
+                                        "text-sm font-medium opacity-80",
+                                        currentTemplate.textColor === 'text-black' || config.textColor === '#000000' || config.textColor === '#111827' ? "text-gray-600" : "text-white/80"
+                                    )} style={{ color: config.textColor !== '#111827' ? config.textColor : undefined }}>
+                                        @{user?.username}
+                                    </p>
                                 )}
                             </div>
-                        )}
-
-                        {/* Name & Handle */}
-                        <div className="text-center mb-8">
-                            <h2 className={cn(
-                                "text-2xl font-bold tracking-tight mb-1",
-                                currentTemplate.textColor === 'text-black' || config.textColor === '#000000' || config.textColor === '#111827' ? "text-gray-900" : "text-white"
-                            )} style={{ color: config.textColor !== '#111827' ? config.textColor : undefined }}>
-                                {user?.name || user?.username}
-                            </h2>
-                            <p className={cn(
-                                "text-sm font-medium opacity-80",
-                                currentTemplate.textColor === 'text-black' || config.textColor === '#000000' || config.textColor === '#111827' ? "text-gray-600" : "text-white/80"
-                            )} style={{ color: config.textColor !== '#111827' ? config.textColor : undefined }}>
-                                @{user?.username}
-                            </p>
                         </div>
 
-                        {/* Social Icons */}
-                        <div className="flex gap-4 flex-wrap justify-center mb-8">
-                            {user?.social_links && Object.entries(user.social_links).map(([platform, url]) => {
-                                if (!url) return null;
-                                const Icon = getIconForThumbnail(platform);
-                                return Icon ? (
-                                    <a key={platform} className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/30 backdrop-blur-sm text-white transition-all hover:scale-110">
-                                        <Icon className="w-5 h-5" />
-                                    </a>
-                                ) : null;
-                            })}
-                        </div>
+                        {/* Scrollable Content Body (Links & Socials) */}
+                        <div className={cn(
+                            "w-full px-8 pb-16 transition-all duration-300",
+                            isScrolled ? "pt-6" : "pt-8"
+                        )}>
+                            {/* Social Icons (Only show when not scrolled or move? Logic implies mostly keeping them in body) */}
+                            <div className={cn(
+                                "flex gap-4 flex-wrap mb-8 transition-all duration-500",
+                                isScrolled ? "justify-start" : "justify-center"
+                            )}>
+                                {user?.social_links && Object.entries(user.social_links).map(([platform, url]) => {
+                                    if (!url) return null;
+                                    const Icon = getIconForThumbnail(platform);
+                                    return Icon ? (
+                                        <a key={platform} className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/30 backdrop-blur-sm text-white transition-all hover:scale-110">
+                                            <Icon className="w-5 h-5" />
+                                        </a>
+                                    ) : null;
+                                })}
+                            </div>
 
-                        {/* Links */}
-                        <div className="space-y-4 w-full">
-                            {authLinks.filter(l => l.isActive).map((link) => {
-                                const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
-                                return (
-                                    <a
-                                        key={link.id}
-                                        href={link.url || '#'}
-                                        className={cn(
-                                            "group block w-full flex items-center justify-center relative min-h-[56px] px-6 transition-all duration-300 hover:scale-[1.02]",
-                                            currentTemplate.buttonStyle || "bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white hover:bg-white/20"
-                                        )}
-                                    >
-                                        {Icon && (
-                                            <Icon className="absolute left-6 w-5 h-5 opacity-90 transition-transform group-hover:rotate-12" />
-                                        )}
-                                        <span className="truncate max-w-[200px] text-sm font-medium">{link.title}</span>
-                                    </a>
-                                );
-                            })}
-                        </div>
+                            {/* Links */}
+                            <div className="space-y-4 w-full">
+                                {authLinks.filter(l => l.isActive).map((link) => {
+                                    const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
+                                    return (
+                                        <a
+                                            key={link.id}
+                                            href={link.url || '#'}
+                                            className={cn(
+                                                "group block w-full flex items-center justify-center relative min-h-[56px] px-6 transition-all duration-300 hover:scale-[1.02]",
+                                                currentTemplate.buttonStyle || "bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white hover:bg-white/20"
+                                            )}
+                                        >
+                                            {Icon && (
+                                                <Icon className="absolute left-6 w-5 h-5 opacity-90 transition-transform group-hover:rotate-12" />
+                                            )}
+                                            <span className="truncate max-w-[200px] text-sm font-medium">{link.title}</span>
+                                        </a>
+                                    );
+                                })}
+                            </div>
 
-                        <div className="mt-12 flex justify-center">
-                            <span className="text-[10px] opacity-60 text-white font-medium tracking-widest uppercase">TapONNN</span>
+                            <div className="mt-12 flex justify-center">
+                                <span className="text-[10px] opacity-60 text-white font-medium tracking-widest uppercase">TapONNN</span>
+                            </div>
                         </div>
 
                     </div>

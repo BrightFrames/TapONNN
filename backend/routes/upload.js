@@ -51,24 +51,67 @@ const upload = multer({
 // POST /api/upload - Single file upload
 // usage: /api/upload?type=product_file (for 15MB limit & all types)
 // usage: /api/upload (for 5MB limit & images only - enforced by strict middleware if we wanted, but currently shared)
-router.post('/', upload.single('file'), (req, res) => {
+router.post('/', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        let finalFilename = req.file.filename;
+        let finalPath = req.file.path;
+        let finalSize = req.file.size;
+
+        // Image Compression Logic (using Sharp)
+        // Only compress if it is an image and NOT a product file (unless we want to optimize product images too? Yes likely)
+        // But let's check mime type.
+        if (req.file.mimetype.startsWith('image/')) {
+            try {
+                const sharp = require('sharp');
+                const fs = require('fs');
+
+                // Construct optimized filename
+                const optimizedFilename = `opt-${req.file.filename.split('.')[0]}.jpeg`; // Force JPEG/WebP for consistency? Let's use JPEG for broad compatibility
+                const optimizedPath = path.join(uploadDir, optimizedFilename);
+
+                // Process image: Resize max width/height 1920, Convert to JPEG, Quality 80
+                await sharp(req.file.path)
+                    .resize(1920, 1920, {
+                        fit: 'inside',
+                        withoutEnlargement: true
+                    })
+                    .toFormat('jpeg', { quality: 80, mozjpeg: true })
+                    .toFile(optimizedPath);
+
+                // Success! Delete original large file
+                try {
+                    fs.unlinkSync(req.file.path);
+                } catch (unlinkErr) {
+                    console.error("Failed to delete original file:", unlinkErr);
+                }
+
+                // Update references
+                finalFilename = optimizedFilename;
+                finalPath = optimizedPath;
+                finalSize = fs.statSync(optimizedPath).size;
+
+            } catch (sharpError) {
+                console.error("Image compression failed, keeping original:", sharpError);
+                // Fallback to original file
+            }
         }
 
         // Return the URL to access the file
         // Assumes the server serves the 'uploads' folder at /uploads
         const protocol = req.protocol;
         const host = req.get('host');
-        const fileUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+        const fileUrl = `${protocol}://${host}/uploads/${finalFilename}`;
 
         res.json({
             success: true,
             url: fileUrl,
-            filename: req.file.filename,
+            filename: finalFilename,
             originalName: req.file.originalname,
-            size: req.file.size
+            size: finalSize
         });
     } catch (err) {
         console.error("Upload error:", err);

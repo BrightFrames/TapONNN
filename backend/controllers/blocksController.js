@@ -25,12 +25,18 @@ const notifyUpdate = async (req, userId) => {
     }
 };
 
-// Get all blocks for a user
+// Get all blocks for a user (Filtered by active profile mode)
 const getBlocks = async (req, res) => {
     try {
         const userId = req.user.id;
+        // Default to 'personal' if undefined (backend should populate, but safe fallback)
+        const activeMode = req.user.active_profile_mode || 'personal';
 
-        const blocks = await Block.find({ user_id: userId })
+        // Filter blocks ensuring they match current mode
+        const blocks = await Block.find({
+            user_id: userId,
+            profile_context: activeMode
+        })
             .sort({ position: 1 })
             .lean();
 
@@ -45,10 +51,18 @@ const getBlocks = async (req, res) => {
 const getPublicBlocks = async (req, res) => {
     try {
         const { userId } = req.params;
+        // Allow optional query param 'context' to filter (default to 'personal' if not specified)
+        // Does PublicProfile or PublicStore send this param? 
+        // PublicProfile (Personal) usually wants personal blocks.
+        // PublicStore usually displays products, but if it displayed blocks it would want "store" blocks.
+        // PublicProfile is the MAIN place blocks are shown.
+        // Let's check query param.
+        const context = req.query.context || 'personal';
 
         const blocks = await Block.find({
             user_id: userId,
-            is_active: true
+            is_active: true,
+            profile_context: context // Only fetch blocks for requested context
         })
             .sort({ position: 1 })
             .lean();
@@ -74,13 +88,17 @@ const createBlock = async (req, res) => {
     try {
         const userId = req.user.id;
         const { block_type, title, content, cta_type, cta_label, cta_requires_login, styles, thumbnail } = req.body;
+        const activeMode = req.user.active_profile_mode || 'personal';
 
         if (!block_type || !title) {
             return res.status(400).json({ error: 'Block type and title are required' });
         }
 
-        // Get highest position
-        const lastBlock = await Block.findOne({ user_id: userId }).sort({ position: -1 });
+        // Get highest position for current context
+        const lastBlock = await Block.findOne({
+            user_id: userId,
+            profile_context: activeMode
+        }).sort({ position: -1 });
         const position = lastBlock ? lastBlock.position + 1 : 0;
 
         const newBlock = new Block({
@@ -94,10 +112,10 @@ const createBlock = async (req, res) => {
             styles: styles || {},
             thumbnail: thumbnail || '',
             position,
+            profile_context: activeMode, // Assign current mode
             is_active: true
         });
 
-        await newBlock.save();
         await newBlock.save();
         notifyUpdate(req, userId);
         res.json(newBlock);

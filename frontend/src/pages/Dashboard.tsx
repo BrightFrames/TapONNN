@@ -625,13 +625,23 @@ const Dashboard = () => {
 
                                         {/* Footer - Connect Button */}
                                         <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 px-6 z-30">
-                                            <Button className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100 hover:bg-gray-50 scale-95 hover:scale-100 duration-200">
-                                                <span>
-                                                    {previewTab === 'shop'
-                                                        ? 'Connect with Seller'
-                                                        : `Message ${user?.name?.split(' ')[0] || 'User'}`}
-                                                </span>
-                                                <MessageCircle className="w-5 h-5 text-gray-600" />
+                                            <Button className="group w-full relative overflow-hidden rounded-full h-14 shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 active:scale-95 p-0 border-none">
+                                                {/* Gradient Background */}
+                                                <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-black to-gray-900 group-hover:bg-gradient-to-r group-hover:from-gray-800 group-hover:via-gray-900 group-hover:to-gray-800 transition-all duration-500" />
+
+                                                {/* Shimmer Effect */}
+                                                <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-r from-transparent via-white to-transparent -skew-x-12 translate-x-[-100%] group-hover:animate-shimmer" />
+
+                                                <div className="relative flex items-center justify-between px-6 h-full text-white w-full">
+                                                    <span className="font-bold text-lg tracking-wide">
+                                                        {previewTab === 'shop'
+                                                            ? 'Connect with Seller'
+                                                            : `Message ${user?.name?.split(' ')[0] || 'User'}`}
+                                                    </span>
+                                                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/20 transition-all duration-300">
+                                                        <MessageCircle className="w-5 h-5 text-white" />
+                                                    </div>
+                                                </div>
                                             </Button>
                                         </div>
                                     </Tabs>

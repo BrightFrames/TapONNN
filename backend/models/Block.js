@@ -60,6 +60,12 @@ const blockSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    profile_context: {
+        type: String,
+        enum: ['personal', 'store'],
+        default: 'personal',
+        index: true
+    },
     is_active: {
         type: Boolean,
         default: true
@@ -93,6 +99,7 @@ const blockSchema = new mongoose.Schema({
 // Compound index for efficient queries
 blockSchema.index({ user_id: 1, position: 1 });
 blockSchema.index({ user_id: 1, is_active: 1 });
+blockSchema.index({ user_id: 1, profile_context: 1 });
 
 const Block = mongoose.model('Block', blockSchema);
 

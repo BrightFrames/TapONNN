@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Store, Share2, Settings, ShoppingBag, MessageCircle, Sparkles } from "lucide-react";
 import ShareModal from "@/components/ShareModal";
 import ProductInteractionModal from "@/components/ProductInteractionModal";
+import { getIconForThumbnail } from "@/utils/socialIcons";
 
 interface Product {
     _id: string;
@@ -37,6 +38,10 @@ const PublicStore_New = () => {
     const [notFound, setNotFound] = useState(false);
     const [viewMode, setViewMode] = useState<'links' | 'shop'>('shop');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [blocks, setBlocks] = useState<any[]>([]); // Store links
+    const [activeTab, setActiveTab] = useState<'links' | 'shop'>('shop'); // For internal consistency if needed
+
+    // Helper for icons (copied imports needed)
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
@@ -53,7 +58,15 @@ const PublicStore_New = () => {
                 }
 
                 const data = await res.json();
+                const data = await res.json();
                 setStore(data);
+
+                // Fetch Store Blocks
+                const blocksRes = await fetch(`${API_URL}/blocks/public/${data.id}?context=store`);
+                if (blocksRes.ok) {
+                    const storeBlocks = await blocksRes.json();
+                    setBlocks(storeBlocks);
+                }
             } catch (error) {
                 console.error("Error fetching store:", error);
                 setNotFound(true);
@@ -146,7 +159,7 @@ const PublicStore_New = () => {
                 {/* Toggle */}
                 <div className="inline-flex bg-gray-200 rounded-full p-1 shadow-inner">
                     <button
-                        onClick={() => navigate(`/${store.username}`)}
+                        onClick={() => setViewMode('links')}
                         className={`px-6 py-2.5 rounded-full font-semibold transition-all ${viewMode === 'links'
                             ? 'bg-white text-black shadow-md'
                             : 'text-gray-600 hover:text-gray-900'
@@ -166,124 +179,161 @@ const PublicStore_New = () => {
                 </div>
             </div>
 
-            {/* Products Grid */}
-            {hasProducts ? (
-                <div className="max-w-5xl mx-auto px-4 pb-20">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {store.products.map((product) => (
-                            <div
-                                key={product._id}
-                                onClick={() => setSelectedProduct(product)}
-                                className="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
-                            >
-                                {/* Product Image */}
-                                <div className="aspect-square relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-                                    {product.image_url ? (
-                                        <img
-                                            src={product.image_url}
-                                            alt={product.title}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <ShoppingBag className="w-24 h-24 text-gray-300" />
+            {/* Content Switcher */}
+            {viewMode === 'links' ? (
+                <div className="max-w-md mx-auto px-4 pb-20 space-y-4">
+                    {blocks.filter(b => b.is_active).length > 0 ? (
+                        blocks.filter(b => b.is_active).map((block) => {
+                            const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
+                            const isUrlThumbnail = block.thumbnail && !Icon;
+
+                            return (
+                                <a
+                                    key={block._id}
+                                    href={block.content?.url || '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block w-full bg-white hover:bg-gray-50 transition-all rounded-xl p-4 shadow-sm hover:shadow-md border border-gray-100 flex items-center gap-4"
+                                >
+                                    {Icon && (
+                                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                            <Icon className="w-5 h-5 text-gray-700" />
                                         </div>
                                     )}
-
-                                    {/* Logo and Share Overlay */}
-                                    <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-                                        {/* Logo Icon */}
-                                        <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                                            <Sparkles className="w-5 h-5 text-black" />
-                                        </button>
-
-                                        {/* Share Button */}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setShareOpen(true);
-                                            }}
-                                            className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-                                        >
-                                            <Share2 className="w-5 h-5 text-black" />
-                                        </button>
-                                    </div>
-
-                                    {/* Hover Overlay */}
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
-                                </div>
-
-                                {/* Product Info */}
-                                <div className="p-6">
-                                    <h3 className="text-xl font-bold text-gray-900 mb-1 line-clamp-2">
-                                        {product.title}
-                                    </h3>
-                                    <p className="text-2xl font-bold text-gray-900">
-                                        ₹{product.price}
-                                    </p>
-                                    {product.description && (
-                                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                                            {product.description}
-                                        </p>
+                                    {isUrlThumbnail && (
+                                        <img src={block.thumbnail} alt="" className="w-10 h-10 rounded-full object-cover" />
                                     )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Featured Collection Sections */}
-                    {store.products.length >= 3 && (
-                        <div className="mt-12">
-                            <div className="bg-white rounded-3xl p-8 shadow-lg">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                                    Featured Collection
-                                </h2>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    {store.products.slice(0, 6).map((product) => (
-                                        <div
-                                            key={product._id}
-                                            onClick={() => setSelectedProduct(product)}
-                                            className="group cursor-pointer"
-                                        >
-                                            <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-3">
-                                                {product.image_url ? (
-                                                    <img
-                                                        src={product.image_url}
-                                                        alt={product.title}
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <ShoppingBag className="w-12 h-12 text-gray-300" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <h4 className="font-semibold text-sm text-gray-900 line-clamp-1">
-                                                {product.title}
-                                            </h4>
-                                            <p className="text-sm text-gray-600">₹{product.price}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                                    <span className="font-semibold text-gray-900 truncate flex-1">{block.title}</span>
+                                    <MessageCircle className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </a>
+                            );
+                        })
+                    ) : (
+                        <div className="text-center py-12 text-gray-500">
+                            <Store className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                            <p>No links added to this store yet.</p>
                         </div>
                     )}
                 </div>
             ) : (
-                <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-                    <ShoppingBag className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">No products yet</h3>
-                    <p className="text-gray-600 mb-8">
-                        This store doesn't have any products available at the moment.
-                    </p>
-                    <Button
-                        className="bg-black hover:bg-gray-800 text-white rounded-full px-8"
-                        onClick={() => navigate(`/${store.username}`)}
-                    >
-                        View Profile
-                    </Button>
-                </div>
-            )}
+                /* Products Grid */
+                hasProducts ? (
+                    <div className="max-w-5xl mx-auto px-4 pb-20">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {store.products.map((product) => (
+                                <div
+                                    key={product._id}
+                                    onClick={() => setSelectedProduct(product)}
+                                    className="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
+                                >
+                                    {/* Product Image */}
+                                    <div className="aspect-square relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                                        {product.image_url ? (
+                                            <img
+                                                src={product.image_url}
+                                                alt={product.title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <ShoppingBag className="w-24 h-24 text-gray-300" />
+                                            </div>
+                                        )}
+
+                                        {/* Logo and Share Overlay */}
+                                        <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+                                            {/* Logo Icon */}
+                                            <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+                                                <Sparkles className="w-5 h-5 text-black" />
+                                            </button>
+
+                                            {/* Share Button */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShareOpen(true);
+                                                }}
+                                                className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                                            >
+                                                <Share2 className="w-5 h-5 text-black" />
+                                            </button>
+                                        </div>
+
+                                        {/* Hover Overlay */}
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
+                                    </div>
+
+                                    {/* Product Info */}
+                                    <div className="p-6">
+                                        <h3 className="text-xl font-bold text-gray-900 mb-1 line-clamp-2">
+                                            {product.title}
+                                        </h3>
+                                        <p className="text-2xl font-bold text-gray-900">
+                                            ₹{product.price}
+                                        </p>
+                                        {product.description && (
+                                            <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                                                {product.description}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Featured Collection Sections */}
+                        {store.products.length >= 3 && (
+                            <div className="mt-12">
+                                <div className="bg-white rounded-3xl p-8 shadow-lg">
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                                        Featured Collection
+                                    </h2>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        {store.products.slice(0, 6).map((product) => (
+                                            <div
+                                                key={product._id}
+                                                onClick={() => setSelectedProduct(product)}
+                                                className="group cursor-pointer"
+                                            >
+                                                <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-3">
+                                                    {product.image_url ? (
+                                                        <img
+                                                            src={product.image_url}
+                                                            alt={product.title}
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center">
+                                                            <ShoppingBag className="w-12 h-12 text-gray-300" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <h4 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                                                    {product.title}
+                                                </h4>
+                                                <p className="text-sm text-gray-600">₹{product.price}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="max-w-2xl mx-auto px-4 py-20 text-center">
+                        <ShoppingBag className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">No products yet</h3>
+                        <p className="text-gray-600 mb-8">
+                            This store doesn't have any products available at the moment.
+                        </p>
+                        <Button
+                            className="bg-black hover:bg-gray-800 text-white rounded-full px-8"
+                            onClick={() => navigate(`/${store.username}`)}
+                        >
+                            View Profile
+                        </Button>
+                    </div>
+                ))}
 
             {/* Footer CTA */}
             <div className="max-w-5xl mx-auto px-4 py-12 text-center">
