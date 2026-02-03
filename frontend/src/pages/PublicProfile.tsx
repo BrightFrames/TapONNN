@@ -389,6 +389,7 @@ const PublicProfile = () => {
     // Check for cover media
     // Helper for rendering cover media
     const renderCoverMedia = () => {
+        const designConfig = profile.design_config || {};
         const { coverType, coverUrl, coverYoutubeUrl } = designConfig;
 
         if (coverType === 'image' && coverUrl) {
