@@ -157,6 +157,27 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
             {/* Main Navigation - Scrollable */}
             <nav className="flex-1 px-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 hover:scrollbar-thumb-zinc-700 py-2">
 
+                {/* Explore Section - Only for Personal Profile - Moved to Top */}
+                {!isStoreMode && (
+                    <>
+                        <SidebarSectionTitle>Discover</SidebarSectionTitle>
+                        <div className="space-y-[1px]">
+                            <NavItem
+                                icon={Grid}
+                                label="Explore"
+                                active={location.pathname === '/explore'}
+                                onClick={() => handleNav('/explore')}
+                            />
+                            <NavItem
+                                icon={Heart}
+                                label="Liked"
+                                active={location.pathname === '/liked'}
+                                onClick={() => handleNav('/liked')}
+                            />
+                        </div>
+                    </>
+                )}
+
                 <SidebarSectionTitle>{t('nav.manage')}</SidebarSectionTitle>
                 <div className="space-y-[1px]">
                     <NavItem
@@ -172,12 +193,22 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                         onClick={() => handleNav('/media')}
                         count={142}
                     />
-                    <NavItem
-                        icon={Store}
-                        label="Shop"
-                        active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')}
-                        onClick={() => handleNav('/dashboard/business?tab=shop')}
-                    />
+                    {/* Show Shop for Store profiles, Links & Blocks for Personal profiles */}
+                    {isStoreMode ? (
+                        <NavItem
+                            icon={Store}
+                            label="Shop"
+                            active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')}
+                            onClick={() => handleNav('/dashboard/business?tab=shop')}
+                        />
+                    ) : (
+                        <NavItem
+                            icon={List}
+                            label="Links & Blocks"
+                            active={location.pathname === '/dashboard' || location.pathname.includes('links')}
+                            onClick={() => handleNav('/dashboard')}
+                        />
+                    )}
                     <NavItem
                         icon={DollarSign}
                         label={t('nav.vault')}
@@ -188,23 +219,6 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
 
                 <SidebarSectionTitle>{t('nav.growth')}</SidebarSectionTitle>
                 <div className="space-y-[1px]">
-                    {/* Explore - Only for Personal Profile */}
-                    {!isStoreMode && (
-                        <>
-                            <NavItem
-                                icon={Grid}
-                                label="Explore"
-                                active={location.pathname === '/explore'}
-                                onClick={() => handleNav('/explore')}
-                            />
-                            <NavItem
-                                icon={Heart}
-                                label="Liked"
-                                active={location.pathname === '/liked'}
-                                onClick={() => handleNav('/liked')}
-                            />
-                        </>
-                    )}
                     <NavItem
                         icon={BarChart3}
                         label={t('nav.analytics')}
@@ -298,8 +312,10 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
     const handleLogout = async () => {
-        await logout();
-        navigate('/login');
+        if (window.confirm('Are you sure you want to log out?')) {
+            await logout();
+            navigate('/login');
+        }
     };
 
     // Fetch unread message count

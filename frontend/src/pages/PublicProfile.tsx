@@ -36,12 +36,16 @@ const PublicProfile = () => {
     const [profile, setProfile] = useState<any>(null);
     const [blocks, setBlocks] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState<'links' | 'offerings'>('links');
     const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
     const [selectedBlock, setSelectedBlock] = useState<any | null>(null); // For Link Interstitial
     const [searchQuery, setSearchQuery] = useState('');
     const [notFound, setNotFound] = useState(false);
     const [likedProductIds, setLikedProductIds] = useState<Set<string>>(new Set());
+    const [activeTab, setActiveTab] = useState<'personal' | 'store'>('personal');
+
+    useEffect(() => {
+        setActiveTab(isStoreRoute ? 'store' : 'personal');
+    }, [isStoreRoute]);
 
     // Countdown State
     const [countdown, setCountdown] = useState(5);
@@ -587,35 +591,72 @@ const PublicProfile = () => {
                             </div>
 
                             {/* Navigation Toggles */}
-                            {/* Navigation Toggles - Hide if shop disabled */}
-                            {profile.show_shop_on_profile !== false && (
-                                <div className="w-full max-w-[240px] p-1.5 rounded-full flex mb-8 relative mt-8 shadow-inner"
-                                    style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#f4f4f5' }}>
-                                    <button
-                                        onClick={() => setActiveTab('links')}
-                                        className={cn("flex-1 py-2.5 text-xs font-bold rounded-full transition-all z-10 relative")}
-                                        style={{ color: activeTab === 'links' ? (isDarkTheme ? '#000' : textColor) : `${textColor}80` }}
-                                    >
-                                        Links
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('offerings')}
-                                        className={cn("flex-1 py-2.5 text-xs font-bold rounded-full transition-all z-10 relative")}
-                                        style={{ color: activeTab === 'offerings' ? (isDarkTheme ? '#000' : textColor) : `${textColor}80` }}
-                                    >
-                                        Shop
-                                    </button>
-                                    {/* Sliding Pill */}
-                                    <div className={cn(
-                                        "absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-full shadow-sm transition-all duration-300 ease-spring border border-black/5",
-                                        activeTab === 'offerings' ? "left-[calc(50%+3px)]" : "left-1.5"
-                                    )} style={{ backgroundColor: isDarkTheme ? '#ffffff' : '#ffffff' }} />
-                                </div>
-                            )}
+                            <div className="flex w-full bg-zinc-100 p-1 rounded-full mb-6 relative z-20 mx-auto max-w-[200px]" style={{
+                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#f4f4f5'
+                            }}>
+                                <button
+                                    onClick={() => setActiveTab('personal')}
+                                    className={cn(
+                                        "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
+                                        activeTab === 'personal' ? "bg-white shadow-sm text-black" : "text-zinc-500 hover:text-zinc-700"
+                                    )}
+                                    style={activeTab === 'personal' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
+                                >
+                                    Links
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('store')}
+                                    className={cn(
+                                        "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
+                                        activeTab === 'store' ? "bg-white shadow-sm text-black" : "text-zinc-500 hover:text-zinc-700"
+                                    )}
+                                    style={activeTab === 'store' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
+                                >
+                                    Store
+                                </button>
+                            </div>
 
-                            {/* Content Area */}
+                            {/* Content Area - Show Links or Products based on mode */}
                             <div className="w-full min-h-[300px]">
-                                {activeTab === 'links' ? (
+                                {activeTab === 'store' ? (
+                                    <div className="space-y-4 px-1 pb-24 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {products.length > 0 ? (
+                                                products.map((product) => (
+                                                    <div
+                                                        key={product._id}
+                                                        className="bg-zinc-50 rounded-xl overflow-hidden shadow-sm border border-zinc-100 cursor-pointer hover:shadow-md transition-all active:scale-[0.98] group flex flex-col"
+                                                        onClick={() => setSelectedProduct(product)}
+                                                    >
+                                                        <div className="aspect-square bg-zinc-200 relative overflow-hidden">
+                                                            {product.image_url ? (
+                                                                <img src={product.image_url} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-2xl">🛍️</div>
+                                                            )}
+                                                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <div className="bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-white transition-colors"
+                                                                    onClick={(e) => handleLike(product._id, e)}
+                                                                >
+                                                                    <Heart className={cn("w-3.5 h-3.5", likedProductIds.has(product._id) ? "fill-red-500 text-red-500" : "text-zinc-600")} />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="p-3">
+                                                            <h3 className="font-semibold text-xs text-zinc-900 line-clamp-1">{product.title}</h3>
+                                                            <p className="text-[10px] text-zinc-500 mt-1">₹{product.price}</p>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="col-span-2 text-center py-10 opacity-60">
+                                                    <ShoppingBag className="w-6 h-6 mx-auto mb-2 text-zinc-300" />
+                                                    <p className="text-xs text-zinc-400">No products found</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
                                     <div className="space-y-3 w-full animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
                                         {blocks.filter(b => b.is_active).map((block) => {
                                             const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
@@ -652,77 +693,6 @@ const PublicProfile = () => {
                                             <div className="text-center py-12 opacity-50">
                                                 <p className="text-sm font-medium" style={{ color: textColor }}>No links added yet.</p>
                                             </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
-                                        {(profile?.is_store_identity || profile?.design_config?.showShopOnPersonal !== false) && (
-                                            <>
-                                                {/* Search Bar */}
-                                                <div className="relative w-full mb-4">
-                                                    <input
-                                                        type="text"
-                                                        placeholder={`Search products...`}
-                                                        className="w-full border-none rounded-2xl text-sm px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-black/5"
-                                                        style={{
-                                                            backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : '#fafafa',
-                                                            color: textColor
-                                                        }}
-                                                        value={searchQuery}
-                                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                                    />
-                                                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" style={{ color: textColor }} />
-                                                </div>
-
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
-                                                        products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).map((product) => (
-                                                            <div
-                                                                key={product._id}
-                                                                className="rounded-2xl overflow-hidden shadow-sm border cursor-pointer hover:shadow-md transition-all active:scale-[0.98] group flex flex-col"
-                                                                style={{
-                                                                    backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : '#ffffff',
-                                                                    borderColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : '#f4f4f5'
-                                                                }}
-                                                                onClick={() => setSelectedProduct(product)}
-                                                            >
-                                                                <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.2)' : '#f4f4f5' }}>
-                                                                    {product.image_url ? (
-                                                                        <img src={product.image_url} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                                                                    ) : (
-                                                                        <div className="w-full h-full flex items-center justify-center opacity-30" style={{ color: textColor }}>
-                                                                            <ShoppingBag className="w-8 h-8" />
-                                                                        </div>
-                                                                    )}
-                                                                    <div className="absolute top-2 right-2 flex gap-1">
-                                                                        <button
-                                                                            onClick={(e) => handleLike(product._id, e)}
-                                                                            className="w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center shadow-sm"
-                                                                            style={{ backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.9)' }}
-                                                                        >
-                                                                            <Heart className={cn("w-3.5 h-3.5 transition-colors", likedProductIds.has(product._id) ? "fill-red-500 text-red-500" : "text-zinc-600")} />
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="p-3">
-                                                                    <h3 className="font-bold text-xs line-clamp-2 leading-snug mb-1.5 h-8" style={{ color: textColor }}>{product.title}</h3>
-                                                                    <div className="flex items-center justify-between">
-                                                                        <span className="text-xs font-bold" style={{ color: textColor }}>₹{product.price}</span>
-                                                                        <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: buttonColor, color: buttonTextColor }}>
-                                                                            <ArrowRight className="w-3 h-3" />
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))
-                                                    ) : (
-                                                        <div className="col-span-2 text-center py-12 opacity-60">
-                                                            <ShoppingBag className="w-8 h-8 mx-auto mb-2 opacity-50" style={{ color: textColor }} />
-                                                            <p className="text-xs opacity-60" style={{ color: textColor }}>No products found</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </>
                                         )}
                                     </div>
                                 )}

@@ -23,7 +23,7 @@ import ProfilePreview from "@/components/dashboard/ProfilePreview";
 import { supabase } from "@/lib/supabase";
 
 const Design = () => {
-    const { user, selectedTheme, updateTheme, updateProfile, blocks, addBlock } = useAuth();
+    const { user, selectedTheme, updateTheme, updateProfile, blocks, addBlock, refreshProfile } = useAuth();
     const { t } = useTranslation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
@@ -65,7 +65,6 @@ const Design = () => {
         coverUrl: '',
         coverColor: '',
         coverYoutubeUrl: '',
-        showShopOnPersonal: true,
         ...user?.design_config
     });
 
@@ -159,6 +158,7 @@ const Design = () => {
         const toastId = toast.loading("Saving changes...");
         try {
             await updateProfile({ design_config: config });
+            await refreshProfile(); // Refresh auth context to update live preview
             toast.success("Changes saved successfully!", { id: toastId });
             setIsConfigOpen(false);
             // Reload window to force refresh designs if needed, or rely on context update
@@ -372,18 +372,6 @@ const Design = () => {
                             </TabsContent>
 
                             <TabsContent value="header" className="space-y-8 mt-0">
-                                {user?.is_store_identity && (
-                                    <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                                        <div className="space-y-0.5">
-                                            <Label className="text-sm font-semibold">Show Shop Tab</Label>
-                                            <p className="text-xs text-zinc-500">Display Shop on profile</p>
-                                        </div>
-                                        <Switch
-                                            checked={config.showShopOnPersonal !== false}
-                                            onCheckedChange={(c) => handleConfigChange('showShopOnPersonal', c)}
-                                        />
-                                    </div>
-                                )}
                                 <div className="space-y-4">
                                     <Label className="text-xs uppercase tracking-wider text-zinc-500 font-bold">Profile Layout</Label>
                                     <div className="grid grid-cols-2 gap-4">

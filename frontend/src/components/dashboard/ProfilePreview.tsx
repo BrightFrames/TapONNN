@@ -6,13 +6,17 @@ import { getIconForThumbnail } from "@/utils/socialIcons";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
+// ... (previous code)
+
 interface ProfilePreviewProps {
     blocks?: any[];
     theme?: any;
     products?: any[];
+    mode?: 'personal' | 'store';
 }
 
-const ProfilePreview = ({ blocks = [], theme, products = [] }: ProfilePreviewProps) => {
+const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal' }: ProfilePreviewProps) => {
+
     const { user } = useAuth();
     const username = user?.username || "user";
     const displayName = user?.name || "Display Name";
@@ -20,11 +24,26 @@ const ProfilePreview = ({ blocks = [], theme, products = [] }: ProfilePreviewPro
     const avatarUrl = user?.avatar;
     const coverUrl = theme?.coverUrl || user?.design_config?.coverUrl;
     const coverColor = theme?.coverColor || user?.design_config?.coverColor;
+    const coverYoutubeUrl = theme?.coverYoutubeUrl || user?.design_config?.coverYoutubeUrl;
 
-    const [activeTab, setActiveTab] = useState<'links' | 'shop'>('links');
+    // Extract YouTube video ID from URL
+    const getYouTubeVideoId = (url: string) => {
+        if (!url) return null;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    };
+
+    const youtubeVideoId = coverYoutubeUrl ? getYouTubeVideoId(coverYoutubeUrl) : null;
+
     const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
     const [scrollProgress, setScrollProgress] = useState(0);
+    const [activeTab, setActiveTab] = useState<'personal' | 'store'>(mode || 'personal');
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (mode) setActiveTab(mode);
+    }, [mode]);
 
     // Handle scroll for animations
     const handleScroll = () => {
@@ -130,7 +149,20 @@ const ProfilePreview = ({ blocks = [], theme, products = [] }: ProfilePreviewPro
     const buttonTextColor = theme?.buttonTextColor || "#ffffff";
     const blockStyle = theme?.blockStyle || 'rounded'; // rounded, square, fully_rounded
 
-    const isDarkTheme = textColor === '#ffffff' || textColor === '#fff' || textColor.toLowerCase().includes('white') || textColor === '#D4AF37' || textColor === '#F0E6D3' || textColor === '#00FF88';
+    // Helper to determine if a color is light or dark
+    const isColorLight = (color: string) => {
+        if (!color) return false;
+        const hex = color.replace('#', '');
+        // Handle short hex (e.g., #fff)
+        const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+        const r = parseInt(fullHex.substring(0, 2), 16);
+        const g = parseInt(fullHex.substring(2, 4), 16);
+        const b = parseInt(fullHex.substring(4, 6), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness > 128;
+    };
+
+    const isDarkTheme = isColorLight(textColor); // If text is light, theme is likely dark
 
     return (
         <div className="flex flex-col items-center justify-center p-4 w-full h-full font-sans select-none" style={{ color: textColor }}>
@@ -197,7 +229,17 @@ const ProfilePreview = ({ blocks = [], theme, products = [] }: ProfilePreviewPro
                 >
                     {/* Cover Photo */}
                     <div className="h-64 w-full relative z-0">
-                        {coverUrl ? (
+                        {youtubeVideoId ? (
+                            <div className="w-full h-full relative pointer-events-auto">
+                                <iframe
+                                    src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeVideoId}&playsinline=1`}
+                                    className="w-full h-full absolute inset-0 object-cover"
+                                    allow="autoplay; encrypted-media; loop"
+                                    title="Cover Video"
+                                />
+                                <div className="absolute inset-0 bg-transparent pointer-events-none" />
+                            </div>
+                        ) : coverUrl ? (
                             <img src={coverUrl} className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full" style={{ background: coverColor || 'linear-gradient(to bottom right, #6366f1, #a855f7, #ec4899)' }} />
@@ -236,32 +278,36 @@ const ProfilePreview = ({ blocks = [], theme, products = [] }: ProfilePreviewPro
                             </div>
 
                             {/* Navigation Toggles */}
-                            <div className="w-full max-w-[220px] p-1 rounded-full flex mb-6 relative mt-6"
-                                style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#f4f4f5' }}>
+                            <div className="flex w-full bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-full mb-6 relative z-20 mx-auto max-w-[200px]" style={{
+                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#f4f4f5'
+                            }}>
                                 <button
-                                    onClick={() => setActiveTab('links')}
-                                    className={cn("flex-1 py-2 text-xs font-bold rounded-full transition-all z-10")}
-                                    style={{ color: activeTab === 'links' ? (isDarkTheme ? '#000' : textColor) : `${textColor}80` }}
+                                    onClick={() => setActiveTab('personal')}
+                                    className={cn(
+                                        "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
+                                        activeTab === 'personal' ? "bg-white dark:bg-zinc-800 shadow-sm text-black dark:text-white" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+                                    )}
+                                    style={activeTab === 'personal' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
                                 >
                                     Links
                                 </button>
                                 <button
-                                    onClick={() => setActiveTab('shop')}
-                                    className={cn("flex-1 py-2 text-xs font-bold rounded-full transition-all z-10")}
-                                    style={{ color: activeTab === 'shop' ? (isDarkTheme ? '#000' : textColor) : `${textColor}80` }}
+                                    onClick={() => setActiveTab('store')}
+                                    className={cn(
+                                        "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
+                                        activeTab === 'store' ? "bg-white dark:bg-zinc-800 shadow-sm text-black dark:text-white" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+                                    )}
+                                    style={activeTab === 'store' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
                                 >
-                                    Shop
+                                    Store
                                 </button>
-                                {/* Sliding Pill */}
-                                <div className={cn(
-                                    "absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full shadow-sm transition-all duration-300 ease-spring",
-                                    activeTab === 'shop' ? "left-[calc(50%+2px)]" : "left-1"
-                                )} style={{ backgroundColor: isDarkTheme ? '#ffffff' : '#ffffff' }} />
                             </div>
 
-                            {/* Content Area */}
+                            {/* Content Area - Show Links or Products based on mode */}
                             <div className="w-full min-h-[300px]">
-                                {activeTab === 'links' ? (
+                                {activeTab === 'store' ? (
+                                    renderProductList()
+                                ) : (
                                     <div className="space-y-3 w-full animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
                                         {blocks.map((block) => {
                                             const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
@@ -290,8 +336,6 @@ const ProfilePreview = ({ blocks = [], theme, products = [] }: ProfilePreviewPro
                                             </div>
                                         )}
                                     </div>
-                                ) : (
-                                    renderProductList()
                                 )}
                             </div>
 

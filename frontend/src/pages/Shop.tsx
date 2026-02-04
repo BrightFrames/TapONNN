@@ -523,7 +523,7 @@ const Shop = () => {
                     <div className="max-w-2xl mx-auto">
 
                         {/* Tabs Integration */}
-                        <Tabs defaultValue="shop" className="w-full">
+                        <Tabs defaultValue="shop" value={previewTab} onValueChange={(val) => setPreviewTab(val as 'links' | 'shop')} className="w-full">
                             <div className="flex flex-col gap-4 mb-6">
                                 {/* Title Row */}
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -847,7 +847,7 @@ const Shop = () => {
                 {/* Phone Preview - Right Side */}
                 < div className="w-[400px] border-l border-zinc-200 dark:border-zinc-800 hidden xl:flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0A] sticky top-0 h-full" >
                     <div className="py-8 px-8 flex flex-col items-center transform scale-90 origin-top">
-                        <ProfilePreview blocks={authLinks} theme={currentTemplate} products={products} />
+                        <ProfilePreview blocks={authLinks} theme={currentTemplate} products={products} mode={previewTab === 'shop' ? 'store' : 'personal'} />
 
                         {/* Preview Label */}
                         <div className="text-center mt-6">
@@ -874,7 +874,7 @@ const Shop = () => {
             < Sheet open={showPreview} onOpenChange={setShowPreview} >
                 <SheetContent side="right" className="w-full sm:max-w-md p-0 bg-transparent border-none shadow-none flex items-center justify-center backdrop-blur-sm">
                     <div className="scale-90">
-                        <ProfilePreview blocks={authLinks} theme={currentTemplate} products={products} />
+                        <ProfilePreview blocks={authLinks} theme={currentTemplate} products={products} mode={previewTab === 'shop' ? 'store' : 'personal'} />
                         <Button
                             className="absolute top-4 right-4 rounded-full w-10 h-10 bg-white/10 hover:bg-white/20 text-white"
                             onClick={() => setShowPreview(false)}
