@@ -70,8 +70,8 @@ const LikedProducts = () => {
     if (loading) {
         return (
             <LinktreeLayout>
-                <div className="flex items-center justify-center min-h-screen">
-                    <Loader2 className="w-8 h-8 animate-spin text-zinc-600" />
+                <div className="flex items-center justify-center min-h-screen bg-white dark:bg-black">
+                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-zinc-400" />
                 </div>
             </LinktreeLayout>
         );
@@ -79,24 +79,24 @@ const LikedProducts = () => {
 
     return (
         <LinktreeLayout>
-            <div className="min-h-screen p-4 md:p-8">
+            <div className="min-h-screen bg-gray-50 dark:bg-black p-4 md:p-8">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
                     <div className="mb-8">
-                        <h1 className="text-3xl font-bold mb-2 text-white flex items-center gap-3">
+                        <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white flex items-center gap-3">
                             <Heart className="w-8 h-8 fill-red-500 text-red-500" />
                             Liked Products
                         </h1>
-                        <p className="text-zinc-500">
+                        <p className="text-gray-500 dark:text-zinc-400">
                             Products you've saved for later
                         </p>
                     </div>
 
                     {/* Empty State */}
                     {likedProducts.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-20 text-zinc-600">
+                        <div className="flex flex-col items-center justify-center py-20 text-gray-500 dark:text-zinc-500">
                             <Heart className="w-16 h-16 mb-4 opacity-20" />
-                            <p className="text-lg font-medium">No liked products yet</p>
+                            <p className="text-lg font-medium text-gray-900 dark:text-zinc-300">No liked products yet</p>
                             <p className="text-sm mt-1">Explore and like products to save them here!</p>
                         </div>
                     )}
@@ -107,35 +107,35 @@ const LikedProducts = () => {
                             {likedProducts.map((product) => (
                                 <div
                                     key={product._id}
-                                    className="relative group overflow-hidden bg-zinc-900 rounded-lg border border-zinc-800 hover:shadow-lg transition-shadow"
+                                    className="relative group overflow-hidden bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm hover:shadow-xl dark:hover:shadow-lg dark:hover:shadow-white/5 transition-all duration-300"
                                 >
                                     {/* Product Image */}
-                                    <div className="aspect-square overflow-hidden">
+                                    <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-zinc-800">
                                         {product.image_url ? (
                                             <img
                                                 src={product.image_url}
                                                 alt={product.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                             />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
-                                                <span className="text-4xl opacity-20">✨</span>
+                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-zinc-900">
+                                                <span className="text-4xl opacity-30 dark:opacity-20 grayscale brightness-110">✨</span>
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Product Info */}
-                                    <div className="p-3">
-                                        <h3 className="font-semibold text-sm text-white line-clamp-1 mb-1">
+                                    <div className="p-4">
+                                        <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1 mb-1">
                                             {product.title}
                                         </h3>
                                         {product.price && (
-                                            <p className="text-sm font-medium text-zinc-300 mb-2">
+                                            <p className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">
                                                 ₹{product.price}
                                             </p>
                                         )}
                                         {product.description && (
-                                            <p className="text-xs text-zinc-500 line-clamp-2">
+                                            <p className="text-xs text-gray-500 dark:text-zinc-500 line-clamp-2">
                                                 {product.description}
                                             </p>
                                         )}
