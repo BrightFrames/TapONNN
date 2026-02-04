@@ -466,23 +466,6 @@ const Settings = () => {
                                     </div>
                                 </CardContent>
                             </Card>
-
-                            <Card className="border-gray-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
-                                <CardHeader>
-                                    <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">{t('settings.twoFactor')}</CardTitle>
-                                    <CardDescription className="text-gray-500 dark:text-zinc-400">{t('settings.twoFactorDesc')}</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="font-medium text-gray-900 dark:text-zinc-200">{t('settings.enable2FA')}</p>
-                                            <p className="text-sm text-gray-500 dark:text-zinc-500">{t('settings.enable2FADesc')}</p>
-                                        </div>
-                                        <Switch disabled className="data-[state=checked]:bg-indigo-500" />
-                                    </div>
-                                    <p className="text-xs text-gray-500 dark:text-zinc-600 mt-2">{t('settings.comingSoon')}</p>
-                                </CardContent>
-                            </Card>
                         </TabsContent>
 
                         {/* Notifications Tab */}

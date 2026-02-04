@@ -12,7 +12,9 @@ import {
     Video,
     ShoppingBag,
     MapPin,
-    Calendar
+    Calendar,
+    MessageCircle,
+    Send
 } from "lucide-react";
 
 export const iconMap: any = {
@@ -24,13 +26,16 @@ export const iconMap: any = {
     github: Github,
     tiktok: Music,
     globe: Globe,
+    website: Globe,
     mail: Mail,
     phone: Phone,
     music: Music,
     video: Video,
     store: ShoppingBag,
     location: MapPin,
-    calendar: Calendar
+    calendar: Calendar,
+    whatsapp: MessageCircle,
+    telegram: Send
 };
 
 export const getIconForThumbnail = (thumbnail: string) => {

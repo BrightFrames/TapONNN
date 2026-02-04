@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, Trash2, MessageSquare, Check, X, Clock, CreditCard, Package, MoreHorizontal, Copy, Edit } from "lucide-react";
+import { Loader2, Trash2, MessageSquare, Check, X, Clock, CreditCard, Package, MoreHorizontal, Copy, Edit, BadgeCheck } from "lucide-react";
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -37,6 +37,8 @@ import { Sparkles } from "lucide-react";
 import { ProductPluginSuggestions } from "@/components/shop/ProductPluginSuggestions";
 import { PluginConfigModal } from "@/components/marketplace/PluginConfigModal";
 import { supabase } from "@/lib/supabase";
+import ProfilePreview from "@/components/dashboard/ProfilePreview";
+import LinksManager from "@/components/dashboard/LinksManager";
 
 interface Product {
     _id: string;
@@ -86,7 +88,7 @@ interface UserPlugin {
 }
 
 const Shop = () => {
-    const { user, links: authLinks, isLoading, selectedTheme } = useAuth();
+    const { user, links: authLinks, isLoading, selectedTheme, refreshProfile } = useAuth();
     const { t } = useTranslation();
     const [products, setProducts] = useState<Product[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
@@ -314,14 +316,20 @@ const Shop = () => {
         }
     };
 
-    const handleCreateProduct = async (e: React.FormEvent) => {
+    const handleSaveProduct = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
         const token = localStorage.getItem('auth_token');
 
         try {
-            const res = await fetch(`${API_URL}/products`, {
-                method: 'POST',
+            const url = editingProduct
+                ? `${API_URL}/products/${editingProduct._id}`
+                : `${API_URL}/products`;
+
+            const method = editingProduct ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -333,15 +341,24 @@ const Shop = () => {
                 })
             });
 
-            if (!res.ok) throw new Error("Failed to create product");
+            if (!res.ok) throw new Error(editingProduct ? "Failed to update product" : "Failed to create product");
 
             const data = await res.json();
-            setProducts([data.product, ...products]);
+
+            if (editingProduct) {
+                setProducts(products.map(p => p._id === editingProduct._id ? data.product : p));
+                toast.success("Product updated successfully");
+            } else {
+                setProducts([data.product, ...products]);
+                toast.success("Product created successfully");
+            }
+
             setIsAddOpen(false);
+            setIsEditOpen(false);
+            setEditingProduct(null);
             setNewProduct({ title: "", price: "", description: "", type: "physical_product", image_url: "", file_url: "" });
-            toast.success("Product created successfully");
         } catch (error) {
-            toast.error("Error creating product");
+            toast.error(editingProduct ? "Error updating product" : "Error creating product");
         } finally {
             setIsSubmitting(false);
         }
@@ -475,6 +492,29 @@ const Shop = () => {
 
     const installedPluginIds = installedPlugins.map(p => p.plugin_id._id);
 
+    const handleToggleShopVisibility = async (checked: boolean) => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            const res = await fetch(`${API_URL}/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ show_shop_on_profile: checked })
+            });
+
+            if (res.ok) {
+                await refreshProfile();
+                toast.success(`Shop ${checked ? 'visible' : 'hidden'} on profile`);
+            } else {
+                toast.error("Failed to update visibility");
+            }
+        } catch (error) {
+            toast.error("Error updating settings");
+        }
+    };
+
     return (
         <LinktreeLayout>
             <div className="flex h-full">
@@ -482,427 +522,332 @@ const Shop = () => {
                 <div className="flex-1 py-8 px-6 md:px-10">
                     <div className="max-w-2xl mx-auto">
 
-                        {/* Header */}
-                        <div className="flex flex-col gap-4 mb-6">
-                            {/* Title Row */}
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                <div>
-                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Shop</h1>
-                                    <p className="text-gray-500 dark:text-zinc-400 text-xs sm:text-sm mt-1 hidden sm:block">Manage your products • Drag to reorder</p>
-                                </div>
-                                <div className="flex items-center gap-2 sm:gap-3">
-
-                                    {/* Profile Link */}
-                                    <div className="relative group w-full sm:w-auto">
-                                        <div
-                                            onClick={() => {
-                                                const url = `${window.location.origin}/s/${username}`;
-                                                window.open(url, '_blank');
-                                            }}
-                                            className="bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-zinc-300 pr-10 border border-zinc-800 cursor-pointer truncate max-w-[200px]"
-                                            title="Click to open store"
-                                        >
-                                            {/* Show localhost if on localhost, else tap2.me */}
-                                            {window.location.hostname === 'localhost' ? 'localhost' : 'tapx.bio'}/s/{username}
-                                        </div>
-                                        <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 rounded-full hover:bg-zinc-700 text-zinc-400"
-                                            onClick={() => {
-                                                const url = `${window.location.origin}/s/${username}`;
-                                                navigator.clipboard.writeText(url);
-                                                toast.success("Store link copied!");
-                                            }}
-                                        >
-                                            <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                                        </Button>
+                        {/* Tabs Integration */}
+                        <Tabs defaultValue="shop" className="w-full">
+                            <div className="flex flex-col gap-4 mb-6">
+                                {/* Title Row */}
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                    <div>
+                                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Shop & Links</h1>
+                                        <p className="text-gray-500 dark:text-zinc-400 text-xs sm:text-sm mt-1 hidden sm:block">Manage your products and profile content</p>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Add Button, Socials & Clear All */}
-                        <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8">
-                            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                                <DialogTrigger asChild>
-                                    <Button
-                                        className="w-3/4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-zinc-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
-                                    >
-                                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> {t('dashboard.addContent')}
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
-                                    <DialogHeader>
-                                        <DialogTitle>{t('shop.addNewProduct')}</DialogTitle>
-                                        <DialogDescription>
-                                            {t('shop.addProductDesc')}
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <form onSubmit={handleCreateProduct} className="grid gap-4 py-4">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="title">{t('shop.productName')}</Label>
-                                            <Input
-                                                id="title"
-                                                value={newProduct.title}
-                                                onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="price">Price (₹)</Label>
-                                                <Input
-                                                    id="price"
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={newProduct.price}
-                                                    onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="type">{t('shop.type')}</Label>
-                                                <Select
-                                                    value={newProduct.type}
-                                                    onValueChange={(val: any) => setNewProduct({ ...newProduct, type: val })}
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select type" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="digital_product">Digital Product</SelectItem>
-                                                        <SelectItem value="physical_product">Physical Product</SelectItem>
-                                                        <SelectItem value="physical_service">Physical Service</SelectItem>
-                                                        <SelectItem value="digital_service">Digital Service</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="desc">Description</Label>
-                                            <Textarea
-                                                id="desc"
-                                                value={newProduct.description}
-                                                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                                            />
-                                        </div>
-                                        {newProduct.type === 'digital_product' && (
-                                            <>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="url">Product File (Max 15MB)</Label>
-                                                    <FileUpload
-                                                        value={newProduct.file_url}
-                                                        onChange={(url) => setNewProduct({ ...newProduct, file_url: url })}
-                                                        label="Upload Digital Product"
-                                                        maxSizeMB={15}
-                                                        type="product_file"
-                                                    />
-                                                    <div className="text-xs text-gray-500 text-center mt-1">- OR -</div>
-                                                    <Input
-                                                        id="url"
-                                                        type="url"
-                                                        placeholder="https://drive.google.com/file/..."
-                                                        value={newProduct.file_url}
-                                                        onChange={(e) => setNewProduct({ ...newProduct, file_url: e.target.value })}
-                                                    />
-                                                </div>
-                                            </>
-                                        )}
-
-                                        {/* Marketplace Plugins - Only for non-digital products */}
-                                        {newProduct.type !== 'digital_product' && newProduct.type && (
-                                            <div className="grid gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                                                <div className="flex items-center gap-2">
-                                                    <Store className="w-4 h-4 text-gray-600" />
-                                                    <Label className="text-sm font-semibold text-gray-900">Marketplace Plugins</Label>
-                                                </div>
-                                                <p className="text-xs text-gray-600">
-                                                    Enhance your {newProduct.type.replace('_', ' ')} with shipping, payment, and other plugins from the marketplace.
-                                                </p>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() => window.location.href = '/marketplace'}
-                                                    className="w-full border-gray-300 hover:border-gray-900 hover:bg-gray-100"
-                                                >
-                                                    <Store className="w-4 h-4 mr-2" />
-                                                    Browse Marketplace
-                                                </Button>
-                                            </div>
-                                        )}
-
-                                        <div className="grid gap-2">
-                                            <Label>Product Image</Label>
-                                            <ImageUpload
-                                                value={newProduct.image_url}
-                                                onChange={(url) => setNewProduct({ ...newProduct, image_url: url })}
-                                            />
-                                        </div>
-                                        <DialogFooter>
-                                            <Button type="submit" disabled={isSubmitting} className="w-full">
-                                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                                                {t('shop.createProduct')}
-                                            </Button>
-                                        </DialogFooter>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                            <SocialLinksDialog
-                                initialLinks={user?.social_links || {}}
-                                onSave={async () => { }}
-                                onLinksChange={() => { }}
-                                onOpenChange={() => { }}
-                            >
-                                <Button
-                                    variant="outline"
-                                    className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-900 hover:text-black dark:hover:text-white font-medium gap-1.5 sm:gap-2 text-sm sm:text-base"
-                                >
-                                    <Instagram className="w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span className="hidden sm:inline">{t('dashboard.socials')}</span>
-                                </Button>
-                            </SocialLinksDialog>
-                            <Button
-                                variant="outline"
-                                className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-red-900/30 text-red-400 hover:bg-red-950/30 hover:text-red-300 font-medium"
-                                onClick={() => toast.info("Clear All functionality coming soon")}
-                            >
-                                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                                <span className="hidden sm:inline">{t('dashboard.clearAll')}</span>
-                            </Button>
-                        </div>
-
-                        {/* Products List */}
-                        <div className="space-y-3 sm:space-y-4 pb-6">
-                            {loadingProducts ? (
-                                <div className="flex justify-center py-10"><Loader2 className="animate-spin text-gray-400" /></div>
-                            ) : filteredProducts.length > 0 ? (
-                                filteredProducts.map((product) => (
-                                    <div key={product._id} className="bg-white dark:bg-zinc-900 p-4 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm flex items-center justify-between group hover:shadow-md transition-shadow">
-                                        <div className="flex items-center gap-3 sm:gap-4">
-                                            {/* Drag Handle */}
-                                            <div className="text-zinc-500 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <GripVertical className="w-5 h-5" />
-                                            </div>
-                                            {/* Product Image */}
-                                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                                                {product.image_url ? (
-                                                    <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-xl bg-gradient-to-br from-purple-100 to-pink-100">🛍️</div>
-                                                )}
-                                            </div>
-                                            {/* Product Info */}
-                                            <div>
-                                                <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{product.title}</h3>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="text-xs sm:text-sm font-bold text-green-400">₹{product.price}</span>
-                                                    <span className="text-zinc-600">•</span>
-                                                    <span className="text-xs text-zinc-400 capitalize">{product.type?.replace('_', ' ')}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {/* Actions */}
-                                        <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 sm:gap-3">
+                                        {/* Shop Visibility Toggle */}
+                                        <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 shadow-sm">
                                             <Switch
-                                                checked={product.is_active}
-                                                onCheckedChange={() => handleToggleProduct(product._id, product.is_active)}
-                                                className="data-[state=checked]:bg-green-500"
+                                                checked={user?.show_shop_on_profile ?? true}
+                                                onCheckedChange={handleToggleShopVisibility}
+                                                className="scale-90 data-[state=checked]:bg-green-500"
                                             />
+                                            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400 hidden sm:inline-block">Show Store</span>
+                                            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400 sm:hidden">Store</span>
+                                        </div>
 
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-40 bg-zinc-900 border-zinc-800 text-zinc-300">
-                                                    <DropdownMenuItem
-                                                        onClick={() => {
-                                                            setEditingProduct(product);
-                                                            setIsEditOpen(true);
-                                                        }}
-                                                        className="cursor-pointer hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white"
-                                                    >
-                                                        <Settings className="mr-2 h-4 w-4" />
-                                                        <span>Edit</span>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onClick={() => {
-                                                            const url = `${window.location.origin}/${username}/store/product/${product._id}`;
-                                                            navigator.clipboard.writeText(url);
-                                                            toast.success("Product link copied!");
-                                                        }}
-                                                        className="cursor-pointer hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white"
-                                                    >
-                                                        <Share className="mr-2 h-4 w-4" />
-                                                        <span>Copy Link</span>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onClick={() => handleDuplicateProduct(product)}
-                                                        className="cursor-pointer hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white"
-                                                    >
-                                                        <Copy className="mr-2 h-4 w-4" />
-                                                        <span>Duplicate</span>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator className="bg-zinc-800" />
-                                                    <DropdownMenuItem
-                                                        onClick={() => handleDeleteProduct(product._id)}
-                                                        className="cursor-pointer text-red-400 hover:text-red-300 hover:bg-red-950/30 focus:bg-red-950/30 focus:text-red-300"
-                                                    >
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        <span>Delete</span>
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                        {/* Profile Link */}
+                                        <div className="relative group w-full sm:w-auto">
+                                            <div
+                                                onClick={() => {
+                                                    const url = `${window.location.origin}/s/${username}`;
+                                                    window.open(url, '_blank');
+                                                }}
+                                                className="bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-zinc-300 pr-10 border border-zinc-800 cursor-pointer truncate max-w-[200px]"
+                                                title="Click to open store"
+                                            >
+                                                {window.location.hostname === 'localhost' ? 'localhost' : 'tapx.bio'}/s/{username}
+                                            </div>
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 rounded-full hover:bg-zinc-700 text-zinc-400"
+                                                onClick={() => {
+                                                    const url = `${window.location.origin}/s/${username}`;
+                                                    navigator.clipboard.writeText(url);
+                                                    toast.success("Store link copied!");
+                                                }}
+                                            >
+                                                <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                            </Button>
                                         </div>
                                     </div>
-                                ))
-                            ) : (
-                                <div className="text-center py-10 sm:py-16 bg-white dark:bg-zinc-900/50 rounded-xl sm:rounded-2xl border-2 border-dashed border-gray-200 dark:border-zinc-800 px-4">
-                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 dark:bg-zinc-800 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                                        <Package className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 dark:text-zinc-500" />
-                                    </div>
-                                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('shop.noProducts')}</h3>
-                                    <p className="text-gray-500 dark:text-zinc-400 text-xs sm:text-sm mb-4 sm:mb-6">{t('shop.noProductsDesc')}</p>
-                                    <Button onClick={() => setIsAddOpen(true)} variant="outline" className="rounded-full gap-2 text-sm bg-gray-900 dark:bg-zinc-800 border-transparent dark:border-zinc-700 text-white dark:text-zinc-200 hover:bg-gray-800 dark:hover:bg-zinc-700 hover:text-white">
-                                        <Plus className="w-4 h-4" /> {t('shop.addFirstProduct')}
-                                    </Button>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
 
-                {/* Phone Preview - Right Side */}
-                <div className="w-[400px] border-l border-zinc-200 dark:border-zinc-800 hidden xl:flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0A] sticky top-0 h-full">
-                    <div className="py-8 px-8 flex flex-col items-center">
-                        {/* Phone Frame */}
-                        <div className="w-[300px] h-[620px] bg-black rounded-[3rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">
-                            {/* Notch */}
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-2xl z-20" />
-
-                            {/* Status Bar */}
-                            <div className="h-8 w-full bg-black flex items-center justify-between px-8 text-[10px] text-white font-medium pt-1 z-30 relative">
-                                <span>9:41</span>
-                                <div className="flex gap-1.5 items-center">
-                                    <div className="flex gap-0.5">
-                                        <div className="w-1 h-1 bg-white rounded-full" />
-                                        <div className="w-1 h-1 bg-white rounded-full" />
-                                        <div className="w-1 h-1.5 bg-white rounded-full" />
-                                        <div className="w-1 h-2 bg-white rounded-full" />
-                                    </div>
-                                    <span className="text-[8px]">5G</span>
-                                    <div className="w-5 h-2.5 border border-white rounded-sm relative">
-                                        <div className="absolute inset-0.5 right-1 bg-white rounded-[1px]" />
-                                        <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-1 bg-white rounded-r" />
-                                    </div>
-                                </div>
+                                {/* Tabs List */}
+                                <TabsList className="w-full sm:w-auto self-start bg-zinc-100 dark:bg-zinc-900">
+                                    <TabsTrigger value="shop" className="flex-1 sm:flex-none">Products</TabsTrigger>
+                                    <TabsTrigger value="links" className="flex-1 sm:flex-none">Links</TabsTrigger>
+                                </TabsList>
                             </div>
 
-                            {/* Screen Content */}
-                            <div
-                                className={`h-full w-full overflow-y-auto p-6 pb-20 ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor}`}
-                                style={bgStyle}
-                            >
-                                {currentTemplate.bgImage && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
-
-                                {/* Share Button */}
-                                <div className="absolute top-12 right-6 w-8 h-8 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center z-10">
-                                    <ExternalLink className={`w-4 h-4 ${currentTemplate.textColor ? 'opacity-80' : 'text-gray-700'}`} />
-                                </div>
-
-                                <div className="flex flex-col items-center mt-8 space-y-3 relative z-10">
-                                    <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
-                                        <AvatarImage src={user?.avatar} />
-                                        <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
-                                            {userInitial}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <h2 className="text-xl font-bold tracking-tight">@{username}</h2>
-
-                                    {/* Tab Switcher */}
-                                    <div className="mt-4 flex bg-black/10 backdrop-blur-sm p-1 rounded-full w-fit">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setPreviewTab('links')}
-                                            className={`px-4 py-1.5 h-auto rounded-full text-xs font-semibold transition-all hover:bg-white/10 ${previewTab === 'links' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-current opacity-70 hover:opacity-100 hover:text-white'}`}
-                                        >
-                                            {t('dashboard.links')}
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setPreviewTab('shop')}
-                                            className={`px-4 py-1.5 h-auto rounded-full text-xs font-semibold transition-all hover:bg-white/10 ${previewTab === 'shop' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-current opacity-70 hover:opacity-100 hover:text-white'}`}
-                                        >
-                                            {t('shop.title')}
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                {/* Links Preview */}
-                                {previewTab === 'links' && (
-                                    <div className="mt-8 space-y-3 relative z-10 w-full px-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                                        {authLinks.filter(l => l.isActive).map((link) => {
-                                            const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
-                                            return (
-                                                <a
-                                                    key={link.id}
-                                                    href="#"
-                                                    className={`block w-full flex items-center justify-center relative p-3.5 rounded-full transition-transform hover:scale-[1.02] active:scale-[0.98] ${currentTemplate.buttonStyle}`}
-                                                >
-                                                    {Icon && <Icon className="absolute left-4 w-4 h-4 opacity-80" />}
-                                                    <span className="text-sm font-medium truncate max-w-[200px]">{link.title}</span>
-                                                </a>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-
-                                {/* Shop Preview */}
-                                {previewTab === 'shop' && (
-                                    <div className="mt-8 space-y-3 relative z-10 w-full px-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                                        {products.filter(p => p && p._id && p.is_active).map((product) => (
-                                            <div
-                                                key={product._id}
-                                                className="relative aspect-square w-full rounded-2xl overflow-hidden group shadow-md"
+                            <TabsContent value="shop" className="mt-0">
+                                {/* Add Button, Socials & Clear All */}
+                                <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8">
+                                    {/* Edit Dialog Logic: Unified with Add Dialog or separate usage? Reusing Dialog but logic controlled by isOpen */}
+                                    <Dialog open={isAddOpen || isEditOpen} onOpenChange={(open) => {
+                                        if (!open) {
+                                            setIsAddOpen(false);
+                                            setIsEditOpen(false);
+                                            setEditingProduct(null);
+                                            setNewProduct({ title: "", price: "", description: "", type: "physical_product", image_url: "", file_url: "" });
+                                        }
+                                    }}>
+                                        <DialogTrigger asChild>
+                                            <Button
+                                                onClick={() => {
+                                                    setEditingProduct(null);
+                                                    setNewProduct({ title: "", price: "", description: "", type: "physical_product", image_url: "", file_url: "" });
+                                                    setIsAddOpen(true);
+                                                }}
+                                                className="w-3/4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-zinc-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
                                             >
-                                                {product.image_url ? (
-                                                    <img src={product.image_url} alt={product.title} className="absolute inset-0 w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-400 w-full h-full flex items-center justify-center">
-                                                        <div className="text-4xl opacity-40">✨</div>
+                                                <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> {t('dashboard.addContent')}
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
+                                            <DialogHeader>
+                                                <DialogTitle>{isEditOpen ? 'Edit Product' : t('shop.addNewProduct')}</DialogTitle>
+                                                <DialogDescription>
+                                                    {isEditOpen ? 'Update your product details below.' : t('shop.addProductDesc')}
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <form onSubmit={handleSaveProduct} className="grid gap-4 py-4">
+                                                <div className="grid gap-2">
+                                                    <Input
+                                                        id="title"
+                                                        value={newProduct.title}
+                                                        onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="price">Price (₹)</Label>
+                                                        <Input
+                                                            id="price"
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={newProduct.price}
+                                                            onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="type">{t('shop.type')}</Label>
+                                                        <Select
+                                                            value={newProduct.type}
+                                                            onValueChange={(val: any) => setNewProduct({ ...newProduct, type: val })}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select type" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="digital_product">Digital Product</SelectItem>
+                                                                <SelectItem value="physical_product">Physical Product</SelectItem>
+                                                                <SelectItem value="physical_service">Physical Service</SelectItem>
+                                                                <SelectItem value="digital_service">Digital Service</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="desc">Description</Label>
+                                                    <Textarea
+                                                        id="desc"
+                                                        value={newProduct.description}
+                                                        onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                                                    />
+                                                </div>
+                                                {newProduct.type === 'digital_product' && (
+                                                    <>
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="url">Product File (Max 15MB)</Label>
+                                                            <FileUpload
+                                                                value={newProduct.file_url}
+                                                                onChange={(url) => setNewProduct({ ...newProduct, file_url: url })}
+                                                                label="Upload Digital Product"
+                                                                maxSizeMB={15}
+                                                                type="product_file"
+                                                            />
+                                                            <div className="text-xs text-gray-500 text-center mt-1">- OR -</div>
+                                                            <Input
+                                                                id="url"
+                                                                type="url"
+                                                                placeholder="https://drive.google.com/file/..."
+                                                                value={newProduct.file_url}
+                                                                onChange={(e) => setNewProduct({ ...newProduct, file_url: e.target.value })}
+                                                            />
+                                                        </div>
+                                                    </>
+                                                )}
+
+                                                {/* Marketplace Plugins - Only for non-digital products */}
+                                                {newProduct.type !== 'digital_product' && newProduct.type && (
+                                                    <div className="grid gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                                        <div className="flex items-center gap-2">
+                                                            <Store className="w-4 h-4 text-gray-600" />
+                                                            <Label className="text-sm font-semibold text-gray-900">Marketplace Plugins</Label>
+                                                        </div>
+                                                        <p className="text-xs text-gray-600">
+                                                            Enhance your {newProduct.type.replace('_', ' ')} with shipping, payment, and other plugins from the marketplace.
+                                                        </p>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            onClick={() => window.location.href = '/marketplace'}
+                                                            className="w-full border-gray-300 hover:border-gray-900 hover:bg-gray-100"
+                                                        >
+                                                            <Store className="w-4 h-4 mr-2" />
+                                                            Browse Marketplace
+                                                        </Button>
                                                     </div>
                                                 )}
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                                                <div className="absolute bottom-0 left-0 right-0 p-4">
-                                                    <h4 className="font-bold text-white text-sm truncate">{product.title}</h4>
-                                                    <p className="text-white/80 text-xs font-semibold">₹{product.price}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {products.filter(p => p && p.is_active).length === 0 && (
-                                            <div className="text-center py-8 text-white/50 text-sm">
-                                                No products yet
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
 
-                                {/* Bottom Message Button */}
-                                <div className="absolute bottom-4 left-4 right-4 z-20">
+                                                <div className="grid gap-2">
+                                                    <Label>Product Image</Label>
+                                                    <ImageUpload
+                                                        value={newProduct.image_url}
+                                                        onChange={(url) => setNewProduct({ ...newProduct, image_url: url })}
+                                                    />
+                                                </div>
+                                                <DialogFooter>
+                                                    <Button type="submit" disabled={isSubmitting} className="w-full">
+                                                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                                                        {t('shop.createProduct')}
+                                                    </Button>
+                                                </DialogFooter>
+                                            </form>
+                                        </DialogContent>
+                                    </Dialog>
+
                                     <Button
-                                        variant="secondary"
-                                        className="w-full bg-white text-black h-12 rounded-full font-bold text-sm flex items-center justify-between px-5 shadow-xl hover:shadow-2xl transition-shadow border border-gray-100 hover:bg-white"
+                                        variant="outline"
+                                        className="h-11 sm:h-14 px-3 sm:px-6 rounded-xl sm:rounded-2xl border-red-900/30 text-red-400 hover:bg-red-950/30 hover:text-red-300 font-medium"
+                                        onClick={() => toast.info("Clear All functionality coming soon")}
                                     >
-                                        <span>Message {user?.name?.split(' ')[0] || 'User'}</span>
-                                        <MessageCircle className="w-5 h-5 text-gray-600" />
+                                        <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                                        <span className="hidden sm:inline">{t('dashboard.clearAll')}</span>
                                     </Button>
                                 </div>
-                            </div>
-                        </div>
+
+                                {/* Products List */}
+                                <div className="space-y-3 sm:space-y-4 pb-6">
+                                    {loadingProducts ? (
+                                        <div className="flex justify-center py-10"><Loader2 className="animate-spin text-gray-400" /></div>
+                                    ) : filteredProducts.length > 0 ? (
+                                        filteredProducts.map((product) => (
+                                            <div key={product._id} className="bg-white dark:bg-zinc-900 p-4 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm flex items-center justify-between group hover:shadow-md transition-shadow">
+                                                <div className="flex items-center gap-3 sm:gap-4">
+                                                    {/* Drag Handle */}
+                                                    <div className="text-zinc-500 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <GripVertical className="w-5 h-5" />
+                                                    </div>
+                                                    {/* Product Image */}
+                                                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                                                        {product.image_url ? (
+                                                            <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-xl bg-gradient-to-br from-purple-100 to-pink-100">🛍️</div>
+                                                        )}
+                                                    </div>
+                                                    {/* Product Info */}
+                                                    <div>
+                                                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{product.title}</h3>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <span className="text-xs sm:text-sm font-bold text-green-400">₹{product.price}</span>
+                                                            <span className="text-zinc-600">•</span>
+                                                            <span className="text-xs text-zinc-400 capitalize">{product.type?.replace('_', ' ')}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* Actions */}
+                                                <div className="flex items-center gap-2">
+                                                    <Switch
+                                                        checked={product.is_active}
+                                                        onCheckedChange={() => handleToggleProduct(product._id, product.is_active)}
+                                                        className="data-[state=checked]:bg-green-500"
+                                                    />
+
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-40 bg-zinc-900 border-zinc-800 text-zinc-300">
+                                                            <DropdownMenuItem
+                                                                onClick={() => {
+                                                                    setEditingProduct(product);
+                                                                    setNewProduct({
+                                                                        title: product.title,
+                                                                        price: product.price.toString(),
+                                                                        description: product.description || "",
+                                                                        type: product.product_type || product.type || "physical_product",
+                                                                        image_url: product.image_url || "",
+                                                                        file_url: product.file_url || ""
+                                                                    });
+                                                                    setIsEditOpen(true);
+                                                                }}
+                                                                className="cursor-pointer hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white"
+                                                            >
+                                                                <Settings className="mr-2 h-4 w-4" />
+                                                                <span>Edit</span>
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={() => {
+                                                                    const url = `${window.location.origin}/${username}/store/product/${product._id}`;
+                                                                    navigator.clipboard.writeText(url);
+                                                                    toast.success("Product link copied!");
+                                                                }}
+                                                                className="cursor-pointer hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white"
+                                                            >
+                                                                <Share className="mr-2 h-4 w-4" />
+                                                                <span>Copy Link</span>
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleDuplicateProduct(product)}
+                                                                className="cursor-pointer hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white"
+                                                            >
+                                                                <Copy className="mr-2 h-4 w-4" />
+                                                                <span>Duplicate</span>
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuSeparator className="bg-zinc-800" />
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleDeleteProduct(product._id)}
+                                                                className="cursor-pointer text-red-400 hover:text-red-300 hover:bg-red-950/30 focus:bg-red-950/30 focus:text-red-300"
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                <span>Delete</span>
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-10 sm:py-16 bg-white dark:bg-zinc-900/50 rounded-xl sm:rounded-2xl border-2 border-dashed border-gray-200 dark:border-zinc-800 px-4">
+                                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 dark:bg-zinc-800 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                                                <Package className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 dark:text-zinc-500" />
+                                            </div>
+                                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('shop.noProducts')}</h3>
+                                            <p className="text-gray-500 dark:text-zinc-400 text-xs sm:text-sm mb-4 sm:mb-6">{t('shop.noProductsDesc')}</p>
+                                            <Button onClick={() => setIsAddOpen(true)} variant="outline" className="rounded-full gap-2 text-sm bg-gray-900 dark:bg-zinc-800 border-transparent dark:border-zinc-700 text-white dark:text-zinc-200 hover:bg-gray-800 dark:hover:bg-zinc-700 hover:text-white">
+                                                <Plus className="w-4 h-4" /> {t('shop.addFirstProduct')}
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="links">
+                                <LinksManager />
+                            </TabsContent>
+                        </Tabs >
+                    </div >
+                </div >
+
+                {/* Phone Preview - Right Side */}
+                < div className="w-[400px] border-l border-zinc-200 dark:border-zinc-800 hidden xl:flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0A] sticky top-0 h-full" >
+                    <div className="py-8 px-8 flex flex-col items-center transform scale-90 origin-top">
+                        <ProfilePreview blocks={authLinks} theme={currentTemplate} products={products} />
 
                         {/* Preview Label */}
                         <div className="text-center mt-6">
@@ -912,120 +857,33 @@ const Shop = () => {
                             <p className="text-xs text-gray-400 mt-1">{t('dashboard.previewDesc')}</p>
                         </div>
                     </div>
-                </div>
-            </div>
+                </div >
+            </div >
 
             {/* Mobile Preview Trigger */}
-            <div className="fixed bottom-6 right-6 z-40 xl:hidden">
+            < div className="fixed bottom-6 right-6 z-40 xl:hidden" >
                 <Button
                     onClick={() => setShowPreview(true)}
-                    className="rounded-full w-14 h-14 shadow-2xl flex items-center justify-center"
+                    className="rounded-full w-14 h-14 shadow-2xl flex items-center justify-center bg-zinc-900 text-white"
                 >
                     <Smartphone className="w-6 h-6" />
                 </Button>
-            </div>
+            </div >
 
             {/* Mobile Preview Sheet */}
-            <Sheet open={showPreview} onOpenChange={setShowPreview}>
-                <SheetContent side="right" className="w-full sm:max-w-lg p-0 bg-zinc-950 border-l border-zinc-800">
-                    <div className="h-full flex flex-col items-center justify-center p-6">
-                        {/* Phone Frame - Mobile */}
-                        <div className="w-[280px] h-[560px] bg-black rounded-[2.5rem] border-8 border-gray-900 shadow-2xl overflow-hidden relative">
-                            {/* Notch */}
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-b-xl z-20" />
-
-                            {/* Status Bar */}
-                            <div className="h-7 w-full bg-black flex items-center justify-between px-6 text-[9px] text-white font-medium pt-1 z-30 relative">
-                                <span>9:41</span>
-                                <div className="flex gap-1 items-center">
-                                    <span className="text-[7px]">5G</span>
-                                    <div className="w-4 h-2 border border-white rounded-sm relative">
-                                        <div className="absolute inset-0.5 right-0.5 bg-white rounded-[1px]" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Screen Content */}
-                            <div
-                                className={`h-full w-full overflow-y-auto p-5 pb-16 ${currentTemplate.bgClass || 'bg-gray-100'} ${currentTemplate.textColor}`}
-                                style={bgStyle}
-                            >
-                                <div className="flex flex-col items-center mt-6 space-y-2 relative z-10">
-                                    <Avatar className="w-20 h-20 border-3 border-white/20 shadow-lg">
-                                        <AvatarImage src={user?.avatar} />
-                                        <AvatarFallback className="bg-zinc-800 text-white text-2xl font-bold">
-                                            {userInitial}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <h2 className="text-lg font-bold tracking-tight">@{username}</h2>
-
-                                    {/* Tab Switcher */}
-                                    <div className="mt-3 flex bg-black/10 backdrop-blur-sm p-1 rounded-full">
-                                        <button
-                                            onClick={() => setPreviewTab('links')}
-                                            className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all ${previewTab === 'links' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70'}`}
-                                        >
-                                            {t('dashboard.links')}
-                                        </button>
-                                        <button
-                                            onClick={() => setPreviewTab('shop')}
-                                            className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all ${previewTab === 'shop' ? 'bg-white text-black shadow-sm' : 'text-current opacity-70'}`}
-                                        >
-                                            {t('shop.title')}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Shop Preview in Mobile */}
-                                {previewTab === 'shop' && (
-                                    <div className="mt-6 space-y-2 relative z-10 w-full">
-                                        {products.filter(p => p && p._id && p.is_active).map((product) => (
-                                            <div
-                                                key={product._id}
-                                                className="relative aspect-square w-full rounded-xl overflow-hidden shadow-md"
-                                            >
-                                                {product.image_url ? (
-                                                    <img src={product.image_url} alt={product.title} className="absolute inset-0 w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-400" />
-                                                )}
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                                                <div className="absolute bottom-0 left-0 right-0 p-3">
-                                                    <h4 className="font-bold text-white text-xs truncate">{product.title}</h4>
-                                                    <p className="text-white/80 text-[10px] font-semibold">₹{product.price}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Links Preview in Mobile */}
-                                {previewTab === 'links' && (
-                                    <div className="mt-6 space-y-2 relative z-10 w-full">
-                                        {authLinks.filter(l => l.isActive).map((link) => (
-                                            <a
-                                                key={link.id}
-                                                href="#"
-                                                className={`block w-full flex items-center justify-center p-3 rounded-full transition-transform ${currentTemplate.buttonStyle}`}
-                                            >
-                                                <span className="text-xs font-medium truncate">{link.title}</span>
-                                            </a>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Bottom Message Button */}
-                                <div className="absolute bottom-3 left-3 right-3 z-20">
-                                    <button className="w-full bg-white text-black h-10 rounded-full font-bold text-xs flex items-center justify-between px-4 shadow-lg hover:bg-zinc-200 transition-colors">
-                                        <span>Message {user?.name?.split(' ')[0] || 'User'}</span>
-                                        <MessageCircle className="w-4 h-4 text-black" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+            < Sheet open={showPreview} onOpenChange={setShowPreview} >
+                <SheetContent side="right" className="w-full sm:max-w-md p-0 bg-transparent border-none shadow-none flex items-center justify-center backdrop-blur-sm">
+                    <div className="scale-90">
+                        <ProfilePreview blocks={authLinks} theme={currentTemplate} products={products} />
+                        <Button
+                            className="absolute top-4 right-4 rounded-full w-10 h-10 bg-white/10 hover:bg-white/20 text-white"
+                            onClick={() => setShowPreview(false)}
+                        >
+                            <X className="w-5 h-5" />
+                        </Button>
                     </div>
                 </SheetContent>
-            </Sheet>
+            </Sheet >
 
             <ConnectWithSupplierModal
                 open={connectModal.open}
@@ -1044,7 +902,7 @@ const Shop = () => {
                 currentConfig={selectedConfig}
                 onSave={savePluginConfig}
             />
-        </LinktreeLayout>
+        </LinktreeLayout >
     );
 };
 

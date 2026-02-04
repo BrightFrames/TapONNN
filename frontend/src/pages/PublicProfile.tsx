@@ -1,24 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { io } from "socket.io-client"; // Add Socket.io
+import { io } from "socket.io-client";
 import { useAuth } from "@/contexts/AuthContext";
 import { templates } from "@/data/templates";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Instagram, Twitter, Sparkles, Share2, Link2, Facebook, Linkedin, Youtube, Github, Heart, X, Share, MessageCircle, Search, ExternalLink } from "lucide-react";
+import { Sparkles, Share2, Link2, MessageCircle, Search, ExternalLink, ArrowRight, ShoppingBag, Star, ChevronLeft, BadgeCheck, Heart, Upload } from "lucide-react";
 import EnquiryModal from "@/components/EnquiryModal";
 import PaymentModal from "@/components/PaymentModal";
 import LoginToContinueModal from "@/components/LoginToContinueModal";
 import ShareModal from "@/components/ShareModal";
-
 import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 import { MessageSignupModal } from "@/components/MessageSignupModal";
 import useIntent, { getPendingIntent, clearPendingIntent } from "@/hooks/useIntent";
 import { toast } from "sonner";
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { useAnalytics } from "@/hooks/useAnalytics";
-
+import { cn } from "@/lib/utils";
 
 const PublicProfile = () => {
     const { username } = useParams();
@@ -38,9 +37,28 @@ const PublicProfile = () => {
     const [blocks, setBlocks] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<'links' | 'offerings'>('links');
+    const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+    const [selectedBlock, setSelectedBlock] = useState<any | null>(null); // For Link Interstitial
     const [searchQuery, setSearchQuery] = useState('');
     const [notFound, setNotFound] = useState(false);
     const [likedProductIds, setLikedProductIds] = useState<Set<string>>(new Set());
+
+    // Countdown State
+    const [countdown, setCountdown] = useState(5);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Scroll Logic
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [scrollProgress, setScrollProgress] = useState(0);
+
+    const handleScroll = () => {
+        if (!scrollContainerRef.current) return;
+        const scrollTop = scrollContainerRef.current.scrollTop;
+        const progress = Math.min(scrollTop / 120, 1);
+        setScrollProgress(progress);
+    };
+
+    const isScrolled = scrollProgress > 0.8;
 
     // Modals State
     const [shareOpen, setShareOpen] = useState(false);
@@ -53,7 +71,6 @@ const PublicProfile = () => {
     // Initialize Analytics
     const { trackClick } = useAnalytics(profile?.id);
 
-
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
     // Initialize Profile & Blocks
@@ -62,23 +79,15 @@ const PublicProfile = () => {
 
         // Socket.io Connection
         const socketUrl = (import.meta.env.VITE_API_URL || "http://localhost:5001").replace(/\/api\/?$/, '');
-        console.log("Connecting to socket at:", socketUrl);
         const socket = io(socketUrl);
 
         socket.on("connect", () => {
-            console.log("Socket connected:", socket.id);
             if (username) {
-                console.log("Joining profile room:", username);
                 socket.emit("joinProfile", username);
             }
         });
 
-        socket.on("connect_error", (err) => {
-            console.error("Socket connection error:", err);
-        });
-
         socket.on("profileUpdated", (data) => {
-            console.log("Real-time update received:", data);
             fetchPublicProfile();
         });
 
@@ -95,7 +104,6 @@ const PublicProfile = () => {
                 try {
                     const result = await resumeIntent(pendingIntentId);
                     if (result) {
-                        // Intent resumed - now trigger the action
                         handleIntentAction(result);
                     }
                 } catch (err) {
@@ -109,20 +117,47 @@ const PublicProfile = () => {
         }
     }, [loading, authUser]);
 
+    // Countdown Logic for Link Interstitial
+    useEffect(() => {
+        if (selectedBlock && countdown > 0) {
+            timerRef.current = setTimeout(() => {
+                setCountdown(prev => prev - 1);
+            }, 1000);
+        } else if (selectedBlock && countdown === 0) {
+            // Auto Redirect
+            proceedToLink();
+        }
+
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, [selectedBlock, countdown]);
+
+    const proceedToLink = () => {
+        if (!selectedBlock) return;
+        const url = selectedBlock.content?.url || selectedBlock.url;
+        if (url) {
+            let finalUrl = url;
+            if (!/^https?:\/\//i.test(finalUrl)) {
+                finalUrl = 'https://' + finalUrl;
+            }
+            window.open(finalUrl, '_blank');
+        }
+        // Close interstitial
+        setSelectedBlock(null);
+        setCountdown(5); // Reset
+    };
+
     const fetchPublicProfile = async () => {
         if (!username) return;
 
         try {
-            // 1. Fetch Profile - Use store endpoint for /s/:username route
             const profileEndpoint = isStoreRoute
                 ? `${API_URL}/profile/store/${username}`
                 : `${API_URL}/profile/${username}`;
 
-            console.log('Fetching profile:', { isStoreRoute, username, profileEndpoint });
-
             const profileRes = await fetch(profileEndpoint);
             if (!profileRes.ok) {
-                console.error(`Profile fetch failed: ${profileRes.status} ${profileRes.statusText} for URL: ${profileEndpoint}`);
                 setNotFound(true);
                 return;
             }
@@ -138,25 +173,19 @@ const PublicProfile = () => {
                 payment_instructions: userProfile.payment_instructions,
                 social_links: userProfile.social_links || {},
                 is_store_identity: userProfile.is_store_identity,
-                design_config: userProfile.design_config // Add design_config
+                design_config: userProfile.design_config
             });
 
-            // 2. Fetch Blocks
-            // Determine context based on route
             const context = isStoreRoute ? 'store' : 'personal';
             const blocksRes = await fetch(`${API_URL}/blocks/public/${userProfile.id}?context=${context}`);
             const publicBlocks = await blocksRes.json();
             setBlocks(publicBlocks || []);
 
-            // 3. Fetch Products
             const productsRes = await fetch(`${API_URL}/public/products/${userProfile.username}`);
             if (productsRes.ok) {
                 const publicProducts = await productsRes.json();
                 setProducts(publicProducts.products || publicProducts || []);
             }
-
-            // 4. Track View (handled by useAnalytics hook)
-
 
         } catch (error) {
             console.error("Error fetching profile:", error);
@@ -193,8 +222,6 @@ const PublicProfile = () => {
         }
 
         const isLiked = likedProductIds.has(productId);
-
-        // Optimistic Update
         const newLikedIds = new Set(likedProductIds);
         if (isLiked) {
             newLikedIds.delete(productId);
@@ -209,8 +236,6 @@ const PublicProfile = () => {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
             });
         } catch (error) {
-            console.error('Error toggling like:', error);
-            // Revert on error
             setLikedProductIds(likedProductIds);
             toast.error("Failed to update like");
         }
@@ -218,11 +243,22 @@ const PublicProfile = () => {
 
     // Handle Block Interaction (CTA Click)
     const handleBlockInteract = async (block: any) => {
-        // 1. Create Intent
+        // Track click immediately
+        if (block.url) trackClick(block._id, block.url);
+
+        // Check for Interstitial Requirement (Links only)
+        // If it's a simple link block or no CTA, show interstitial
+        if (block.block_type === 'link' || (!block.cta_type || block.cta_type === 'none')) {
+            setSelectedBlock(block);
+            setCountdown(5);
+            return;
+        }
+
+        // For other interactions (Buy/Enquire/Form linked blocks), use Intent Flow
         const intent = await createIntent({
             profile_id: profile.id,
             block_id: block._id,
-            store_id: profile.id, // Profile is the store in this model
+            store_id: profile.id,
             source: 'profile_page'
         });
 
@@ -231,7 +267,6 @@ const PublicProfile = () => {
             return;
         }
 
-        // 2. Check if Login Required
         if (intent.requires_login) {
             setLoginModal({
                 open: true,
@@ -242,16 +277,35 @@ const PublicProfile = () => {
             return;
         }
 
-        // 3. Proceed with Action
         handleIntentAction(intent, block);
     };
 
-    // Route Action based on Intent/Block
+    // New Handler for Product Actions (Shop Tab)
+    const handleProductAction = (product: any, action: 'buy' | 'enquire') => {
+        if (action === 'buy') {
+            setPaymentModal({
+                open: true,
+                blockId: '', // No block ID
+                blockTitle: product.title,
+                price: product.price,
+                intentId: '', // No intent ID for simple product buy yet (or create one)
+                sellerId: profile.id
+            });
+        } else if (action === 'enquire') {
+            setEnquiryModal({
+                open: true,
+                blockId: '',
+                blockTitle: product.title,
+                ctaType: 'enquire',
+                intentId: ''
+            });
+        }
+    };
+
     const handleIntentAction = (intent: any, blockCtx?: any) => {
         const block = blockCtx || blocks.find(b => b._id === intent.block_id);
         if (!block) return;
 
-        // Redirects
         if (intent.flow_type === 'redirect') {
             if (block.content.url) {
                 let url = block.content.url;
@@ -263,7 +317,6 @@ const PublicProfile = () => {
             return;
         }
 
-        // Enquiries
         if (intent.flow_type === 'enquiry') {
             setEnquiryModal({
                 open: true,
@@ -275,7 +328,6 @@ const PublicProfile = () => {
             return;
         }
 
-        // Buy Flow
         if (intent.flow_type === 'buy') {
             const price = block.content.price || 0;
             if (price > 0) {
@@ -288,26 +340,18 @@ const PublicProfile = () => {
                     sellerId: profile.id
                 });
             } else {
-                // Free download/item - skip payment
                 toast.success('Added to your library! (Mock)');
             }
             return;
         }
     };
 
-    // Guest Continue Handler
     const handleGuestContinue = async (email: string) => {
-        // Determine action based on current login modal context
         const intentId = loginModal.intentId;
-        // In a real app, we'd update the intent with the guest email here
-        // For now, we just close login modal and proceed
         setLoginModal({ ...loginModal, open: false });
 
-        // Find intent to resume details (simplified for frontend flow)
-        // We re-trigger action assuming intent exists
-        const block = blocks.find(b => b.title === loginModal.blockTitle); // Weak match but works for flow
+        const block = blocks.find(b => b.title === loginModal.blockTitle);
         if (block) {
-            // Re-trigger visual flow - intent is technically already created/waiting
             if (loginModal.ctaType === 'buy_now') {
                 setPaymentModal({
                     open: true,
@@ -329,56 +373,6 @@ const PublicProfile = () => {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen w-full flex flex-col items-center py-16 px-6 bg-background space-y-8">
-                <Skeleton className="h-24 w-24 rounded-full" />
-                <Skeleton className="h-8 w-48" />
-                <div className="w-full max-w-lg space-y-4">
-                    {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
-                </div>
-            </div>
-        );
-    }
-
-    if (notFound || !profile) {
-        return (
-            <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background text-center px-4">
-                <div className="bg-muted p-4 rounded-full mb-4">
-                    <Link2 className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <h2 className="text-2xl font-bold mb-2">Profile not found</h2>
-                <Button onClick={() => navigate('/')}>Go Home</Button>
-            </div>
-        );
-    }
-
-    // Determine Theme - Match Dashboard phone preview logic
-    const themeId = authUser && authUser.username === username ? authTheme : (profile.selectedTheme || "artemis");
-    const currentTemplate = templates.find(t => t.id === themeId) || templates[0];
-
-    // Background style - Match Dashboard phone preview
-    // Background style - Match Dashboard phone preview
-    const bgType = profile.design_config?.bgType || 'color';
-    let bgStyle: any = {};
-
-    // Fallback for legacy data (if only bgImageUrl exists)
-    const hasCustomImage = !profile.design_config?.bgType && profile.design_config?.bgImageUrl;
-
-    if (bgType === 'image' || hasCustomImage) {
-        bgStyle = { backgroundImage: `url(${profile.design_config?.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-    } else if (bgType === 'color' && profile.design_config?.bgColor) {
-        bgStyle = { backgroundColor: profile.design_config.bgColor };
-        // Prioritize template image if no custom color sets? No, custom overrides template.
-    } else if (bgType === 'gradient' && profile.design_config?.bgGradient) {
-        bgStyle = { background: profile.design_config.bgGradient };
-    } else {
-        // Template Fallback
-        if (currentTemplate.bgImage) {
-            bgStyle = { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-        }
-    }
-
     const getYouTubeId = (url: string) => {
         if (!url) return null;
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -386,32 +380,24 @@ const PublicProfile = () => {
         return (match && match[2].length === 11) ? match[2] : null;
     };
 
-    // Check for cover media
-    // Helper for rendering cover media
     const renderCoverMedia = () => {
         const designConfig = profile.design_config || {};
         const { coverType, coverUrl, coverYoutubeUrl } = designConfig;
 
-        if (coverType === 'image' && coverUrl) {
-            return <img src={coverUrl} alt="Cover" className="w-full h-48 object-cover" />;
+        // Force cover URL if provided (legacy support)
+        const finalCoverUrl = coverUrl || profile.design_config?.bgImageUrl;
+
+        if (finalCoverUrl && (!coverType || coverType === 'image')) {
+            return <img src={finalCoverUrl} alt="Cover" className="w-full h-full object-cover" />;
         }
-        if (coverType === 'video' && coverUrl) {
-            return (
-                <video
-                    src={coverUrl}
-                    className="w-full h-48 object-cover"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                />
-            );
+        if (coverType === 'video' && finalCoverUrl) {
+            return <video src={finalCoverUrl} className="w-full h-full object-cover" autoPlay muted loop playsInline />;
         }
         if (coverType === 'youtube' && coverYoutubeUrl) {
             const videoId = getYouTubeId(coverYoutubeUrl);
             if (videoId) {
                 return (
-                    <div className="w-full h-48 relative overflow-hidden bg-black">
+                    <div className="w-full h-full relative overflow-hidden bg-black">
                         <iframe
                             src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&showinfo=0&modestbranding=1`}
                             className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] pointer-events-none"
@@ -424,319 +410,338 @@ const PublicProfile = () => {
         return null;
     };
 
-    const userInitial = (profile.name?.[0] || profile.username?.[0] || "U").toUpperCase();
+    const userInitial = (profile?.name?.[0] || profile?.username?.[0] || "U").toUpperCase();
 
+    if (loading) {
+        return (
+            <div className="min-h-screen w-full flex flex-col items-center py-16 px-6 bg-zinc-50 space-y-8 animate-pulse">
+                <div className="w-full h-64 bg-zinc-200 absolute top-0 left-0" />
+                <div className="relative z-10 -mt-10 bg-white p-6 rounded-[2rem] shadow-xl w-full max-w-md flex flex-col items-center">
+                    <Skeleton className="h-24 w-24 rounded-full border-4 border-white -mt-16 mb-4" />
+                    <Skeleton className="h-8 w-48 mb-6" />
+                    <div className="w-full space-y-4">
+                        {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
-    const getProfileSizeClass = () => {
-        switch (profile.design_config?.profileSize) {
-            case 'small': return 'w-16 h-16';
-            case 'large': return 'w-32 h-32';
-            default: return 'w-24 h-24';
-        }
-    };
+    const designConfig = profile.design_config || {};
+    const theme = profile.selectedTheme || {};
 
-    const headerLayout = profile.design_config?.headerLayout || 'classic';
-    const isHero = headerLayout === 'hero';
+    // Theme Variables with Fallbacks
+    const bgColor = designConfig.backgroundColor || theme.backgroundColor || "#fafafa";
+    const textColor = designConfig.textColor || theme.textColor || "#18181b";
+    const buttonColor = designConfig.buttonColor || theme.buttonColor || "#000000";
+    const buttonTextColor = designConfig.buttonTextColor || theme.buttonTextColor || "#ffffff";
+    const blockStyle = designConfig.blockStyle || 'rounded';
 
-    const finalTextColorClass = currentTemplate.textColor || "text-gray-900";
+    // Simple dark mode detection
+    const isDarkTheme = ['#000000', '#18181b', '#09090b', '#121212'].some(c => bgColor.toLowerCase().includes(c));
+
+    if (notFound || !profile) {
+        return (
+            <div className="min-h-screen w-full flex flex-col items-center justify-center text-center px-4" style={{ backgroundColor: bgColor, color: textColor }}>
+                <div className="p-4 rounded-full mb-4 shadow-sm" style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#fff' }}>
+                    <Link2 className="w-8 h-8 opacity-50" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Profile not found</h2>
+                <Button onClick={() => navigate('/')} variant="outline" style={{ color: textColor, borderColor: textColor }}>Go Home</Button>
+            </div>
+        );
+    }
 
     return (
-        <div
-            className={`min-h-screen w-full ${finalTextColorClass} relative transition-colors duration-300`}
-            style={bgStyle}
-        >
-            {/* Share Button - Top Right */}
-            <div className="fixed top-6 right-6 z-50">
-                <Button
-                    size="icon"
-                    variant="ghost"
-                    className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors"
-                    onClick={() => setShareOpen(true)}
-                >
-                    <ExternalLink className={`w-5 h-5 ${currentTemplate.textColor ? 'opacity-80' : 'text-gray-700'}`} />
-                </Button>
-            </div>
+        <div className="fixed inset-0 w-full h-full font-sans selection:bg-zinc-200" style={{ backgroundColor: bgColor, color: textColor }}>
 
-            {/* Main Content */}
-            <div className="relative z-10 max-w-md mx-auto px-6 pt-12 pb-32">
-
-                {/* Profile Header - Card Style */}
-                <div className={`flex flex-col mb-6 relative w-full bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg border border-white/5`}>
-                    {/* Cover Media */}
-                    {renderCoverMedia() && (
-                        <div className="w-full relative">
-                            {renderCoverMedia()}
-                        </div>
-                    )}
-
-                    <div className={`flex flex-col w-full p-6 ${isHero ? 'items-start text-left' : 'items-center text-center'} ${renderCoverMedia() ? '-mt-16 z-10' : ''}`}>
-                        <Avatar className={`${getProfileSizeClass()} border-4 border-white/20 shadow-xl`}>
-                            <AvatarImage src={profile.avatar} className="object-cover" />
-                            <AvatarFallback className="bg-gray-400 text-white text-3xl font-bold">
-                                {userInitial}
-                            </AvatarFallback>
-                        </Avatar>
-
-                        <div className={`mt-4 ${isHero ? 'w-full' : ''}`}>
-                            <h2 className="text-xl font-bold tracking-tight">@{profile.username}</h2>
-
-                            {/* Bio */}
-                            {profile.bio && (
-                                <p className={`text-sm opacity-80 mt-1 ${isHero ? '' : 'max-w-xs mx-auto'}`}>{profile.bio}</p>
-                            )}
-                        </div>
-
-                        {/* Social Links */}
-                        {profile.social_links && Object.keys(profile.social_links).length > 0 && (
-                            <div className={`flex gap-3 flex-wrap mt-4 ${isHero ? 'justify-start' : 'justify-center'}`}>
-                                {Object.entries(profile.social_links).map(([platform, url]: [string, any]) => {
-                                    if (!url) return null;
-                                    const Icon = getIconForThumbnail(platform);
-                                    const href = url.startsWith('http') ? url : `https://${url}`;
-                                    return Icon ? (
-                                        <a
-                                            key={platform}
-                                            href={href}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer backdrop-blur-sm"
-                                            onClick={() => trackClick(null, href)}
-                                        >
-                                            <Icon className="w-5 h-5" />
-                                        </a>
-                                    ) : null;
-                                })}
+            {/* 1. Fixed Sticky Header */}
+            <div className={cn(
+                "absolute top-0 left-0 right-0 z-[60] h-[88px] flex items-end px-5 pb-3 transition-all duration-300 pointer-events-none",
+                isScrolled ? "backdrop-blur-xl shadow-sm border-b border-black/5" : "bg-transparent"
+            )} style={{ backgroundColor: isScrolled ? `${bgColor}90` : 'transparent' }}>
+                <div className="flex items-center justify-between w-full max-w-md mx-auto pointer-events-auto">
+                    <div className="flex items-center gap-2 h-9 overflow-visible relative w-40">
+                        {/* Tapx Logo */}
+                        <div className={cn(
+                            "absolute left-0 flex items-center gap-1.5 transition-all duration-500 transform origin-left px-2.5 py-1 rounded-full",
+                            isScrolled ? "opacity-0 -translate-y-4 pointer-events-none" : "opacity-100 translate-y-0 delay-100 bg-black/20 backdrop-blur-md border border-white/10"
+                        )}>
+                            <div className="w-4 h-4 bg-black rounded-full flex items-center justify-center shadow-sm">
+                                <span className="text-[9px] text-white font-bold">t</span>
                             </div>
-                        )}
-
-                        {/* Tab Switcher */}
-                        <div className={`mt-6 flex bg-black/10 backdrop-blur-sm p-1 rounded-full ${isHero ? 'self-start' : 'self-center'}`}>
-                            <Button
-                                variant="ghost"
-                                onClick={() => setActiveTab('links')}
-                                className={`px-5 py-2 h-auto rounded-full text-sm font-semibold transition-all hover:bg-white/20 hover:text-white ${activeTab === 'links' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-current opacity-70 hover:opacity-100'}`}
-                            >
-                                Profile
-                            </Button>
-                            {profile?.is_store_identity && profile?.design_config?.showShopOnPersonal !== false && (
-                                <Button
-                                    variant="ghost"
-                                    onClick={() => setActiveTab('offerings')}
-                                    className={`px-5 py-2 h-auto rounded-full text-sm font-semibold transition-all hover:bg-white/20 hover:text-white ${activeTab === 'offerings' ? 'bg-white text-black shadow-sm hover:bg-white hover:text-black' : 'text-current opacity-70 hover:opacity-100'}`}
-                                >
-                                    Shop
-                                </Button>
-                            )}
+                            <span className="text-xs font-bold text-white shadow-black drop-shadow-sm">tapx.bio</span>
                         </div>
+
+                        {/* Mini Avatar */}
+                        <div
+                            onClick={() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+                            className={cn(
+                                "absolute left-0 flex items-center gap-2 transition-all duration-500 transform origin-left cursor-pointer",
+                                isScrolled ? "opacity-100 translate-y-0 delay-75" : "opacity-0 translate-y-8"
+                            )}>
+                            <Avatar className="w-8 h-8 cursor-pointer border border-zinc-200/20">
+                                <AvatarImage src={profile.avatar} className="object-cover" />
+                                <AvatarFallback style={{ backgroundColor: buttonColor, color: buttonTextColor }} className="text-xs">{userInitial}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-bold line-clamp-1 truncate max-w-[120px]" style={{ color: textColor }}>{profile.name}</span>
+                        </div>
+                    </div>
+
+                    {/* Share Button */}
+                    <div className="flex items-center gap-2">
+                        {authUser?.username === username && (
+                            <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 backdrop-blur-md"
+                                style={{ color: textColor }}
+                                onClick={() => navigate('/dashboard')}
+                            >
+                                <ExternalLink className="w-4 h-4" />
+                            </Button>
+                        )}
+                        <Button size="icon" variant="ghost" onClick={() => setShareOpen(true)} className={cn(
+                            "w-8 h-8 rounded-full transition-colors backdrop-blur-md",
+                            isScrolled ? "hover:opacity-80" : "bg-black/20 text-white hover:bg-black/30 border border-white/10"
+                        )} style={isScrolled ? { color: textColor, backgroundColor: `${textColor}10` } : {}}>
+                            <Upload className="w-4 h-4" />
+                        </Button>
                     </div>
                 </div>
+            </div>
 
-                {/* Links View - Match Phone Preview Design */}
-                {activeTab === 'links' && (
-                    <div className="mt-8 space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        {blocks.filter(b => b.is_active).map((block) => {
-                            const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
-                            const isUrlThumbnail = block.thumbnail && !Icon;
+            {/* 2. Main Scroll Container */}
+            <div
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="w-full h-full overflow-y-auto overflow-x-hidden scrollbar-hide relative"
+                style={{ backgroundColor: bgColor }}
+            >
+                {/* Max Width Container to mimic phone on desktop */}
+                <div className="w-full max-w-md mx-auto min-h-full flex flex-col relative box-border shadow-2xl md:my-0 md:min-h-screen"
+                    style={{ backgroundColor: bgColor }}
+                >
 
-                            return (
-                                <Button
-                                    key={block._id}
-                                    variant="ghost"
-                                    onClick={() => {
-                                        handleBlockInteract(block);
-                                        if (block.url) trackClick(block._id, block.url);
-                                    }}
-                                    className={`block w-full h-auto flex items-center justify-center relative px-12 py-3.5 hover:scale-[1.02] active:scale-[0.98] ${currentTemplate.buttonStyle} whitespace-normal min-h-[50px]`}
-                                >
-                                    {Icon && (
-                                        <Icon className="absolute left-4 w-5 h-5 opacity-90" />
-                                    )}
-                                    {isUrlThumbnail && (
-                                        <img src={block.thumbnail} alt="" className="absolute left-4 w-5 h-5 rounded-full object-cover bg-white/10" />
-                                    )}
-                                    <span className="truncate w-full">{block.title}</span>
-                                </Button>
-                            );
-                        })}
-                        {blocks.filter(b => b.is_active).length === 0 && (
-                            <div className={`text-center text-sm py-8 ${currentTemplate.textColor} opacity-60`}>
-                                No links yet
-                            </div>
+                    {/* Cover Photo */}
+                    <div className="h-64 w-full relative z-0 shrink-0">
+                        {renderCoverMedia() || (
+                            <div className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500" />
                         )}
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent pointer-events-none" />
                     </div>
-                )}
 
-                {/* Offerings View - Match Phone Preview Connect Card Design */}
-                {activeTab === 'offerings' && profile?.is_store_identity && (
-                    <div className="mt-6 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        {/* Search Bar - Match Phone Preview */}
-                        <div className="relative w-full">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50 text-current" />
-                            <input
-                                type="text"
-                                placeholder={`Search ${profile.username}'s products`}
-                                className="w-full pl-10 pr-4 py-3 rounded-xl text-sm bg-white/10 backdrop-blur-md border border-white/10 placeholder:text-current/50 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all font-medium"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
+                    {/* Uplifted Card */}
+                    <div className="relative z-10 -mt-10 px-4 pb-12 flex-1 flex flex-col">
+                        <div
+                            className="w-full rounded-[2rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] p-5 pt-0 flex flex-col items-center animate-in slide-in-from-bottom-8 duration-700 fill-mode-both min-h-[60vh]"
+                            style={{
+                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : '#ffffff',
+                                border: isDarkTheme ? '1px solid rgba(255,255,255,0.1)' : 'none'
+                            }}
+                        >
 
-                        {/* Product Grid - Match Phone Preview Connect Card Design */}
-                        {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
-                            <div className="grid gap-4">
-                                {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).map((product, index) => (
-                                    <div
-                                        key={product._id || `product-${index}`}
-                                        className="relative aspect-square w-full rounded-2xl overflow-hidden group shadow-md"
+                            {/* Large Profile Header */}
+                            <div className="relative -top-10 flex flex-col items-center mb-[-24px]">
+                                <div className={cn(
+                                    "w-24 h-24 rounded-full border-[5px] shadow-lg overflow-hidden mb-3 transition-all duration-300",
+                                    scrollProgress > 0.2 ? "scale-90 opacity-80" : "scale-100 opacity-100"
+                                )} style={{ borderColor: isDarkTheme ? '#18181b' : '#ffffff', backgroundColor: isDarkTheme ? '#18181b' : '#ffffff' }}>
+                                    <Avatar className="w-full h-full">
+                                        <AvatarImage src={profile.avatar} className="object-cover" />
+                                        <AvatarFallback style={{ backgroundColor: buttonColor, color: buttonTextColor }} className="text-3xl font-bold">{userInitial}</AvatarFallback>
+                                    </Avatar>
+                                </div>
+                                <div className={cn(
+                                    "text-center transition-all duration-300",
+                                    scrollProgress > 0.4 ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
+                                )}>
+                                    <h1 className="text-2xl font-black tracking-tight flex items-center gap-1.5 justify-center" style={{ color: textColor }}>
+                                        {profile.name}
+                                        {profile.is_email_verified && <BadgeCheck className="w-5 h-5 text-blue-500 fill-blue-500/10" />}
+                                    </h1>
+                                    <p className="text-sm font-medium opacity-60 mt-1" style={{ color: textColor }}>@{profile.username}</p>
+                                    {profile.bio && <p className="text-sm mt-3 max-w-xs leading-relaxed opacity-80" style={{ color: textColor }}>{profile.bio}</p>}
+
+                                    {/* Social Links */}
+                                    {profile.social_links && Object.keys(profile.social_links).length > 0 && (
+                                        <div className="flex gap-3 justify-center mt-4">
+                                            {Object.entries(profile.social_links).map(([platform, url]: [string, any]) => {
+                                                if (!url) return null;
+                                                const Icon = getIconForThumbnail(platform);
+                                                const href = url.startsWith('http') ? url : `https://${url}`;
+                                                return Icon ? (
+                                                    <a
+                                                        key={platform}
+                                                        href={href}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="w-8 h-8 rounded-full flex items-center justify-center hover:opacity-80 transition-colors"
+                                                        style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#f4f4f5', color: textColor }}
+                                                        onClick={() => trackClick(null, href)}
+                                                    >
+                                                        <Icon className="w-4 h-4" />
+                                                    </a>
+                                                ) : null;
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Navigation Toggles */}
+                            {/* Navigation Toggles - Hide if shop disabled */}
+                            {profile.show_shop_on_profile !== false && (
+                                <div className="w-full max-w-[240px] p-1.5 rounded-full flex mb-8 relative mt-8 shadow-inner"
+                                    style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#f4f4f5' }}>
+                                    <button
+                                        onClick={() => setActiveTab('links')}
+                                        className={cn("flex-1 py-2.5 text-xs font-bold rounded-full transition-all z-10 relative")}
+                                        style={{ color: activeTab === 'links' ? (isDarkTheme ? '#000' : textColor) : `${textColor}80` }}
                                     >
-                                        {/* Background Image */}
-                                        {product.image_url ? (
-                                            <img src={product.image_url} alt={product.title} className="absolute inset-0 w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-black w-full h-full flex items-center justify-center">
-                                                <div className="text-4xl opacity-20">✨</div>
+                                        Links
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('offerings')}
+                                        className={cn("flex-1 py-2.5 text-xs font-bold rounded-full transition-all z-10 relative")}
+                                        style={{ color: activeTab === 'offerings' ? (isDarkTheme ? '#000' : textColor) : `${textColor}80` }}
+                                    >
+                                        Shop
+                                    </button>
+                                    {/* Sliding Pill */}
+                                    <div className={cn(
+                                        "absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-full shadow-sm transition-all duration-300 ease-spring border border-black/5",
+                                        activeTab === 'offerings' ? "left-[calc(50%+3px)]" : "left-1.5"
+                                    )} style={{ backgroundColor: isDarkTheme ? '#ffffff' : '#ffffff' }} />
+                                </div>
+                            )}
+
+                            {/* Content Area */}
+                            <div className="w-full min-h-[300px]">
+                                {activeTab === 'links' ? (
+                                    <div className="space-y-3 w-full animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
+                                        {blocks.filter(b => b.is_active).map((block) => {
+                                            const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
+                                            const isUrlThumbnail = block.thumbnail && !Icon;
+
+                                            return (
+                                                <div
+                                                    key={block._id}
+                                                    onClick={() => handleBlockInteract(block)}
+                                                    className="w-full p-4 rounded-2xl active:scale-[0.98] transition-all cursor-pointer border flex items-center justify-between group h-16 shadow-sm hover:shadow-md"
+                                                    style={{
+                                                        backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : '#fafafa',
+                                                        borderColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : '#f4f4f5',
+                                                    }}
+                                                >
+                                                    <div className="flex items-center gap-4 w-full overflow-hidden">
+                                                        {isUrlThumbnail ? (
+                                                            <img src={block.thumbnail} className="w-10 h-10 rounded-full object-cover border border-zinc-200" />
+                                                        ) : (
+                                                            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border border-zinc-200 shadow-sm"
+                                                                style={{ backgroundColor: isDarkTheme ? '#000' : '#fff', color: textColor }}>
+                                                                {Icon ? <Icon className="w-5 h-5" /> : <ExternalLink className="w-5 h-5" />}
+                                                            </div>
+                                                        )}
+                                                        <span className="text-sm font-bold truncate flex-1 text-left" style={{ color: textColor }}>{block.title}</span>
+                                                    </div>
+                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity -ml-4 group-hover:ml-0">
+                                                        <ArrowRight className="w-4 h-4 opacity-50" style={{ color: textColor }} />
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                        {blocks.filter(b => b.is_active).length === 0 && (
+                                            <div className="text-center py-12 opacity-50">
+                                                <p className="text-sm font-medium" style={{ color: textColor }}>No links added yet.</p>
                                             </div>
                                         )}
-
-                                        {/* Overlay */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
-                                        {/* Top Actions */}
-                                        <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10">
-                                            {/* Empty or Add Share/Like button here later if needed */}
-                                        </div>
-
-                                        {/* Bottom Content */}
-                                        <div className="absolute bottom-0 left-0 right-0 p-4 z-20 text-white">
-                                            {/* Badge / Pill */}
-                                            <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-medium mb-2 border border-white/10">
-                                                <div className="w-2 h-2 rounded-full bg-blue-400" />
-                                                <span>{profile?.name || "User"}</span>
-                                            </div>
-
-                                            <h3 className="text-base font-bold leading-tight mb-1 text-white">{product.title}</h3>
-                                            <p className="text-xs text-gray-300 line-clamp-1 mb-3 font-light">{product.description}</p>
-
-                                            <div className="flex items-center gap-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    onClick={() => {
-                                                        setEnquiryModal({
-                                                            open: true,
-                                                            blockId: product._id, // Using product ID as block ID for context
-                                                            blockTitle: product.title,
-                                                            ctaType: 'enquiry',
-                                                            intentId: ''
-                                                        });
-                                                    }}
-                                                    className="flex-1 bg-white/10 text-white h-10 rounded-full font-bold text-sm flex items-center justify-center hover:bg-white/20 transition-colors border border-white/10"
-                                                >
-                                                    Enquire Now
-                                                </Button>
-                                                <Button
-                                                    variant="secondary"
-                                                    onClick={() => {
-                                                        // Track Product Click
-                                                        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/analytics/track`, {
-                                                            method: 'POST',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            body: JSON.stringify({
-                                                                event_type: 'product_click',
-                                                                profile_id: profile.id,
-                                                                path: window.location.pathname,
-                                                                metadata: {
-                                                                    productId: product._id,
-                                                                    productName: product.title
-                                                                }
-                                                            })
-                                                        }).catch(err => console.error("Analytics track error:", err));
-
-                                                        setConnectModal({
-                                                            open: true,
-                                                            product: product,
-                                                            seller: { id: profile.id, name: profile.name }
-                                                        });
-                                                    }}
-                                                    className="flex-1 bg-white text-black h-10 rounded-full font-bold text-sm flex items-center justify-center hover:bg-gray-100 transition-colors"
-                                                >
-                                                    Buy Now
-                                                </Button>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    onClick={(e) => handleLike(product._id, e)}
-                                                    className={`w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors border border-white/10 ${likedProductIds.has(product._id) ? 'text-red-500 fill-current' : 'text-white'}`}
-                                                >
-                                                    <Heart className={`w-4 h-4 ${likedProductIds.has(product._id) ? 'fill-red-500' : ''}`} />
-                                                </Button>
-                                                <Button size="icon" variant="ghost" className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
-                                                    <Share className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
                                     </div>
-                                ))}
+                                ) : (
+                                    <div className="space-y-4 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
+                                        {(profile?.is_store_identity || profile?.design_config?.showShopOnPersonal !== false) && (
+                                            <>
+                                                {/* Search Bar */}
+                                                <div className="relative w-full mb-4">
+                                                    <input
+                                                        type="text"
+                                                        placeholder={`Search products...`}
+                                                        className="w-full border-none rounded-2xl text-sm px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-black/5"
+                                                        style={{
+                                                            backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : '#fafafa',
+                                                            color: textColor
+                                                        }}
+                                                        value={searchQuery}
+                                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                                    />
+                                                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" style={{ color: textColor }} />
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
+                                                        products.filter(p => p && p._id && p.title.toLowerCase().includes(searchQuery.toLowerCase())).map((product) => (
+                                                            <div
+                                                                key={product._id}
+                                                                className="rounded-2xl overflow-hidden shadow-sm border cursor-pointer hover:shadow-md transition-all active:scale-[0.98] group flex flex-col"
+                                                                style={{
+                                                                    backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : '#ffffff',
+                                                                    borderColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : '#f4f4f5'
+                                                                }}
+                                                                onClick={() => setSelectedProduct(product)}
+                                                            >
+                                                                <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.2)' : '#f4f4f5' }}>
+                                                                    {product.image_url ? (
+                                                                        <img src={product.image_url} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center opacity-30" style={{ color: textColor }}>
+                                                                            <ShoppingBag className="w-8 h-8" />
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="absolute top-2 right-2 flex gap-1">
+                                                                        <button
+                                                                            onClick={(e) => handleLike(product._id, e)}
+                                                                            className="w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center shadow-sm"
+                                                                            style={{ backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.9)' }}
+                                                                        >
+                                                                            <Heart className={cn("w-3.5 h-3.5 transition-colors", likedProductIds.has(product._id) ? "fill-red-500 text-red-500" : "text-zinc-600")} />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="p-3">
+                                                                    <h3 className="font-bold text-xs line-clamp-2 leading-snug mb-1.5 h-8" style={{ color: textColor }}>{product.title}</h3>
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="text-xs font-bold" style={{ color: textColor }}>₹{product.price}</span>
+                                                                        <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: buttonColor, color: buttonTextColor }}>
+                                                                            <ArrowRight className="w-3 h-3" />
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="col-span-2 text-center py-12 opacity-60">
+                                                            <ShoppingBag className="w-8 h-8 mx-auto mb-2 opacity-50" style={{ color: textColor }} />
+                                                            <p className="text-xs opacity-60" style={{ color: textColor }}>No products found</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <div className="text-center py-10 opacity-60">
-                                <p className="text-sm font-medium">No products yet</p>
-                            </div>
-                        )}
-                    </div>
-                )}
 
-
-            </div>
-
-            {/* Footer - Connect Button - MOVED TO FLOW */}
-            <div className="mt-12 mb-8 w-full flex flex-col items-center gap-3 px-6 z-40 translate-y-0 opacity-100 transition-all duration-500 delay-300">
-                <div className="w-full max-w-md">
-                    <Button
-                        onClick={() => {
-                            // If user is logged in, go directly to messages
-                            if (authUser) {
-                                navigate(`/messages?with=${profile.username}`);
-                            } else {
-                                // Open Quick Signup Modal
-                                setMessageSignupOpen(true);
-                            }
-                        }}
-                        className="group w-full relative overflow-hidden rounded-full h-14 shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 active:scale-95 p-0 border-none"
-                    >
-                        {/* Gradient Background */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-black to-gray-900 group-hover:bg-gradient-to-r group-hover:from-gray-800 group-hover:via-gray-900 group-hover:to-gray-800 transition-all duration-500" />
-
-                        {/* Shimmer Effect */}
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-r from-transparent via-white to-transparent -skew-x-12 translate-x-[-100%] group-hover:animate-shimmer" />
-
-                        <div className="relative flex items-center justify-between px-6 h-full text-white w-full">
-                            <span className="font-bold text-lg tracking-wide">
-                                {activeTab === 'links'
-                                    ? `Message ${profile.name?.split(' ')[0] || profile.username || 'User'}`
-                                    : 'Connect with Seller'
-                                }
-                            </span>
-                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/20 transition-all duration-300">
-                                <MessageCircle className="w-5 h-5 text-white" />
-                            </div>
                         </div>
-                    </Button>
-                </div>
 
-                {/* Tap2 Branding */}
-                <a
-                    href="/"
-                    className="inline-flex items-center gap-2 px-5 py-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full text-xs font-medium text-current/60 hover:text-current hover:bg-white/10 hover:border-white/20 transition-all hover:scale-105 shadow-sm"
-                >
-                    <Sparkles className="w-3 h-3 text-purple-500" />
-                    <span>Create your own TapX</span>
-                </a>
+                        {/* Footer Branding */}
+                        <div className="mt-8 flex flex-col items-center justify-center opacity-40 hover:opacity-100 transition-opacity pb-8">
+                            <a href="/" className="flex items-center gap-1.5 grayscale hover:grayscale-0 transition-all">
+                                <span className="text-[11px] font-bold" style={{ color: textColor }}>Powered by tapx.bio</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-
-
-            {/* Modals */}
-            < LoginToContinueModal
+            {/* Modals & Overlays */}
+            <LoginToContinueModal
                 open={loginModal.open}
                 onOpenChange={(open) => setLoginModal(prev => ({ ...prev, open }))}
                 intentId={loginModal.intentId}
@@ -745,18 +750,17 @@ const PublicProfile = () => {
                 onContinueAsGuest={handleGuestContinue}
             />
 
-            {/* Message Signup Modal */}
-            < MessageSignupModal
+            <MessageSignupModal
                 open={messageSignupOpen}
                 onOpenChange={setMessageSignupOpen}
                 intentUsername={username || ''}
                 intentName={profile?.name || profile?.username || 'User'}
             />
 
-            < EnquiryModal
+            <EnquiryModal
                 open={enquiryModal.open}
                 onOpenChange={(open) => setEnquiryModal(prev => ({ ...prev, open }))}
-                sellerId={profile.id}
+                sellerId={profile?.id}
                 blockId={enquiryModal.blockId}
                 blockTitle={enquiryModal.blockTitle}
                 ctaType={enquiryModal.ctaType}
@@ -764,23 +768,23 @@ const PublicProfile = () => {
                 onComplete={() => clearPendingIntent()}
             />
 
-            < PaymentModal
+            <PaymentModal
                 open={paymentModal.open}
                 onOpenChange={(open) => setPaymentModal(prev => ({ ...prev, open }))}
                 intentId={paymentModal.intentId}
-                itemTitle={paymentModal.blockTitle}
+                itemTitle={paymentModal.blockTitle || paymentModal.itemTitle}
                 price={paymentModal.price}
                 sellerId={paymentModal.sellerId}
                 onComplete={() => clearPendingIntent()}
             />
 
-            < ShareModal
+            <ShareModal
                 open={shareOpen}
                 onOpenChange={setShareOpen}
-                username={profile.username}
+                username={profile?.username}
                 url={window.location.href}
-                userAvatar={profile.avatar}
-                userName={profile.name}
+                userAvatar={profile?.avatar}
+                userName={profile?.name}
             />
 
             <ConnectWithSupplierModal
@@ -792,7 +796,141 @@ const PublicProfile = () => {
                     toast.success(`Welcome, ${user.full_name}! You are now connected.`);
                 }}
             />
-        </div >
+
+            {/* Link Interstitial Overlay */}
+            {selectedBlock && (
+                <div className="fixed inset-0 bg-[#F2F7FD] z-[80] flex flex-col animate-in slide-in-from-bottom-10 duration-300">
+                    {/* Header */}
+                    <div className="px-6 py-4 flex items-center justify-between safe-area-top">
+                        <div className="flex items-center gap-3">
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedBlock(null)} className="-ml-2 hover:bg-black/5 rounded-full">
+                                <ChevronLeft className="w-6 h-6 text-zinc-800" />
+                            </Button>
+                            <span className="font-semibold text-sm text-zinc-500 truncate max-w-[200px]">tapx.bio/{username}</span>
+                        </div>
+                        <Avatar className="w-9 h-9 border-2 border-white shadow-sm">
+                            <AvatarImage src={profile?.avatar} />
+                            <AvatarFallback>{userInitial}</AvatarFallback>
+                        </Avatar>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto px-6 py-4 pb-32">
+                        {/* Rating Badge */}
+                        <div className="bg-white w-fit px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1 mb-4">
+                            <Star className="w-3 h-3 text-black fill-black" />
+                            <span className="text-xs font-bold">5.0</span>
+                        </div>
+
+                        {/* Title */}
+                        <h1 className="text-3xl font-black text-zinc-900 leading-tight mb-8 tracking-tight">
+                            {selectedBlock.title}
+                        </h1>
+
+                        {/* Info Row */}
+                        <div className="flex border-y border-zinc-200 divide-x divide-zinc-200 mb-8 bg-white rounded-xl shadow-sm overflow-hidden">
+                            <div className="flex-1 py-4 px-4 flex items-center gap-3">
+                                <ShoppingBag className="w-5 h-5 text-zinc-900" />
+                                <span className="text-sm font-semibold text-zinc-700">Website Link</span>
+                            </div>
+                            <div className="flex-1 py-4 px-4 flex items-center gap-3">
+                                <Sparkles className="w-5 h-5 text-zinc-900" />
+                                <span className="text-sm font-semibold text-zinc-700">{selectedBlock.analytics?.clicks || 0} Visits</span>
+                            </div>
+                        </div>
+
+                        {/* Description OR Large Thumbnail */}
+                        <div className="space-y-6 mb-8">
+                            {/* Only show thumbnail if it's a valid URL (not a social icon ID) */}
+                            {selectedBlock.thumbnail && (selectedBlock.thumbnail.startsWith('http') || selectedBlock.thumbnail.startsWith('/')) && (
+                                <div className="w-full aspect-video rounded-xl overflow-hidden shadow-sm border border-zinc-100">
+                                    <img src={selectedBlock.thumbnail} className="w-full h-full object-cover" alt={selectedBlock.title} />
+                                </div>
+                            )}
+
+                            {selectedBlock.content?.description && (
+                                <div className="prose prose-sm prose-zinc max-w-none text-zinc-600 leading-relaxed">
+                                    <p>{selectedBlock.content.description}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Bottom Sticky Action */}
+                    <div className="fixed bottom-0 w-full bg-white border-t border-zinc-100 p-4 safe-area-bottom shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-[90]">
+                        <p className="text-xs font-medium text-zinc-500 mb-3 text-center animate-pulse">
+                            Redirecting to website in {countdown} seconds ...
+                        </p>
+                        <Button
+                            onClick={proceedToLink}
+                            className="w-full h-12 bg-black text-white font-bold text-base rounded-lg hover:bg-zinc-800 transition-all flex items-center justify-center gap-2"
+                        >
+                            Continue to Link
+                            <ArrowRight className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {/* Product Detail Overlay */}
+            {selectedProduct && (
+                <div className="fixed inset-0 z-[80] flex justify-center bg-zinc-50/50 backdrop-blur-sm animate-in slide-in-from-bottom duration-300">
+                    <div className="w-full max-w-md mx-auto h-full bg-white flex flex-col shadow-2xl relative">
+                        <div className="p-4 border-b border-zinc-100 flex items-center justify-between sticky top-0 bg-white z-10 safe-area-top">
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedProduct(null)} className="-ml-2">
+                                <ChevronLeft className="w-6 h-6" />
+                            </Button>
+                            <span className="font-bold text-sm">Product Details</span>
+                            <div className="w-9" />
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-5 pb-32">
+                            <div className="aspect-video bg-zinc-100 rounded-2xl overflow-hidden mb-6 shadow-sm border border-zinc-100 relative">
+                                {selectedProduct.image_url ?
+                                    <img src={selectedProduct.image_url} className="w-full h-full object-cover" /> :
+                                    <div className="w-full h-full flex items-center justify-center text-4xl">🛍️</div>
+                                }
+                                <div className="absolute top-3 right-3">
+                                    <div className="bg-white/90 backdrop-blur-md p-2 rounded-full shadow-sm cursor-pointer hover:bg-white transition-colors"
+                                        onClick={(e) => handleLike(selectedProduct._id, e)}
+                                    >
+                                        <Heart className={cn("w-5 h-5", likedProductIds.has(selectedProduct._id) ? "fill-red-500 text-red-500" : "text-zinc-600")} />
+                                    </div>
+                                </div>
+                            </div>
+                            <h1 className="text-2xl font-black mb-2 leading-tight text-zinc-900">{selectedProduct.title}</h1>
+                            <div className="flex items-center gap-2 mb-6">
+                                <span className="text-xl font-bold text-green-600">₹{selectedProduct.price}</span>
+                                {selectedProduct.originalPrice && <span className="text-sm text-zinc-400 line-through">₹{selectedProduct.originalPrice}</span>}
+                            </div>
+
+                            {selectedProduct.description && (
+                                <div className="prose prose-sm prose-zinc max-w-none">
+                                    <p className="text-zinc-600 leading-relaxed">{selectedProduct.description}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Sticky Buy/Enquire Bar - Only if description exists */}
+                        {selectedProduct.description && (
+                            <div className="p-4 border-t border-zinc-100 absolute bottom-0 w-full bg-white safe-area-bottom shadow-[0_-5px_20px_rgba(0,0,0,0.05)] flex gap-3">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handleProductAction(selectedProduct, 'enquire')}
+                                    className="flex-1 h-12 rounded-xl font-bold text-base border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                                >
+                                    Enquire Now
+                                </Button>
+                                <Button
+                                    onClick={() => handleProductAction(selectedProduct, 'buy')}
+                                    className="flex-1 h-12 rounded-xl bg-black text-white font-bold text-base shadow-lg hover:bg-zinc-800 transition-colors"
+                                >
+                                    Buy Now
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 

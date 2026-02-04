@@ -17,6 +17,7 @@ interface User {
     // Gender for avatar generation
     gender?: 'male' | 'female' | 'other';
     phone_verified?: boolean;
+    is_email_verified?: boolean;
 }
 
 interface Link {
@@ -163,7 +164,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 // Role-based profile handling
                 role: profile.role || 'super',
                 has_store: profile.has_store || false,
-                active_profile_mode: profile.active_profile_mode || 'personal'
+                active_profile_mode: profile.active_profile_mode || 'personal',
+                is_email_verified: profile.is_email_verified
             });
             setSelectedTheme(profile.selected_theme || "artemis");
             setIsAuthenticated(true);
@@ -240,7 +242,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 username: data.user.username,
                 avatar: data.user.avatar,
                 email: data.user.email,
-                email_confirmed_at: new Date().toISOString()
+                email_confirmed_at: new Date().toISOString(),
+                is_email_verified: data.user.is_email_verified
             });
             setIsAuthenticated(true);
 
@@ -292,7 +295,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 email: data.user.email,
                 avatar: data.user.avatar,
                 gender: data.user.gender,
-                email_confirmed_at: new Date().toISOString()
+                email_confirmed_at: new Date().toISOString(),
+                is_email_verified: data.user.is_email_verified
             });
             setIsAuthenticated(true);
 
@@ -360,7 +364,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 avatar: data.user.avatar,
                 gender: data.user.gender,
                 phone_verified: data.user.phone_verified,
-                email_confirmed_at: new Date().toISOString()
+                email_confirmed_at: new Date().toISOString(),
+                is_email_verified: true // Set to true after OTP verification
             });
             setIsAuthenticated(true);
 

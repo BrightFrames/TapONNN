@@ -29,11 +29,11 @@ const fileFilter = (req, file, cb) => {
         // Allow all file types for product files
         cb(null, true);
     } else {
-        // Default: Images only
-        if (file.mimetype.startsWith('image/')) {
+        // Allow Images and Videos
+        if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
             cb(null, true);
         } else {
-            cb(new Error('Only image files are allowed!'), false);
+            cb(new Error('Only image and video files are allowed!'), false);
         }
     }
 };
@@ -42,9 +42,7 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 15 * 1024 * 1024 // 15MB global limit, logic handled/checked mostly by filter/logic but multer checks max first. 
-        // We set max to 15MB to accomodate products. 
-        // For standard images, we can enforce smaller limit if needed, but 15MB hard limit is safe.
+        fileSize: 50 * 1024 * 1024 // 50MB limit to support video covers
     }
 });
 

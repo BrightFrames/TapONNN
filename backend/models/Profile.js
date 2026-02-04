@@ -40,6 +40,10 @@ const profileSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    is_email_verified: {
+        type: Boolean,
+        default: false
+    },
     gender: {
         type: String,
         enum: ['male', 'female', 'other'],
@@ -61,6 +65,10 @@ const profileSchema = new mongoose.Schema({
     has_store: {
         type: Boolean,
         default: false
+    },
+    show_shop_on_profile: {
+        type: Boolean,
+        default: true
     },
     store_published: {
         type: Boolean,

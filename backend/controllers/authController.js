@@ -227,6 +227,7 @@ const me = async (req, res) => {
             avatar_url: (isStore && profileObj.store_avatar_url) ? profileObj.store_avatar_url : profileObj.avatar_url,
             selected_theme: (isStore && profileObj.store_selected_theme) ? profileObj.store_selected_theme : profileObj.selected_theme,
             design_config: (isStore && profileObj.store_design_config) ? profileObj.store_design_config : profileObj.design_config,
+            is_email_verified: profileObj.is_email_verified || false,
 
             email: profileObj.email,
             phone_number: profileObj.phone_number,
@@ -668,6 +669,7 @@ const signupVerifyOTP = async (req, res) => {
             gender: userGender,
             phone_number: phone_number || '',
             phone_verified: false,
+            is_email_verified: true,
             selected_theme: 'artemis'
         });
         await newProfile.save();
@@ -857,7 +859,9 @@ const quickSignupVerify = async (req, res) => {
             email,
             avatar_url: avatarDataUri,
             phone_number,
+            phone_number,
             phone_verified: false,
+            is_email_verified: true,
             active_profile_mode: 'personal',
             selected_theme: 'artemis'
         });

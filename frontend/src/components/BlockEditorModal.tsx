@@ -26,7 +26,8 @@ interface Block {
 interface BlockEditorModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    block: Block | null;
+    block?: Block | null;
+    initialData?: Block | null;
     onSave: (block: Block) => Promise<void>;
     allowedTypes?: string[];
     plugins?: any[];
@@ -56,6 +57,7 @@ const BlockEditorModal = ({
     open,
     onOpenChange,
     block,
+    initialData,
     onSave,
     allowedTypes,
     plugins,
@@ -76,10 +78,11 @@ const BlockEditorModal = ({
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        if (block) {
+        const dataToLoad = block || initialData;
+        if (dataToLoad) {
             setFormData({
-                ...block,
-                content: block.content || {}
+                ...dataToLoad,
+                content: dataToLoad.content || {}
             });
         } else {
             const defaultType = allowedTypes && allowedTypes.length > 0 ? allowedTypes[0] : 'link';

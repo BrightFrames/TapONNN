@@ -1,15 +1,13 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { UserCircle, Layout, Image as ImageIcon, Type, Sparkles, Monitor, Video, Youtube, Play, X, User, Pencil, Share2 } from "lucide-react";
+import { UserCircle, Layout, Image as ImageIcon, Type, Monitor, Video, Youtube, Pencil } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { getIconForThumbnail } from "@/utils/socialIcons";
 import { toast } from "sonner";
 import axios from "axios";
 import {
@@ -18,58 +16,152 @@ import {
     SheetDescription,
     SheetHeader,
     SheetTitle,
-    SheetTrigger,
 } from "@/components/ui/sheet";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import ProfilePreview from "@/components/dashboard/ProfilePreview";
+import { supabase } from "@/lib/supabase";
 
 const Design = () => {
-    const { user, selectedTheme, updateTheme, updateProfile, links: authLinks } = useAuth();
+    const { user, selectedTheme, updateTheme, updateProfile, blocks, addBlock } = useAuth();
     const { t } = useTranslation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
-    const [isEditOpen, setIsEditOpen] = useState(false);
 
-    // Local state for configuration
+    // UI States
+    const [isConfigOpen, setIsConfigOpen] = useState(false);
+    const [isAddingBlock, setIsAddingBlock] = useState(false);
+
+    // Product Fetching for Preview
+    const [products, setProducts] = useState<any[]>([]);
+    useEffect(() => {
+        const fetchProducts = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token || localStorage.getItem('token');
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_URL}/products`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setProducts(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch products", error);
+            }
+        };
+        fetchProducts();
+    }, []);
+
+    // Configuration State
     const [config, setConfig] = useState<any>({
         headerLayout: 'classic',
         titleStyle: 'text',
         profileSize: 'medium',
         bgType: 'color',
         bgYoutubeUrl: '',
-        coverType: 'none', // none | image | video | youtube
+        coverType: 'none',
         coverUrl: '',
+        coverColor: '',
         coverYoutubeUrl: '',
-        showShopOnPersonal: true, // Default to true
+        showShopOnPersonal: true,
         ...user?.design_config
     });
 
+    // Sync config when selectedTheme changes
+    useEffect(() => {
+        const template = templates.find(t => t.id === selectedTheme);
+        if (template) {
+            // Helper to map Tailwind classes to CSS values
+            const getCssFromClass = (cls: string, type: 'text' | 'bg') => {
+                if (!cls) return type === 'text' ? '#000000' : '#ffffff';
+
+                // Handle Hex directly
+                if (cls.startsWith('#')) return cls;
+
+                // Handle Text Colors (Simple mapping)
+                if (type === 'text') {
+                    if (cls.includes('white')) return '#ffffff';
+                    if (cls.includes('black')) return '#000000';
+                    if (cls.includes('zinc-900') || cls.includes('gray-900') || cls.includes('slate-900')) return '#18181b';
+                    if (cls.includes('zinc-50') || cls.includes('gray-50') || cls.includes('slate-50')) return '#fafafa';
+                    // Specific template overrides
+                    if (cls.includes('text-[#')) {
+                        const match = cls.match(/text-\[#([a-fA-F0-9]+)\]/);
+                        if (match) return `#${match[1]}`;
+                    }
+                    return '#000000';
+                }
+
+                // Handle Backgrounds (Gradients & Solids)
+                if (type === 'bg') {
+                    // Check for arbitrary values first [bg-[#...]]
+                    if (cls.includes('bg-[#')) {
+                        const match = cls.match(/bg-\[#([a-fA-F0-9]+)\]/);
+                        if (match && !cls.includes('gradient')) return `#${match[1]}`;
+                    }
+
+                    // Handle Gradients
+                    if (cls.includes('bg-gradient')) {
+                        let direction = 'to bottom';
+                        if (cls.includes('to-r')) direction = 'to right';
+                        if (cls.includes('to-br')) direction = '135deg';
+                        if (cls.includes('to-bl')) direction = '225deg';
+
+                        const fromMatch = cls.match(/from-\[#([a-fA-F0-9]+)\]/);
+                        const viaMatch = cls.match(/via-\[#([a-fA-F0-9]+)\]/);
+                        const toMatch = cls.match(/to-\[#([a-fA-F0-9]+)\]/);
+
+                        if (fromMatch && toMatch) {
+                            if (viaMatch) {
+                                return `linear-gradient(${direction}, #${fromMatch[1]}, #${viaMatch[1]}, #${toMatch[1]})`;
+                            }
+                            return `linear-gradient(${direction}, #${fromMatch[1]}, #${toMatch[1]})`;
+                        }
+
+                        // Named color fallback for gradients (basic support)
+                        if (cls.includes('from-purple-500') && cls.includes('to-pink-500')) return 'linear-gradient(135deg, #a855f7, #ec4899)';
+                        if (cls.includes('from-blue-400') && cls.includes('to-teal-500')) return 'linear-gradient(to right, #60a5fa, #14b8a6)';
+                    }
+
+                    // Simple classes
+                    if (cls.includes('white')) return '#ffffff';
+                    if (cls.includes('black')) return '#000000';
+                    if (cls.includes('zinc-900')) return '#18181b';
+                    if (cls.includes('zinc-50')) return '#fafafa';
+                }
+
+                return type === 'text' ? '#000000' : '#ffffff';
+            };
+
+            setConfig(prev => ({
+                ...prev,
+                textColor: getCssFromClass(template.textColor, 'text'),
+                backgroundColor: getCssFromClass(template.bgClass || '', 'bg'),
+                coverUrl: template.bgImage || '',
+                coverColor: '' // Reset cover color when changing themes
+            }));
+        }
+    }, [selectedTheme]);
+
     useEffect(() => {
         if (user?.design_config) {
-            setConfig({
-                headerLayout: 'classic',
-                titleStyle: 'text',
-                profileSize: 'medium',
-                bgType: 'color',
-                ...user.design_config
-            });
+            setConfig(prev => ({ ...prev, ...user.design_config }));
         }
     }, [user?.design_config]);
 
     const handleConfigChange = (key: string, value: any) => {
-        const newConfig = { ...config, [key]: value };
-        setConfig(newConfig);
-        // Auto-save removed in favor of manual save button
+        setConfig(prev => ({ ...prev, [key]: value }));
     };
 
-    const handleSave = async () => {
+    const handleSaveConfig = async () => {
         const toastId = toast.loading("Saving changes...");
         try {
-            await updateProfile({
-                design_config: config
-            });
+            await updateProfile({ design_config: config });
             toast.success("Changes saved successfully!", { id: toastId });
-            setIsEditOpen(false);
+            setIsConfigOpen(false);
+            // Reload window to force refresh designs if needed, or rely on context update
         } catch (error) {
             console.error("Save error:", error);
             toast.error("Failed to save changes", { id: toastId });
@@ -89,24 +181,29 @@ const Design = () => {
         formData.append('file', file);
         const toastId = toast.loading(`Uploading ${type}...`);
 
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token || localStorage.getItem('token');
+
         try {
             const res = await axios.post(`${API_URL}/upload`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
             });
 
             if (res.data.success) {
                 toast.success(`${type === 'image' ? 'Image' : 'Video'} uploaded successfully!`, { id: toastId });
+                const newUrl = res.data.url;
                 if (isCover) {
-                    const newUrl = res.data.url;
-                    // Update state directly + config
                     handleConfigChange('coverUrl', newUrl);
                     handleConfigChange('coverType', type);
                 } else {
                     if (type === 'image') {
-                        handleConfigChange('bgImageUrl', res.data.url);
+                        handleConfigChange('bgImageUrl', newUrl);
                         handleConfigChange('bgType', 'image');
                     } else {
-                        handleConfigChange('bgVideoUrl', res.data.url);
+                        handleConfigChange('bgVideoUrl', newUrl);
                         handleConfigChange('bgType', 'video');
                     }
                 }
@@ -119,450 +216,217 @@ const Design = () => {
         }
     };
 
-    const getYouTubeId = (url: string) => {
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
-    };
-
     const handleYouTubeChange = (url: string) => {
-        const id = getYouTubeId(url);
         handleConfigChange('bgYoutubeUrl', url);
-        if (id) {
+        // Simple validation could be added here
+        if (url.includes('youtu')) {
             handleConfigChange('bgType', 'youtube');
         }
     };
 
-    // Preview Helpers
+    // Derived States
     const currentTemplate = templates.find(t => t.id === selectedTheme) || templates[0];
-
-    // Determine background styles
-    let bgStyle: any = {};
-    const bgType = config.bgType || 'color';
-
-    if (bgType === 'image' && config.bgImageUrl) {
-        bgStyle = { backgroundImage: `url(${config.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-    } else if (bgType === 'color' && config.bgColor) {
-        bgStyle = { backgroundColor: config.bgColor };
-    } else if (bgType === 'gradient' && config.bgGradient) {
-        bgStyle = { background: config.bgGradient };
-    } else if (bgType === 'video' || bgType === 'youtube') {
-        bgStyle = { backgroundColor: 'black' };
-    } else {
-        if (currentTemplate.bgImage) {
-            bgStyle = { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-        }
-    }
-
-    // Fallback if no bgType but image exists
-    if (!config.bgType && config.bgImageUrl) {
-        bgStyle = { backgroundImage: `url(${config.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-    }
-
-    const getProfileSizeClass = () => {
-        switch (config.profileSize) {
-            case 'small': return 'w-16 h-16';
-            case 'large': return 'w-32 h-32';
-            default: return 'w-24 h-24';
-        }
-    };
-
-    // The Preview Content (Card)
-    const [isScrolled, setIsScrolled] = useState(false);
-
-    const PreviewContent = () => (
-        <div className="relative z-10 w-full max-w-[420px] mx-auto">
-            {/* Profile Card Container - Glassmorphism */}
-            <div className={cn(
-                "backdrop-blur-xl bg-white/10 dark:bg-black/20 border border-white/20 dark:border-white/10 shadow-2xl rounded-[2.5rem] overflow-hidden transition-all duration-300",
-                "flex flex-col min-h-[600px] max-h-[750px] relative" // Fixed height frame
-            )}>
-                {/* Share Button */}
-                <button className="absolute top-6 right-6 z-50 p-2 rounded-full bg-black/20 text-white backdrop-blur-md hover:bg-black/40 transition-colors border border-white/10">
-                    <Share2 className="w-5 h-5" />
-                </button>
-
-                {/* Inner Scrollable Area */}
-                <div
-                    className={cn(
-                        "h-full w-full overflow-y-auto scrollbar-hide flex-1 relative scroll-smooth",
-                        !config.bgType && currentTemplate.bgClass
-                    )}
-                    style={bgStyle}
-                    onScroll={(e) => setIsScrolled(e.currentTarget.scrollTop > 60)}
-                >
-
-                    {currentTemplate.bgImage && !bgType && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
-
-                    {/* Video/YouTube Background Rendering w/ Overlay */}
-                    {(bgType === 'video' && config.bgVideoUrl) && (
-                        <video src={config.bgVideoUrl} autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover z-0" />
-                    )}
-                    {(bgType === 'youtube' && config.bgYoutubeUrl) && (
-                        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                            <iframe
-                                src={`https://www.youtube.com/embed/${getYouTubeId(config.bgYoutubeUrl)}?autoplay=1&mute=1&controls=0&loop=1&playlist=${getYouTubeId(config.bgYoutubeUrl)}&playsinline=1`}
-                                className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2 opacity-80"
-                                allow="autoplay; encrypted-media"
-                            />
-                        </div>
-                    )}
-
-                    {/* COVER MEDIA SECTION */}
-                    {config.coverType !== 'none' && (
-                        <div className="w-full aspect-[2/1] sm:aspect-[3/1] relative overflow-hidden bg-black/10">
-                            {config.coverType === 'image' && config.coverUrl && (
-                                <img src={config.coverUrl} className="w-full h-full object-cover" alt="Cover" />
-                            )}
-                            {config.coverType === 'video' && config.coverUrl && (
-                                <video src={config.coverUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
-                            )}
-                            {config.coverType === 'youtube' && config.coverYoutubeUrl && (
-                                <div className="absolute inset-0 pointer-events-none overflow-hidden bg-black">
-                                    <iframe
-                                        src={`https://www.youtube.com/embed/${getYouTubeId(config.coverYoutubeUrl)}?autoplay=1&mute=1&controls=0&loop=1&playlist=${getYouTubeId(config.coverYoutubeUrl)}&playsinline=1`}
-                                        className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2 opacity-90"
-                                        allow="autoplay; encrypted-media"
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Content Overlay - Split Wrapper */}
-                    <div className="relative z-10">
-
-                        {/* Sticky Header Section (Profile Info) */}
-                        <div className={cn(
-                            "transition-all duration-500 ease-in-out px-8 w-full z-20",
-                            isScrolled
-                                ? "sticky top-0 bg-white/10 backdrop-blur-xl border-b border-white/10 flex flex-row items-center justify-start gap-4 py-3"
-                                : cn("flex flex-col items-center", config.coverType !== 'none' ? "-mt-16" : "pt-16")
-                        )}>
-                            {/* Profile Picture */}
-                            {config.titleStyle !== 'logo' && (
-                                <div className={cn(
-                                    "relative rounded-full overflow-hidden transition-all duration-500",
-                                    isScrolled
-                                        ? "w-10 h-10 border-2 border-white/20 mb-0 shadow-sm"
-                                        : cn("mb-4 border-4 border-white/20 shadow-xl", getProfileSizeClass())
-                                )}>
-                                    {user?.avatar ? (
-                                        <img src={user.avatar} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white font-bold text-lg">
-                                            {(user?.name || "U")[0].toUpperCase()}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Name & Handle */}
-                            <div className={cn(
-                                "transition-all duration-500",
-                                isScrolled ? "text-left" : "text-center mb-0"
-                            )}>
-                                <h2 className={cn(
-                                    "font-bold tracking-tight transition-all",
-                                    isScrolled ? "text-sm mb-0" : "text-2xl mb-1",
-                                    currentTemplate.textColor === 'text-black' || config.textColor === '#000000' || config.textColor === '#111827' ? "text-gray-900" : "text-white"
-                                )} style={{ color: config.textColor !== '#111827' ? config.textColor : undefined }}>
-                                    {user?.name || user?.username}
-                                </h2>
-                                {!isScrolled && (
-                                    <p className={cn(
-                                        "text-sm font-medium opacity-80",
-                                        currentTemplate.textColor === 'text-black' || config.textColor === '#000000' || config.textColor === '#111827' ? "text-gray-600" : "text-white/80"
-                                    )} style={{ color: config.textColor !== '#111827' ? config.textColor : undefined }}>
-                                        @{user?.username}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Scrollable Content Body (Links & Socials) */}
-                        <div className={cn(
-                            "w-full px-8 pb-16 transition-all duration-300",
-                            isScrolled ? "pt-6" : "pt-8"
-                        )}>
-                            {/* Social Icons (Only show when not scrolled or move? Logic implies mostly keeping them in body) */}
-                            <div className={cn(
-                                "flex gap-4 flex-wrap mb-8 transition-all duration-500",
-                                isScrolled ? "justify-start" : "justify-center"
-                            )}>
-                                {user?.social_links && Object.entries(user.social_links).map(([platform, url]) => {
-                                    if (!url) return null;
-                                    const Icon = getIconForThumbnail(platform);
-                                    return Icon ? (
-                                        <a key={platform} className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/30 backdrop-blur-sm text-white transition-all hover:scale-110">
-                                            <Icon className="w-5 h-5" />
-                                        </a>
-                                    ) : null;
-                                })}
-                            </div>
-
-                            {/* Links */}
-                            <div className="space-y-4 w-full">
-                                {authLinks.filter(l => l.isActive).map((link) => {
-                                    const Icon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
-                                    return (
-                                        <a
-                                            key={link.id}
-                                            href={link.url || '#'}
-                                            className={cn(
-                                                "group block w-full flex items-center justify-center relative min-h-[56px] px-6 transition-all duration-300 hover:scale-[1.02]",
-                                                currentTemplate.buttonStyle || "bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white hover:bg-white/20"
-                                            )}
-                                        >
-                                            {Icon && (
-                                                <Icon className="absolute left-6 w-5 h-5 opacity-90 transition-transform group-hover:rotate-12" />
-                                            )}
-                                            <span className="truncate max-w-[200px] text-sm font-medium">{link.title}</span>
-                                        </a>
-                                    );
-                                })}
-                            </div>
-
-                            <div className="mt-12 flex justify-center">
-                                <span className="text-[10px] opacity-60 text-white font-medium tracking-widest uppercase">TapX</span>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-
-    // Configuration Sheet Content
-    const ConfigurationContent = () => (
-        <div className="space-y-8 pb-20">
-            <Tabs defaultValue="theme" className="w-full">
-                <TabsList className="flex flex-wrap h-auto gap-2 bg-transparent justify-start mb-8 p-0 sticky top-0 bg-white dark:bg-zinc-950 z-20 py-4 border-b border-zinc-200 dark:border-zinc-800">
-                    <TabsTrigger value="theme" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                        <Layout className="w-4 h-4 mr-2" /> {t('design.theme')}
-                    </TabsTrigger>
-                    <TabsTrigger value="cover" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                        <ImageIcon className="w-4 h-4 mr-2" /> Cover
-                    </TabsTrigger>
-                    <TabsTrigger value="header" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                        <UserCircle className="w-4 h-4 mr-2" /> {t('design.header')}
-                    </TabsTrigger>
-                    <TabsTrigger value="text" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                        <Type className="w-4 h-4 mr-2" /> {t('design.text')}
-                    </TabsTrigger>
-                    <TabsTrigger value="wallpaper" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                        <Monitor className="w-4 h-4 mr-2" /> {t('design.wallpaper')}
-                    </TabsTrigger>
-                </TabsList>
-
-                {/* THEME TAB */}
-                <TabsContent value="theme" className="space-y-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {templates.map((t) => (
-                            <div key={t.id} onClick={() => updateTheme(t.id)} className="cursor-pointer group flex flex-col gap-2">
-                                <div className={cn("relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-sm transition-all", selectedTheme === t.id && "ring-4 ring-purple-600 ring-offset-2")}>
-                                    <div className="absolute inset-0 w-full h-full bg-cover bg-center" style={t.bgImage ? { backgroundImage: `url(${t.bgImage})` } : { backgroundColor: t.id === 'blocks' ? '#7F00FF' : undefined }}>
-                                        {!t.bgImage && <div className={`w-full h-full ${t.bgClass}`} />}
-                                    </div>
-                                    {selectedTheme === t.id && <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-20"><div className="bg-white rounded-full p-1.5"><div className="w-3 h-3 bg-purple-600 rounded-full" /></div></div>}
-                                </div>
-                                <span className="text-xs font-medium text-center">{t.name}</span>
-                            </div>
-                        ))}
-                    </div>
-                </TabsContent>
-
-                {/* COVER TAB - Extracted from Header */}
-                <TabsContent value="cover" className="space-y-6">
-                    <div className="space-y-4">
-                        <Label>Profile Cover</Label>
-                        <Tabs value={config.coverType || 'none'} onValueChange={(v) => handleConfigChange('coverType', v)} className="w-full">
-                            <TabsList className="w-full grid grid-cols-4 bg-zinc-100 dark:bg-zinc-800 p-1">
-                                <TabsTrigger value="none" className="text-xs">None</TabsTrigger>
-                                <TabsTrigger value="image"><ImageIcon className="w-4 h-4" /></TabsTrigger>
-                                <TabsTrigger value="video"><Video className="w-4 h-4" /></TabsTrigger>
-                                <TabsTrigger value="youtube"><Youtube className="w-4 h-4" /></TabsTrigger>
-                            </TabsList>
-
-                            <TabsContent value="image" className="pt-4">
-                                <div className="space-y-2">
-                                    <Label className="text-xs text-muted-foreground">Upload Cover Image</Label>
-                                    <input type="file" id="cover-image-upload" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'image', true)} />
-                                    <Button variant="outline" className="w-full h-20 border-dashed" onClick={() => document.getElementById('cover-image-upload')?.click()}>
-                                        <div className="flex flex-col items-center text-zinc-500">
-                                            {config.coverUrl ? <img src={config.coverUrl} className="h-12 w-full object-cover rounded opacity-50" /> : <ImageIcon className="w-6 h-6 mb-1" />}
-                                            {!config.coverUrl && <span className="text-xs">Upload</span>}
-                                        </div>
-                                    </Button>
-                                </div>
-                            </TabsContent>
-
-                            <TabsContent value="video" className="pt-4">
-                                <div className="space-y-2">
-                                    <Label className="text-xs text-muted-foreground">Upload Cover Video (Max 50MB)</Label>
-                                    <Input type="file" accept="video/mp4,video/webm" onChange={(e) => handleFileUpload(e, 'video', true)} />
-                                </div>
-                            </TabsContent>
-
-                            <TabsContent value="youtube" className="pt-4">
-                                <div className="space-y-2">
-                                    <Label className="text-xs text-muted-foreground">YouTube Cover URL</Label>
-                                    <Input
-                                        placeholder="https://youtube.com/watch?v=..."
-                                        value={config.coverYoutubeUrl || ''}
-                                        onChange={(e) => {
-                                            const url = e.target.value;
-                                            handleConfigChange('coverYoutubeUrl', url);
-                                        }}
-                                    />
-                                </div>
-                            </TabsContent>
-                        </Tabs>
-                    </div>
-                </TabsContent>
-
-                {/* HEADER TAB - Layout & Shop Toggle */}
-                <TabsContent value="header" className="space-y-10">
-
-                    {/* Show Shop Toggle */}
-                    {user?.is_store_identity && (
-                        <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                            <div className="space-y-0.5">
-                                <Label className="text-base font-semibold">Show Shop on Profile</Label>
-                                <p className="text-xs text-zinc-500">Display the Shop tab on your personal profile</p>
-                            </div>
-                            <Switch
-                                checked={config.showShopOnPersonal !== false}
-                                onCheckedChange={(c) => handleConfigChange('showShopOnPersonal', c)}
-                            />
-                        </div>
-                    )}
-
-                    <div className="space-y-4">
-                        <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Profile image layout</h2>
-                        <div className="grid grid-cols-2 gap-4">
-                            <Button variant="outline" onClick={() => handleConfigChange('headerLayout', 'classic')} className={cn("h-auto p-4 border-2 rounded-xl flex flex-col items-center gap-2", config.headerLayout === 'classic' && "border-zinc-900 dark:border-white bg-zinc-50 dark:bg-zinc-900")}>
-                                <div className="w-8 h-8 rounded-full border-2 border-current"></div>
-                                <span className="text-sm font-medium">Classic</span>
-                            </Button>
-                            <Button variant="outline" onClick={() => handleConfigChange('headerLayout', 'hero')} className={cn("h-auto p-4 border-2 rounded-xl flex flex-col items-center gap-2", config.headerLayout === 'hero' && "border-zinc-900 dark:border-white bg-zinc-50 dark:bg-zinc-900")}>
-                                <div className="w-full h-8 border-2 border-dashed border-current rounded-md"></div>
-                                <span className="text-sm font-medium">Hero</span>
-                            </Button>
-                        </div>
-                    </div>
-                    <div className="space-y-4">
-                        <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{t('design.size')}</h2>
-                        <div className="grid grid-cols-2 gap-4">
-                            <Button variant="outline" onClick={() => handleConfigChange('profileSize', 'small')} className={cn("rounded-full", config.profileSize === 'small' && "border-black dark:border-white ring-1 ring-black")}>{t('design.small')}</Button>
-                            <Button variant="outline" onClick={() => handleConfigChange('profileSize', 'large')} className={cn("rounded-full", config.profileSize === 'large' && "border-black dark:border-white ring-1 ring-black")}>{t('design.large')}</Button>
-                        </div>
-                    </div>
-                </TabsContent>
-
-                {/* TEXT TAB */}
-                <TabsContent value="text" className="space-y-6">
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{t('design.textColor')}</h3>
-                        <div className="grid grid-cols-6 gap-3">
-                            {['#111827', '#374151', '#6B7280', '#FFFFFF', '#7C3AED', '#059669'].map(color => (
-                                <button key={color} onClick={() => handleConfigChange('textColor', color)} className={cn("w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold", config.textColor === color ? "border-purple-600" : "border-transparent bg-zinc-100 dark:bg-zinc-800")} style={{ color }}>A</button>
-                            ))}
-                        </div>
-                    </div>
-                </TabsContent>
-
-                {/* WALLPAPER TAB */}
-                <TabsContent value="wallpaper" className="space-y-6">
-                    <div className="space-y-4">
-                        <Label>Background Type</Label>
-                        <Tabs value={config.bgType || 'color'} onValueChange={(v) => handleConfigChange('bgType', v)} className="w-full">
-                            <TabsList className="w-full grid grid-cols-5">
-                                <TabsTrigger value="color"><div className="w-4 h-4 bg-blue-500 rounded-full"></div></TabsTrigger>
-                                <TabsTrigger value="gradient"><div className="w-4 h-4 bg-gradient-to-tr from-blue-400 to-purple-500 rounded-full"></div></TabsTrigger>
-                                <TabsTrigger value="image"><ImageIcon className="w-4 h-4" /></TabsTrigger>
-                                <TabsTrigger value="video"><Video className="w-4 h-4" /></TabsTrigger>
-                                <TabsTrigger value="youtube"><Youtube className="w-4 h-4" /></TabsTrigger>
-                            </TabsList>
-                            {/* Inner content for each type */}
-                            <TabsContent value="image" className="pt-4">
-                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'image')} />
-                                <Button variant="outline" className="w-full h-24 border-dashed" onClick={() => fileInputRef.current?.click()}>
-                                    <div className="flex flex-col items-center">
-                                        <ImageIcon className="w-6 h-6 mb-2" />
-                                        <span>Upload Image</span>
-                                    </div>
-                                </Button>
-                            </TabsContent>
-                            <TabsContent value="video" className="pt-4">
-                                <Input type="file" accept="video/mp4,video/webm" onChange={(e) => handleFileUpload(e, 'video')} />
-                            </TabsContent>
-                            <TabsContent value="youtube" className="pt-4">
-                                <Input placeholder="YouTube URL" value={config.bgYoutubeUrl || ''} onChange={(e) => handleYouTubeChange(e.target.value)} />
-                            </TabsContent>
-                            <TabsContent value="color" className="pt-4">
-                                <div className="grid grid-cols-6 gap-2">
-                                    {['#FFFFFF', '#F8FAFC', '#FEF3C7', '#DCFCE7', '#E0E7FF', '#FCE7F3', '#111827', '#1F2937', '#7C3AED', '#059669', '#DC2626', '#F59E0B'].map(color => (
-                                        <button key={color} onClick={() => handleConfigChange('bgColor', color)} className="w-8 h-8 rounded-full border border-gray-200" style={{ backgroundColor: color }} />
-                                    ))}
-                                </div>
-                            </TabsContent>
-                            <TabsContent value="gradient" className="pt-4">
-                                <div className="grid grid-cols-2 gap-2">
-                                    {['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'].map((grad, i) => (
-                                        <button key={i} onClick={() => handleConfigChange('bgGradient', grad)} className="h-10 w-full rounded-md border border-gray-200" style={{ background: grad }} />
-                                    ))}
-                                </div>
-                            </TabsContent>
-                        </Tabs>
-                    </div>
-                </TabsContent>
-            </Tabs>
-        </div>
-    );
 
     return (
         <LinktreeLayout>
-            <div className="h-[calc(100vh-64px)] lg:h-screen w-full relative overflow-hidden bg-zinc-50/50 dark:bg-black flex items-center justify-center">
+            <div className="flex h-full w-full bg-black min-h-screen font-sans overflow-hidden">
+                {/* Center Panel - Profile Preview */}
+                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-black relative overflow-y-auto custom-scrollbar">
+                    <div className="absolute top-6 left-8 flex items-center gap-2 text-zinc-500 text-sm">
+                        <span className="text-zinc-600 font-semibold">Edit Profile</span>
+                    </div>
 
-                {/* Background Blurs for Atmosphere */}
-                <div className="absolute inset-0 z-0 opacity-30 dark:opacity-20 pointer-events-none">
-                    <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-500/30 rounded-full blur-[120px]" />
-                    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/30 rounded-full blur-[120px]" />
+                    <div className="absolute top-6 right-8 flex items-center gap-3">
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-full px-4 py-1.5 flex items-center gap-2 text-sm text-zinc-400">
+                            <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></span>
+                            Your Bio Link
+                            <span className="text-zinc-600">|</span>
+                            <span className="text-zinc-300">tapx.bio/{user?.username}</span>
+                        </div>
+                    </div>
+
+                    <ProfilePreview
+                        blocks={blocks}
+                        theme={config}
+                        products={products}
+                    />
                 </div>
 
-                {/* Top Right Action Button */}
-                <div className="absolute top-6 right-6 z-40">
-                    <Sheet open={isEditOpen} onOpenChange={setIsEditOpen}>
-                        <SheetTrigger asChild>
-                            <Button size="lg" className="rounded-full shadow-lg gap-2 bg-white text-black hover:bg-zinc-100 dark:bg-white dark:text-black font-semibold px-6 transition-all hover:scale-105">
-                                <Pencil className="w-4 h-4 text-purple-600" />
-                                Edit Profile
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent className="w-full sm:w-[500px] overflow-y-auto z-50 p-6 pt-12">
-                            <SheetHeader className="mb-6">
-                                <SheetTitle className="text-2xl font-bold">Edit Profile</SheetTitle>
-                                <SheetDescription>
-                                    Customize your profile appearance, theme, and layout.
-                                </SheetDescription>
-                            </SheetHeader>
-                            <ConfigurationContent />
-                            <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800 mt-6 sticky bottom-0 bg-white dark:bg-zinc-950 pb-6 z-20">
-                                <Button size="lg" className="w-full bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 rounded-xl font-bold h-12" onClick={handleSave}>
-                                    Save Changes
-                                </Button>
-                            </div>
-                        </SheetContent>
-                    </Sheet>
-                </div>
+                {/* Right Panel - Design Tools */}
+                <div className="w-[420px] border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black flex flex-col h-full overflow-hidden">
+                    <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                        <div className="mb-8">
+                            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Design</h2>
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400">Customize your profile appearance</p>
+                        </div>
 
-                {/* Main Preview Area */}
-                <div className="relative z-10 w-full h-full max-w-4xl mx-auto flex items-center justify-center p-4 lg:p-10">
-                    <PreviewContent />
-                </div>
+                        <Tabs defaultValue="theme" className="w-full">
+                            <TabsList className="w-full flex-wrap h-auto gap-2 bg-transparent justify-start mb-6 p-0">
+                                <TabsTrigger value="theme" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
+                                    Theme
+                                </TabsTrigger>
+                                <TabsTrigger value="cover" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
+                                    Cover
+                                </TabsTrigger>
+                                <TabsTrigger value="header" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
+                                    Header
+                                </TabsTrigger>
+                                <TabsTrigger value="text" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
+                                    Text
+                                </TabsTrigger>
 
+                            </TabsList>
+
+                            <TabsContent value="theme" className="space-y-6 mt-0">
+                                <div className="grid grid-cols-2 gap-4">
+                                    {templates.map((t) => (
+                                        <div key={t.id} onClick={() => updateTheme(t.id)} className="cursor-pointer group flex flex-col gap-2">
+                                            <div className={cn("relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-sm transition-all border border-zinc-200 dark:border-zinc-800", selectedTheme === t.id && "ring-2 ring-zinc-900 dark:ring-white ring-offset-2 dark:ring-offset-black")}>
+                                                <div className="absolute inset-0 w-full h-full bg-cover bg-center" style={t.bgImage ? { backgroundImage: `url(${t.bgImage})` } : { backgroundColor: t.id === 'blocks' ? '#7F00FF' : undefined }}>
+                                                    {!t.bgImage && <div className={`w-full h-full ${t.bgClass}`} />}
+                                                </div>
+                                                {selectedTheme === t.id && (
+                                                    <div className="absolute inset-0 bg-black/10 flex items-center justify-center z-20">
+                                                        <div className="bg-white rounded-full p-1 shadow-md">
+                                                            <div className="w-2 h-2 bg-zinc-900 rounded-full" />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <span className={cn("text-xs font-medium text-center", selectedTheme === t.id ? "text-zinc-900 dark:text-white" : "text-zinc-500")}>{t.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="cover" className="space-y-6 mt-0">
+                                <div className="space-y-4">
+                                    <Label>Profile Cover</Label>
+                                    <Tabs value={config.coverType || 'none'} onValueChange={(v) => handleConfigChange('coverType', v)} className="w-full">
+                                        <TabsList className="w-full grid grid-cols-5 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-lg">
+                                            <TabsTrigger value="none" className="text-xs rounded-md">None</TabsTrigger>
+                                            <TabsTrigger value="color" className="rounded-md">Color</TabsTrigger>
+                                            <TabsTrigger value="image" className="rounded-md"><ImageIcon className="w-4 h-4" /></TabsTrigger>
+                                            <TabsTrigger value="video" className="rounded-md"><Video className="w-4 h-4" /></TabsTrigger>
+                                            <TabsTrigger value="youtube" className="rounded-md"><Youtube className="w-4 h-4" /></TabsTrigger>
+                                        </TabsList>
+
+                                        <TabsContent value="none" className="pt-4">
+                                            <div className="text-center p-4 text-zinc-500 text-xs">
+                                                Default gradient will be used if no cover is selected.
+                                            </div>
+                                        </TabsContent>
+
+                                        <TabsContent value="color" className="pt-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs text-muted-foreground">Solid Color Background</Label>
+                                                <div className="grid grid-cols-5 gap-2">
+                                                    {['#000000', '#ffffff', '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#881337', '#78350f'].map((color) => (
+                                                        <button
+                                                            key={color}
+                                                            onClick={() => {
+                                                                handleConfigChange('coverUrl', '');
+                                                                handleConfigChange('coverColor', color);
+                                                                handleConfigChange('coverType', 'color');
+                                                            }}
+                                                            className={cn("w-full aspect-square rounded-lg border shadow-sm transition-transform active:scale-95", config.coverColor === color ? "ring-2 ring-zinc-900 dark:ring-white ring-offset-1" : "border-transparent")}
+                                                            style={{ backgroundColor: color }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </TabsContent>
+
+                                        <TabsContent value="image" className="pt-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs text-muted-foreground">Upload Cover Image</Label>
+                                                <input type="file" id="cover-image-upload" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'image', true)} />
+                                                <Button variant="outline" className="w-full h-24 border-dashed border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-900" onClick={() => document.getElementById('cover-image-upload')?.click()}>
+                                                    <div className="flex flex-col items-center text-zinc-500">
+                                                        {config.coverUrl ? <img src={config.coverUrl} className="h-12 w-full object-cover rounded shadow-sm" /> : <ImageIcon className="w-6 h-6 mb-2" />}
+                                                        <span className="text-xs font-medium">{config.coverUrl ? 'Change Image' : 'Click to Upload'}</span>
+                                                    </div>
+                                                </Button>
+                                            </div>
+                                        </TabsContent>
+
+                                        <TabsContent value="video" className="pt-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs text-muted-foreground">Upload Cover Video (Max 50MB)</Label>
+                                                <Input type="file" accept="video/mp4,video/webm" onChange={(e) => handleFileUpload(e, 'video', true)} className="cursor-pointer" />
+                                            </div>
+                                        </TabsContent>
+
+                                        <TabsContent value="youtube" className="pt-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs text-muted-foreground">YouTube Cover URL</Label>
+                                                <Input
+                                                    placeholder="https://youtube.com/watch?v=..."
+                                                    value={config.coverYoutubeUrl || ''}
+                                                    onChange={(e) => handleConfigChange('coverYoutubeUrl', e.target.value)}
+                                                />
+                                            </div>
+                                        </TabsContent>
+                                    </Tabs>
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="header" className="space-y-8 mt-0">
+                                {user?.is_store_identity && (
+                                    <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-semibold">Show Shop Tab</Label>
+                                            <p className="text-xs text-zinc-500">Display Shop on profile</p>
+                                        </div>
+                                        <Switch
+                                            checked={config.showShopOnPersonal !== false}
+                                            onCheckedChange={(c) => handleConfigChange('showShopOnPersonal', c)}
+                                        />
+                                    </div>
+                                )}
+                                <div className="space-y-4">
+                                    <Label className="text-xs uppercase tracking-wider text-zinc-500 font-bold">Profile Layout</Label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div onClick={() => handleConfigChange('headerLayout', 'classic')} className={cn("cursor-pointer p-4 border-2 rounded-xl flex flex-col items-center gap-3 transition-all", config.headerLayout === 'classic' ? "border-zinc-900 dark:border-white bg-zinc-50 dark:bg-zinc-900" : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700")}>
+                                            <div className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600"></div>
+                                            <span className="text-xs font-medium">Classic</span>
+                                        </div>
+                                        <div onClick={() => handleConfigChange('headerLayout', 'hero')} className={cn("cursor-pointer p-4 border-2 rounded-xl flex flex-col items-center gap-3 transition-all", config.headerLayout === 'hero' ? "border-zinc-900 dark:border-white bg-zinc-50 dark:bg-zinc-900" : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700")}>
+                                            <div className="w-full h-12 bg-zinc-200 dark:bg-zinc-800 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-md"></div>
+                                            <span className="text-xs font-medium">Hero</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="text" className="space-y-6 mt-0">
+                                <div className="space-y-4">
+                                    <Label className="text-xs uppercase tracking-wider text-zinc-500 font-bold">{t('design.textColor')}</Label>
+                                    <div className="grid grid-cols-6 gap-3">
+                                        {['#111827', '#374151', '#6B7280', '#FFFFFF', '#7C3AED', '#059669'].map(color => (
+                                            <button
+                                                key={color}
+                                                onClick={() => handleConfigChange('textColor', color)}
+                                                className={cn("w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold text-lg shadow-sm transition-transform active:scale-95", config.textColor === color ? "border-zinc-900 dark:border-white scale-110" : "border-transparent bg-zinc-100 dark:bg-zinc-800")}
+                                                style={{ color: color === '#FFFFFF' ? '#000' : color, backgroundColor: color === '#FFFFFF' ? '#f3f4f6' : undefined }}
+                                            >
+                                                A
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </TabsContent>
+
+
+                        </Tabs>
+                    </div>
+
+                    <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black z-10">
+                        <Button size="lg" className="w-full bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 rounded-xl font-bold h-12 shadow-lg" onClick={handleSaveConfig}>
+                            Save Changes
+                        </Button>
+                    </div>
+                </div>
             </div>
         </LinktreeLayout>
     );

@@ -160,12 +160,6 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                 <SidebarSectionTitle>{t('nav.manage')}</SidebarSectionTitle>
                 <div className="space-y-[1px]">
                     <NavItem
-                        icon={List}
-                        label={isStoreMode ? "Store Front" : t('nav.links')}
-                        active={location.pathname === '/dashboard'}
-                        onClick={() => handleNav('/dashboard')}
-                    />
-                    <NavItem
                         icon={User}
                         label="Profile"
                         active={location.pathname === '/design'}

@@ -9,7 +9,7 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, User, Store, Check, Sparkles, Lock } from "lucide-react";
+import { ChevronDown, User, Store, Check, Sparkles, Lock, BadgeCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const ProfileSwitcher = () => {
@@ -60,7 +60,10 @@ const ProfileSwitcher = () => {
                             </div>
                             <div className="text-left">
                                 <div className="text-[13px] font-semibold leading-none text-gray-900 dark:text-zinc-100">
-                                    {currentMode === 'store' ? `${user.username}'s Store` : user.username}
+                                    <span className="flex items-center gap-1">
+                                        {currentMode === 'store' ? `${user.username}'s Store` : user.username}
+                                        {user.is_email_verified && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-500/10" />}
+                                    </span>
                                 </div>
                                 <div className="text-[11px] text-gray-500 dark:text-zinc-500 mt-1">
                                     {currentMode === 'store' ? 'Digital Store' : 'Personal Profile'}

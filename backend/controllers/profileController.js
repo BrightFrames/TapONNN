@@ -160,6 +160,9 @@ const updateProfile = async (req, res) => {
                 profile.social_links = rawUpdateData.social_links;
                 profile.markModified('social_links');
             }
+            if (typeof rawUpdateData.show_shop_on_profile !== 'undefined') {
+                profile.show_shop_on_profile = rawUpdateData.show_shop_on_profile;
+            }
         }
 
         // Handle Global Username Check if changed
