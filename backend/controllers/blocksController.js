@@ -269,6 +269,40 @@ const getBlockLibrary = async (req, res) => {
     }
 };
 
+// Get updates feed - aggregates update blocks from all profiles
+const getUpdatesFeed = async (req, res) => {
+    try {
+        // Get update blocks from all profiles, sorted by newest first
+        const updates = await Block.find({
+            block_type: 'update',
+            is_active: true
+        })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .populate('user_id', 'username name avatar');
+
+        // Transform the data for the frontend
+        const formattedUpdates = updates.map(update => ({
+            _id: update._id,
+            title: update.title,
+            message: update.content?.message,
+            style: update.content?.style || 'info',
+            url: update.content?.url,
+            createdAt: update.createdAt,
+            profile: {
+                username: update.user_id?.username || 'unknown',
+                name: update.user_id?.name || 'Unknown',
+                avatar: update.user_id?.avatar
+            }
+        }));
+
+        res.json(formattedUpdates);
+    } catch (err) {
+        console.error('Error fetching updates feed:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 module.exports = {
     getBlocks,
     getPublicBlocks,
@@ -277,5 +311,6 @@ module.exports = {
     deleteBlock,
     reorderBlocks,
     trackBlockInteraction,
-    getBlockLibrary
+    getBlockLibrary,
+    getUpdatesFeed
 };

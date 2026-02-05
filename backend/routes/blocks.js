@@ -6,6 +6,9 @@ const blocksController = require('../controllers/blocksController');
 // --- Block Library (Public) ---
 router.get('/library', blocksController.getBlockLibrary);
 
+// --- Updates Feed (Authenticated) ---
+router.get('/updates/feed', authMiddleware, blocksController.getUpdatesFeed);
+
 // --- Public Blocks ---
 router.get('/public/:userId', blocksController.getPublicBlocks);
 

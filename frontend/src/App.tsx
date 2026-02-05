@@ -31,6 +31,7 @@ import NfcStore from "./pages/NfcStore";
 import Explore from "./pages/Explore";
 import LikedProducts from "./pages/LikedProducts";
 import Messages from "./pages/Messages";
+import Updates from "./pages/Updates";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="/nfc-cards" element={<ProtectedRoute><NFCCards /></ProtectedRoute>} />
             <Route path="/connect-device" element={<ProtectedRoute><NfcStore /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Route path="/updates" element={<ProtectedRoute><Updates /></ProtectedRoute>} />
 
             {/* Earn Routes */}
             <Route path="/dashboard/earn" element={<ProtectedRoute><EarnOverview /></ProtectedRoute>} />

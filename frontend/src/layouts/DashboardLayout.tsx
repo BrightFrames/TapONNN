@@ -24,7 +24,8 @@ import {
     Grid,
     ChevronDown,
     ChevronRight,
-    Users
+    Users,
+    Bell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -215,6 +216,13 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
                             label="Analytics"
                             to="/analytics"
                             active={location.pathname === "/analytics"}
+                        />
+                        <SidebarItem
+                            icon={Bell}
+                            label="Updates"
+                            to="/updates"
+                            active={location.pathname === "/updates"}
+                            isNew
                         />
                         <SidebarItem
                             icon={User}
