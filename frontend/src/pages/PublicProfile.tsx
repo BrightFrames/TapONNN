@@ -38,23 +38,23 @@ const getFaviconUrl = (url: string): string | null => {
 };
 
 // Favicon component with fallback
-const Favicon = ({ url, fallback, className, style }: { 
-    url: string; 
-    fallback: React.ReactNode; 
+const Favicon = ({ url, fallback, className, style }: {
+    url: string;
+    fallback: React.ReactNode;
     className?: string;
     style?: React.CSSProperties;
 }) => {
     const [error, setError] = useState(false);
     const faviconUrl = getFaviconUrl(url);
-    
+
     if (error || !faviconUrl) {
         return <>{fallback}</>;
     }
-    
+
     return (
-        <img 
-            src={faviconUrl} 
-            alt="" 
+        <img
+            src={faviconUrl}
+            alt=""
             className={className}
             style={style}
             onError={() => setError(true)}
@@ -490,17 +490,17 @@ const PublicProfile = () => {
         if (cls.startsWith('rgb')) return cls;
         // Pass through gradients as-is
         if (cls.includes('gradient') || cls.includes('linear')) return cls;
-        
+
         // Handle text colors
         if (cls.includes('white')) return '#ffffff';
         if (cls.includes('black')) return '#000000';
         if (cls.includes('zinc-900') || cls.includes('gray-900')) return '#18181b';
         if (cls.includes('zinc-50') || cls.includes('gray-50')) return '#fafafa';
-        
+
         // Extract hex from arbitrary values like text-[#abc123] or bg-[#abc123]
         const hexMatch = cls.match(/\[#([a-fA-F0-9]+)\]/);
         if (hexMatch) return `#${hexMatch[1]}`;
-        
+
         return type === 'text' ? '#000000' : '#ffffff';
     };
 
@@ -508,8 +508,8 @@ const PublicProfile = () => {
     const hexToRgba = (hex: string, alpha: number): string => {
         if (!hex || hex.includes('rgb') || hex.includes('gradient')) return `rgba(0,0,0,${alpha})`;
         const cleanHex = hex.replace('#', '');
-        const fullHex = cleanHex.length === 3 
-            ? cleanHex.split('').map(c => c + c).join('') 
+        const fullHex = cleanHex.length === 3
+            ? cleanHex.split('').map(c => c + c).join('')
             : cleanHex;
         const r = parseInt(fullHex.substring(0, 2), 16);
         const g = parseInt(fullHex.substring(2, 4), 16);
@@ -523,7 +523,7 @@ const PublicProfile = () => {
     const rawTextColor = designConfig.textColor || theme.textColor || "#18181b";
     const rawButtonColor = designConfig.buttonColor || theme.buttonColor || "#000000";
     const rawButtonTextColor = designConfig.buttonTextColor || theme.buttonTextColor || "#ffffff";
-    
+
     const bgColor = tailwindToHex(rawBgColor, 'bg');
     const textColor = tailwindToHex(rawTextColor, 'text');
     const buttonColor = tailwindToHex(rawButtonColor, 'bg');
@@ -533,20 +533,20 @@ const PublicProfile = () => {
     // Helper to determine if a color is light or dark
     const isColorLight = (color: string) => {
         if (!color) return false;
-        
+
         // First convert from Tailwind class if needed
         let hexColor = color.startsWith('#') ? color : tailwindToHex(color, 'text');
-        
+
         // Handle gradients - extract the first color
         if (hexColor.includes('gradient') || hexColor.includes('linear')) {
             const match = hexColor.match(/#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})/);
             if (match) hexColor = match[0];
             else return false; // Can't determine
         }
-        
+
         const hex = hexColor.replace('#', '');
         if (!/^[a-fA-F0-9]{3,6}$/.test(hex)) return false; // Invalid hex
-        
+
         // Handle short hex (e.g., #fff)
         const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
         const r = parseInt(fullHex.substring(0, 2), 16);
@@ -563,11 +563,11 @@ const PublicProfile = () => {
     // A theme is "dark" if background is dark OR if background is a gradient (gradients are usually dark/colorful)
     // Also check if the background contains gradient keywords or is not a simple light color
     const isDarkTheme = !bgIsLight || bgColor.includes('gradient') || bgColor.includes('linear') || bgColor.includes('rgb');
-    
+
     // Card background - semi-transparent for better blending with theme
     // Products should have a subtle overlay effect that works with any background
-    const cardBgColor = isDarkTheme 
-        ? 'rgba(255, 255, 255, 0.08)' 
+    const cardBgColor = isDarkTheme
+        ? 'rgba(255, 255, 255, 0.08)'
         : 'rgba(255, 255, 255, 0.85)';
 
     // Helper to get background style object (handles both colors and gradients)
@@ -597,16 +597,18 @@ const PublicProfile = () => {
             <div className={cn(
                 "absolute top-0 left-0 right-0 z-[60] h-[88px] flex items-end px-5 pb-3 transition-all duration-300 pointer-events-none",
                 isScrolled ? "backdrop-blur-xl shadow-sm border-b border-black/5" : "bg-transparent"
-            )} style={isScrolled ? getBackgroundStyle(bgColor) : { backgroundColor: 'transparent' }}>
+            )} style={isScrolled ? {
+                background: `linear-gradient(to bottom, ${hexToRgba(bgColor, 0.85)}, ${bgColor}), url(${profile.cover_photo}) center/cover no-repeat`,
+            } : { backgroundColor: 'transparent' }}>
                 <div className="flex items-center justify-between w-full max-w-md mx-auto pointer-events-auto">
                     <div className="flex items-center gap-2 h-9 overflow-visible relative w-40">
                         {/* Tapx Logo */}
-                        <div 
+                        <div
                             onClick={() => navigate('/signup')}
                             className={cn(
-                            "absolute left-0 flex items-center gap-1.5 transition-all duration-500 transform origin-left px-2.5 py-1 rounded-full cursor-pointer hover:scale-105",
-                            isScrolled ? "opacity-0 -translate-y-4 pointer-events-none" : "opacity-100 translate-y-0 delay-100 bg-black/20 backdrop-blur-md border border-white/10"
-                        )}>
+                                "absolute left-0 flex items-center gap-1.5 transition-all duration-500 transform origin-left px-2.5 py-1 rounded-full cursor-pointer hover:scale-105",
+                                isScrolled ? "opacity-0 -translate-y-4 pointer-events-none" : "opacity-100 translate-y-0 delay-100 bg-black/20 backdrop-blur-md border border-white/10"
+                            )}>
                             <div className="w-4 h-4 bg-black rounded-full flex items-center justify-center shadow-sm">
                                 <span className="text-[9px] text-white font-bold">t</span>
                             </div>
@@ -662,9 +664,9 @@ const PublicProfile = () => {
 
                     {/* Cover Photo */}
                     <div className="h-64 w-full relative z-0 shrink-0 overflow-hidden">
-                        <div 
+                        <div
                             className="w-full h-full transition-all duration-300"
-                            style={{ 
+                            style={{
                                 filter: `blur(${Math.min(scrollProgress * 15, 10)}px)`,
                                 transform: `scale(${1 + scrollProgress * 0.1})`,
                             }}
@@ -816,7 +818,7 @@ const PublicProfile = () => {
                                             const style = block.content?.style || 'info';
                                             const config = styleConfig[style as keyof typeof styleConfig] || styleConfig.info;
                                             const UpdateIcon = config.icon;
-                                            
+
                                             return (
                                                 <div
                                                     key={block._id}
@@ -844,7 +846,7 @@ const PublicProfile = () => {
                                                 </div>
                                             );
                                         })}
-                                        
+
                                         {/* Regular Link Blocks */}
                                         {blocks.filter(b => b.is_active && b.block_type !== 'update').map((block) => {
                                             const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
@@ -872,7 +874,7 @@ const PublicProfile = () => {
                                                         ) : blockUrl ? (
                                                             <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border shadow-sm overflow-hidden"
                                                                 style={{ backgroundColor: isDarkTheme ? bgColor : cardBgColor, borderColor: `${textColor}15` }}>
-                                                                <Favicon 
+                                                                <Favicon
                                                                     url={blockUrl}
                                                                     className="w-6 h-6 object-contain"
                                                                     fallback={<ExternalLink className="w-5 h-5" style={{ color: textColor }} />}
@@ -1003,7 +1005,7 @@ const PublicProfile = () => {
                         <div className="flex border-y border-zinc-200 divide-x divide-zinc-200 mb-8 bg-white rounded-xl shadow-sm overflow-hidden">
                             <div className="flex-1 py-4 px-4 flex items-center gap-3">
                                 {(selectedBlock.content?.url || selectedBlock.url) ? (
-                                    <Favicon 
+                                    <Favicon
                                         url={selectedBlock.content?.url || selectedBlock.url}
                                         className="w-5 h-5 object-contain"
                                         fallback={<ShoppingBag className="w-5 h-5 text-zinc-900" />}
