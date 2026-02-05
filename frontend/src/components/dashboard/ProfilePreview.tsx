@@ -1,23 +1,81 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Share2, ArrowRight, Sparkles, AlertCircle, ExternalLink, Mail, Phone, ShoppingBag, ChevronLeft, Star, Heart, Upload } from "lucide-react";
+import { Share2, ArrowRight, Sparkles, AlertCircle, ExternalLink, Mail, Phone, ShoppingBag, ChevronLeft, Star, Heart, Upload, Instagram, Twitter, Facebook, Linkedin, Youtube, Github, Music, MessageCircle, Send, Globe, Info, CheckCircle, AlertTriangle, PartyPopper } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
-// ... (previous code)
+// Helper function to get favicon URL from a link
+const getFaviconUrl = (url: string): string | null => {
+    if (!url) return null;
+    try {
+        // Add protocol if missing
+        let fullUrl = url;
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            fullUrl = 'https://' + url;
+        }
+        const urlObj = new URL(fullUrl);
+        const domain = urlObj.hostname;
+        // Use Google's favicon service for reliable favicon fetching
+        return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+    } catch {
+        return null;
+    }
+};
+
+// Favicon component with fallback
+const Favicon = ({ url, fallback, className, style }: { 
+    url: string; 
+    fallback: React.ReactNode; 
+    className?: string;
+    style?: React.CSSProperties;
+}) => {
+    const [error, setError] = useState(false);
+    const faviconUrl = getFaviconUrl(url);
+    
+    if (error || !faviconUrl) {
+        return <>{fallback}</>;
+    }
+    
+    return (
+        <img 
+            src={faviconUrl} 
+            alt="" 
+            className={className}
+            style={style}
+            onError={() => setError(true)}
+        />
+    );
+};
+
+// Social icons mapping for preview
+const socialIconMap: Record<string, any> = {
+    instagram: Instagram,
+    twitter: Twitter,
+    facebook: Facebook,
+    linkedin: Linkedin,
+    youtube: Youtube,
+    github: Github,
+    tiktok: Music,
+    whatsapp: MessageCircle,
+    telegram: Send,
+    website: Globe,
+};
 
 interface ProfilePreviewProps {
     blocks?: any[];
     theme?: any;
     products?: any[];
     mode?: 'personal' | 'store';
+    showStoreTab?: boolean;
 }
 
-const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal' }: ProfilePreviewProps) => {
+const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', showStoreTab = false }: ProfilePreviewProps) => {
 
     const { user } = useAuth();
+    // Only show store tab if explicitly passed as true
+    const shouldShowStoreTab = showStoreTab === true;
     const username = user?.username || "user";
     const displayName = user?.name || "Display Name";
     const userInitial = displayName[0]?.toUpperCase() || "U";
@@ -56,6 +114,40 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal' }
 
     const isScrolled = scrollProgress > 0.8;
 
+    // Theme Styles - moved up so they can be used in renderProductList
+    const bgColor = theme?.backgroundColor || "#fafafa"; // Zinc-50 equivalent
+    const textColor = theme?.textColor || "#18181b"; // Zinc-900
+    const buttonColor = theme?.buttonColor || "#000000";
+    const buttonTextColor = theme?.buttonTextColor || "#ffffff";
+    const blockStyle = theme?.blockStyle || 'rounded'; // rounded, square, fully_rounded
+
+    // Helper to determine if a color is light or dark
+    const isColorLight = (color: string) => {
+        if (!color) return false;
+        let hex = color.replace('#', '');
+        
+        // Handle gradients - extract the first color
+        if (color.includes('gradient') || color.includes('linear')) {
+            const match = color.match(/#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})/);
+            if (match) hex = match[1];
+            else return false;
+        }
+        
+        if (!/^[a-fA-F0-9]{3,6}$/.test(hex)) return false;
+        
+        // Handle short hex (e.g., #fff)
+        const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+        const r = parseInt(fullHex.substring(0, 2), 16);
+        const g = parseInt(fullHex.substring(2, 4), 16);
+        const b = parseInt(fullHex.substring(4, 6), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness > 128;
+    };
+
+    // Dark theme detection - if background is dark OR a gradient, treat as dark theme
+    const bgIsLight = isColorLight(bgColor);
+    const isDarkTheme = !bgIsLight || bgColor.includes('gradient') || bgColor.includes('linear');
+
     const renderProductList = () => (
         <div className="space-y-4 px-1 pb-24 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
             <div className="grid grid-cols-2 gap-3">
@@ -63,10 +155,15 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal' }
                     products.map((product) => (
                         <div
                             key={product._id}
-                            className="bg-zinc-50 rounded-xl overflow-hidden shadow-sm border border-zinc-100 cursor-pointer hover:shadow-md transition-all active:scale-[0.98] group flex flex-col"
+                            className="rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-all active:scale-[0.98] group flex flex-col"
+                            style={{
+                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.03)',
+                                borderWidth: '1px',
+                                borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                            }}
                             onClick={() => setSelectedProduct(product)}
                         >
-                            <div className="aspect-square bg-zinc-200 relative overflow-hidden">
+                            <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
                                 {product.image_url ? (
                                     <img src={product.image_url} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
                                 ) : (
@@ -74,15 +171,15 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal' }
                                 )}
                             </div>
                             <div className="p-3">
-                                <h3 className="font-semibold text-xs text-zinc-900 line-clamp-1">{product.title}</h3>
-                                <p className="text-[10px] text-zinc-500 mt-1">₹{product.price}</p>
+                                <h3 className="font-semibold text-xs line-clamp-1" style={{ color: textColor }}>{product.title}</h3>
+                                <p className="text-[10px] mt-1" style={{ color: textColor, opacity: 0.6 }}>₹{product.price}</p>
                             </div>
                         </div>
                     ))
                 ) : (
                     <div className="col-span-2 text-center py-10 opacity-60">
-                        <ShoppingBag className="w-6 h-6 mx-auto mb-2 text-zinc-300" />
-                        <p className="text-xs text-zinc-400">No products found</p>
+                        <ShoppingBag className="w-6 h-6 mx-auto mb-2" style={{ color: textColor, opacity: 0.3 }} />
+                        <p className="text-xs" style={{ color: textColor, opacity: 0.4 }}>No products found</p>
                     </div>
                 )}
             </div>
@@ -141,28 +238,6 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal' }
             </div>
         );
     }
-
-    // Theme Styles
-    const bgColor = theme?.backgroundColor || "#fafafa"; // Zinc-50 equivalent
-    const textColor = theme?.textColor || "#18181b"; // Zinc-900
-    const buttonColor = theme?.buttonColor || "#000000";
-    const buttonTextColor = theme?.buttonTextColor || "#ffffff";
-    const blockStyle = theme?.blockStyle || 'rounded'; // rounded, square, fully_rounded
-
-    // Helper to determine if a color is light or dark
-    const isColorLight = (color: string) => {
-        if (!color) return false;
-        const hex = color.replace('#', '');
-        // Handle short hex (e.g., #fff)
-        const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
-        const r = parseInt(fullHex.substring(0, 2), 16);
-        const g = parseInt(fullHex.substring(2, 4), 16);
-        const b = parseInt(fullHex.substring(4, 6), 16);
-        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        return brightness > 128;
-    };
-
-    const isDarkTheme = isColorLight(textColor); // If text is light, theme is likely dark
 
     return (
         <div className="flex flex-col items-center justify-center p-4 w-full h-full font-sans select-none" style={{ color: textColor }}>
@@ -274,43 +349,112 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal' }
                                 )}>
                                     <h1 className="text-xl font-black tracking-tight" style={{ color: textColor }}>{displayName}</h1>
                                     <p className="text-xs font-medium opacity-60" style={{ color: textColor }}>@{username}</p>
+                                    
+                                    {/* Social Links Icons */}
+                                    {user?.social_links && Object.keys(user.social_links).length > 0 && (
+                                        <div className="flex items-center justify-center gap-2 mt-3">
+                                            {Object.entries(user.social_links).map(([key, url]) => {
+                                                if (!url) return null;
+                                                const Icon = socialIconMap[key];
+                                                if (!Icon) return null;
+                                                return (
+                                                    <a
+                                                        key={key}
+                                                        href={url as string}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+                                                        style={{ 
+                                                            backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#f4f4f5',
+                                                            color: textColor
+                                                        }}
+                                                    >
+                                                        <Icon className="w-4 h-4" />
+                                                    </a>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Navigation Toggles */}
-                            <div className="flex w-full bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-full mb-6 relative z-20 mx-auto max-w-[200px]" style={{
-                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#f4f4f5'
-                            }}>
-                                <button
-                                    onClick={() => setActiveTab('personal')}
-                                    className={cn(
-                                        "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
-                                        activeTab === 'personal' ? "bg-white dark:bg-zinc-800 shadow-sm text-black dark:text-white" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
-                                    )}
-                                    style={activeTab === 'personal' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
-                                >
-                                    Links
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('store')}
-                                    className={cn(
-                                        "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
-                                        activeTab === 'store' ? "bg-white dark:bg-zinc-800 shadow-sm text-black dark:text-white" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
-                                    )}
-                                    style={activeTab === 'store' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
-                                >
-                                    Store
-                                </button>
-                            </div>
+                            {/* Navigation Toggles - Only show if user has store */}
+                            {shouldShowStoreTab && (
+                                <div className="flex w-full bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-full mb-6 relative z-20 mx-auto max-w-[200px]" style={{
+                                    backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#f4f4f5'
+                                }}>
+                                    <button
+                                        onClick={() => setActiveTab('personal')}
+                                        className={cn(
+                                            "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
+                                            activeTab === 'personal' ? "bg-white dark:bg-zinc-800 shadow-sm text-black dark:text-white" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+                                        )}
+                                        style={activeTab === 'personal' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
+                                    >
+                                        Links
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('store')}
+                                        className={cn(
+                                            "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
+                                            activeTab === 'store' ? "bg-white dark:bg-zinc-800 shadow-sm text-black dark:text-white" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+                                        )}
+                                        style={activeTab === 'store' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
+                                    >
+                                        Store
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Content Area - Show Links or Products based on mode */}
                             <div className="w-full min-h-[300px]">
-                                {activeTab === 'store' ? (
+                                {shouldShowStoreTab && activeTab === 'store' ? (
                                     renderProductList()
                                 ) : (
                                     <div className="space-y-3 w-full animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
-                                        {blocks.map((block) => {
+                                        {/* Update/Notification Blocks - Show at top */}
+                                        {blocks.filter(b => b.is_active !== false && b.block_type === 'update').map((block) => {
+                                            const styleConfig = {
+                                                info: { icon: Info, bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.3)', iconColor: '#3b82f6' },
+                                                success: { icon: CheckCircle, bg: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.3)', iconColor: '#22c55e' },
+                                                warning: { icon: AlertTriangle, bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.3)', iconColor: '#f59e0b' },
+                                                promo: { icon: PartyPopper, bg: 'rgba(168, 85, 247, 0.15)', border: 'rgba(168, 85, 247, 0.3)', iconColor: '#a855f7' },
+                                            };
+                                            const style = block.content?.style || 'info';
+                                            const config = styleConfig[style as keyof typeof styleConfig] || styleConfig.info;
+                                            const UpdateIcon = config.icon;
+                                            
+                                            return (
+                                                <div
+                                                    key={block._id}
+                                                    className={`w-full p-3 rounded-2xl transition-all border ${block.content?.url ? 'cursor-pointer active:scale-[0.98]' : ''}`}
+                                                    style={{
+                                                        backgroundColor: config.bg,
+                                                        borderColor: config.border,
+                                                    }}
+                                                >
+                                                    <div className="flex items-start gap-2.5">
+                                                        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: config.iconColor + '20' }}>
+                                                            <UpdateIcon className="w-3 h-3" style={{ color: config.iconColor }} />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="text-xs font-bold" style={{ color: textColor }}>{block.title}</h4>
+                                                            {block.content?.message && (
+                                                                <p className="text-[10px] mt-0.5 opacity-80" style={{ color: textColor }}>{block.content.message}</p>
+                                                            )}
+                                                        </div>
+                                                        {block.content?.url && (
+                                                            <ArrowRight className="w-3 h-3 opacity-50 shrink-0 mt-0.5" style={{ color: textColor }} />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        
+                                        {/* Regular Link Blocks */}
+                                        {blocks.filter(b => b.is_active !== false && b.block_type !== 'update').map((block) => {
                                             const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
+                                            const blockUrl = block.content?.url || block.url;
                                             return (
                                                 <div key={block._id}
                                                     className="w-full p-3.5 rounded-2xl active:scale-[0.98] transition-all cursor-pointer border flex items-center justify-between group h-14"
@@ -320,17 +464,25 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal' }
                                                     }}
                                                 >
                                                     <div className="flex items-center gap-3 w-full overflow-hidden">
-                                                        {Icon ?
+                                                        {Icon ? (
                                                             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: isDarkTheme ? '#000' : '#fff', color: textColor }}><Icon className="w-4 h-4" /></div>
-                                                            :
+                                                        ) : blockUrl ? (
+                                                            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm overflow-hidden" style={{ backgroundColor: isDarkTheme ? '#000' : '#fff' }}>
+                                                                <Favicon 
+                                                                    url={blockUrl}
+                                                                    className="w-5 h-5 object-contain"
+                                                                    fallback={<ExternalLink className="w-4 h-4" style={{ color: textColor }} />}
+                                                                />
+                                                            </div>
+                                                        ) : (
                                                             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: isDarkTheme ? '#000' : '#fff', color: textColor }}><ExternalLink className="w-4 h-4" /></div>
-                                                        }
+                                                        )}
                                                         <span className="text-sm font-bold truncate flex-1 text-left" style={{ color: textColor }}>{block.title}</span>
                                                     </div>
                                                 </div>
                                             )
                                         })}
-                                        {blocks.length === 0 && (
+                                        {blocks.filter(b => b.is_active !== false).length === 0 && (
                                             <div className="text-center py-8 opacity-50">
                                                 <p className="text-xs" style={{ color: textColor }}>No links added yet.</p>
                                             </div>

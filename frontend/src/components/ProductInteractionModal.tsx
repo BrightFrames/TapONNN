@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContentBottomSheet, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
@@ -145,7 +145,7 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-white text-black">
+            <DialogContentBottomSheet className="sm:max-w-[425px] p-0 overflow-hidden bg-white dark:bg-zinc-900 text-black dark:text-white">
                 {/* Header Image/Summary */}
                 <div className="bg-gray-50 p-6 border-b border-gray-100">
                     <div className="flex gap-4 items-center">
@@ -280,20 +280,20 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
                     {/* Step 5: Success */}
                     {step === 'success' && (
                         <div className="text-center py-8">
-                            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <div className="w-16 h-16 bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <CheckCircle2 className="w-8 h-8" />
                             </div>
                             <h2 className="text-2xl font-bold mb-2">All Set!</h2>
-                            <p className="text-gray-500 mb-6">
+                            <p className="text-gray-500 dark:text-zinc-400 mb-6">
                                 Your request has been sent to the seller. They will verify your details and get back to you soon.
                             </p>
-                            <Button onClick={() => onOpenChange(false)} variant="outline" className="min-w-[120px]">
+                            <Button onClick={() => onOpenChange(false)} variant="outline" className="min-w-[120px] rounded-xl">
                                 Close
                             </Button>
                         </div>
                     )}
                 </div>
-            </DialogContent>
+            </DialogContentBottomSheet>
         </Dialog>
     );
 };

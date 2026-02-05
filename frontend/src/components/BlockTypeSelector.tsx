@@ -28,7 +28,8 @@ import {
     MapPin,
     File,
     Search,
-    Loader2
+    Loader2,
+    Bell
 } from 'lucide-react';
 
 interface BlockType {
@@ -75,7 +76,8 @@ const iconMap: Record<string, any> = {
     'square': Square,
     'clock': Clock,
     'map-pin': MapPin,
-    'file': File
+    'file': File,
+    'bell': Bell
 };
 
 const BlockTypeSelector = ({ open, onOpenChange, onSelect }: BlockTypeSelectorProps) => {

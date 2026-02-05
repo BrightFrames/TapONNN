@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { Camera, Loader2, X } from "lucide-react";
+import { Camera, Loader2, ImagePlus } from "lucide-react";
 
 interface AvatarUploadProps {
     currentAvatarUrl?: string;
@@ -69,52 +69,43 @@ const AvatarUpload = ({ currentAvatarUrl, userName, onUploadComplete }: AvatarUp
         }
     };
 
-    const handleRemoveAvatar = () => {
-        setPreviewUrl(null);
-        onUploadComplete("");
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
-    };
-
     const displayUrl = previewUrl || currentAvatarUrl;
 
     return (
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col sm:flex-row items-center gap-6">
             <div className="relative group">
-                <Avatar className="w-24 h-24 border-4 border-gray-100">
-                    <AvatarImage src={displayUrl} />
-                    <AvatarFallback className="bg-purple-100 text-purple-700 text-2xl font-bold">
+                {/* Glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <Avatar className="w-28 h-28 border-4 border-white dark:border-zinc-800 shadow-xl ring-4 ring-gray-100 dark:ring-zinc-800/50 relative">
+                    <AvatarImage src={displayUrl} className="object-cover" />
+                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-3xl font-bold">
                         {userInitial}
                     </AvatarFallback>
                 </Avatar>
 
                 {/* Upload overlay */}
                 <div
-                    className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-sm"
                     onClick={() => fileInputRef.current?.click()}
                 >
                     {uploading ? (
-                        <Loader2 className="w-6 h-6 text-white animate-spin" />
+                        <Loader2 className="w-7 h-7 text-white animate-spin" />
                     ) : (
-                        <Camera className="w-6 h-6 text-white" />
+                        <Camera className="w-7 h-7 text-white" />
                     )}
                 </div>
 
-                {/* Remove button */}
-                {displayUrl && !uploading && (
-                    <Button
-                        size="icon"
-                        variant="destructive"
-                        onClick={handleRemoveAvatar}
-                        className="absolute -top-1 -right-1 h-6 w-6 rounded-full p-0 hover:bg-red-600 transition-colors"
-                    >
-                        <X className="w-3 h-3" />
-                    </Button>
-                )}
+                {/* Camera badge */}
+                <div 
+                    className="absolute -bottom-1 -right-1 p-2 bg-indigo-500 rounded-full shadow-lg cursor-pointer hover:bg-indigo-600 transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                >
+                    <Camera className="w-4 h-4 text-white" />
+                </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3 text-center sm:text-left">
                 <input
                     ref={fileInputRef}
                     type="file"
@@ -124,7 +115,7 @@ const AvatarUpload = ({ currentAvatarUrl, userName, onUploadComplete }: AvatarUp
                 />
                 <Button
                     variant="outline"
-                    className="gap-2 rounded-xl"
+                    className="gap-2 rounded-xl border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:border-gray-300 dark:hover:border-zinc-600 transition-all"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
                 >
@@ -135,12 +126,12 @@ const AvatarUpload = ({ currentAvatarUrl, userName, onUploadComplete }: AvatarUp
                         </>
                     ) : (
                         <>
-                            <Camera className="w-4 h-4" />
+                            <ImagePlus className="w-4 h-4" />
                             Change Avatar
                         </>
                     )}
                 </Button>
-                <p className="text-xs text-gray-500">JPG, PNG or GIF. Max 2MB.</p>
+                <p className="text-xs text-gray-500 dark:text-zinc-500">JPG, PNG or GIF. Max 2MB.</p>
             </div>
         </div>
     );

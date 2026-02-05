@@ -32,6 +32,8 @@ const getPublicProfile = async (req, res) => {
 
         // If matched by store_username only, return store data mapped to standard fields
         if (isStoreMatch) {
+            // Check if store_design_config has any properties, otherwise fall back to personal design_config
+            const hasStoreDesign = profileObj.store_design_config && Object.keys(profileObj.store_design_config).length > 0;
             res.json({
                 id: profileObj.user_id,
                 username: profileObj.store_username,
@@ -41,7 +43,7 @@ const getPublicProfile = async (req, res) => {
                 selected_theme: profileObj.store_selected_theme,
                 // Store specific?
                 social_links: profileObj.social_links instanceof Map ? Object.fromEntries(profileObj.social_links) : profileObj.social_links,
-                design_config: profileObj.store_design_config || {},
+                design_config: hasStoreDesign ? profileObj.store_design_config : (profileObj.design_config || {}),
                 has_store: true,
                 store_published: profileObj.store_published,
                 is_store_identity: true // Flag for frontend if needed
@@ -58,6 +60,7 @@ const getPublicProfile = async (req, res) => {
                 social_links: profileObj.social_links instanceof Map ? Object.fromEntries(profileObj.social_links) : profileObj.social_links,
                 design_config: profileObj.design_config,
                 has_store: profileObj.has_store,
+                show_shop_on_profile: profileObj.show_shop_on_profile ?? true,
                 store_published: profileObj.store_published,
                 is_store_identity: false
             });
@@ -96,6 +99,9 @@ const getPublicStoreProfile = async (req, res) => {
 
         const profileObj = profile.toObject();
         const hasStoreUsername = !!profileObj.store_username;
+        
+        // Check if store_design_config has any actual content
+        const hasStoreDesignConfig = profileObj.store_design_config && Object.keys(profileObj.store_design_config).length > 0;
 
         // Return store-specific data (fallback to personal data if store-specific not set)
         res.json({
@@ -106,7 +112,7 @@ const getPublicStoreProfile = async (req, res) => {
             avatar_url: profileObj.store_avatar_url || profileObj.avatar_url,
             selected_theme: profileObj.store_selected_theme || profileObj.selected_theme || 'clean',
             social_links: profileObj.social_links instanceof Map ? Object.fromEntries(profileObj.social_links) : profileObj.social_links,
-            design_config: profileObj.store_design_config || profileObj.design_config || {},
+            design_config: hasStoreDesignConfig ? profileObj.store_design_config : (profileObj.design_config || {}),
             has_store: true,
             store_published: profileObj.store_published,
             is_store_identity: true
@@ -178,6 +184,13 @@ const updateProfile = async (req, res) => {
         profile.updated_at = new Date();
         await profile.save();
 
+        // Emit socket event for real-time updates
+        if (req.io && profile.username) {
+            const roomName = profile.username.toLowerCase();
+            console.log(`[SocketDebug] Emitting 'profileUpdated' (profile) to room: '${roomName}'`);
+            req.io.to(roomName).emit('profileUpdated', { type: 'profile' });
+        }
+
         console.log('Profile updated successfully (save)');
         res.json({ success: true, profile });
 
@@ -208,6 +221,13 @@ const updateTheme = async (req, res) => {
                 updated_at: new Date()
             }
         );
+
+        // Emit socket event for real-time updates
+        if (req.io && profile?.username) {
+            const roomName = profile.username.toLowerCase();
+            console.log(`[SocketDebug] Emitting 'profileUpdated' (theme) to room: '${roomName}'`);
+            req.io.to(roomName).emit('profileUpdated', { type: 'theme' });
+        }
 
         res.json({ success: true });
     } catch (err) {

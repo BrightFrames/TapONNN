@@ -12,7 +12,7 @@ const blockSchema = new mongoose.Schema({
         required: true,
         enum: [
             // Content blocks
-            'link', 'text', 'header', 'image', 'video', 'divider',
+            'link', 'text', 'header', 'image', 'video', 'divider', 'update',
             // Commerce blocks
             'product', 'service', 'pricing', 'donation',
             // Contact blocks

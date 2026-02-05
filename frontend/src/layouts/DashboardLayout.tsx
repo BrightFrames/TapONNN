@@ -171,11 +171,11 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
             <aside className="w-[280px] bg-[#050505] border-r border-[#1A1A1A] flex flex-col fixed h-full z-20 hidden md:flex transition-all duration-300">
                 {/* Header */}
                 <div className="p-4 pt-5 pb-4 flex items-center justify-between border-b border-[#1A1A1A]">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 flex items-center justify-center bg-white rounded-lg">
-                            <img src="/logo.svg" alt="TapX" className="w-6 h-6 object-contain" />
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center bg-white rounded-xl">
+                            <img src="/logo.svg" alt="TapX" className="w-7 h-7 object-contain" />
                         </div>
-                        <span className="text-lg font-bold text-white tracking-tight">tapx.bio</span>
+                        <span className="text-xl font-bold text-white tracking-tight">tapx.bio</span>
                     </div>
                 </div>
 

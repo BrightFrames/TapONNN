@@ -35,11 +35,12 @@ const getBlocks = async (req, res) => {
         const activeMode = profile?.active_profile_mode || 'personal';
 
         // Filter blocks ensuring they match current mode
+        // Sort by is_featured (featured first) then by position
         const blocks = await Block.find({
             user_id: userId,
             profile_context: activeMode
         })
-            .sort({ position: 1 })
+            .sort({ is_featured: -1, position: 1 })
             .lean();
 
         res.json(blocks);
@@ -61,7 +62,7 @@ const getPublicBlocks = async (req, res) => {
             is_active: true,
             profile_context: context // Only fetch blocks for requested context
         })
-            .sort({ position: 1 })
+            .sort({ is_featured: -1, position: 1 })
             .lean();
 
         // Track views asynchronously
@@ -232,7 +233,8 @@ const getBlockLibrary = async (req, res) => {
                 { type: 'header', name: 'Header', description: 'Section header', icon: 'heading', cta_default: 'none' },
                 { type: 'image', name: 'Image', description: 'Display an image', icon: 'image', cta_default: 'none' },
                 { type: 'video', name: 'Video', description: 'Embed a video', icon: 'video', cta_default: 'none' },
-                { type: 'divider', name: 'Divider', description: 'Visual separator', icon: 'minus', cta_default: 'none' }
+                { type: 'divider', name: 'Divider', description: 'Visual separator', icon: 'minus', cta_default: 'none' },
+                { type: 'update', name: 'Update', description: 'Notification banner', icon: 'bell', cta_default: 'none' }
             ],
             commerce: [
                 { type: 'product', name: 'Product', description: 'Showcase a product', icon: 'shopping-bag', cta_default: 'buy_now' },

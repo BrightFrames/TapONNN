@@ -13,6 +13,7 @@ interface User {
     // Role-based profile handling
     role?: 'super' | 'personal';
     has_store?: boolean;
+    show_shop_on_profile?: boolean;
     active_profile_mode?: 'personal' | 'store';
     // Gender for avatar generation
     gender?: 'male' | 'female' | 'other';
@@ -164,6 +165,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 // Role-based profile handling
                 role: profile.role || 'super',
                 has_store: profile.has_store || false,
+                show_shop_on_profile: profile.show_shop_on_profile ?? true,
                 active_profile_mode: profile.active_profile_mode || 'personal',
                 is_email_verified: profile.is_email_verified
             });
@@ -622,7 +624,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         // Optimistic update
-        setBlocks(prev => prev.map(b => b._id === blockId ? { ...b, ...updates } : b));
+        setBlocks(prev => {
+            const updated = prev.map(b => b._id === blockId ? { ...b, ...updates } : b);
+            // Re-sort if featured status changed (featured first, then by position)
+            if ('is_featured' in updates) {
+                return updated.sort((a, b) => {
+                    if (a.is_featured && !b.is_featured) return -1;
+                    if (!a.is_featured && b.is_featured) return 1;
+                    return (a.position || 0) - (b.position || 0);
+                });
+            }
+            return updated;
+        });
 
         const token = getToken();
         if (!token) return;

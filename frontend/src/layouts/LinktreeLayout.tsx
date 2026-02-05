@@ -141,9 +141,9 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#050505] text-zinc-900 dark:text-zinc-100 font-sans border-r border-zinc-200 dark:border-[#1A1A1A]">
             {/* Header */}
-            <div className="p-4 pt-5 pb-2 flex items-center justify-between">
+            <div className="p-4 pt-5 pb-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 flex items-center justify-center">
+                    <div className="w-24 h-12 flex items-center justify-center">
                         <img src="/logo.svg" alt="TapX" className="w-full h-full object-contain dark:invert" />
                     </div>
                 </div>
@@ -416,11 +416,10 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
                                 <SidebarContent navigate={navigate} location={location} onClose={() => setIsMobileOpen(false)} onShare={() => setShareOpen(true)} onLogout={handleLogout} unreadMessageCount={unreadMessageCount} />
                             </SheetContent>
                         </Sheet>
-                        <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 flex items-center justify-center">
+                        <div className="flex items-center">
+                            <div className="w-20 h-10 flex items-center justify-center">
                                 <img src="/logo.svg" alt="TapX" className="w-full h-full object-contain" />
                             </div>
-                            <span className="font-bold text-lg tracking-tight">TapX</span>
                         </div>
                     </div>
                 </header>

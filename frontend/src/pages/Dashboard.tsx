@@ -3,13 +3,14 @@ import { toast } from "sonner";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import BlockEditorModal from "@/components/BlockEditorModal";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import { Plus } from "lucide-react";
+import { Plus, ShoppingBag, Link2, Copy, ExternalLink } from "lucide-react";
 import SortableLinkCard from "@/components/SortableLinkCard";
+import SocialLinksEditor from "@/components/SocialLinksEditor";
 import ProfilePreview from "@/components/dashboard/ProfilePreview";
 import { templates } from "@/data/templates";
-import { supabase } from "@/lib/supabase";
 import {
     DndContext,
     closestCenter,
@@ -28,7 +29,7 @@ import {
 
 const Dashboard = () => {
     const { t } = useTranslation();
-    const { user, addBlock, updateBlock, deleteBlock, blocks, reorderBlocks, selectedTheme } = useAuth();
+    const { user, addBlock, updateBlock, deleteBlock, blocks, reorderBlocks, selectedTheme, updateProfile } = useAuth();
     const [isAddingBlock, setIsAddingBlock] = useState(false);
     const [editBlockData, setEditBlockData] = useState<any>(null);
     const [products, setProducts] = useState<any[]>([]);
@@ -38,8 +39,7 @@ const Dashboard = () => {
     // Products for Preview
     useEffect(() => {
         const fetchProducts = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token || localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             if (!token) return;
             try {
                 const res = await fetch(`${API_URL}/products`, {
@@ -132,6 +132,76 @@ const Dashboard = () => {
                             </Button>
                         </div>
 
+                        {/* Your Profile Link */}
+                        <div className="bg-white dark:bg-zinc-900/60 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-zinc-800/60 p-5">
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shrink-0">
+                                        <Link2 className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="text-base font-bold text-gray-900 dark:text-white">Your Profile</h3>
+                                        <p className="text-sm text-gray-500 dark:text-zinc-500 truncate">
+                                            {window.location.origin}/{user?.username}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-9 w-9 rounded-xl"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(`${window.location.origin}/${user?.username}`);
+                                            toast.success("Profile link copied!");
+                                        }}
+                                        title="Copy link"
+                                    >
+                                        <Copy className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-9 w-9 rounded-xl"
+                                        onClick={() => window.open(`/${user?.username}`, '_blank')}
+                                        title="Open profile"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Social Links Section */}
+                        <SocialLinksEditor
+                            socialLinks={user?.social_links || {}}
+                            onSave={async (links) => {
+                                await updateProfile({ social_links: links } as any);
+                            }}
+                        />
+
+                        {/* Shop Visibility Toggle */}
+                        <div className="bg-white dark:bg-zinc-900/60 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-zinc-800/60 p-5">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+                                        <ShoppingBag className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-base font-bold text-gray-900 dark:text-white">Show Shop on Profile</h3>
+                                        <p className="text-sm text-gray-500 dark:text-zinc-500">Display your store tab on your public profile</p>
+                                    </div>
+                                </div>
+                                <Switch
+                                    checked={user?.show_shop_on_profile ?? true}
+                                    onCheckedChange={async (checked) => {
+                                        await updateProfile({ show_shop_on_profile: checked } as any);
+                                    }}
+                                    className="data-[state=checked]:bg-emerald-500"
+                                />
+                            </div>
+                        </div>
+
                         {/* Links List */}
                         <div className="space-y-4 pb-20">
                             {blocks.length === 0 ? (
@@ -182,6 +252,7 @@ const Dashboard = () => {
                                     blocks={blocks}
                                     theme={currentThemeConfig}
                                     products={products}
+                                    showStoreTab={user?.has_store === true && user?.show_shop_on_profile !== false}
                                 />
                             </div>
                             <div className="mt-4 text-center">

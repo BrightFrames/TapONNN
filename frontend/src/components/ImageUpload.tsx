@@ -31,7 +31,7 @@ export function ImageUpload({ value, onChange, label = "Upload Image", className
 
         setIsUploading(true);
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append('file', file);
 
         try {
             const token = localStorage.getItem('auth_token');

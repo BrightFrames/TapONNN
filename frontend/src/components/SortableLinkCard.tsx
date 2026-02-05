@@ -160,6 +160,23 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit, onDuplicate }: Sor
                             </div>
                         )}
 
+                        {/* External Link Button - Quick access to open link */}
+                        {link.url && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Open link"
+                                onClick={() => {
+                                    let url = link.url;
+                                    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+                                    window.open(url, '_blank');
+                                }}
+                                className="w-9 h-9 rounded-xl text-gray-400 dark:text-zinc-600 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-400/10 transition-all duration-200"
+                            >
+                                <ExternalLink className="w-4 h-4" />
+                            </Button>
+                        )}
+
                         {/* Star Button */}
                         <Button
                             variant="ghost"

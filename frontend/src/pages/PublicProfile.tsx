@@ -6,7 +6,7 @@ import { templates } from "@/data/templates";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Share2, Link2, MessageCircle, Search, ExternalLink, ArrowRight, ShoppingBag, Star, ChevronLeft, BadgeCheck, Heart, Upload } from "lucide-react";
+import { Sparkles, Share2, Link2, MessageCircle, Search, ExternalLink, ArrowRight, ShoppingBag, Star, ChevronLeft, BadgeCheck, Heart, Upload, Bell, Info, CheckCircle, AlertTriangle, PartyPopper } from "lucide-react";
 import EnquiryModal from "@/components/EnquiryModal";
 import PaymentModal from "@/components/PaymentModal";
 import LoginToContinueModal from "@/components/LoginToContinueModal";
@@ -18,6 +18,49 @@ import { toast } from "sonner";
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { cn } from "@/lib/utils";
+
+// Helper function to get favicon URL from a link
+const getFaviconUrl = (url: string): string | null => {
+    if (!url) return null;
+    try {
+        // Add protocol if missing
+        let fullUrl = url;
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            fullUrl = 'https://' + url;
+        }
+        const urlObj = new URL(fullUrl);
+        const domain = urlObj.hostname;
+        // Use Google's favicon service for reliable favicon fetching
+        return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+    } catch {
+        return null;
+    }
+};
+
+// Favicon component with fallback
+const Favicon = ({ url, fallback, className, style }: { 
+    url: string; 
+    fallback: React.ReactNode; 
+    className?: string;
+    style?: React.CSSProperties;
+}) => {
+    const [error, setError] = useState(false);
+    const faviconUrl = getFaviconUrl(url);
+    
+    if (error || !faviconUrl) {
+        return <>{fallback}</>;
+    }
+    
+    return (
+        <img 
+            src={faviconUrl} 
+            alt="" 
+            className={className}
+            style={style}
+            onError={() => setError(true)}
+        />
+    );
+};
 
 const PublicProfile = () => {
     const { username } = useParams();
@@ -177,7 +220,9 @@ const PublicProfile = () => {
                 payment_instructions: userProfile.payment_instructions,
                 social_links: userProfile.social_links || {},
                 is_store_identity: userProfile.is_store_identity,
-                design_config: userProfile.design_config
+                design_config: userProfile.design_config,
+                has_store: userProfile.has_store,
+                show_shop_on_profile: userProfile.show_shop_on_profile ?? true
             });
 
             const context = isStoreRoute ? 'store' : 'personal';
@@ -386,11 +431,15 @@ const PublicProfile = () => {
 
     const renderCoverMedia = () => {
         const designConfig = profile.design_config || {};
-        const { coverType, coverUrl, coverYoutubeUrl } = designConfig;
+        const { coverType, coverUrl, coverYoutubeUrl, coverColor } = designConfig;
 
         // Force cover URL if provided (legacy support)
         const finalCoverUrl = coverUrl || profile.design_config?.bgImageUrl;
 
+        // Handle solid color background
+        if (coverType === 'color' && coverColor) {
+            return <div className="w-full h-full" style={{ backgroundColor: coverColor }} />;
+        }
         if (finalCoverUrl && (!coverType || coverType === 'image')) {
             return <img src={finalCoverUrl} alt="Cover" className="w-full h-full object-cover" />;
         }
@@ -434,19 +483,104 @@ const PublicProfile = () => {
     const designConfig = profile.design_config || {};
     const theme = profile.selectedTheme || {};
 
-    // Theme Variables with Fallbacks
-    const bgColor = designConfig.backgroundColor || theme.backgroundColor || "#fafafa";
-    const textColor = designConfig.textColor || theme.textColor || "#18181b";
-    const buttonColor = designConfig.buttonColor || theme.buttonColor || "#000000";
-    const buttonTextColor = designConfig.buttonTextColor || theme.buttonTextColor || "#ffffff";
+    // Helper to convert Tailwind class names to hex colors
+    const tailwindToHex = (cls: string, type: 'text' | 'bg'): string => {
+        if (!cls) return type === 'text' ? '#000000' : '#ffffff';
+        if (cls.startsWith('#')) return cls;
+        if (cls.startsWith('rgb')) return cls;
+        // Pass through gradients as-is
+        if (cls.includes('gradient') || cls.includes('linear')) return cls;
+        
+        // Handle text colors
+        if (cls.includes('white')) return '#ffffff';
+        if (cls.includes('black')) return '#000000';
+        if (cls.includes('zinc-900') || cls.includes('gray-900')) return '#18181b';
+        if (cls.includes('zinc-50') || cls.includes('gray-50')) return '#fafafa';
+        
+        // Extract hex from arbitrary values like text-[#abc123] or bg-[#abc123]
+        const hexMatch = cls.match(/\[#([a-fA-F0-9]+)\]/);
+        if (hexMatch) return `#${hexMatch[1]}`;
+        
+        return type === 'text' ? '#000000' : '#ffffff';
+    };
+
+    // Helper to convert hex color to rgba with opacity
+    const hexToRgba = (hex: string, alpha: number): string => {
+        if (!hex || hex.includes('rgb') || hex.includes('gradient')) return `rgba(0,0,0,${alpha})`;
+        const cleanHex = hex.replace('#', '');
+        const fullHex = cleanHex.length === 3 
+            ? cleanHex.split('').map(c => c + c).join('') 
+            : cleanHex;
+        const r = parseInt(fullHex.substring(0, 2), 16);
+        const g = parseInt(fullHex.substring(2, 4), 16);
+        const b = parseInt(fullHex.substring(4, 6), 16);
+        return `rgba(${r},${g},${b},${alpha})`;
+    };
+
+    // Theme Variables with Fallbacks - prioritize design_config from profile
+    // Convert any Tailwind classes to proper hex values
+    const rawBgColor = designConfig.backgroundColor || theme.backgroundColor || "#fafafa";
+    const rawTextColor = designConfig.textColor || theme.textColor || "#18181b";
+    const rawButtonColor = designConfig.buttonColor || theme.buttonColor || "#000000";
+    const rawButtonTextColor = designConfig.buttonTextColor || theme.buttonTextColor || "#ffffff";
+    
+    const bgColor = tailwindToHex(rawBgColor, 'bg');
+    const textColor = tailwindToHex(rawTextColor, 'text');
+    const buttonColor = tailwindToHex(rawButtonColor, 'bg');
+    const buttonTextColor = tailwindToHex(rawButtonTextColor, 'text');
     const blockStyle = designConfig.blockStyle || 'rounded';
 
-    // Simple dark mode detection
-    const isDarkTheme = ['#000000', '#18181b', '#09090b', '#121212'].some(c => bgColor.toLowerCase().includes(c));
+    // Helper to determine if a color is light or dark
+    const isColorLight = (color: string) => {
+        if (!color) return false;
+        
+        // First convert from Tailwind class if needed
+        let hexColor = color.startsWith('#') ? color : tailwindToHex(color, 'text');
+        
+        // Handle gradients - extract the first color
+        if (hexColor.includes('gradient') || hexColor.includes('linear')) {
+            const match = hexColor.match(/#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})/);
+            if (match) hexColor = match[0];
+            else return false; // Can't determine
+        }
+        
+        const hex = hexColor.replace('#', '');
+        if (!/^[a-fA-F0-9]{3,6}$/.test(hex)) return false; // Invalid hex
+        
+        // Handle short hex (e.g., #fff)
+        const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+        const r = parseInt(fullHex.substring(0, 2), 16);
+        const g = parseInt(fullHex.substring(2, 4), 16);
+        const b = parseInt(fullHex.substring(4, 6), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness > 128;
+    };
+
+    // Dark theme detection - check both background and text
+    // If background is dark (not light) OR if it's a gradient, treat as dark theme
+    const bgIsLight = isColorLight(bgColor);
+    const textIsLight = isColorLight(textColor);
+    // A theme is "dark" if background is dark OR if background is a gradient (gradients are usually dark/colorful)
+    // Also check if the background contains gradient keywords or is not a simple light color
+    const isDarkTheme = !bgIsLight || bgColor.includes('gradient') || bgColor.includes('linear') || bgColor.includes('rgb');
+    
+    // Card background - semi-transparent for better blending with theme
+    // Products should have a subtle overlay effect that works with any background
+    const cardBgColor = isDarkTheme 
+        ? 'rgba(255, 255, 255, 0.08)' 
+        : 'rgba(255, 255, 255, 0.85)';
+
+    // Helper to get background style object (handles both colors and gradients)
+    const getBackgroundStyle = (color: string) => {
+        if (color.includes('gradient') || color.includes('linear')) {
+            return { background: color };
+        }
+        return { backgroundColor: color };
+    };
 
     if (notFound || !profile) {
         return (
-            <div className="min-h-screen w-full flex flex-col items-center justify-center text-center px-4" style={{ backgroundColor: bgColor, color: textColor }}>
+            <div className="min-h-screen w-full flex flex-col items-center justify-center text-center px-4" style={{ ...getBackgroundStyle(bgColor), color: textColor }}>
                 <div className="p-4 rounded-full mb-4 shadow-sm" style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#fff' }}>
                     <Link2 className="w-8 h-8 opacity-50" />
                 </div>
@@ -457,18 +591,20 @@ const PublicProfile = () => {
     }
 
     return (
-        <div className="fixed inset-0 w-full h-full font-sans selection:bg-zinc-200" style={{ backgroundColor: bgColor, color: textColor }}>
+        <div className="fixed inset-0 w-full h-full font-sans selection:bg-zinc-200" style={{ ...getBackgroundStyle(bgColor), color: textColor }}>
 
             {/* 1. Fixed Sticky Header */}
             <div className={cn(
                 "absolute top-0 left-0 right-0 z-[60] h-[88px] flex items-end px-5 pb-3 transition-all duration-300 pointer-events-none",
                 isScrolled ? "backdrop-blur-xl shadow-sm border-b border-black/5" : "bg-transparent"
-            )} style={{ backgroundColor: isScrolled ? `${bgColor}90` : 'transparent' }}>
+            )} style={isScrolled ? getBackgroundStyle(bgColor) : { backgroundColor: 'transparent' }}>
                 <div className="flex items-center justify-between w-full max-w-md mx-auto pointer-events-auto">
                     <div className="flex items-center gap-2 h-9 overflow-visible relative w-40">
                         {/* Tapx Logo */}
-                        <div className={cn(
-                            "absolute left-0 flex items-center gap-1.5 transition-all duration-500 transform origin-left px-2.5 py-1 rounded-full",
+                        <div 
+                            onClick={() => navigate('/signup')}
+                            className={cn(
+                            "absolute left-0 flex items-center gap-1.5 transition-all duration-500 transform origin-left px-2.5 py-1 rounded-full cursor-pointer hover:scale-105",
                             isScrolled ? "opacity-0 -translate-y-4 pointer-events-none" : "opacity-100 translate-y-0 delay-100 bg-black/20 backdrop-blur-md border border-white/10"
                         )}>
                             <div className="w-4 h-4 bg-black rounded-full flex items-center justify-center shadow-sm">
@@ -517,18 +653,26 @@ const PublicProfile = () => {
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
                 className="w-full h-full overflow-y-auto overflow-x-hidden scrollbar-hide relative"
-                style={{ backgroundColor: bgColor }}
+                style={getBackgroundStyle(bgColor)}
             >
                 {/* Max Width Container to mimic phone on desktop */}
                 <div className="w-full max-w-md mx-auto min-h-full flex flex-col relative box-border shadow-2xl md:my-0 md:min-h-screen"
-                    style={{ backgroundColor: bgColor }}
+                    style={getBackgroundStyle(bgColor)}
                 >
 
                     {/* Cover Photo */}
-                    <div className="h-64 w-full relative z-0 shrink-0">
-                        {renderCoverMedia() || (
-                            <div className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500" />
-                        )}
+                    <div className="h-64 w-full relative z-0 shrink-0 overflow-hidden">
+                        <div 
+                            className="w-full h-full transition-all duration-300"
+                            style={{ 
+                                filter: `blur(${Math.min(scrollProgress * 15, 10)}px)`,
+                                transform: `scale(${1 + scrollProgress * 0.1})`,
+                            }}
+                        >
+                            {renderCoverMedia() || (
+                                <div className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500" />
+                            )}
+                        </div>
                         <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent pointer-events-none" />
                     </div>
 
@@ -537,7 +681,7 @@ const PublicProfile = () => {
                         <div
                             className="w-full rounded-[2rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] p-5 pt-0 flex flex-col items-center animate-in slide-in-from-bottom-8 duration-700 fill-mode-both min-h-[60vh]"
                             style={{
-                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : '#ffffff',
+                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : cardBgColor,
                                 border: isDarkTheme ? '1px solid rgba(255,255,255,0.1)' : 'none'
                             }}
                         >
@@ -547,7 +691,7 @@ const PublicProfile = () => {
                                 <div className={cn(
                                     "w-24 h-24 rounded-full border-[5px] shadow-lg overflow-hidden mb-3 transition-all duration-300",
                                     scrollProgress > 0.2 ? "scale-90 opacity-80" : "scale-100 opacity-100"
-                                )} style={{ borderColor: isDarkTheme ? '#18181b' : '#ffffff', backgroundColor: isDarkTheme ? '#18181b' : '#ffffff' }}>
+                                )} style={{ borderColor: isDarkTheme ? bgColor : cardBgColor, backgroundColor: isDarkTheme ? bgColor : cardBgColor }}>
                                     <Avatar className="w-full h-full">
                                         <AvatarImage src={profile.avatar} className="object-cover" />
                                         <AvatarFallback style={{ backgroundColor: buttonColor, color: buttonTextColor }} className="text-3xl font-bold">{userInitial}</AvatarFallback>
@@ -578,7 +722,7 @@ const PublicProfile = () => {
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="w-8 h-8 rounded-full flex items-center justify-center hover:opacity-80 transition-colors"
-                                                        style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#f4f4f5', color: textColor }}
+                                                        style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : `${textColor}10`, color: textColor }}
                                                         onClick={() => trackClick(null, href)}
                                                     >
                                                         <Icon className="w-4 h-4" />
@@ -590,77 +734,129 @@ const PublicProfile = () => {
                                 </div>
                             </div>
 
-                            {/* Navigation Toggles */}
-                            <div className="flex w-full bg-zinc-100 p-1 rounded-full mb-6 relative z-20 mx-auto max-w-[200px]" style={{
-                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#f4f4f5'
-                            }}>
-                                <button
-                                    onClick={() => setActiveTab('personal')}
-                                    className={cn(
-                                        "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
-                                        activeTab === 'personal' ? "bg-white shadow-sm text-black" : "text-zinc-500 hover:text-zinc-700"
-                                    )}
-                                    style={activeTab === 'personal' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
-                                >
-                                    Links
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('store')}
-                                    className={cn(
-                                        "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
-                                        activeTab === 'store' ? "bg-white shadow-sm text-black" : "text-zinc-500 hover:text-zinc-700"
-                                    )}
-                                    style={activeTab === 'store' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
-                                >
-                                    Store
-                                </button>
-                            </div>
+                            {/* Navigation Toggles - Only show if profile has a store and wants to show it */}
+                            {profile?.has_store && profile?.show_shop_on_profile !== false && (
+                                <div className="flex w-full bg-zinc-100 p-1 rounded-full mb-6 relative z-20 mx-auto max-w-[200px]" style={{
+                                    backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : `${textColor}10`
+                                }}>
+                                    <button
+                                        onClick={() => setActiveTab('personal')}
+                                        className={cn(
+                                            "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
+                                            activeTab === 'personal' ? "bg-white shadow-sm text-black" : "text-zinc-500 hover:text-zinc-700"
+                                        )}
+                                        style={activeTab === 'personal' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : cardBgColor } : { color: textColor, opacity: 0.6 }}
+                                    >
+                                        Links
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('store')}
+                                        className={cn(
+                                            "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
+                                            activeTab === 'store' ? "bg-white shadow-sm text-black" : "text-zinc-500 hover:text-zinc-700"
+                                        )}
+                                        style={activeTab === 'store' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : cardBgColor } : { color: textColor, opacity: 0.6 }}
+                                    >
+                                        Store
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Content Area - Show Links or Products based on mode */}
                             <div className="w-full min-h-[300px]">
-                                {activeTab === 'store' ? (
+                                {profile?.has_store && profile?.show_shop_on_profile !== false && activeTab === 'store' ? (
                                     <div className="space-y-4 px-1 pb-24 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
                                         <div className="grid grid-cols-2 gap-3">
                                             {products.length > 0 ? (
                                                 products.map((product) => (
                                                     <div
                                                         key={product._id}
-                                                        className="bg-zinc-50 rounded-xl overflow-hidden shadow-sm border border-zinc-100 cursor-pointer hover:shadow-md transition-all active:scale-[0.98] group flex flex-col"
+                                                        className="rounded-xl overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-all active:scale-[0.98] group flex flex-col backdrop-blur-xl"
+                                                        style={{ 
+                                                            backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.7)',
+                                                            border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)'}`,
+                                                            boxShadow: isDarkTheme 
+                                                                ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
+                                                                : '0 8px 32px rgba(0, 0, 0, 0.1)'
+                                                        }}
                                                         onClick={() => setSelectedProduct(product)}
                                                     >
-                                                        <div className="aspect-square bg-zinc-200 relative overflow-hidden">
+                                                        <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }}>
                                                             {product.image_url ? (
                                                                 <img src={product.image_url} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
                                                             ) : (
                                                                 <div className="w-full h-full flex items-center justify-center text-2xl">🛍️</div>
                                                             )}
                                                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <div className="bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-white transition-colors"
+                                                                <div className="backdrop-blur-md p-1.5 rounded-full shadow-sm cursor-pointer transition-colors"
+                                                                    style={{ backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.9)' }}
                                                                     onClick={(e) => handleLike(product._id, e)}
                                                                 >
-                                                                    <Heart className={cn("w-3.5 h-3.5", likedProductIds.has(product._id) ? "fill-red-500 text-red-500" : "text-zinc-600")} />
+                                                                    <Heart className={cn("w-3.5 h-3.5", likedProductIds.has(product._id) ? "fill-red-500 text-red-500" : "")} style={{ color: likedProductIds.has(product._id) ? undefined : textColor }} />
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="p-3">
-                                                            <h3 className="font-semibold text-xs text-zinc-900 line-clamp-1">{product.title}</h3>
-                                                            <p className="text-[10px] text-zinc-500 mt-1">₹{product.price}</p>
+                                                        <div className="p-3 backdrop-blur-xl" style={{ backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.5)' }}>
+                                                            <h3 className="font-semibold text-xs line-clamp-1" style={{ color: textColor }}>{product.title}</h3>
+                                                            <p className="text-[10px] mt-1" style={{ color: textColor, opacity: 0.6 }}>₹{product.price}</p>
                                                         </div>
                                                     </div>
                                                 ))
                                             ) : (
                                                 <div className="col-span-2 text-center py-10 opacity-60">
-                                                    <ShoppingBag className="w-6 h-6 mx-auto mb-2 text-zinc-300" />
-                                                    <p className="text-xs text-zinc-400">No products found</p>
+                                                    <ShoppingBag className="w-6 h-6 mx-auto mb-2" style={{ color: textColor, opacity: 0.4 }} />
+                                                    <p className="text-xs" style={{ color: textColor, opacity: 0.5 }}>No products found</p>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="space-y-3 w-full animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
-                                        {blocks.filter(b => b.is_active).map((block) => {
+                                        {/* Update/Notification Blocks - Show at top */}
+                                        {blocks.filter(b => b.is_active && b.block_type === 'update').map((block) => {
+                                            const styleConfig = {
+                                                info: { icon: Info, bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.3)', iconColor: '#3b82f6' },
+                                                success: { icon: CheckCircle, bg: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.3)', iconColor: '#22c55e' },
+                                                warning: { icon: AlertTriangle, bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.3)', iconColor: '#f59e0b' },
+                                                promo: { icon: PartyPopper, bg: 'rgba(168, 85, 247, 0.15)', border: 'rgba(168, 85, 247, 0.3)', iconColor: '#a855f7' },
+                                            };
+                                            const style = block.content?.style || 'info';
+                                            const config = styleConfig[style as keyof typeof styleConfig] || styleConfig.info;
+                                            const UpdateIcon = config.icon;
+                                            
+                                            return (
+                                                <div
+                                                    key={block._id}
+                                                    onClick={() => block.content?.url && handleBlockInteract(block)}
+                                                    className={`w-full p-4 rounded-2xl transition-all border ${block.content?.url ? 'cursor-pointer active:scale-[0.98] hover:shadow-md' : ''}`}
+                                                    style={{
+                                                        backgroundColor: config.bg,
+                                                        borderColor: config.border,
+                                                    }}
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: config.iconColor + '20' }}>
+                                                            <UpdateIcon className="w-4 h-4" style={{ color: config.iconColor }} />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="text-sm font-bold" style={{ color: textColor }}>{block.title}</h4>
+                                                            {block.content?.message && (
+                                                                <p className="text-xs mt-1 opacity-80" style={{ color: textColor }}>{block.content.message}</p>
+                                                            )}
+                                                        </div>
+                                                        {block.content?.url && (
+                                                            <ArrowRight className="w-4 h-4 opacity-50 shrink-0 mt-1" style={{ color: textColor }} />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        
+                                        {/* Regular Link Blocks */}
+                                        {blocks.filter(b => b.is_active && b.block_type !== 'update').map((block) => {
                                             const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
                                             const isUrlThumbnail = block.thumbnail && !Icon;
+                                            const blockUrl = block.content?.url || block.url;
 
                                             return (
                                                 <div
@@ -668,17 +864,31 @@ const PublicProfile = () => {
                                                     onClick={() => handleBlockInteract(block)}
                                                     className="w-full p-4 rounded-2xl active:scale-[0.98] transition-all cursor-pointer border flex items-center justify-between group h-16 shadow-sm hover:shadow-md"
                                                     style={{
-                                                        backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : '#fafafa',
-                                                        borderColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : '#f4f4f5',
+                                                        backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : `${textColor}08`,
+                                                        borderColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : `${textColor}10`,
                                                     }}
                                                 >
                                                     <div className="flex items-center gap-4 w-full overflow-hidden">
                                                         {isUrlThumbnail ? (
                                                             <img src={block.thumbnail} className="w-10 h-10 rounded-full object-cover border border-zinc-200" />
+                                                        ) : Icon ? (
+                                                            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
+                                                                style={{ backgroundColor: isDarkTheme ? bgColor : cardBgColor, color: textColor, borderColor: `${textColor}15` }}>
+                                                                <Icon className="w-5 h-5" />
+                                                            </div>
+                                                        ) : blockUrl ? (
+                                                            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border shadow-sm overflow-hidden"
+                                                                style={{ backgroundColor: isDarkTheme ? bgColor : cardBgColor, borderColor: `${textColor}15` }}>
+                                                                <Favicon 
+                                                                    url={blockUrl}
+                                                                    className="w-6 h-6 object-contain"
+                                                                    fallback={<ExternalLink className="w-5 h-5" style={{ color: textColor }} />}
+                                                                />
+                                                            </div>
                                                         ) : (
-                                                            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border border-zinc-200 shadow-sm"
-                                                                style={{ backgroundColor: isDarkTheme ? '#000' : '#fff', color: textColor }}>
-                                                                {Icon ? <Icon className="w-5 h-5" /> : <ExternalLink className="w-5 h-5" />}
+                                                            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
+                                                                style={{ backgroundColor: isDarkTheme ? bgColor : cardBgColor, color: textColor, borderColor: `${textColor}15` }}>
+                                                                <ExternalLink className="w-5 h-5" />
                                                             </div>
                                                         )}
                                                         <span className="text-sm font-bold truncate flex-1 text-left" style={{ color: textColor }}>{block.title}</span>
@@ -799,7 +1009,15 @@ const PublicProfile = () => {
                         {/* Info Row */}
                         <div className="flex border-y border-zinc-200 divide-x divide-zinc-200 mb-8 bg-white rounded-xl shadow-sm overflow-hidden">
                             <div className="flex-1 py-4 px-4 flex items-center gap-3">
-                                <ShoppingBag className="w-5 h-5 text-zinc-900" />
+                                {(selectedBlock.content?.url || selectedBlock.url) ? (
+                                    <Favicon 
+                                        url={selectedBlock.content?.url || selectedBlock.url}
+                                        className="w-5 h-5 object-contain"
+                                        fallback={<ShoppingBag className="w-5 h-5 text-zinc-900" />}
+                                    />
+                                ) : (
+                                    <ShoppingBag className="w-5 h-5 text-zinc-900" />
+                                )}
                                 <span className="text-sm font-semibold text-zinc-700">Website Link</span>
                             </div>
                             <div className="flex-1 py-4 px-4 flex items-center gap-3">

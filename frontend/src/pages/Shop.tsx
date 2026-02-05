@@ -88,7 +88,7 @@ interface UserPlugin {
 }
 
 const Shop = () => {
-    const { user, links: authLinks, isLoading, selectedTheme, refreshProfile } = useAuth();
+    const { user, blocks, isLoading, selectedTheme, refreshProfile } = useAuth();
     const { t } = useTranslation();
     const [products, setProducts] = useState<Product[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
@@ -481,7 +481,12 @@ const Shop = () => {
     const username = user?.username || "user";
     const userInitial = (user?.name || "U")[0]?.toUpperCase();
 
-    const currentTemplate = templates.find(t => t.id === selectedTheme) || templates[0];
+    // Merge user's design_config with selected template for live preview
+    const baseTemplate = templates.find(t => t.id === selectedTheme) || templates[0];
+    const currentTemplate = {
+        ...baseTemplate,
+        ...user?.design_config, // User's custom design overrides template defaults
+    };
     const bgStyle = currentTemplate.bgImage
         ? { backgroundImage: `url(${currentTemplate.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
         : {};
@@ -847,7 +852,7 @@ const Shop = () => {
                 {/* Phone Preview - Right Side */}
                 < div className="w-[400px] border-l border-zinc-200 dark:border-zinc-800 hidden xl:flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0A] sticky top-0 h-full" >
                     <div className="py-8 px-8 flex flex-col items-center transform scale-90 origin-top">
-                        <ProfilePreview blocks={authLinks} theme={currentTemplate} products={products} mode={previewTab === 'shop' ? 'store' : 'personal'} />
+                        <ProfilePreview blocks={blocks} theme={currentTemplate} products={products} mode={previewTab === 'shop' ? 'store' : 'personal'} showStoreTab={true} />
 
                         {/* Preview Label */}
                         <div className="text-center mt-6">
@@ -874,7 +879,7 @@ const Shop = () => {
             < Sheet open={showPreview} onOpenChange={setShowPreview} >
                 <SheetContent side="right" className="w-full sm:max-w-md p-0 bg-transparent border-none shadow-none flex items-center justify-center backdrop-blur-sm">
                     <div className="scale-90">
-                        <ProfilePreview blocks={authLinks} theme={currentTemplate} products={products} mode={previewTab === 'shop' ? 'store' : 'personal'} />
+                        <ProfilePreview blocks={blocks} theme={currentTemplate} products={products} mode={previewTab === 'shop' ? 'store' : 'personal'} showStoreTab={true} />
                         <Button
                             className="absolute top-4 right-4 rounded-full w-10 h-10 bg-white/10 hover:bg-white/20 text-white"
                             onClick={() => setShowPreview(false)}

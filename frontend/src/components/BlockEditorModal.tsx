@@ -38,7 +38,8 @@ interface BlockEditorModalProps {
 }
 
 const ALL_BLOCK_TYPES = [
-    { value: 'link', label: '🔗 Link' }
+    { value: 'link', label: '🔗 Link' },
+    { value: 'update', label: '📢 Update/Notification' }
 ];
 
 const ctaOptions = [
@@ -310,6 +311,47 @@ const BlockEditorModal = ({
                             onChange={(e) => updateContent('body', e.target.value)}
                             rows={5}
                         />
+                    </div>
+                );
+
+            case 'update':
+                return (
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Notification Message</Label>
+                            <Textarea
+                                placeholder="Share an update with your visitors..."
+                                value={formData.content.message || ''}
+                                onChange={(e) => updateContent('message', e.target.value)}
+                                rows={3}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Style</Label>
+                            <Select
+                                value={formData.content.style || 'info'}
+                                onValueChange={(v) => updateContent('style', v)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="info">ℹ️ Info</SelectItem>
+                                    <SelectItem value="success">✅ Success</SelectItem>
+                                    <SelectItem value="warning">⚠️ Warning</SelectItem>
+                                    <SelectItem value="promo">🎉 Promo/Announcement</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Link URL (optional)</Label>
+                            <Input
+                                type="url"
+                                placeholder="https://example.com"
+                                value={formData.content.url || ''}
+                                onChange={(e) => updateContent('url', e.target.value)}
+                            />
+                        </div>
                     </div>
                 );
 
