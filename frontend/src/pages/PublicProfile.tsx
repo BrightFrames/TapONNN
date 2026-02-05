@@ -681,15 +681,35 @@ const PublicProfile = () => {
                     {/* Uplifted Card */}
                     <div className="relative z-10 -mt-10 px-4 pb-12 flex-1 flex flex-col">
                         <div
-                            className="w-full rounded-[2rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] p-5 pt-0 flex flex-col items-center animate-in slide-in-from-bottom-8 duration-700 fill-mode-both min-h-[60vh]"
+                            className="w-full rounded-[2rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] p-5 pt-0 flex flex-col items-center animate-in slide-in-from-bottom-8 duration-700 fill-mode-both min-h-[60vh] relative overflow-hidden"
                             style={{
-                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : cardBgColor,
+                                backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.9)' : cardBgColor,
                                 border: isDarkTheme ? '1px solid rgba(255,255,255,0.1)' : 'none'
                             }}
                         >
+                            {/* Profile Avatar Background - Full Silhouette */}
+                            {profile.avatar && (
+                                <div
+                                    className="absolute inset-x-0 top-0 z-0 pointer-events-none"
+                                    style={{
+                                        height: '70%',
+                                        backgroundImage: `url(${profile.avatar})`,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center top',
+                                        filter: 'brightness(0.35) saturate(1.1)',
+                                    }}
+                                />
+                            )}
+                            {/* Gradient Overlay - Fade to dark at bottom */}
+                            <div
+                                className="absolute inset-0 z-0 pointer-events-none"
+                                style={{
+                                    background: 'linear-gradient(to bottom, transparent 0%, transparent 30%, rgba(0,0,0,0.8) 60%, rgba(0,0,0,1) 100%)',
+                                }}
+                            />
 
                             {/* Large Profile Header */}
-                            <div className="relative -top-10 flex flex-col items-center mb-[-24px]">
+                            <div className="relative z-10 -top-10 flex flex-col items-center mb-[-24px]">
                                 <div className={cn(
                                     "w-24 h-24 rounded-full border-[5px] shadow-lg overflow-hidden mb-3 transition-all duration-300",
                                     scrollProgress > 0.2 ? "scale-90 opacity-80" : "scale-100 opacity-100"
@@ -765,7 +785,7 @@ const PublicProfile = () => {
                             )}
 
                             {/* Content Area - Show Links or Products based on mode */}
-                            <div className="w-full min-h-[300px]">
+                            <div className="w-full min-h-[300px] relative z-10">
                                 {profile?.show_stores_on_profile && activeTab === 'store' ? (
                                     <div className="space-y-4 px-1 pb-24 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
                                         {profile?.visible_stores?.length > 0 ? (
