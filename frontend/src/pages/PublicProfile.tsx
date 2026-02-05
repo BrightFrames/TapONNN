@@ -86,6 +86,10 @@ const PublicProfile = () => {
     const [likedProductIds, setLikedProductIds] = useState<Set<string>>(new Set());
     const [activeTab, setActiveTab] = useState<'personal' | 'store'>('personal');
 
+    // Derived Products Data
+    const featuredProducts = (products || []).filter(p => p.is_featured);
+    const regularProducts = (products || []).filter(p => !p.is_featured);
+
     useEffect(() => {
         setActiveTab(isStoreRoute ? 'store' : 'personal');
     }, [isStoreRoute]);
@@ -757,7 +761,7 @@ const PublicProfile = () => {
                             </div>
 
                             {/* Navigation Toggles - Only show if profile has a store and wants to show it */}
-                            {profile?.show_stores_on_profile && (
+                            {!profile?.is_store_identity && profile?.show_stores_on_profile && (
                                 <div className="flex w-full bg-zinc-100 p-1 rounded-full mb-6 relative z-20 mx-auto max-w-[200px]" style={{
                                     backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : `${textColor}10`
                                 }}>
@@ -784,9 +788,166 @@ const PublicProfile = () => {
                                 </div>
                             )}
 
-                            {/* Content Area - Show Links or Products based on mode */}
+                            {/* Content Area - Show Products, Stores, or Links based on profile type and settings */}
                             <div className="w-full min-h-[300px] relative z-10">
-                                {profile?.show_stores_on_profile && activeTab === 'store' ? (
+                                {profile?.is_store_identity ? (
+                                    <div className="space-y-6 px-1 pb-24 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
+                                        
+                                        {/* 1. Featured Products (High UI Level Card) */}
+                                        {featuredProducts.length > 0 && (
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between px-1">
+                                                    <h2 className="text-lg font-black tracking-tight flex items-center gap-2" style={{ color: textColor }}>
+                                                        <Sparkles className="w-4 h-4 text-amber-500" />
+                                                        Top Picks
+                                                    </h2>
+                                                </div>
+                                                <div className="flex overflow-x-auto gap-5 pb-6 scrollbar-hide snap-x px-1">
+                                                    {featuredProducts.map((product) => (
+                                                        <div
+                                                            key={product._id}
+                                                            onClick={() => setSelectedProduct(product)}
+                                                            className="min-w-[280px] snap-center rounded-[2.5rem] overflow-hidden border relative flex flex-col group transition-all active:scale-[0.98] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.04)]"
+                                                            style={{ 
+                                                                borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.06)',
+                                                            }}
+                                                        >
+                                                            {/* Badge */}
+                                                            {product.badge && (
+                                                                <div className="absolute top-6 right-6 z-20 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm text-white"
+                                                                    style={{ backgroundColor: buttonColor }}
+                                                                >
+                                                                    {product.badge}
+                                                                </div>
+                                                            )}
+                                                            
+                                                            <div className="aspect-square relative p-8 flex items-center justify-center bg-white">
+                                                                {product.image_url ? (
+                                                                    <img src={product.image_url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center text-5xl bg-zinc-50 rounded-3xl text-zinc-300">🛍️</div>
+                                                                )}
+                                                            </div>
+                                                            
+                                                            <div className="px-6 pb-8 pt-2 flex flex-col">
+                                                                <h3 className="text-xl font-bold leading-tight line-clamp-2 text-zinc-900 mb-2">{product.title}</h3>
+                                                                <p className="text-xs text-zinc-400 line-clamp-2 min-h-[32px] mb-4 leading-relaxed">{product.description}</p>
+                                                                
+                                                                <div className="space-y-1 mb-6">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-sm font-semibold text-zinc-500">Price:</span>
+                                                                        <span className="text-base font-black text-zinc-900">₹{product.price}</span>
+                                                                        {product.discount_price && (
+                                                                            <span className="text-sm text-zinc-300 line-through">₹{product.discount_price}</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-sm font-semibold text-zinc-500">Stock:</span>
+                                                                        <span className={cn(
+                                                                            "text-sm font-bold",
+                                                                            product.stock_status === 'out_of_stock' ? "text-red-500" : "text-[#1a73e8]"
+                                                                        )}>
+                                                                            {product.stock_status === 'out_of_stock' ? 'Out of Stock' : 'In Stock'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-3">
+                                                                    <Button 
+                                                                        variant="outline"
+                                                                        className="flex-1 rounded-2xl h-12 font-bold text-sm border-zinc-200 text-zinc-900 group-hover:border-[#1a73e8] group-hover:text-[#1a73e8] transition-all"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleProductAction(product, 'enquire');
+                                                                        }}
+                                                                    >
+                                                                        Enquire
+                                                                    </Button>
+                                                                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center border border-zinc-100 transition-colors hover:bg-zinc-50 group/heart"
+                                                                        onClick={(e) => handleLike(product._id, e)}
+                                                                    >
+                                                                        <Heart className={cn("w-5 h-5 transition-all", likedProductIds.has(product._id) ? "fill-red-500 text-red-500 scale-110" : "text-zinc-300")} />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* 2. Rest of the Products (The Grid) */}
+                                        <div className="space-y-4">
+                                            {featuredProducts.length > 0 && regularProducts.length > 0 && (
+                                                <h2 className="text-sm font-black opacity-30 uppercase tracking-[0.2em] px-1" style={{ color: textColor }}>
+                                                    All Products
+                                                </h2>
+                                            )}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {(featuredProducts.length === 0 ? products : regularProducts).length > 0 ? (
+                                                    (featuredProducts.length === 0 ? products : regularProducts).map((product) => (
+                                                        <div
+                                                            key={product._id}
+                                                            className="rounded-xl overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-all active:scale-[0.98] group flex flex-col backdrop-blur-xl"
+                                                            style={{ 
+                                                                backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.7)',
+                                                                border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)'}`,
+                                                                boxShadow: isDarkTheme 
+                                                                    ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
+                                                                    : '0 8px 32px rgba(0, 0, 0, 0.1)'
+                                                            }}
+                                                            onClick={() => setSelectedProduct(product)}
+                                                        >
+                                                            <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }}>
+                                                                {product.image_url ? (
+                                                                    <img src={product.image_url} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center text-2xl">🛍️</div>
+                                                                )}
+                                                                
+                                                                {/* Grid View Badges */}
+                                                                {product.badge && (
+                                                                    <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase text-white shadow-md"
+                                                                        style={{ backgroundColor: buttonColor }}
+                                                                    >
+                                                                        {product.badge}
+                                                                    </div>
+                                                                )}
+
+                                                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <div className="backdrop-blur-md p-1.5 rounded-full shadow-sm cursor-pointer transition-colors"
+                                                                        style={{ backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.9)' }}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleLike(product._id, e);
+                                                                        }}
+                                                                    >
+                                                                        <Heart className={cn("w-3.5 h-3.5", likedProductIds.has(product._id) ? "fill-red-500 text-red-500" : "")} style={{ color: likedProductIds.has(product._id) ? undefined : textColor }} />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="p-3 backdrop-blur-xl" style={{ backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.5)' }}>
+                                                                <h3 className="font-semibold text-xs line-clamp-1" style={{ color: textColor }}>{product.title}</h3>
+                                                                <div className="flex items-center gap-1.5 mt-1">
+                                                                    <p className="text-[10px] font-bold" style={{ color: textColor, opacity: 0.8 }}>₹{product.price}</p>
+                                                                    {product.discount_price && (
+                                                                        <p className="text-[8px] opacity-40 line-through" style={{ color: textColor }}>₹{product.discount_price}</p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="col-span-2 text-center py-10 opacity-60">
+                                                        <ShoppingBag className="w-6 h-6 mx-auto mb-2" style={{ color: textColor, opacity: 0.4 }} />
+                                                        <p className="text-xs" style={{ color: textColor, opacity: 0.5 }}>No products found</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : profile?.show_stores_on_profile && activeTab === 'store' ? (
+
                                     <div className="space-y-4 px-1 pb-24 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
                                         {profile?.visible_stores?.length > 0 ? (
                                             <div className="grid grid-cols-1 gap-3">
@@ -1091,18 +1252,28 @@ const PublicProfile = () => {
                                     <img src={selectedProduct.image_url} className="w-full h-full object-cover" /> :
                                     <div className="w-full h-full flex items-center justify-center text-4xl">🛍️</div>
                                 }
-                                <div className="absolute top-3 right-3">
+                                <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
                                     <div className="bg-white/90 backdrop-blur-md p-2 rounded-full shadow-sm cursor-pointer hover:bg-white transition-colors"
                                         onClick={(e) => handleLike(selectedProduct._id, e)}
                                     >
                                         <Heart className={cn("w-5 h-5", likedProductIds.has(selectedProduct._id) ? "fill-red-500 text-red-500" : "text-zinc-600")} />
                                     </div>
+                                    {selectedProduct.badge && (
+                                        <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-zinc-900 text-white shadow-lg">
+                                            {selectedProduct.badge}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            <h1 className="text-2xl font-black mb-2 leading-tight text-zinc-900">{selectedProduct.title}</h1>
+                            <div className="flex items-center justify-between mb-2">
+                                <h1 className="text-2xl font-black leading-tight text-zinc-900">{selectedProduct.title}</h1>
+                                {selectedProduct.stock_status === 'out_of_stock' && (
+                                    <Badge variant="outline" className="text-red-500 border-red-200 bg-red-50">Out of Stock</Badge>
+                                )}
+                            </div>
                             <div className="flex items-center gap-2 mb-6">
                                 <span className="text-xl font-bold text-green-600">₹{selectedProduct.price}</span>
-                                {selectedProduct.originalPrice && <span className="text-sm text-zinc-400 line-through">₹{selectedProduct.originalPrice}</span>}
+                                {selectedProduct.discount_price && <span className="text-sm text-zinc-400 line-through">₹{selectedProduct.discount_price}</span>}
                             </div>
 
                             {selectedProduct.description && (

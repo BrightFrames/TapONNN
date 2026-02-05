@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
     Dialog,
     DialogContent,
+    DialogContentBottomSheet,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -163,8 +164,8 @@ export const SocialLinksDialog = ({ initialLinks, onSave, onLinksChange, onOpenC
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-                <DialogHeader>
+            <DialogContentBottomSheet className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+                <DialogHeader className="pt-6 sm:pt-0">
                     <DialogTitle>Social Icons</DialogTitle>
                     <DialogDescription>
                         Add your social profiles to display them as icons at the top of your page.
@@ -232,13 +233,13 @@ export const SocialLinksDialog = ({ initialLinks, onSave, onLinksChange, onOpenC
                         </div>
                     )}
                 </div>
-                <DialogFooter>
+                <DialogFooter className="px-1 pb-6 sm:pb-4">
                     <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
                     <Button onClick={handleSave} disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white">
                         {loading ? "Saving..." : "Save Changes"}
                     </Button>
                 </DialogFooter>
-            </DialogContent>
+            </DialogContentBottomSheet>
         </Dialog>
     );
 };

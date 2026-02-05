@@ -3,10 +3,10 @@ import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Settings, Share, Plus, EyeOff, Eye, ExternalLink, Instagram, Globe, Search, GripVertical, Heart, MessageCircle, Smartphone, Store } from "lucide-react";
+import { Settings, Share, Plus, EyeOff, Eye, ExternalLink, Instagram, Globe, Search, GripVertical, Heart, MessageCircle, Smartphone, Store, Star } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogContentBottomSheet, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ImageUpload } from "@/components/ImageUpload";
+import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import { FileUpload } from "@/components/FileUpload";
 import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
@@ -45,11 +46,15 @@ interface Product {
     title: string;
     description?: string;
     price: number;
+    discount_price?: number;
     image_url?: string;
     file_url?: string; // Used for "Product URL"
     type: 'digital_product' | 'physical_product' | 'physical_service' | 'digital_service';
     product_type?: 'digital_product' | 'physical_product' | 'physical_service' | 'digital_service';
     is_active: boolean;
+    is_featured?: boolean;
+    badge?: string;
+    stock_status?: 'in_stock' | 'out_of_stock';
 }
 
 interface Order {
@@ -115,10 +120,14 @@ const Shop = () => {
     const [newProduct, setNewProduct] = useState({
         title: "",
         price: "",
+        discount_price: "",
         description: "",
         type: "physical_product",
         image_url: "",
-        file_url: ""
+        file_url: "",
+        is_featured: false,
+        badge: "",
+        stock_status: "in_stock" as 'in_stock' | 'out_of_stock'
     });
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
@@ -337,6 +346,7 @@ const Shop = () => {
                 body: JSON.stringify({
                     ...newProduct,
                     price: parseFloat(newProduct.price),
+                    discount_price: newProduct.discount_price ? parseFloat(newProduct.discount_price) : undefined,
                     product_type: newProduct.type
                 })
             });
@@ -356,7 +366,18 @@ const Shop = () => {
             setIsAddOpen(false);
             setIsEditOpen(false);
             setEditingProduct(null);
-            setNewProduct({ title: "", price: "", description: "", type: "physical_product", image_url: "", file_url: "" });
+            setNewProduct({ 
+                title: "", 
+                price: "", 
+                discount_price: "",
+                description: "", 
+                type: "physical_product", 
+                image_url: "", 
+                file_url: "",
+                is_featured: false,
+                badge: "",
+                stock_status: "in_stock"
+            });
         } catch (error) {
             toast.error(editingProduct ? "Error updating product" : "Error creating product");
         } finally {
@@ -468,6 +489,45 @@ const Shop = () => {
 
             console.error('[Toggle] Network error:', error);
             toast.error("Failed to toggle product. Please check your connection.");
+        }
+    };
+
+    const handleToggleFeature = async (id: string, currentStatus: boolean) => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        const newStatus = !currentStatus;
+        
+        // Optimistic update
+        setProducts(products.map(p =>
+            p._id === id ? { ...p, is_featured: newStatus } : p
+        ));
+
+        try {
+            const res = await fetch(`${API_URL}/products/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ is_featured: newStatus })
+            });
+
+            if (!res.ok) {
+                // Revert
+                setProducts(products.map(p =>
+                    p._id === id ? { ...p, is_featured: currentStatus } : p
+                ));
+                toast.error("Failed to feature product");
+                return;
+            }
+
+            toast.success(newStatus ? "Product featured!" : "Product removed from top picks");
+        } catch (error) {
+            setProducts(products.map(p =>
+                p._id === id ? { ...p, is_featured: currentStatus } : p
+            ));
+            toast.error("Error updating product");
         }
     };
 
@@ -592,14 +652,36 @@ const Shop = () => {
                                             setIsAddOpen(false);
                                             setIsEditOpen(false);
                                             setEditingProduct(null);
-                                            setNewProduct({ title: "", price: "", description: "", type: "physical_product", image_url: "", file_url: "" });
+                                            setNewProduct({ 
+                                                title: "", 
+                                                price: "", 
+                                                discount_price: "",
+                                                description: "", 
+                                                type: "physical_product", 
+                                                image_url: "", 
+                                                file_url: "",
+                                                is_featured: false,
+                                                badge: "",
+                                                stock_status: "in_stock"
+                                            });
                                         }
                                     }}>
                                         <DialogTrigger asChild>
                                             <Button
                                                 onClick={() => {
                                                     setEditingProduct(null);
-                                                    setNewProduct({ title: "", price: "", description: "", type: "physical_product", image_url: "", file_url: "" });
+                                                    setNewProduct({ 
+                                                        title: "", 
+                                                        price: "", 
+                                                        discount_price: "",
+                                                        description: "", 
+                                                        type: "physical_product", 
+                                                        image_url: "", 
+                                                        file_url: "",
+                                                        is_featured: false,
+                                                        badge: "",
+                                                        stock_status: "in_stock"
+                                                    });
                                                     setIsAddOpen(true);
                                                 }}
                                                 className="w-3/4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl sm:rounded-2xl h-11 sm:h-14 text-sm sm:text-base font-semibold shadow-lg shadow-zinc-200/50 transition-all hover:scale-[1.01] active:scale-[0.99] gap-1.5 sm:gap-2"
@@ -607,7 +689,7 @@ const Shop = () => {
                                                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> {t('dashboard.addContent')}
                                             </Button>
                                         </DialogTrigger>
-                                        <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
+                                        <DialogContentBottomSheet className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                                             <DialogHeader>
                                                 <DialogTitle>{isEditOpen ? 'Edit Product' : t('shop.addNewProduct')}</DialogTitle>
                                                 <DialogDescription>
@@ -636,6 +718,60 @@ const Shop = () => {
                                                         />
                                                     </div>
                                                     <div className="grid gap-2">
+                                                        <Label htmlFor="discount_price">Discount Price (₹)</Label>
+                                                        <Input
+                                                            id="discount_price"
+                                                            type="number"
+                                                            step="0.01"
+                                                            placeholder="Optional"
+                                                            value={newProduct.discount_price}
+                                                            onChange={(e) => setNewProduct({ ...newProduct, discount_price: e.target.value })}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4 border-y py-4 my-2 dark:border-zinc-800">
+                                                    <div className="flex items-center justify-between col-span-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <Sparkles className="w-4 h-4 text-amber-500" />
+                                                            <div>
+                                                                <Label className="text-sm font-semibold">Featured Product</Label>
+                                                                <p className="text-[10px] text-zinc-500">Show in the "Top Picks" section</p>
+                                                            </div>
+                                                        </div>
+                                                        <Switch
+                                                            checked={newProduct.is_featured}
+                                                            onCheckedChange={(checked) => setNewProduct({ ...newProduct, is_featured: checked })}
+                                                        />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="badge">Badge Text</Label>
+                                                        <Input
+                                                            id="badge"
+                                                            placeholder="NEW, SALE, etc."
+                                                            value={newProduct.badge}
+                                                            onChange={(e) => setNewProduct({ ...newProduct, badge: e.target.value.toUpperCase() })}
+                                                        />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="stock">Stock Status</Label>
+                                                        <Select
+                                                            value={newProduct.stock_status}
+                                                            onValueChange={(val: any) => setNewProduct({ ...newProduct, stock_status: val })}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="in_stock">In Stock</SelectItem>
+                                                                <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="grid gap-2 col-span-2">
                                                         <Label htmlFor="type">{t('shop.type')}</Label>
                                                         <Select
                                                             value={newProduct.type}
@@ -646,13 +782,12 @@ const Shop = () => {
                                                             </SelectTrigger>
                                                             <SelectContent>
                                                                 <SelectItem value="digital_product">Digital Product</SelectItem>
-                                                                <SelectItem value="physical_product">Physical Product</SelectItem>
-                                                                <SelectItem value="physical_service">Physical Service</SelectItem>
-                                                                <SelectItem value="digital_service">Digital Service</SelectItem>
+                                                                <SelectItem value="commerce">E-commerce Product</SelectItem>
                                                             </SelectContent>
                                                         </Select>
                                                     </div>
                                                 </div>
+
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="desc">Description</Label>
                                                     <Textarea
@@ -720,7 +855,7 @@ const Shop = () => {
                                                     </Button>
                                                 </DialogFooter>
                                             </form>
-                                        </DialogContent>
+                                        </DialogContentBottomSheet>
                                     </Dialog>
 
                                     <Button
@@ -755,16 +890,47 @@ const Shop = () => {
                                                     </div>
                                                     {/* Product Info */}
                                                     <div>
-                                                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{product.title}</h3>
+                                                        <div className="flex items-center gap-2">
+                                                            <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{product.title}</h3>
+                                                            {product.is_featured && (
+                                                                <Badge variant="outline" className="h-4 text-[8px] bg-amber-50 text-amber-600 border-amber-200 gap-0.5">
+                                                                    <Sparkles className="w-2 h-2" /> Top
+                                                                </Badge>
+                                                            )}
+                                                            {product.badge && (
+                                                                <Badge className="h-4 text-[8px] bg-zinc-900 text-white">
+                                                                    {product.badge}
+                                                                </Badge>
+                                                            )}
+                                                        </div>
                                                         <div className="flex items-center gap-2 mt-0.5">
                                                             <span className="text-xs sm:text-sm font-bold text-green-400">₹{product.price}</span>
+                                                            {product.discount_price && (
+                                                                <span className="text-[10px] text-zinc-500 line-through">₹{product.discount_price}</span>
+                                                            )}
                                                             <span className="text-zinc-600">•</span>
                                                             <span className="text-xs text-zinc-400 capitalize">{product.type?.replace('_', ' ')}</span>
+                                                            {product.stock_status === 'out_of_stock' && (
+                                                                <span className="text-[10px] text-red-500 font-medium bg-red-50 px-1 rounded">Out of Stock</span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 {/* Actions */}
                                                 <div className="flex items-center gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className={cn(
+                                                            "h-8 w-8 rounded-full transition-all",
+                                                            product.is_featured ? "text-amber-500 bg-amber-50" : "text-gray-300 hover:text-amber-500 hover:bg-amber-50"
+                                                        )}
+                                                        onClick={() => handleToggleFeature(product._id, !!product.is_featured)}
+                                                        title={product.is_featured ? "Remove from Featured" : "Mark as Featured"}
+                                                    >
+                                                        <Star className={cn("w-4 h-4", product.is_featured && "fill-current")} />
+                                                    </Button>
+
                                                     <Switch
                                                         checked={product.is_active}
                                                         onCheckedChange={() => handleToggleProduct(product._id, product.is_active)}
@@ -784,10 +950,14 @@ const Shop = () => {
                                                                     setNewProduct({
                                                                         title: product.title,
                                                                         price: product.price.toString(),
+                                                                        discount_price: product.discount_price?.toString() || "",
                                                                         description: product.description || "",
                                                                         type: product.product_type || product.type || "physical_product",
                                                                         image_url: product.image_url || "",
-                                                                        file_url: product.file_url || ""
+                                                                        file_url: product.file_url || "",
+                                                                        is_featured: product.is_featured || false,
+                                                                        badge: product.badge || "",
+                                                                        stock_status: product.stock_status || "in_stock"
                                                                     });
                                                                     setIsEditOpen(true);
                                                                 }}

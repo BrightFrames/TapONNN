@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogContentBottomSheet, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -154,19 +154,19 @@ const BlockTypeSelector = ({ open, onOpenChange, onSelect }: BlockTypeSelectorPr
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[85vh]">
-                <DialogHeader>
+            <DialogContentBottomSheet className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+                <DialogHeader className="px-1 pt-6 sm:pt-0">
                     <DialogTitle>Add Block</DialogTitle>
                     <DialogDescription>Choose a block type to add to your profile</DialogDescription>
                 </DialogHeader>
 
-                <div className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <div className="relative mb-4 px-1">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                         placeholder="Search blocks..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="pl-9"
+                        className="pl-10"
                     />
                 </div>
 
@@ -175,16 +175,16 @@ const BlockTypeSelector = ({ open, onOpenChange, onSelect }: BlockTypeSelectorPr
                         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                     </div>
                 ) : library ? (
-                    <Tabs defaultValue="content" className="w-full">
-                        <TabsList className="grid w-full grid-cols-5 mb-4">
-                            <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
-                            <TabsTrigger value="commerce" className="text-xs">Commerce</TabsTrigger>
-                            <TabsTrigger value="contact" className="text-xs">Contact</TabsTrigger>
-                            <TabsTrigger value="social" className="text-xs">Social</TabsTrigger>
-                            <TabsTrigger value="utility" className="text-xs">Utility</TabsTrigger>
+                    <Tabs defaultValue="content" className="w-full flex-1 flex flex-col">
+                        <TabsList className="grid w-full grid-cols-5 mb-4 shrink-0">
+                            <TabsTrigger value="content" className="text-[10px] sm:text-xs">Content</TabsTrigger>
+                            <TabsTrigger value="commerce" className="text-[10px] sm:text-xs">Store</TabsTrigger>
+                            <TabsTrigger value="contact" className="text-[10px] sm:text-xs">Contact</TabsTrigger>
+                            <TabsTrigger value="social" className="text-[10px] sm:text-xs">Social</TabsTrigger>
+                            <TabsTrigger value="utility" className="text-[10px] sm:text-xs">Utility</TabsTrigger>
                         </TabsList>
 
-                        <ScrollArea className="h-[400px] pr-4">
+                        <ScrollArea className="flex-1 pr-4">
                             <TabsContent value="content" className="mt-0">
                                 {renderBlockGrid(library.content)}
                             </TabsContent>
@@ -205,7 +205,8 @@ const BlockTypeSelector = ({ open, onOpenChange, onSelect }: BlockTypeSelectorPr
                 ) : (
                     <p className="text-center text-muted-foreground py-8">Failed to load block library</p>
                 )}
-            </DialogContent>
+                <div className="h-6 shrink-0" />
+            </DialogContentBottomSheet>
         </Dialog>
     );
 };

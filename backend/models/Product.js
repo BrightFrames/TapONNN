@@ -22,6 +22,22 @@ const productSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    is_featured: {
+        type: Boolean,
+        default: false
+    },
+    discount_price: {
+        type: Number
+    },
+    badge: {
+        type: String, // e.g., 'New', 'Sale', 'Hot'
+        default: ''
+    },
+    stock_status: {
+        type: String,
+        enum: ['in_stock', 'out_of_stock', 'on_backorder'],
+        default: 'in_stock'
+    },
     is_active: {
         type: Boolean,
         default: true

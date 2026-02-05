@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogContentBottomSheet, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -372,8 +372,8 @@ const BlockEditorModal = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto sm:max-w-xl">
-                <DialogHeader className="px-1">
+            <DialogContentBottomSheet className="max-w-lg max-h-[90vh] overflow-y-auto sm:max-w-xl">
+                <DialogHeader className="px-1 pt-6 sm:pt-0">
                     <DialogTitle>
                         {allowedTypes?.length === 1 && allowedTypes[0] === 'product'
                             ? 'Add New Product'
@@ -417,7 +417,7 @@ const BlockEditorModal = ({
                             : formData.block_type === 'product' ? 'Add Product' : 'Add Block'}
                     </Button>
                 </DialogFooter>
-            </DialogContent>
+            </DialogContentBottomSheet>
         </Dialog>
     );
 };

@@ -29,7 +29,7 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogContentBottomSheet, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -194,14 +194,14 @@ const LinksManager = () => {
 
             {/* Add Social Link Dialog */}
             <Dialog open={!!selectedPlatform} onOpenChange={(open) => !open && setSelectedPlatform(null)}>
-                <DialogContent>
+                <DialogContentBottomSheet>
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             {selectedPlatform && <selectedPlatform.icon className={`w-5 h-5 ${selectedPlatform.color}`} />}
                             Add {selectedPlatform?.name}
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="py-4 space-y-4">
+                    <div className="py-4 space-y-4 px-1">
                         <div className="space-y-2">
                             <Label>URL</Label>
                             <Input
@@ -212,11 +212,11 @@ const LinksManager = () => {
                             />
                         </div>
                     </div>
-                    <DialogFooter>
+                    <DialogFooter className="pb-6 px-1">
                         <Button variant="outline" onClick={() => setSelectedPlatform(null)}>Cancel</Button>
                         <Button onClick={handleAddSocial}>Add Link</Button>
                     </DialogFooter>
-                </DialogContent>
+                </DialogContentBottomSheet>
             </Dialog>
 
             {/* Block Editor Modal (Edit Only) */}

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import {
     Dialog,
     DialogContent,
+    DialogContentBottomSheet,
     DialogDescription,
     DialogFooter,
     DialogHeader,
@@ -89,8 +90,8 @@ const StoreSelectorModal = ({ open, onClose, currentVisibleStores, onSave }: Sto
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
+            <DialogContentBottomSheet className="sm:max-w-[500px]">
+                <DialogHeader className="pt-6 sm:pt-0">
                     <DialogTitle className="flex items-center gap-2">
                         <Store className="w-5 h-5" />
                         Select Stores to Display
@@ -171,7 +172,7 @@ const StoreSelectorModal = ({ open, onClose, currentVisibleStores, onSave }: Sto
                         )}
                     </Button>
                 </DialogFooter>
-            </DialogContent>
+            </DialogContentBottomSheet>
         </Dialog>
     );
 };

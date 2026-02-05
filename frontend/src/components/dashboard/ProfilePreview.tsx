@@ -378,43 +378,17 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                 </div>
                             </div>
 
-                            {/* Navigation Toggles - Only show if user has store */}
-                            {shouldShowStoreTab && (
-                                <div className="flex w-full bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-full mb-6 relative z-20 mx-auto max-w-[200px]" style={{
-                                    backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#f4f4f5'
-                                }}>
-                                    <button
-                                        onClick={() => setActiveTab('personal')}
-                                        className={cn(
-                                            "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
-                                            activeTab === 'personal' ? "bg-white dark:bg-zinc-800 shadow-sm text-black dark:text-white" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
-                                        )}
-                                        style={activeTab === 'personal' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
-                                    >
-                                        Links
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('store')}
-                                        className={cn(
-                                            "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
-                                            activeTab === 'store' ? "bg-white dark:bg-zinc-800 shadow-sm text-black dark:text-white" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
-                                        )}
-                                        style={activeTab === 'store' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
-                                    >
-                                        Stores
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Content Area - Show Links or Products based on mode */}
+                            {/* Content Area - Show Links or Products based on mode and settings */}
                             <div className="w-full min-h-[300px]">
-                                {shouldShowStoreTab && activeTab === 'store' ? (
+                                {mode === 'store' ? (
+                                    renderProductList()
+                                ) : shouldShowStoreTab ? (
                                     <div className="space-y-3 w-full animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both">
                                         {(user?.visible_stores?.length || 0) > 0 ? (
                                             <div className="grid grid-cols-1 gap-2.5">
-                                                {user?.visible_stores?.map((storeId: any) => (
+                                                {user?.visible_stores?.map((store: any) => (
                                                     <div
-                                                        key={storeId}
+                                                        key={store._id || (typeof store === 'string' ? store : 'fallback')}
                                                         className="w-full p-3 rounded-2xl border flex items-center justify-between group h-16 shadow-sm"
                                                         style={{
                                                             backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : `${textColor}08`,
@@ -426,8 +400,12 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                                                 <ShoppingBag className="w-5 h-5 opacity-40" style={{ color: textColor }} />
                                                             </div>
                                                             <div className="flex flex-col text-left overflow-hidden">
-                                                                <span className="text-sm font-bold truncate" style={{ color: textColor }}>{typeof storeId === 'string' ? 'Your Store' : (storeId.store_name || 'Store')}</span>
-                                                                <span className="text-[10px] opacity-60 truncate" style={{ color: textColor }}>Visit shop</span>
+                                                                <span className="text-sm font-bold truncate" style={{ color: textColor }}>
+                                                                    {typeof store === 'string' ? 'Your Store' : (store.store_name || 'Store')}
+                                                                </span>
+                                                                <span className="text-[10px] opacity-60 truncate" style={{ color: textColor }}>
+                                                                    @{typeof store === 'string' ? 'username' : (store.username || 'store')}
+                                                                </span>
                                                             </div>
                                                         </div>
                                                         <ArrowRight className="w-4 h-4 opacity-30" style={{ color: textColor }} />
@@ -435,7 +413,10 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                                 ))}
                                             </div>
                                         ) : (
-                                            renderProductList()
+                                            <div className="text-center py-10 opacity-60">
+                                                <ShoppingBag className="w-6 h-6 mx-auto mb-2" style={{ color: textColor, opacity: 0.4 }} />
+                                                <p className="text-[10px]" style={{ color: textColor, opacity: 0.5 }}>No stores visible</p>
+                                            </div>
                                         )}
                                     </div>
                                 ) : (
