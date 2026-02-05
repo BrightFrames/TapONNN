@@ -13,7 +13,8 @@ interface User {
     // Role-based profile handling
     role?: 'super' | 'personal';
     has_store?: boolean;
-    show_shop_on_profile?: boolean;
+    show_stores_on_profile?: boolean;
+    visible_stores?: string[];
     active_profile_mode?: 'personal' | 'store';
     // Gender for avatar generation
     gender?: 'male' | 'female' | 'other';
@@ -165,7 +166,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 // Role-based profile handling
                 role: profile.role || 'super',
                 has_store: profile.has_store || false,
-                show_shop_on_profile: profile.show_shop_on_profile ?? true,
+                show_stores_on_profile: profile.show_stores_on_profile ?? false,
                 active_profile_mode: profile.active_profile_mode || 'personal',
                 is_email_verified: profile.is_email_verified
             });

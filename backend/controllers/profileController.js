@@ -16,7 +16,7 @@ const getPublicProfile = async (req, res) => {
                 { username: normalizedUsername },
                 { store_username: normalizedUsername }
             ]
-        });
+        }).populate('visible_stores');
 
         if (!profile) {
             return res.status(404).json({ error: 'Profile not found' });
@@ -60,7 +60,8 @@ const getPublicProfile = async (req, res) => {
                 social_links: profileObj.social_links instanceof Map ? Object.fromEntries(profileObj.social_links) : profileObj.social_links,
                 design_config: profileObj.design_config,
                 has_store: profileObj.has_store,
-                show_shop_on_profile: profileObj.show_shop_on_profile ?? true,
+                show_stores_on_profile: profileObj.show_stores_on_profile ?? false,
+                visible_stores: profileObj.visible_stores || [],
                 store_published: profileObj.store_published,
                 is_store_identity: false
             });
@@ -166,8 +167,11 @@ const updateProfile = async (req, res) => {
                 profile.social_links = rawUpdateData.social_links;
                 profile.markModified('social_links');
             }
-            if (typeof rawUpdateData.show_shop_on_profile !== 'undefined') {
-                profile.show_shop_on_profile = rawUpdateData.show_shop_on_profile;
+            if (typeof rawUpdateData.show_stores_on_profile !== 'undefined') {
+                profile.show_stores_on_profile = rawUpdateData.show_stores_on_profile;
+            }
+            if (rawUpdateData.visible_stores) {
+                profile.visible_stores = rawUpdateData.visible_stores;
             }
         }
 

@@ -99,10 +99,9 @@ router.post('/', upload.single('file'), async (req, res) => {
         }
 
         // Return the URL to access the file
-        // Assumes the server serves the 'uploads' folder at /uploads
-        const protocol = req.protocol;
-        const host = req.get('host');
-        const fileUrl = `${protocol}://${host}/uploads/${finalFilename}`;
+        // Use BASE_URL from environment variable for production, or construct from request
+        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+        const fileUrl = `${baseUrl}/uploads/${finalFilename}`;
 
         res.json({
             success: true,

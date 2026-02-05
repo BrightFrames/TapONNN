@@ -236,7 +236,8 @@ const me = async (req, res) => {
             // New fields for role-based profile handling
             role: profileObj.role || 'super',
             has_store: profileObj.has_store || false,
-            show_shop_on_profile: profileObj.show_shop_on_profile ?? true,
+            show_stores_on_profile: profileObj.show_stores_on_profile ?? false,
+            visible_stores: profileObj.visible_stores || [],
             active_profile_mode: mode,
             // Optimistic UI Support: Return both identities explicitly
             identities: {

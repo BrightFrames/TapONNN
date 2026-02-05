@@ -401,7 +401,7 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                         )}
                                         style={activeTab === 'store' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : '#ffffff' } : { color: textColor, opacity: 0.6 }}
                                     >
-                                        Store
+                                        Stores
                                     </button>
                                 </div>
                             )}
@@ -409,7 +409,35 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                             {/* Content Area - Show Links or Products based on mode */}
                             <div className="w-full min-h-[300px]">
                                 {shouldShowStoreTab && activeTab === 'store' ? (
-                                    renderProductList()
+                                    <div className="space-y-3 w-full animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both">
+                                        {(user?.visible_stores?.length || 0) > 0 ? (
+                                            <div className="grid grid-cols-1 gap-2.5">
+                                                {user?.visible_stores?.map((storeId: any) => (
+                                                    <div
+                                                        key={storeId}
+                                                        className="w-full p-3 rounded-2xl border flex items-center justify-between group h-16 shadow-sm"
+                                                        style={{
+                                                            backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : `${textColor}08`,
+                                                            borderColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : `${textColor}10`,
+                                                        }}
+                                                    >
+                                                        <div className="flex items-center gap-3 w-full overflow-hidden">
+                                                            <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center shrink-0 border border-white/20">
+                                                                <ShoppingBag className="w-5 h-5 opacity-40" style={{ color: textColor }} />
+                                                            </div>
+                                                            <div className="flex flex-col text-left overflow-hidden">
+                                                                <span className="text-sm font-bold truncate" style={{ color: textColor }}>{typeof storeId === 'string' ? 'Your Store' : (storeId.store_name || 'Store')}</span>
+                                                                <span className="text-[10px] opacity-60 truncate" style={{ color: textColor }}>Visit shop</span>
+                                                            </div>
+                                                        </div>
+                                                        <ArrowRight className="w-4 h-4 opacity-30" style={{ color: textColor }} />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            renderProductList()
+                                        )}
+                                    </div>
                                 ) : (
                                     <div className="space-y-3 w-full animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
                                         {/* Update/Notification Blocks - Show at top */}

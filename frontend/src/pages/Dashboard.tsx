@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import BlockEditorModal from "@/components/BlockEditorModal";
+import StoreSelectorModal from "@/components/StoreSelectorModal";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +34,8 @@ const Dashboard = () => {
     const [isAddingBlock, setIsAddingBlock] = useState(false);
     const [editBlockData, setEditBlockData] = useState<any>(null);
     const [products, setProducts] = useState<any[]>([]);
+    const [stores, setStores] = useState<any[]>([]);
+    const [isStoreSelectorOpen, setIsStoreSelectorOpen] = useState(false);
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
@@ -55,6 +58,70 @@ const Dashboard = () => {
         };
         fetchProducts();
     }, []);
+
+    // Fetch user stores
+    useEffect(() => {
+        const fetchStores = async () => {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                console.log('[Dashboard] No auth token found');
+                return;
+            }
+            try {
+                console.log('[Dashboard] Fetching stores from:', `${API_URL}/stores/my-stores`);
+                const res = await fetch(`${API_URL}/stores/my-stores`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                console.log('[Dashboard] Stores fetch response status:', res.status);
+                if (res.ok) {
+                    const data = await res.json();
+                    console.log('[Dashboard] Stores data received:', data);
+                    setStores(data.stores || []);
+                    console.log('[Dashboard] Stores count:', data.stores?.length || 0);
+                } else {
+                    console.error('[Dashboard] Stores fetch failed:', res.status, res.statusText);
+                }
+            } catch (error) {
+                console.error("[Dashboard] Failed to fetch stores", error);
+            }
+        };
+        fetchStores();
+    }, []);
+
+    const handleStoreVisibilityToggle = async (checked: boolean) => {
+        if (stores.length === 0 && checked) {
+            toast.error("Create a store first to enable this feature");
+            return;
+        }
+        
+        if (checked) {
+            setIsStoreSelectorOpen(true);
+        } else {
+            await updateProfile({ 
+                show_stores_on_profile: false,
+                visible_stores: [] 
+            } as any);
+            toast.success("Stores hidden from profile");
+        }
+    };
+
+    const handleSaveVisibleStores = async (storeIds: string[]) => {
+        try {
+            await updateProfile({ 
+                show_stores_on_profile: storeIds.length > 0,
+                visible_stores: storeIds 
+            } as any);
+            setIsStoreSelectorOpen(false);
+            if (storeIds.length > 0) {
+                toast.success(`${storeIds.length} store${storeIds.length > 1 ? 's' : ''} now visible on your profile`);
+            } else {
+                toast.success("All stores hidden from profile");
+            }
+        } catch (error) {
+            console.error("Failed to update visible stores", error);
+            toast.error("Failed to update store visibility");
+        }
+    };
 
     // Current config/theme for preview
     const currentThemeConfig = {
@@ -188,17 +255,21 @@ const Dashboard = () => {
                                         <ShoppingBag className="w-5 h-5 text-white" />
                                     </div>
                                     <div>
-                                        <h3 className="text-base font-bold text-gray-900 dark:text-white">Show Shop on Profile</h3>
-                                        <p className="text-sm text-gray-500 dark:text-zinc-500">Display your store tab on your public profile</p>
+                                        <h3 className="text-base font-bold text-gray-900 dark:text-white">Show Store on Profile</h3>
+                                        <p className="text-sm text-gray-500 dark:text-zinc-500">
+                                            {stores.length > 0 
+                                                ? `Display your ${stores.length} store${stores.length > 1 ? 's' : ''} on your public profile`
+                                                : 'Create a store to enable this feature'}
+                                        </p>
                                     </div>
                                 </div>
-                                <Switch
-                                    checked={user?.show_shop_on_profile ?? true}
-                                    onCheckedChange={async (checked) => {
-                                        await updateProfile({ show_shop_on_profile: checked } as any);
-                                    }}
-                                    className="data-[state=checked]:bg-emerald-500"
-                                />
+                                <div className="flex items-center gap-2">
+                                    <Switch
+                                        checked={(user?.visible_stores?.length || 0) > 0 && user?.show_stores_on_profile === true}
+                                        onCheckedChange={handleStoreVisibilityToggle}
+                                        className="data-[state=checked]:bg-emerald-500"
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -252,11 +323,26 @@ const Dashboard = () => {
                                     blocks={blocks}
                                     theme={currentThemeConfig}
                                     products={products}
-                                    showStoreTab={user?.has_store === true && user?.show_shop_on_profile !== false}
+                                    showStoreTab={user?.show_stores_on_profile === true && (user?.visible_stores?.length || 0) > 0}
                                 />
                             </div>
-                            <div className="mt-4 text-center">
+                            <div className="mt-4 text-center space-y-2">
                                 <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Live Preview</p>
+                                {stores.length > 0 ? (
+                                    <div className="flex items-center gap-2 justify-center text-xs text-zinc-500 dark:text-zinc-400">
+                                        <div className="w-4 h-4 rounded-full bg-green-500/20 flex items-center justify-center">
+                                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                        </div>
+                                        <span>{stores.length} store{stores.length > 1 ? 's' : ''} active</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2 justify-center text-xs text-zinc-400">
+                                        <div className="w-4 h-4 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center">
+                                            <div className="w-2 h-2 rounded-full bg-zinc-400"></div>
+                                        </div>
+                                        <span>No stores yet</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -278,6 +364,14 @@ const Dashboard = () => {
                     setEditBlockData(null);
                 }}
             />
+
+            <StoreSelectorModal
+                open={isStoreSelectorOpen}
+                onClose={() => setIsStoreSelectorOpen(false)}
+                currentVisibleStores={user?.visible_stores || []}
+                onSave={handleSaveVisibleStores}
+            />
+
         </LinktreeLayout>
     );
 };

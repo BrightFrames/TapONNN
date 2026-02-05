@@ -735,7 +735,7 @@ const PublicProfile = () => {
                             </div>
 
                             {/* Navigation Toggles - Only show if profile has a store and wants to show it */}
-                            {profile?.has_store && profile?.show_shop_on_profile !== false && (
+                            {profile?.show_stores_on_profile && (
                                 <div className="flex w-full bg-zinc-100 p-1 rounded-full mb-6 relative z-20 mx-auto max-w-[200px]" style={{
                                     backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : `${textColor}10`
                                 }}>
@@ -757,58 +757,51 @@ const PublicProfile = () => {
                                         )}
                                         style={activeTab === 'store' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : cardBgColor } : { color: textColor, opacity: 0.6 }}
                                     >
-                                        Store
+                                        Stores
                                     </button>
                                 </div>
                             )}
 
                             {/* Content Area - Show Links or Products based on mode */}
                             <div className="w-full min-h-[300px]">
-                                {profile?.has_store && profile?.show_shop_on_profile !== false && activeTab === 'store' ? (
+                                {profile?.show_stores_on_profile && activeTab === 'store' ? (
                                     <div className="space-y-4 px-1 pb-24 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {products.length > 0 ? (
-                                                products.map((product) => (
+                                        {profile?.visible_stores?.length > 0 ? (
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {profile.visible_stores.map((store: any) => (
                                                     <div
-                                                        key={product._id}
-                                                        className="rounded-xl overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-all active:scale-[0.98] group flex flex-col backdrop-blur-xl"
-                                                        style={{ 
-                                                            backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.7)',
-                                                            border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)'}`,
-                                                            boxShadow: isDarkTheme 
-                                                                ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
-                                                                : '0 8px 32px rgba(0, 0, 0, 0.1)'
+                                                        key={store._id}
+                                                        onClick={() => navigate(`/s/${store.username}`)}
+                                                        className="w-full p-4 rounded-2xl active:scale-[0.98] transition-all cursor-pointer border flex items-center justify-between group h-20 shadow-sm hover:shadow-md backdrop-blur-xl"
+                                                        style={{
+                                                            backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.7)',
+                                                            borderColor: isDarkTheme ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
                                                         }}
-                                                        onClick={() => setSelectedProduct(product)}
                                                     >
-                                                        <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }}>
-                                                            {product.image_url ? (
-                                                                <img src={product.image_url} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-2xl">🛍️</div>
-                                                            )}
-                                                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <div className="backdrop-blur-md p-1.5 rounded-full shadow-sm cursor-pointer transition-colors"
-                                                                    style={{ backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.9)' }}
-                                                                    onClick={(e) => handleLike(product._id, e)}
-                                                                >
-                                                                    <Heart className={cn("w-3.5 h-3.5", likedProductIds.has(product._id) ? "fill-red-500 text-red-500" : "")} style={{ color: likedProductIds.has(product._id) ? undefined : textColor }} />
-                                                                </div>
+                                                        <div className="flex items-center gap-4 w-full overflow-hidden">
+                                                            <Avatar className="w-12 h-12 border-2 border-white/20">
+                                                                <AvatarImage src={store.avatar_url || profile.avatar} />
+                                                                <AvatarFallback style={{ backgroundColor: buttonColor, color: buttonTextColor }}>
+                                                                    {store.store_name?.charAt(0) || 'S'}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            <div className="flex flex-col text-left">
+                                                                <span className="text-[15px] font-black" style={{ color: textColor }}>{store.store_name}</span>
+                                                                <span className="text-xs opacity-60" style={{ color: textColor }}>@{store.username}</span>
                                                             </div>
                                                         </div>
-                                                        <div className="p-3 backdrop-blur-xl" style={{ backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.5)' }}>
-                                                            <h3 className="font-semibold text-xs line-clamp-1" style={{ color: textColor }}>{product.title}</h3>
-                                                            <p className="text-[10px] mt-1" style={{ color: textColor, opacity: 0.6 }}>₹{product.price}</p>
+                                                        <div className="flex items-center gap-2">
+                                                            <ArrowRight className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-all" style={{ color: textColor }} />
                                                         </div>
                                                     </div>
-                                                ))
-                                            ) : (
-                                                <div className="col-span-2 text-center py-10 opacity-60">
-                                                    <ShoppingBag className="w-6 h-6 mx-auto mb-2" style={{ color: textColor, opacity: 0.4 }} />
-                                                    <p className="text-xs" style={{ color: textColor, opacity: 0.5 }}>No products found</p>
-                                                </div>
-                                            )}
-                                        </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-20 opacity-60">
+                                                <ShoppingBag className="w-8 h-8 mx-auto mb-3" style={{ color: textColor, opacity: 0.4 }} />
+                                                <p className="text-sm font-bold" style={{ color: textColor }}>No stores currently visible</p>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="space-y-3 w-full animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>

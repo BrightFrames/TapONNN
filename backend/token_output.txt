@@ -1,8 +1,0 @@
-﻿[dotenv@17.2.3] injecting env (12) from .env -- tip: Γ£à audit secrets and track compliance: https://dotenvx.com/ops
-User found: new ObjectId('6978ef4e2ff3f5a35a37e222') vivek@example.com
-
-=== TEST TOKEN FOR VIVEK ===
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NzhlZjRlMmZmM2Y1YTM1YTM3ZTIyMiIsImVtYWlsIjoidml2ZWtAZXhhbXBsZS5jb20iLCJpYXQiOjE3Njk2MDc3MjAsImV4cCI6MTc2OTY5NDEyMH0.YNQJYj4bilQOgMIO4UHkAe5TXE_d0s29_NsHrObQeng
-
-=== CURL COMMAND TO TEST ===
-curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NzhlZjRlMmZmM2Y1YTM1YTM3ZTIyMiIsImVtYWlsIjoidml2ZWtAZXhhbXBsZS5jb20iLCJpYXQiOjE3Njk2MDc3MjAsImV4cCI6MTc2OTY5NDEyMH0.YNQJYj4bilQOgMIO4UHkAe5TXE_d0s29_NsHrObQeng" http://localhost:5000/api/analytics/stats?period=30d

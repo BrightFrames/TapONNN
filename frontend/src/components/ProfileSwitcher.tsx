@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,56 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, User, Store, Check, Sparkles, Lock, BadgeCheck } from "lucide-react";
+import { ChevronDown, User, Store, Check, Sparkles, Lock, BadgeCheck, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+interface StoreData {
+    id: string;
+    username: string;
+    store_name: string;
+    avatar_url?: string;
+    published: boolean;
+}
 
 const ProfileSwitcher = () => {
     const { user, switchProfileMode } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
+    const [stores, setStores] = useState<StoreData[]>([]);
+    const [loadingStores, setLoadingStores] = useState(false);
     const navigate = useNavigate();
+
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+
+    // Fetch user's stores
+    useEffect(() => {
+        const fetchStores = async () => {
+            if (!user) return;
+            
+            setLoadingStores(true);
+            const token = localStorage.getItem('auth_token');
+            
+            try {
+                const response = await fetch(`${API_URL}/stores/my-stores`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    setStores(data.stores || []);
+                }
+            } catch (err) {
+                console.error("Error fetching stores:", err);
+            } finally {
+                setLoadingStores(false);
+            }
+        };
+
+        if (isOpen) {
+            fetchStores();
+        }
+    }, [isOpen, user, API_URL]);
 
     if (!user) return null;
 
@@ -97,8 +140,41 @@ const ProfileSwitcher = () => {
                         {currentMode === 'personal' && <Check className="w-4 h-4 text-[#ADFA1D]" />}
                     </DropdownMenuItem>
 
-                    {/* Store Profile Option */}
-                    {hasStore ? (
+                    {/* Store Profiles - Show all stores */}
+                    {stores.length > 0 && (
+                        <>
+                            <DropdownMenuSeparator className="bg-gray-100 dark:bg-[#1A1A1A]" />
+                            <div className="px-3 py-2 text-[10px] font-semibold text-gray-500 dark:text-zinc-600 uppercase tracking-wider">
+                                Your Stores
+                            </div>
+                            {stores.map((store) => (
+                                <DropdownMenuItem
+                                    key={store.id}
+                                    onClick={() => {
+                                        // Navigate to store page
+                                        navigate(`/${store.username}/store`);
+                                        setIsOpen(false);
+                                    }}
+                                    className="flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1A1A1A] focus:bg-gray-50 dark:focus:bg-[#1A1A1A] text-gray-900 dark:text-zinc-100"
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-500/20 flex items-center justify-center border border-orange-100 dark:border-orange-500/30">
+                                            <Store className="w-3.5 h-3.5 text-orange-500 dark:text-orange-400" />
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-medium">{store.store_name}</div>
+                                            <div className="text-[10px] text-gray-500 dark:text-zinc-500">
+                                                @{store.username}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </DropdownMenuItem>
+                            ))}
+                        </>
+                    )}
+
+                    {/* Old Store Profile (backward compatibility) */}
+                    {hasStore && stores.length === 0 && (
                         <DropdownMenuItem
                             onClick={() => handleSwitch('store')}
                             className="flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1A1A1A] focus:bg-gray-50 dark:focus:bg-[#1A1A1A] text-gray-900 dark:text-zinc-100"
@@ -117,27 +193,34 @@ const ProfileSwitcher = () => {
 
                             {currentMode === 'store' && <Check className="w-4 h-4 text-[#ADFA1D]" />}
                         </DropdownMenuItem>
-                    ) : (
-                        <DropdownMenuItem
-                            onClick={() => navigate('/pricing?tab=store')}
-                            className="flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1A1A1A] focus:bg-gray-50 dark:focus:bg-[#1A1A1A] text-gray-900 dark:text-zinc-100 opacity-75 hover:opacity-100"
-                        >
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-zinc-900 flex items-center justify-center border border-gray-200 dark:border-zinc-800">
-                                    <Lock className="w-3.5 h-3.5 text-gray-500 dark:text-zinc-600" />
-                                </div>
-                                <div>
-                                    <div className="text-sm font-medium">Upgrade for Store</div>
-                                    <div className="text-[10px] text-gray-500 dark:text-zinc-500">
-                                        Unlock Store Features
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#ADFA1D] text-black">
-                                NEW
-                            </div>
-                        </DropdownMenuItem>
                     )}
+
+                    {/* Manage Section */}
+                    <DropdownMenuSeparator className="bg-gray-100 dark:bg-[#1A1A1A]" />
+                    <div className="px-3 py-2 text-[10px] font-semibold text-gray-500 dark:text-zinc-600 uppercase tracking-wider">
+                        Manage
+                    </div>
+                    
+                    {/* Add New Store Button */}
+                    <DropdownMenuItem
+                        onClick={() => {
+                            navigate('/create-store');
+                            setIsOpen(false);
+                        }}
+                        className="flex items-center gap-2.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-[#1A1A1A] focus:bg-gray-100 dark:focus:bg-[#1A1A1A] text-gray-900 dark:text-zinc-100"
+                    >
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-gray-800 to-black dark:from-gray-700 dark:to-gray-900 flex items-center justify-center">
+                            <Plus className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        <div>
+                            <div className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
+                                Add New Store
+                            </div>
+                            <div className="text-[10px] text-gray-500 dark:text-zinc-500">
+                                Create another store
+                            </div>
+                        </div>
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>

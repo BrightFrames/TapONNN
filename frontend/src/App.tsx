@@ -32,6 +32,7 @@ import Explore from "./pages/Explore";
 import LikedProducts from "./pages/LikedProducts";
 import Messages from "./pages/Messages";
 import Updates from "./pages/Updates";
+import CreateStore from "./pages/CreateStore";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/connect-device" element={<ProtectedRoute><NfcStore /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="/updates" element={<ProtectedRoute><Updates /></ProtectedRoute>} />
+            <Route path="/create-store" element={<ProtectedRoute><CreateStore /></ProtectedRoute>} />
 
             {/* Earn Routes */}
             <Route path="/dashboard/earn" element={<ProtectedRoute><EarnOverview /></ProtectedRoute>} />

@@ -70,6 +70,10 @@ const profileSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    visible_stores: {
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Store' }],
+        default: []
+    },
     store_published: {
         type: Boolean,
         default: false
@@ -121,6 +125,10 @@ const profileSchema = new mongoose.Schema({
     payment_instructions: {
         type: String,
         default: ''
+    },
+    show_stores_on_profile: {
+        type: Boolean,
+        default: false
     },
     liked_products: {
         type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
