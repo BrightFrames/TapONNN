@@ -195,9 +195,9 @@ const Analytics = () => {
         percentChange?: number;
         iconColor: string;
     }) => (
-        <div className={`relative overflow-hidden rounded-2xl p-5 ${gradient}`}>
+        <div className={`relative overflow-hidden rounded-2xl p-5 ${gradient} transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl cursor-pointer group`}>
             <div className="flex items-start gap-3 mb-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconColor}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconColor} group-hover:scale-110 transition-transform`}>
                     <Icon className="w-5 h-5" />
                 </div>
                 <span className="text-sm font-medium text-white/90 mt-2">{title}</span>
@@ -210,6 +210,8 @@ const Analytics = () => {
                 </span>
                 <span className="text-white/50">vs last period</span>
             </div>
+            {/* Decorative glow on hover */}
+            <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/5 rounded-full blur-2xl group-hover:bg-white/15 transition-all" />
         </div>
     );
 

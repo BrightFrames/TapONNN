@@ -1,19 +1,17 @@
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { Button } from "@/components/ui/button";
 import {
-    ChevronRight,
-    Home,
     Download,
-    DollarSign,
     TrendingUp,
-    Clock,
     Receipt,
     Wallet,
     ArrowUpRight,
-    ArrowDownRight,
     CreditCard,
     RefreshCcw,
-    FileText
+    FileText,
+    ChevronDown,
+    Search,
+    Filter
 } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -83,83 +81,11 @@ const DUMMY_ORDERS: Order[] = [
     }
 ];
 
-// Gradient Metric Card Component
-const GradientMetricCard = ({
-    title,
-    value,
-    icon: Icon,
-    gradient,
-    iconColor,
-    percentChange = 0
-}: {
-    title: string;
-    value: string | number;
-    icon: any;
-    gradient: string;
-    iconColor: string;
-    percentChange?: number;
-}) => (
-    <div className={`relative overflow-hidden rounded-2xl p-5 ${gradient} transition-all duration-300 hover:scale-[1.02] hover:shadow-xl`}>
-        <div className="flex items-start gap-3 mb-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconColor}`}>
-                <Icon className="w-5 h-5" />
-            </div>
-            <span className="text-sm font-medium text-white/90 mt-2">{title}</span>
-        </div>
-        <p className="text-4xl font-bold text-white mb-3">{value}</p>
-        <div className="flex items-center gap-2 text-sm">
-            <span className={`flex items-center gap-1 ${percentChange >= 0 ? 'text-white/70' : 'text-red-300'}`}>
-                {percentChange >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                {Math.abs(percentChange)}%
-            </span>
-            <span className="text-white/50">vs last month</span>
-        </div>
-        {/* Decorative gradient overlay */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-    </div>
-);
-
-// Section Card Component
-const SectionCard = ({
-    title,
-    subtitle,
-    icon: Icon,
-    iconColor,
-    rightContent,
-    children
-}: {
-    title: string;
-    subtitle?: string;
-    icon?: any;
-    iconColor?: string;
-    rightContent?: React.ReactNode;
-    children: React.ReactNode;
-}) => (
-    <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 overflow-hidden shadow-sm dark:shadow-none">
-        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-zinc-800">
-            <div className="flex items-center gap-3">
-                {Icon && (
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconColor || 'bg-gray-100 dark:bg-zinc-800'}`}>
-                        <Icon className="w-5 h-5" />
-                    </div>
-                )}
-                <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">{title}</h3>
-                    {subtitle && <p className="text-sm text-gray-500 dark:text-zinc-500">{subtitle}</p>}
-                </div>
-            </div>
-            {rightContent}
-        </div>
-        <div className="p-0">
-            {children}
-        </div>
-    </div>
-);
-
 const Earnings = () => {
     const { t } = useTranslation();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
@@ -172,16 +98,25 @@ const Earnings = () => {
             return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
         });
         const thisMonthEarnings = thisMonthOrders.reduce((sum, order) => sum + (order.amount || 0), 0);
-        const pendingOrders = orders.filter(order => order.status === 'pending');
-        const pendingAmount = pendingOrders.reduce((sum, order) => sum + (order.amount || 0), 0);
 
         return {
             totalEarnings,
             thisMonthEarnings,
-            pendingAmount,
             totalTransactions: orders.length
         };
     }, [orders]);
+
+    // Filter orders based on search
+    const filteredOrders = useMemo(() => {
+        if (!searchQuery.trim()) return orders;
+        const query = searchQuery.toLowerCase();
+        return orders.filter(order =>
+            order.product_name?.toLowerCase().includes(query) ||
+            order.buyer_name?.toLowerCase().includes(query) ||
+            order.payment_id?.toLowerCase().includes(query) ||
+            order.invoice_id?.toLowerCase().includes(query)
+        );
+    }, [orders, searchQuery]);
 
     const fetchEarnings = async () => {
         const token = localStorage.getItem('auth_token');
@@ -197,7 +132,6 @@ const Earnings = () => {
             setLoading(false);
         } catch (error) {
             console.error("Error loading earnings:", error);
-            // Fallback to dummy data on error for demo purposes
             setOrders(DUMMY_ORDERS);
             setLoading(false);
         }
@@ -234,163 +168,203 @@ Thank you for your business!
 
     useEffect(() => {
         fetchEarnings();
-        const interval = setInterval(fetchEarnings, 10000); // Polling every 10s
+        const interval = setInterval(fetchEarnings, 10000);
         return () => clearInterval(interval);
     }, []);
 
     return (
         <LinktreeLayout>
-            <div className="p-6 md:p-10 max-w-6xl mx-auto font-sans text-gray-900 dark:text-white bg-gray-50 dark:bg-zinc-950 min-h-full">
-                {/* Premium Header */}
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white mb-1">
-                            {t('earnings.title')}
-                        </h1>
-                        <p className="text-gray-500 dark:text-zinc-400">
-                            {t('earnings.breadcrumb')} • Track your revenue and transactions
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        {/* Refresh Button */}
+            <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto font-sans min-h-full bg-slate-50 dark:bg-[#0a0a0a]">
+                {/* Header */}
+                <div className="mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                                {t('earnings.title')}
+                            </h1>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                                Manage your earnings and transaction history
+                            </p>
+                        </div>
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={fetchEarnings}
-                            className="flex items-center gap-2 rounded-full border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-800"
+                            className="w-fit flex items-center gap-2 rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm"
                         >
                             <RefreshCcw className="w-4 h-4" />
-                            Refresh
+                            Sync
                         </Button>
                     </div>
                 </div>
 
-                {/* Gradient Metric Cards */}
+                {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                    <GradientMetricCard
-                        title="Total Earnings"
-                        value={`₹${metrics.totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                        icon={Wallet}
-                        gradient="bg-gradient-to-br from-violet-500/90 via-purple-600/80 to-purple-700/70"
-                        iconColor="bg-violet-400/30 text-violet-100"
-                        percentChange={12}
-                    />
-                    <GradientMetricCard
-                        title="This Month"
-                        value={`₹${metrics.thisMonthEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                        icon={TrendingUp}
-                        gradient="bg-gradient-to-br from-emerald-500/90 via-emerald-600/80 to-emerald-700/70"
-                        iconColor="bg-emerald-400/30 text-emerald-100"
-                        percentChange={8}
-                    />
-                    <GradientMetricCard
-                        title="Transactions"
-                        value={metrics.totalTransactions}
-                        icon={Receipt}
-                        gradient="bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900 border border-zinc-600/30"
-                        iconColor="bg-zinc-600/30 text-zinc-300"
-                        percentChange={5}
-                    />
+                    {/* Total Earnings - Vibrant Blue-Purple */}
+                    <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-[#6366F1] via-[#8B5CF6] to-[#A855F7] shadow-lg shadow-indigo-500/25 dark:shadow-indigo-500/15 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/30 cursor-pointer group">
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <Wallet className="w-4 h-4 text-white" />
+                                </div>
+                                <span className="text-sm font-medium text-white/90">Total Earnings</span>
+                            </div>
+                            <p className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                                ₹{metrics.totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                            <div className="flex items-center gap-1.5 text-sm text-white/70">
+                                <ArrowUpRight className="w-3.5 h-3.5" />
+                                <span>12% vs last month</span>
+                            </div>
+                        </div>
+                        {/* Decorative circles */}
+                        <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all" />
+                        <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-purple-300/20 rounded-full blur-xl" />
+                    </div>
+
+                    {/* This Month - Vibrant Teal-Cyan */}
+                    <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-[#14B8A6] via-[#0D9488] to-[#0F766E] shadow-lg shadow-teal-500/25 dark:shadow-teal-500/15 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-teal-500/30 cursor-pointer group">
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <TrendingUp className="w-4 h-4 text-white" />
+                                </div>
+                                <span className="text-sm font-medium text-white/90">This Month</span>
+                            </div>
+                            <p className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                                ₹{metrics.thisMonthEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                            <div className="flex items-center gap-1.5 text-sm text-white/70">
+                                <ArrowUpRight className="w-3.5 h-3.5" />
+                                <span>8% vs last month</span>
+                            </div>
+                        </div>
+                        <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all" />
+                        <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-cyan-300/20 rounded-full blur-xl" />
+                    </div>
+
+                    {/* Transactions - Slate with subtle blue tint */}
+                    <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-[#334155] via-[#1E293B] to-[#0F172A] shadow-lg shadow-slate-500/25 dark:shadow-black/40 sm:col-span-2 lg:col-span-1 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-500/30 cursor-pointer group">
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform">
+                                    <Receipt className="w-4 h-4 text-white" />
+                                </div>
+                                <span className="text-sm font-medium text-white/90">Transactions</span>
+                            </div>
+                            <p className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                                {metrics.totalTransactions}
+                            </p>
+                            <div className="flex items-center gap-1.5 text-sm text-white/60">
+                                <ArrowUpRight className="w-3.5 h-3.5" />
+                                <span>5% vs last month</span>
+                            </div>
+                        </div>
+                        <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-all" />
+                        <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-blue-500/10 rounded-full blur-xl" />
+                    </div>
                 </div>
 
-                {/* Tabs Section */}
-                <Tabs defaultValue="payment_history" className="w-full">
-                    <TabsList className="bg-white dark:bg-zinc-900/50 p-1 rounded-xl w-full sm:w-auto justify-start border border-gray-200 dark:border-zinc-800 mb-6">
-                        <TabsTrigger
-                            value="payment_history"
-                            className="rounded-lg px-6 py-2.5 font-medium text-gray-600 dark:text-zinc-400 data-[state=active]:bg-purple-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
-                        >
-                            <CreditCard className="w-4 h-4 mr-2" />
-                            {t('earnings.paymentHistory')}
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="refund_history"
-                            className="rounded-lg px-6 py-2.5 font-medium text-gray-600 dark:text-zinc-400 data-[state=active]:bg-purple-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
-                        >
-                            <RefreshCcw className="w-4 h-4 mr-2" />
-                            {t('earnings.refundHistory')}
-                        </TabsTrigger>
-                    </TabsList>
+                {/* Transactions Section */}
+                <div className="bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    {/* Tabs */}
+                    <Tabs defaultValue="payment_history" className="w-full">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border-b border-slate-100 dark:border-slate-800">
+                            <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit">
+                                <TabsTrigger
+                                    value="payment_history"
+                                    className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+                                >
+                                    <CreditCard className="w-4 h-4 mr-2 inline" />
+                                    {t('earnings.paymentHistory')}
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="refund_history"
+                                    className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+                                >
+                                    <RefreshCcw className="w-4 h-4 mr-2 inline" />
+                                    {t('earnings.refundHistory')}
+                                </TabsTrigger>
+                            </TabsList>
 
-                    <TabsContent value="payment_history">
-                        {loading ? (
-                            <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-zinc-900/50 rounded-2xl border border-gray-200 dark:border-zinc-800">
-                                <Loader2 className="animate-spin text-purple-600 w-10 h-10 mb-4" />
-                                <p className="text-gray-500 dark:text-zinc-400 font-medium">Loading transactions...</p>
+                            {/* Search */}
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search transactions..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-9 pr-4 py-2 w-full sm:w-64 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                                />
                             </div>
-                        ) : (
-                            <SectionCard
-                                title="Recent Transactions"
-                                subtitle={`${orders.length} transactions found`}
-                                icon={FileText}
-                                iconColor="bg-purple-500/20 text-purple-400"
-                                rightContent={
-                                    <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-none">
-                                        {orders.filter(o => o.status === 'paid').length} Paid
-                                    </Badge>
-                                }
-                            >
+                        </div>
+
+                        <TabsContent value="payment_history" className="m-0">
+                            {loading ? (
+                                <div className="flex flex-col items-center justify-center py-16">
+                                    <Loader2 className="animate-spin text-purple-600 w-8 h-8 mb-3" />
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm">Loading transactions...</p>
+                                </div>
+                            ) : (
                                 <div className="overflow-x-auto">
                                     <Table>
                                         <TableHeader>
-                                            <TableRow className="border-b border-gray-200 dark:border-zinc-800 hover:bg-transparent">
-                                                <TableHead className="w-[50px]">
-                                                    <Checkbox className="ml-2 border-gray-300 dark:border-zinc-700 data-[state=checked]:bg-purple-600 dark:data-[state=checked]:bg-purple-600 text-white" />
+                                            <TableRow className="border-b border-slate-100 dark:border-slate-800 hover:bg-transparent">
+                                                <TableHead className="w-[40px] pl-4">
+                                                    <Checkbox className="border-slate-300 dark:border-slate-600" />
                                                 </TableHead>
-                                                <TableHead className="font-semibold text-gray-600 dark:text-zinc-300">{t('earnings.paymentId')}</TableHead>
-                                                <TableHead className="font-semibold text-gray-600 dark:text-zinc-300">{t('earnings.invoiceId')}</TableHead>
-                                                <TableHead className="font-semibold text-gray-600 dark:text-zinc-300">{t('earnings.service')}</TableHead>
-                                                <TableHead className="font-semibold text-gray-600 dark:text-zinc-300">{t('earnings.paidTitle')}</TableHead>
-                                                <TableHead className="font-semibold text-gray-600 dark:text-zinc-300">{t('earnings.paidAt')}</TableHead>
-                                                <TableHead className="font-semibold text-gray-600 dark:text-zinc-300">{t('earnings.amount')}</TableHead>
-                                                <TableHead className="w-[50px]"></TableHead>
+                                                <TableHead className="font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">{t('earnings.paymentId')}</TableHead>
+                                                <TableHead className="font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">{t('earnings.service')}</TableHead>
+                                                <TableHead className="font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">{t('earnings.paidTitle')}</TableHead>
+                                                <TableHead className="font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">{t('earnings.paidAt')}</TableHead>
+                                                <TableHead className="font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider text-right">{t('earnings.amount')}</TableHead>
+                                                <TableHead className="w-[60px]"></TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {orders.length > 0 ? (
-                                                orders.map((order) => (
+                                            {filteredOrders.length > 0 ? (
+                                                filteredOrders.map((order, index) => (
                                                     <TableRow
                                                         key={order._id}
-                                                        className="border-b border-gray-100 dark:border-zinc-800/50 hover:bg-purple-50/50 dark:hover:bg-purple-500/5 transition-colors group"
+                                                        className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group"
                                                     >
-                                                        <TableCell>
-                                                            <Checkbox className="ml-2 border-gray-300 dark:border-zinc-700 data-[state=checked]:bg-purple-600" />
+                                                        <TableCell className="pl-4">
+                                                            <Checkbox className="border-slate-300 dark:border-slate-600" />
                                                         </TableCell>
                                                         <TableCell>
-                                                            <Badge variant="secondary" className="bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 border-none font-mono font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
-                                                                {order.payment_id || `H_${order._id.substr(-8).toUpperCase()}`}
-                                                            </Badge>
+                                                            <code className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded font-mono">
+                                                                {order.payment_id?.slice(-12) || `H_${order._id.substr(-8).toUpperCase()}`}
+                                                            </code>
                                                         </TableCell>
                                                         <TableCell>
-                                                            <span className="font-bold text-xs text-gray-700 dark:text-zinc-300 bg-gray-50 dark:bg-zinc-800/50 px-2 py-1 rounded">
-                                                                {order.invoice_id || `HSG-${order._id.substr(-6).toUpperCase()}`}
+                                                            <span className="text-sm font-medium text-slate-800 dark:text-slate-200 line-clamp-1">
+                                                                {order.product_name || "Digital Service"}
                                                             </span>
                                                         </TableCell>
                                                         <TableCell>
-                                                            <Badge variant="outline" className="font-medium truncate max-w-[150px] inline-flex rounded-lg border-purple-200 dark:border-purple-500/30 text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-500/10">
-                                                                {order.product_name || "Digital Service"}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell>
                                                             <div className="flex items-center gap-2">
-                                                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold">
+                                                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
                                                                     {(order.buyer_name || "A")[0].toUpperCase()}
                                                                 </div>
-                                                                <span className="text-sm text-gray-700 dark:text-zinc-300 font-medium">
-                                                                    {order.buyer_name || "Anonymous User"}
+                                                                <span className="text-sm text-slate-600 dark:text-slate-300 truncate max-w-[120px]">
+                                                                    {order.buyer_name || "Anonymous"}
                                                                 </span>
                                                             </div>
                                                         </TableCell>
                                                         <TableCell>
-                                                            <span className="text-sm text-gray-500 dark:text-zinc-400">
-                                                                {order.paid_at ? new Date(order.paid_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                            <span className="text-sm text-slate-500 dark:text-slate-400">
+                                                                {new Date(order.paid_at || order.created_at).toLocaleDateString('en-IN', {
+                                                                    day: 'numeric',
+                                                                    month: 'short',
+                                                                    year: 'numeric'
+                                                                })}
                                                             </span>
                                                         </TableCell>
-                                                        <TableCell>
-                                                            <Badge variant="secondary" className="bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-950/50 dark:to-green-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 font-bold inline-flex rounded-lg shadow-sm">
+                                                        <TableCell className="text-right">
+                                                            <span className="inline-flex items-center text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                                                                 ₹{order.amount?.toFixed(2)}
-                                                            </Badge>
+                                                            </span>
                                                         </TableCell>
                                                         <TableCell>
                                                             <Button
@@ -398,22 +372,26 @@ Thank you for your business!
                                                                 size="icon"
                                                                 onClick={() => handleDownloadInvoice(order)}
                                                                 title="Download Invoice"
-                                                                className="hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                                                             >
-                                                                <Download className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                                                                <Download className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                                                             </Button>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))
                                             ) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={8} className="h-40 text-center text-gray-500 dark:text-zinc-500">
-                                                        <div className="flex flex-col items-center gap-3">
-                                                            <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center">
-                                                                <Receipt className="w-8 h-8 text-gray-400 dark:text-zinc-600" />
+                                                    <TableCell colSpan={7} className="h-40 text-center">
+                                                        <div className="flex flex-col items-center gap-2">
+                                                            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                                                <Receipt className="w-6 h-6 text-slate-400" />
                                                             </div>
-                                                            <p className="font-medium">{t('earnings.noHistory')}</p>
-                                                            <p className="text-sm text-gray-400 dark:text-zinc-600">Your transactions will appear here</p>
+                                                            <p className="text-slate-500 dark:text-slate-400 font-medium">
+                                                                {searchQuery ? "No matching transactions" : t('earnings.noHistory')}
+                                                            </p>
+                                                            <p className="text-sm text-slate-400 dark:text-slate-500">
+                                                                {searchQuery ? "Try a different search term" : "Your transactions will appear here"}
+                                                            </p>
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -421,34 +399,24 @@ Thank you for your business!
                                         </TableBody>
                                     </Table>
                                 </div>
-                            </SectionCard>
-                        )}
-                    </TabsContent>
+                            )}
+                        </TabsContent>
 
-                    <TabsContent value="refund_history">
-                        <SectionCard
-                            title="Refund History"
-                            subtitle="Track all refund requests and their status"
-                            icon={RefreshCcw}
-                            iconColor="bg-amber-500/20 text-amber-400"
-                        >
+                        <TabsContent value="refund_history" className="m-0">
                             <div className="text-center py-16 px-4">
-                                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/30 dark:to-orange-950/30 flex items-center justify-center mx-auto mb-4">
-                                    <RefreshCcw className="w-10 h-10 text-amber-500 dark:text-amber-400" />
+                                <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+                                    <RefreshCcw className="w-7 h-7 text-slate-400 dark:text-slate-500" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                                    No Refunds Yet
+                                <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                                    No Refunds
                                 </h3>
-                                <p className="text-gray-500 dark:text-zinc-400 max-w-sm mx-auto">
+                                <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">
                                     {t('earnings.noRefunds')}
                                 </p>
-                                <p className="text-sm text-gray-400 dark:text-zinc-500 mt-2">
-                                    All refund requests and their statuses will appear here
-                                </p>
                             </div>
-                        </SectionCard>
-                    </TabsContent>
-                </Tabs>
+                        </TabsContent>
+                    </Tabs>
+                </div>
             </div>
         </LinktreeLayout>
     );
