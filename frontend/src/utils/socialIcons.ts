@@ -1,4 +1,15 @@
 import {
+    InstagramIcon,
+    FacebookIcon,
+    TwitterIcon,
+    LinkedInIcon,
+    YouTubeIcon,
+    GitHubIcon,
+    WhatsAppIcon,
+    TelegramIcon
+} from "@/components/BrandIcons";
+
+import {
     Instagram,
     Facebook,
     Twitter,
@@ -18,12 +29,12 @@ import {
 } from "lucide-react";
 
 export const iconMap: any = {
-    instagram: Instagram,
-    facebook: Facebook,
-    twitter: Twitter,
-    linkedin: Linkedin,
-    youtube: Youtube,
-    github: Github,
+    instagram: InstagramIcon || Instagram,
+    facebook: FacebookIcon || Facebook,
+    twitter: TwitterIcon || Twitter,
+    linkedin: LinkedInIcon || Linkedin,
+    youtube: YouTubeIcon || Youtube,
+    github: GitHubIcon || Github,
     tiktok: Music,
     globe: Globe,
     website: Globe,
@@ -34,8 +45,8 @@ export const iconMap: any = {
     store: ShoppingBag,
     location: MapPin,
     calendar: Calendar,
-    whatsapp: MessageCircle,
-    telegram: Send
+    whatsapp: WhatsAppIcon || MessageCircle,
+    telegram: TelegramIcon || Send
 };
 
 export const getIconForThumbnail = (thumbnail: string) => {

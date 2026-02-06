@@ -10,5 +10,30 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+# Block generic scraping bots
+User-agent: *
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /login/
+Disallow: /signup/
+
+# Specific aggressive scrapers
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SEMrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+Allow: /
+
 User-agent: *
 Allow: /

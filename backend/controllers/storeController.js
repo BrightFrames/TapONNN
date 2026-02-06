@@ -1,6 +1,9 @@
 const Store = require('../models/Store');
 const Profile = require('../models/Profile');
+const User = require('../models/User');
 const { Product } = require('../models/Product');
+const StoreSubscriber = require('../models/StoreSubscriber');
+const emailService = require('../services/emailService');
 
 // Check if username is available
 const checkUsernameAvailability = async (req, res) => {
@@ -213,11 +216,75 @@ const getPublicStore = async (req, res) => {
     }
 };
 
+const subscribeToStore = async (req, res) => {
+    try {
+        const { seller_id, email, username } = req.body;
+
+        if (!seller_id) {
+            return res.status(400).json({ error: 'Seller ID is required' });
+        }
+
+        if (!email && !username) {
+            return res.status(400).json({ error: 'Email or username is required' });
+        }
+
+        let subscriberData = { seller_id };
+
+        if (username) {
+            // Verify username exists
+            const profile = await Profile.findOne({ username: username.toLowerCase() });
+            if (!profile) {
+                return res.status(404).json({ error: 'Invalid tapx.bio username' });
+            }
+            subscriberData.tapx_username = username.toLowerCase();
+            // Also store email if available from profile
+            if (profile.email) {
+                subscriberData.email = profile.email;
+            }
+        } else if (email) {
+            subscriberData.email = email.toLowerCase();
+        }
+
+        // Use upsert to avoid duplicates
+        await StoreSubscriber.findOneAndUpdate(
+            subscriberData,
+            subscriberData,
+            { upsert: true, new: true }
+        );
+
+        // Notify the seller via email
+        try {
+            const seller = await User.findById(seller_id);
+            if (seller && seller.email) {
+                // Find store name to make email better
+                const store = await Store.findOne({ user_id: seller_id });
+                const storeName = store ? store.store_name : 'Your Store';
+                
+                await emailService.sendStoreSubscriptionNotification(
+                    seller.email,
+                    storeName,
+                    subscriberData.email,
+                    subscriberData.tapx_username
+                );
+            }
+        } catch (emailErr) {
+            console.error('Failed to send subscription notification email:', emailErr);
+            // Don't fail the request if email fails
+        }
+
+        res.json({ success: true, message: 'Subscribed successfully' });
+    } catch (err) {
+        console.error('Error subscribing to store:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 module.exports = {
     checkUsernameAvailability,
     createStore,
     getUserStores,
     getStoreById,
     updateStore,
-    getPublicStore
+    getPublicStore,
+    subscribeToStore
 };

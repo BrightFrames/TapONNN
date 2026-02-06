@@ -3,7 +3,7 @@ import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Settings, Share, Plus, EyeOff, Eye, ExternalLink, Instagram, Globe, Search, GripVertical, Heart, MessageCircle, Smartphone, Store, Star } from "lucide-react";
+import { Settings, Share, Plus, EyeOff, Eye, ExternalLink, Instagram, Globe, Search, GripVertical, Heart, MessageCircle, Smartphone, Store, Star, ShoppingBag, Upload } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogContentBottomSheet, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, Trash2, MessageSquare, Check, X, Clock, CreditCard, Package, MoreHorizontal, Copy, Edit, BadgeCheck } from "lucide-react";
+import { Loader2, Trash2, MessageSquare, Check, X, Clock, CreditCard, Package, MoreHorizontal, Copy, Edit, BadgeCheck, CheckCircle2, ArrowRight } from "lucide-react";
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -48,6 +48,7 @@ interface Product {
     price: number;
     discount_price?: number;
     image_url?: string;
+    images?: string[];
     file_url?: string; // Used for "Product URL"
     type: 'digital_product' | 'physical_product' | 'physical_service' | 'digital_service';
     product_type?: 'digital_product' | 'physical_product' | 'physical_service' | 'digital_service';
@@ -124,6 +125,7 @@ const Shop = () => {
         description: "",
         type: "physical_product",
         image_url: "",
+        images: [] as string[],
         file_url: "",
         is_featured: false,
         badge: "",
@@ -345,6 +347,7 @@ const Shop = () => {
                 },
                 body: JSON.stringify({
                     ...newProduct,
+                    image_url: newProduct.images.length > 0 ? newProduct.images[0] : newProduct.image_url,
                     price: parseFloat(newProduct.price),
                     discount_price: newProduct.discount_price ? parseFloat(newProduct.discount_price) : undefined,
                     product_type: newProduct.type
@@ -373,6 +376,7 @@ const Shop = () => {
                 description: "", 
                 type: "physical_product", 
                 image_url: "", 
+                images: [],
                 file_url: "",
                 is_featured: false,
                 badge: "",
@@ -591,23 +595,19 @@ const Shop = () => {
                         <Tabs defaultValue="shop" value={previewTab} onValueChange={(val) => setPreviewTab(val as 'links' | 'shop')} className="w-full">
                             <div className="flex flex-col gap-4 mb-6">
                                 {/* Title Row */}
-                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                    <div>
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                    <div className="flex-1">
                                         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Shop & Links</h1>
                                         <p className="text-gray-500 dark:text-zinc-400 text-xs sm:text-sm mt-1 hidden sm:block">Manage your products and profile content</p>
                                     </div>
+                                    <div className="flex items-center gap-3 bg-zinc-50 dark:bg-zinc-900/50 px-4 py-2 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                                        <Label className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Show Shop on Profile</Label>
+                                        <Switch 
+                                            checked={user?.show_shop_on_profile ?? true} 
+                                            onCheckedChange={handleToggleShopVisibility}
+                                        />
+                                    </div>
                                     <div className="flex items-center gap-2 sm:gap-3">
-                                        {/* Shop Visibility Toggle */}
-                                        <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                                            <Switch
-                                                checked={user?.show_shop_on_profile ?? true}
-                                                onCheckedChange={handleToggleShopVisibility}
-                                                className="scale-90 data-[state=checked]:bg-green-500"
-                                            />
-                                            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400 hidden sm:inline-block">Show Store</span>
-                                            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400 sm:hidden">Store</span>
-                                        </div>
-
                                         {/* Profile Link */}
                                         <div className="relative group w-full sm:w-auto">
                                             <div
@@ -659,6 +659,7 @@ const Shop = () => {
                                                 description: "", 
                                                 type: "physical_product", 
                                                 image_url: "", 
+                                                images: [],
                                                 file_url: "",
                                                 is_featured: false,
                                                 badge: "",
@@ -677,6 +678,7 @@ const Shop = () => {
                                                         description: "", 
                                                         type: "physical_product", 
                                                         image_url: "", 
+                                                        images: [],
                                                         file_url: "",
                                                         is_featured: false,
                                                         badge: "",
@@ -689,172 +691,209 @@ const Shop = () => {
                                                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> {t('dashboard.addContent')}
                                             </Button>
                                         </DialogTrigger>
-                                        <DialogContentBottomSheet className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-                                            <DialogHeader>
-                                                <DialogTitle>{isEditOpen ? 'Edit Product' : t('shop.addNewProduct')}</DialogTitle>
-                                                <DialogDescription>
+                                        <DialogContentBottomSheet className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col p-0 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl">
+                                            <DialogHeader className="px-6 pt-6 pb-2">
+                                                <DialogTitle className="text-2xl font-black tracking-tight">{isEditOpen ? 'Edit Product' : t('shop.addNewProduct')}</DialogTitle>
+                                                <DialogDescription className="text-zinc-500 font-medium">
                                                     {isEditOpen ? 'Update your product details below.' : t('shop.addProductDesc')}
                                                 </DialogDescription>
                                             </DialogHeader>
-                                            <form onSubmit={handleSaveProduct} className="grid gap-4 py-4">
-                                                <div className="grid gap-2">
-                                                    <Input
-                                                        id="title"
-                                                        value={newProduct.title}
-                                                        onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="price">Price (₹)</Label>
+                                            
+                                            <div className="flex-1 overflow-y-auto px-6">
+                                                <form onSubmit={handleSaveProduct} className="flex flex-col gap-8 py-6">
+                                                    {/* Product Name */}
+                                                    <div className="space-y-3">
+                                                        <Label htmlFor="title" className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                                            <ShoppingBag className="w-3.5 h-3.5" />
+                                                            Product Name
+                                                        </Label>
                                                         <Input
-                                                            id="price"
-                                                            type="number"
-                                                            step="0.01"
-                                                            value={newProduct.price}
-                                                            onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                                                            id="title"
+                                                            placeholder="e.g. Premium Leather Watch"
+                                                            className="h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border-none focus-visible:ring-1 focus-visible:ring-zinc-300 dark:focus-visible:ring-zinc-700 transition-all font-bold text-lg"
+                                                            value={newProduct.title}
+                                                            onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
                                                             required
                                                         />
                                                     </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="discount_price">Discount Price (₹)</Label>
-                                                        <Input
-                                                            id="discount_price"
-                                                            type="number"
-                                                            step="0.01"
-                                                            placeholder="Optional"
-                                                            value={newProduct.discount_price}
-                                                            onChange={(e) => setNewProduct({ ...newProduct, discount_price: e.target.value })}
-                                                        />
-                                                    </div>
-                                                </div>
 
-                                                <div className="grid grid-cols-2 gap-4 border-y py-4 my-2 dark:border-zinc-800">
-                                                    <div className="flex items-center justify-between col-span-2">
-                                                        <div className="flex items-center gap-2">
-                                                            <Sparkles className="w-4 h-4 text-amber-500" />
-                                                            <div>
-                                                                <Label className="text-sm font-semibold">Featured Product</Label>
-                                                                <p className="text-[10px] text-zinc-500">Show in the "Top Picks" section</p>
-                                                            </div>
-                                                        </div>
-                                                        <Switch
-                                                            checked={newProduct.is_featured}
-                                                            onCheckedChange={(checked) => setNewProduct({ ...newProduct, is_featured: checked })}
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="badge">Badge Text</Label>
-                                                        <Input
-                                                            id="badge"
-                                                            placeholder="NEW, SALE, etc."
-                                                            value={newProduct.badge}
-                                                            onChange={(e) => setNewProduct({ ...newProduct, badge: e.target.value.toUpperCase() })}
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="stock">Stock Status</Label>
-                                                        <Select
-                                                            value={newProduct.stock_status}
-                                                            onValueChange={(val: any) => setNewProduct({ ...newProduct, stock_status: val })}
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="in_stock">In Stock</SelectItem>
-                                                                <SelectItem value="out_of_stock">Out of Stock</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="grid gap-2 col-span-2">
-                                                        <Label htmlFor="type">{t('shop.type')}</Label>
-                                                        <Select
-                                                            value={newProduct.type}
-                                                            onValueChange={(val: any) => setNewProduct({ ...newProduct, type: val })}
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select type" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="digital_product">Digital Product</SelectItem>
-                                                                <SelectItem value="commerce">E-commerce Product</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="desc">Description</Label>
-                                                    <Textarea
-                                                        id="desc"
-                                                        value={newProduct.description}
-                                                        onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                                                    />
-                                                </div>
-                                                {newProduct.type === 'digital_product' && (
-                                                    <>
-                                                        <div className="grid gap-2">
-                                                            <Label htmlFor="url">Product File (Max 15MB)</Label>
-                                                            <FileUpload
-                                                                value={newProduct.file_url}
-                                                                onChange={(url) => setNewProduct({ ...newProduct, file_url: url })}
-                                                                label="Upload Digital Product"
-                                                                maxSizeMB={15}
-                                                                type="product_file"
-                                                            />
-                                                            <div className="text-xs text-gray-500 text-center mt-1">- OR -</div>
+                                                    {/* Pricing Section */}
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-3">
+                                                            <Label htmlFor="price" className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                                                Price (₹)
+                                                            </Label>
                                                             <Input
-                                                                id="url"
-                                                                type="url"
-                                                                placeholder="https://drive.google.com/file/..."
-                                                                value={newProduct.file_url}
-                                                                onChange={(e) => setNewProduct({ ...newProduct, file_url: e.target.value })}
+                                                                id="price"
+                                                                type="number"
+                                                                step="0.01"
+                                                                placeholder="0.00"
+                                                                className="h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border-none font-black text-xl text-green-500"
+                                                                value={newProduct.price}
+                                                                onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                                                                required
                                                             />
                                                         </div>
-                                                    </>
-                                                )}
-
-                                                {/* Marketplace Plugins - Only for non-digital products */}
-                                                {newProduct.type !== 'digital_product' && newProduct.type && (
-                                                    <div className="grid gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                                                        <div className="flex items-center gap-2">
-                                                            <Store className="w-4 h-4 text-gray-600" />
-                                                            <Label className="text-sm font-semibold text-gray-900">Marketplace Plugins</Label>
+                                                        <div className="space-y-3">
+                                                            <Label htmlFor="discount_price" className="text-xs font-black uppercase tracking-widest text-zinc-400">Discount Price (₹)</Label>
+                                                            <Input
+                                                                id="discount_price"
+                                                                type="number"
+                                                                step="0.01"
+                                                                placeholder="Optional"
+                                                                className="h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border-none font-bold"
+                                                                value={newProduct.discount_price}
+                                                                onChange={(e) => setNewProduct({ ...newProduct, discount_price: e.target.value })}
+                                                            />
                                                         </div>
-                                                        <p className="text-xs text-gray-600">
-                                                            Enhance your {newProduct.type.replace('_', ' ')} with shipping, payment, and other plugins from the marketplace.
-                                                        </p>
-                                                        <Button
-                                                            type="button"
-                                                            variant="outline"
-                                                            onClick={() => window.location.href = '/marketplace'}
-                                                            className="w-full border-gray-300 hover:border-gray-900 hover:bg-gray-100"
-                                                        >
-                                                            <Store className="w-4 h-4 mr-2" />
-                                                            Browse Marketplace
-                                                        </Button>
                                                     </div>
-                                                )}
 
-                                                <div className="grid gap-2">
-                                                    <Label>Product Image</Label>
-                                                    <ImageUpload
-                                                        value={newProduct.image_url}
-                                                        onChange={(url) => setNewProduct({ ...newProduct, image_url: url })}
-                                                    />
-                                                </div>
-                                                <DialogFooter>
-                                                    <Button type="submit" disabled={isSubmitting} className="w-full">
-                                                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                                                        {t('shop.createProduct')}
-                                                    </Button>
-                                                </DialogFooter>
-                                            </form>
+                                                    {/* Badge & Stock Row */}
+                                                    <div className="grid grid-cols-2 gap-4 p-5 rounded-[2rem] bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-100 dark:border-zinc-800/50">
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="badge" className="text-[10px] font-black uppercase text-zinc-400 px-1 tracking-tighter">Badge Text</Label>
+                                                            <Input
+                                                                id="badge"
+                                                                placeholder="NEW, SALE"
+                                                                className="h-11 rounded-xl bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 font-bold"
+                                                                value={newProduct.badge}
+                                                                onChange={(e) => setNewProduct({ ...newProduct, badge: e.target.value.toUpperCase() })}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="stock" className="text-[10px] font-black uppercase text-zinc-400 px-1 tracking-tighter">Stock Status</Label>
+                                                            <Select
+                                                                value={newProduct.stock_status}
+                                                                onValueChange={(val: any) => setNewProduct({ ...newProduct, stock_status: val })}
+                                                            >
+                                                                <SelectTrigger className="h-11 rounded-xl bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 font-bold">
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+                                                                    <SelectItem value="in_stock">In Stock</SelectItem>
+                                                                    <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Type & Description */}
+                                                    <div className="space-y-6">
+                                                        <div className="space-y-3">
+                                                            <Label htmlFor="type" className="text-xs font-black uppercase tracking-widest text-zinc-400">Product Type</Label>
+                                                            <Select
+                                                                value={newProduct.type}
+                                                                onValueChange={(val: any) => setNewProduct({ ...newProduct, type: val })}
+                                                            >
+                                                                <SelectTrigger className="h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border-none px-5 font-bold">
+                                                                    <SelectValue placeholder="Select type" />
+                                                                </SelectTrigger>
+                                                                <SelectContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+                                                                    <SelectItem value="digital_product">Digital Product</SelectItem>
+                                                                    <SelectItem value="physical_product">Physical Product</SelectItem>
+                                                                    <SelectItem value="physical_service">Physical Service</SelectItem>
+                                                                    <SelectItem value="digital_service">Digital Service</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+
+                                                        <div className="space-y-3">
+                                                            <Label htmlFor="desc" className="text-xs font-black uppercase tracking-widest text-zinc-400">Description</Label>
+                                                            <Textarea
+                                                                id="desc"
+                                                                placeholder="Tell your customers about this product..."
+                                                                className="rounded-[2rem] bg-zinc-50 dark:bg-zinc-900 border-none min-h-[120px] p-5 font-medium resize-none"
+                                                                value={newProduct.description}
+                                                                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Marketplace Plugins */}
+                                                    {newProduct.type !== 'digital_product' && newProduct.type && (
+                                                        <div className="p-6 bg-zinc-50 dark:bg-zinc-900/40 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50">
+                                                            <div className="flex items-center gap-4 mb-4">
+                                                                <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-2xl flex items-center justify-center shadow-sm">
+                                                                    <Store className="w-6 h-6 text-zinc-900 dark:text-zinc-100" />
+                                                                </div>
+                                                                <div>
+                                                                    <Label className="text-sm font-black">Marketplace Plugins</Label>
+                                                                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Boost Sales</p>
+                                                                </div>
+                                                            </div>
+                                                            <p className="text-xs font-medium text-zinc-500 mb-5 leading-relaxed">
+                                                                Need shipping labels or razorpay checkout? browse our marketplace for high-converting plugins.
+                                                            </p>
+                                                            <Button
+                                                                type="button"
+                                                                onClick={() => window.location.href = '/marketplace'}
+                                                                className="w-full h-12 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold hover:scale-[1.01] transition-all"
+                                                            >
+                                                                Browse Plugins
+                                                            </Button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Product Image Upload Section */}
+                                                    <div className="space-y-4">
+                                                        <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                                            <Upload className="w-3.5 h-3.5" />
+                                                            Product Images (Max 3)
+                                                        </Label>
+                                                        <div className="grid grid-cols-3 gap-4">
+                                                            {newProduct.images.map((img, idx) => (
+                                                                <div key={idx} className="relative aspect-square rounded-[1.5rem] overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 group shadow-lg">
+                                                                    <img src={img} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                                                                    {idx === 0 && (
+                                                                        <div className="absolute top-2 left-2 px-2.5 py-1 bg-zinc-900/80 text-[7px] font-black text-white uppercase tracking-[0.2em] rounded-full backdrop-blur-md shadow-lg border border-white/10">
+                                                                            Thumbnail
+                                                                        </div>
+                                                                    )}
+                                                                    <button 
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const updated = [...newProduct.images];
+                                                                            updated.splice(idx, 1);
+                                                                            setNewProduct({ ...newProduct, images: updated });
+                                                                        }}
+                                                                        className="absolute top-2 right-2 w-7 h-7 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110 shadow-lg"
+                                                                    >
+                                                                        <X className="w-3.5 h-3.5 text-white" />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                            {newProduct.images.length < 3 && (
+                                                                <div className="rounded-[1.5rem] overflow-hidden border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all aspect-square p-0.5 bg-zinc-50/50 dark:bg-zinc-900/20">
+                                                                    <ImageUpload
+                                                                        value=""
+                                                                        onChange={(url) => {
+                                                                            if (url) {
+                                                                                setNewProduct(prev => ({ ...prev, images: [...prev.images, url] }));
+                                                                            }
+                                                                        }}
+                                                                        className="h-full w-full [&>div]:border-none [&>div]:bg-transparent [&>div]:h-full [&>div]:p-0"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800/50">
+                                                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-center leading-relaxed">
+                                                                Adding multiple images boosts conversions. First image is used as the main thumbnail.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </div>
+
+                                            <div className="p-6 bg-white dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-800">
+                                                <Button 
+                                                    onClick={() => handleSaveProduct({ preventDefault: () => {} } as any)} 
+                                                    disabled={isSubmitting} 
+                                                    className="w-full h-16 rounded-[2rem] bg-black dark:bg-white text-white dark:text-black font-black text-xl shadow-2xl transition-all active:scale-[0.98]"
+                                                >
+                                                    {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : (isEditOpen ? 'Update Product' : 'Drop Product')}
+                                                </Button>
+                                            </div>
                                         </DialogContentBottomSheet>
                                     </Dialog>
 
@@ -934,7 +973,6 @@ const Shop = () => {
                                                     <Switch
                                                         checked={product.is_active}
                                                         onCheckedChange={() => handleToggleProduct(product._id, product.is_active)}
-                                                        className="data-[state=checked]:bg-green-500"
                                                     />
 
                                                     <DropdownMenu>
@@ -954,6 +992,7 @@ const Shop = () => {
                                                                         description: product.description || "",
                                                                         type: product.product_type || product.type || "physical_product",
                                                                         image_url: product.image_url || "",
+                                                                        images: product.images || (product.image_url ? [product.image_url] : []),
                                                                         file_url: product.file_url || "",
                                                                         is_featured: product.is_featured || false,
                                                                         badge: product.badge || "",

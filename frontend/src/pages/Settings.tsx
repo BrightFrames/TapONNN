@@ -488,21 +488,21 @@ const Settings = () => {
                                             <p className="font-medium text-gray-900 dark:text-zinc-200">{t('settings.weeklyAnalytics')}</p>
                                             <p className="text-sm text-gray-500 dark:text-zinc-500 mt-0.5">{t('settings.weeklyAnalyticsDesc')}</p>
                                         </div>
-                                        <Switch defaultChecked className="data-[state=checked]:bg-indigo-500" />
+                                        <Switch defaultChecked />
                                     </div>
                                     <div className="flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
                                         <div>
                                             <p className="font-medium text-gray-900 dark:text-zinc-200">{t('settings.newFeatures')}</p>
                                             <p className="text-sm text-gray-500 dark:text-zinc-500 mt-0.5">{t('settings.newFeaturesDesc')}</p>
                                         </div>
-                                        <Switch defaultChecked className="data-[state=checked]:bg-indigo-500" />
+                                        <Switch defaultChecked />
                                     </div>
                                     <div className="flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
                                         <div>
                                             <p className="font-medium text-gray-900 dark:text-zinc-200">{t('settings.marketingEmails')}</p>
                                             <p className="text-sm text-gray-500 dark:text-zinc-500 mt-0.5">{t('settings.marketingEmailsDesc')}</p>
                                         </div>
-                                        <Switch className="data-[state=checked]:bg-indigo-500" />
+                                        <Switch />
                                     </div>
                                 </CardContent>
                             </Card>

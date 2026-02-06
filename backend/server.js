@@ -1,7 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
+const helmet = require('helmet');
 const { Server } = require("socket.io");
+const { antiScrapeMiddleware, globalLimiter } = require('./middleware/antiScrape');
 require('dotenv').config();
 
 // Initialize express
@@ -17,6 +19,14 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
     console.error('UNHANDLED REJECTION:', reason);
 });
+
+// Security Middleware
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false, // Set to false if it interferes with your specific setup, or configure properly
+}));
+app.use(globalLimiter);
+app.use(antiScrapeMiddleware);
 
 // CORS Configuration
 const corsOptions = {

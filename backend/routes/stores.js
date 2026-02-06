@@ -21,4 +21,7 @@ router.put('/:storeId', authMiddleware, storeController.updateStore);
 // Get public store by username
 router.get('/public/:username', storeController.getPublicStore);
 
+// Subscribe to store updates
+router.post('/subscribe', storeController.subscribeToStore);
+
 module.exports = router;

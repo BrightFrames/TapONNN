@@ -13,6 +13,8 @@ import LoginToContinueModal from "@/components/LoginToContinueModal";
 import ShareModal from "@/components/ShareModal";
 import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 import { MessageSignupModal } from "@/components/MessageSignupModal";
+import { QuickAuthModal } from "@/components/QuickAuthModal";
+import { StoreUpdates } from "@/components/StoreUpdates";
 import useIntent, { getPendingIntent, clearPendingIntent } from "@/hooks/useIntent";
 import { toast } from "sonner";
 import { getIconForThumbnail } from "@/utils/socialIcons";
@@ -89,6 +91,10 @@ const PublicProfile = () => {
     // Derived Products Data
     const featuredProducts = (products || []).filter(p => p.is_featured);
     const regularProducts = (products || []).filter(p => !p.is_featured);
+    const filteredProducts = (products || []).filter(p => 
+        p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     useEffect(() => {
         setActiveTab(isStoreRoute ? 'store' : 'personal');
@@ -118,6 +124,7 @@ const PublicProfile = () => {
     const [loginModal, setLoginModal] = useState({ open: false, intentId: '', ctaType: '', blockTitle: '' });
     const [connectModal, setConnectModal] = useState<{ open: boolean; product: any; seller: any }>({ open: false, product: null, seller: null });
     const [messageSignupOpen, setMessageSignupOpen] = useState(false);
+    const [quickAuthOpen, setQuickAuthOpen] = useState(false);
 
     // Initialize Analytics
     const { trackClick } = useAnalytics(profile?.id);
@@ -226,7 +233,8 @@ const PublicProfile = () => {
                 is_store_identity: userProfile.is_store_identity,
                 design_config: userProfile.design_config,
                 has_store: userProfile.has_store,
-                show_shop_on_profile: userProfile.show_shop_on_profile ?? true
+                show_stores_on_profile: userProfile.show_stores_on_profile ?? false,
+                visible_stores: userProfile.visible_stores || []
             });
 
             const context = isStoreRoute ? 'store' : 'personal';
@@ -484,6 +492,19 @@ const PublicProfile = () => {
         );
     }
 
+    if (notFound || !profile) {
+        return (
+            <div className="min-h-screen w-full flex flex-col items-center justify-center text-center px-4 bg-zinc-50">
+                <div className="p-4 rounded-full mb-4 shadow-sm bg-white">
+                    <Link2 className="w-8 h-8 opacity-50 text-zinc-400" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2 text-zinc-900">Profile not found</h2>
+                <p className="text-zinc-500 mb-6 text-sm">The bio link you're looking for doesn't exist or has been moved.</p>
+                <Button onClick={() => navigate('/')} variant="outline" className="rounded-xl border-zinc-200 text-zinc-900">Go Home</Button>
+            </div>
+        );
+    }
+
     const designConfig = profile.design_config || {};
     const theme = profile.selectedTheme || {};
 
@@ -582,33 +603,50 @@ const PublicProfile = () => {
         return { backgroundColor: color };
     };
 
-    if (notFound || !profile) {
-        return (
-            <div className="min-h-screen w-full flex flex-col items-center justify-center text-center px-4" style={{ ...getBackgroundStyle(bgColor), color: textColor }}>
-                <div className="p-4 rounded-full mb-4 shadow-sm" style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#fff' }}>
-                    <Link2 className="w-8 h-8 opacity-50" />
-                </div>
-                <h2 className="text-2xl font-bold mb-2">Profile not found</h2>
-                <Button onClick={() => navigate('/')} variant="outline" style={{ color: textColor, borderColor: textColor }}>Go Home</Button>
-            </div>
-        );
-    }
-
     return (
-        <div className="fixed inset-0 w-full h-full font-sans selection:bg-zinc-200" style={{ ...getBackgroundStyle(bgColor), color: textColor }}>
+        <div className="fixed inset-0 w-full h-full font-sans selection:bg-zinc-200 overflow-hidden" style={{ color: textColor }}>
+            
+            {/* Background Blur Layer - Fills the entire screen with the cover photo's colors */}
+            <div 
+                className="absolute inset-0 z-0 transition-all duration-1000 ease-out pointer-events-none"
+                style={{
+                    backgroundColor: bgColor,
+                }}
+            >
+                {/* Blurred Cover Image Background */}
+                <div 
+                    className="absolute inset-0 opacity-40 blur-[80px] saturate-[1.8] scale-110"
+                    style={{
+                        background: (profile.design_config?.coverUrl || profile.design_config?.bgImageUrl) 
+                            ? `url(${profile.design_config.coverUrl || profile.design_config.bgImageUrl}) center/cover no-repeat` 
+                            : (profile.design_config?.coverColor || bgColor),
+                    }}
+                />
+                
+                {/* Dynamic Gradient Overlay that responds to scroll */}
+                <div 
+                    className="absolute inset-0 transition-opacity duration-700"
+                    style={{
+                        background: `linear-gradient(135deg, ${hexToRgba(bgColor, 0.9)}, ${hexToRgba(bgColor, 0.7)}, ${hexToRgba(buttonColor, 0.3)})`,
+                        opacity: 0.8 + (scrollProgress * 0.2)
+                    }}
+                />
+            </div>
 
             {/* 1. Fixed Sticky Header */}
-            <div className={cn(
-                "absolute top-0 left-0 right-0 z-[60] h-[88px] flex items-end px-5 pb-3 transition-all duration-300 pointer-events-none",
-                isScrolled ? "backdrop-blur-xl shadow-sm border-b border-black/5" : "bg-transparent"
-            )} style={isScrolled ? {
-                background: `linear-gradient(to bottom, ${hexToRgba(bgColor, 0.85)}, ${bgColor}), url(${profile.cover_photo}) center/cover no-repeat`,
-            } : { backgroundColor: 'transparent' }}>
-                <div className="flex items-center justify-between w-full max-w-md mx-auto pointer-events-auto">
+            <div className="fixed top-0 left-0 right-0 z-[60] pointer-events-none">
+                <div className={cn(
+                    "flex items-end justify-between w-full max-w-md mx-auto h-[88px] px-5 pb-3 transition-all duration-500 pointer-events-auto",
+                    isScrolled ? "backdrop-blur-xl shadow-lg border-x border-b rounded-b-[2.5rem]" : "bg-transparent"
+                )} style={isScrolled ? {
+                    backgroundColor: cardBgColor,
+                    borderColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.3)',
+                    boxShadow: isDarkTheme ? '0 10px 30px -10px rgba(0,0,0,0.5)' : '0 10px 30px -10px rgba(0,0,0,0.1)'
+                } : { backgroundColor: 'transparent' }}>
                     <div className="flex items-center gap-2 h-9 overflow-visible relative w-40">
                         {/* Tapx Logo */}
                         <div
-                            onClick={() => navigate('/signup')}
+                            onClick={() => setQuickAuthOpen(true)}
                             className={cn(
                                 "absolute left-0 flex items-center gap-1.5 transition-all duration-500 transform origin-left px-2.5 py-1 rounded-full cursor-pointer hover:scale-105",
                                 isScrolled ? "opacity-0 -translate-y-4 pointer-events-none" : "opacity-100 translate-y-0 delay-100 bg-black/20 backdrop-blur-md border border-white/10"
@@ -658,37 +696,43 @@ const PublicProfile = () => {
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="w-full h-full overflow-y-auto overflow-x-hidden scrollbar-hide relative"
-                style={getBackgroundStyle(bgColor)}
+                className="w-full h-full overflow-y-auto overflow-x-hidden scrollbar-hide relative z-10"
             >
                 {/* Max Width Container to mimic phone on desktop */}
-                <div className="w-full max-w-md mx-auto min-h-full flex flex-col relative box-border shadow-2xl md:my-0 md:min-h-screen"
-                    style={getBackgroundStyle(bgColor)}
-                >
+                <div className="w-full max-w-md mx-auto min-h-full flex flex-col relative box-border md:my-0 md:min-h-screen">
 
-                    {/* Cover Photo */}
-                    <div className="h-64 w-full relative z-0 shrink-0 overflow-hidden">
+                    {/* Cover Photo - The "Pink" or Image area */}
+                    <div className="h-[28rem] w-full relative z-0 shrink-0 overflow-hidden">
                         <div
-                            className="w-full h-full transition-all duration-300"
+                            className="w-full h-full transition-all duration-500 ease-out origin-top"
                             style={{
-                                filter: `blur(${Math.min(scrollProgress * 15, 10)}px)`,
-                                transform: `scale(${1 + scrollProgress * 0.1})`,
+                                filter: `blur(${scrollProgress * 40}px) saturate(${1 + scrollProgress})`,
+                                transform: `scale(${1 + scrollProgress * 0.2}) translateY(${scrollProgress * 20}px)`,
                             }}
                         >
                             {renderCoverMedia() || (
-                                <div className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500" />
+                                <div className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 animate-gradient-slow" />
                             )}
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent pointer-events-none" />
+                        
+                        {/* Smooth Gradient Overlay for transition to content */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/10 pointer-events-none" />
+                        
+                        {/* Scroll-dependent overlay to darken/blur as we move down */}
+                        <div 
+                            className="absolute inset-0 bg-black/10 backdrop-blur-sm transition-opacity duration-300 pointer-events-none"
+                            style={{ opacity: Math.max(0, scrollProgress - 0.2) }}
+                        />
                     </div>
 
                     {/* Uplifted Card */}
-                    <div className="relative z-10 -mt-10 px-4 pb-12 flex-1 flex flex-col">
+                    <div className="relative z-10 -mt-24 px-0 pb-12 flex-1 flex flex-col">
                         <div
-                            className="w-full rounded-[2rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] p-5 pt-0 flex flex-col items-center animate-in slide-in-from-bottom-8 duration-700 fill-mode-both min-h-[60vh] relative overflow-hidden"
+                            className="w-full rounded-[2.5rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] p-5 pt-0 flex flex-col items-center animate-in slide-in-from-bottom-12 duration-1000 fill-mode-both min-h-[70vh] relative overflow-hidden backdrop-blur-md"
                             style={{
-                                backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.9)' : cardBgColor,
-                                border: isDarkTheme ? '1px solid rgba(255,255,255,0.1)' : 'none'
+                                backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.92)',
+                                border: isDarkTheme ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.3)',
+                                boxShadow: isDarkTheme ? '0 25px 50px -12px rgba(0,0,0,0.5)' : '0 25px 50px -12px rgba(0,0,0,0.15)'
                             }}
                         >
                             {/* Profile Avatar Background - Full Silhouette */}
@@ -713,45 +757,59 @@ const PublicProfile = () => {
                             />
 
                             {/* Large Profile Header */}
-                            <div className="relative z-10 -top-10 flex flex-col items-center mb-[-24px]">
+                            <div className="relative z-10 pt-14 flex flex-col items-center mb-8 w-full px-6">
                                 <div className={cn(
-                                    "w-24 h-24 rounded-full border-[5px] shadow-lg overflow-hidden mb-3 transition-all duration-300",
+                                    "w-28 h-28 rounded-full border-[6px] shadow-2xl overflow-hidden mb-6 transition-all duration-300",
                                     scrollProgress > 0.2 ? "scale-90 opacity-80" : "scale-100 opacity-100"
-                                )} style={{ borderColor: isDarkTheme ? bgColor : cardBgColor, backgroundColor: isDarkTheme ? bgColor : cardBgColor }}>
+                                )} style={{ borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#ffffff', backgroundColor: isDarkTheme ? bgColor : cardBgColor }}>
                                     <Avatar className="w-full h-full">
                                         <AvatarImage src={profile.avatar} className="object-cover" />
-                                        <AvatarFallback style={{ backgroundColor: buttonColor, color: buttonTextColor }} className="text-3xl font-bold">{userInitial}</AvatarFallback>
+                                        <AvatarFallback style={{ backgroundColor: buttonColor, color: buttonTextColor }} className="text-4xl font-bold">{userInitial}</AvatarFallback>
                                     </Avatar>
                                 </div>
                                 <div className={cn(
-                                    "text-center transition-all duration-300",
+                                    "text-center transition-all duration-300 w-full",
                                     scrollProgress > 0.4 ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
                                 )}>
-                                    <h1 className="text-2xl font-black tracking-tight flex items-center gap-1.5 justify-center" style={{ color: textColor }}>
+                                    <h1 className="text-3xl font-black tracking-tighter flex items-center gap-2 justify-center" style={{ color: textColor }}>
                                         {profile.name}
-                                        {profile.is_email_verified && <BadgeCheck className="w-5 h-5 text-blue-500 fill-blue-500/10" />}
+                                        {profile.is_email_verified && <BadgeCheck className="w-6 h-6 text-blue-500 fill-blue-500/10" />}
                                     </h1>
-                                    <p className="text-sm font-medium opacity-60 mt-1" style={{ color: textColor }}>@{profile.username}</p>
-                                    {profile.bio && <p className="text-sm mt-3 max-w-xs leading-relaxed opacity-80" style={{ color: textColor }}>{profile.bio}</p>}
+                                    <p className="text-base font-bold opacity-40 mt-0.5 tracking-tight" style={{ color: textColor }}>@{profile.username}</p>
+                                    
+                                    {profile.bio && (
+                                        <div className="mt-4 px-2">
+                                            <p className="text-sm font-medium leading-relaxed opacity-70 max-w-[280px] mx-auto" style={{ color: textColor }}>
+                                                {profile.bio}
+                                            </p>
+                                        </div>
+                                    )}
 
                                     {/* Social Links */}
                                     {profile.social_links && Object.keys(profile.social_links).length > 0 && (
-                                        <div className="flex gap-3 justify-center mt-4">
+                                        <div className="flex gap-4 justify-center mt-6">
                                             {Object.entries(profile.social_links).map(([platform, url]: [string, any]) => {
                                                 if (!url) return null;
                                                 const Icon = getIconForThumbnail(platform);
                                                 const href = url.startsWith('http') ? url : `https://${url}`;
+                                                
+                                                // Check if it's a brand icon to decide on styling
+                                                const isBrandIcon = ['instagram', 'facebook', 'twitter', 'youtube', 'linkedin', 'whatsapp', 'telegram', 'github'].includes(platform.toLowerCase());
+                                                
                                                 return Icon ? (
                                                     <a
                                                         key={platform}
                                                         href={href}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="w-8 h-8 rounded-full flex items-center justify-center hover:opacity-80 transition-colors"
-                                                        style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : `${textColor}10`, color: textColor }}
+                                                        className="w-10 h-10 rounded-xl flex items-center justify-center hover:scale-110 transition-all duration-200 shadow-sm"
+                                                        style={{ 
+                                                            backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : '#ffffff',
+                                                            border: isDarkTheme ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.05)'
+                                                        }}
                                                         onClick={() => trackClick(null, href)}
                                                     >
-                                                        <Icon className="w-4 h-4" />
+                                                        <Icon className={cn("w-5 h-5", !isBrandIcon && "currentColor")} style={!isBrandIcon ? { color: textColor } : {}} />
                                                     </a>
                                                 ) : null;
                                             })}
@@ -769,9 +827,9 @@ const PublicProfile = () => {
                                         onClick={() => setActiveTab('personal')}
                                         className={cn(
                                             "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
-                                            activeTab === 'personal' ? "bg-white shadow-sm text-black" : "text-zinc-500 hover:text-zinc-700"
+                                            activeTab === 'personal' ? "shadow-sm" : "opacity-60 hover:opacity-100"
                                         )}
-                                        style={activeTab === 'personal' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : cardBgColor } : { color: textColor, opacity: 0.6 }}
+                                        style={activeTab === 'personal' ? { color: isDarkTheme ? '#ffffff' : '#000000', backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#ffffff' } : { color: textColor }}
                                     >
                                         Links
                                     </button>
@@ -779,9 +837,9 @@ const PublicProfile = () => {
                                         onClick={() => setActiveTab('store')}
                                         className={cn(
                                             "flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5",
-                                            activeTab === 'store' ? "bg-white shadow-sm text-black" : "text-zinc-500 hover:text-zinc-700"
+                                            activeTab === 'store' ? "shadow-sm" : "opacity-60 hover:opacity-100"
                                         )}
-                                        style={activeTab === 'store' ? { color: textColor, backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.4)' : cardBgColor } : { color: textColor, opacity: 0.6 }}
+                                        style={activeTab === 'store' ? { color: isDarkTheme ? '#ffffff' : '#000000', backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#ffffff' } : { color: textColor }}
                                     >
                                         Stores
                                     </button>
@@ -798,18 +856,20 @@ const PublicProfile = () => {
                                             <div className="space-y-4">
                                                 <div className="flex items-center justify-between px-1">
                                                     <h2 className="text-lg font-black tracking-tight flex items-center gap-2" style={{ color: textColor }}>
-                                                        <Sparkles className="w-4 h-4 text-amber-500" />
+                                                        <Sparkles className="w-4 h-4" style={{ color: isDarkTheme ? '#ffffff' : '#000000' }} />
                                                         Top Picks
                                                     </h2>
                                                 </div>
-                                                <div className="flex overflow-x-auto gap-5 pb-6 scrollbar-hide snap-x px-1">
+                                                <div className="flex flex-nowrap overflow-x-auto gap-5 pb-6 scrollbar-hide snap-x px-1">
                                                     {featuredProducts.map((product) => (
                                                         <div
                                                             key={product._id}
                                                             onClick={() => setSelectedProduct(product)}
-                                                            className="min-w-[280px] snap-center rounded-[2.5rem] overflow-hidden border relative flex flex-col group transition-all active:scale-[0.98] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.04)]"
+                                                            className="min-w-[280px] snap-center rounded-[2.5rem] overflow-hidden border relative flex flex-col group transition-all active:scale-[0.98] shadow-2xl backdrop-blur-xl"
                                                             style={{ 
+                                                                backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.9)',
                                                                 borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.06)',
+                                                                boxShadow: isDarkTheme ? '0 20px 50px rgba(0,0,0,0.5)' : '0 10px 40px rgba(0,0,0,0.04)'
                                                             }}
                                                         >
                                                             {/* Badge */}
@@ -821,31 +881,31 @@ const PublicProfile = () => {
                                                                 </div>
                                                             )}
                                                             
-                                                            <div className="aspect-square relative p-8 flex items-center justify-center bg-white">
+                                                            <div className="aspect-square relative p-8 flex items-center justify-center" style={{ backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.02)' : 'transparent' }}>
                                                                 {product.image_url ? (
                                                                     <img src={product.image_url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
                                                                 ) : (
-                                                                    <div className="w-full h-full flex items-center justify-center text-5xl bg-zinc-50 rounded-3xl text-zinc-300">🛍️</div>
+                                                                    <div className="w-full h-full flex items-center justify-center text-5xl bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl text-zinc-300">🛍️</div>
                                                                 )}
                                                             </div>
                                                             
                                                             <div className="px-6 pb-8 pt-2 flex flex-col">
-                                                                <h3 className="text-xl font-bold leading-tight line-clamp-2 text-zinc-900 mb-2">{product.title}</h3>
-                                                                <p className="text-xs text-zinc-400 line-clamp-2 min-h-[32px] mb-4 leading-relaxed">{product.description}</p>
+                                                                <h3 className="text-xl font-bold leading-tight line-clamp-2 mb-2" style={{ color: textColor }}>{product.title}</h3>
+                                                                <p className="text-xs line-clamp-2 min-h-[32px] mb-4 leading-relaxed opacity-60" style={{ color: textColor }}>{product.description}</p>
                                                                 
                                                                 <div className="space-y-1 mb-6">
                                                                     <div className="flex items-center gap-2">
-                                                                        <span className="text-sm font-semibold text-zinc-500">Price:</span>
-                                                                        <span className="text-base font-black text-zinc-900">₹{product.price}</span>
+                                                                        <span className="text-sm font-semibold opacity-50" style={{ color: textColor }}>Price:</span>
+                                                                        <span className="text-base font-black" style={{ color: textColor }}>₹{product.price}</span>
                                                                         {product.discount_price && (
-                                                                            <span className="text-sm text-zinc-300 line-through">₹{product.discount_price}</span>
+                                                                            <span className="text-sm opacity-30 line-through" style={{ color: textColor }}>₹{product.discount_price}</span>
                                                                         )}
                                                                     </div>
                                                                     <div className="flex items-center gap-2">
-                                                                        <span className="text-sm font-semibold text-zinc-500">Stock:</span>
+                                                                        <span className="text-sm font-semibold opacity-50" style={{ color: textColor }}>Stock:</span>
                                                                         <span className={cn(
                                                                             "text-sm font-bold",
-                                                                            product.stock_status === 'out_of_stock' ? "text-red-500" : "text-[#1a73e8]"
+                                                                            product.stock_status === 'out_of_stock' ? "text-red-500" : (isDarkTheme ? "text-green-400" : "text-green-600")
                                                                         )}>
                                                                             {product.stock_status === 'out_of_stock' ? 'Out of Stock' : 'In Stock'}
                                                                         </span>
@@ -855,7 +915,12 @@ const PublicProfile = () => {
                                                                 <div className="flex items-center gap-3">
                                                                     <Button 
                                                                         variant="outline"
-                                                                        className="flex-1 rounded-2xl h-12 font-bold text-sm border-zinc-200 text-zinc-900 group-hover:border-[#1a73e8] group-hover:text-[#1a73e8] transition-all"
+                                                                        className="flex-1 rounded-2xl h-12 font-bold text-sm transition-all"
+                                                                        style={{ 
+                                                                            borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                                                            backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'white',
+                                                                            color: textColor
+                                                                        }}
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
                                                                             handleProductAction(product, 'enquire');
@@ -863,7 +928,11 @@ const PublicProfile = () => {
                                                                     >
                                                                         Enquire
                                                                     </Button>
-                                                                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center border border-zinc-100 transition-colors hover:bg-zinc-50 group/heart"
+                                                                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center border transition-colors group/heart"
+                                                                        style={{ 
+                                                                            borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                                                            backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'white'
+                                                                        }}
                                                                         onClick={(e) => handleLike(product._id, e)}
                                                                     >
                                                                         <Heart className={cn("w-5 h-5 transition-all", likedProductIds.has(product._id) ? "fill-red-500 text-red-500 scale-110" : "text-zinc-300")} />
@@ -878,14 +947,36 @@ const PublicProfile = () => {
 
                                         {/* 2. Rest of the Products (The Grid) */}
                                         <div className="space-y-4">
-                                            {featuredProducts.length > 0 && regularProducts.length > 0 && (
+                                            {featuredProducts.length > 0 && products.length > 0 && (
                                                 <h2 className="text-sm font-black opacity-30 uppercase tracking-[0.2em] px-1" style={{ color: textColor }}>
                                                     All Products
                                                 </h2>
                                             )}
+
+                                            {/* Search Bar - Only for Store Identity or if products exist */}
+                                            {products.length > 0 && (
+                                                <div className="px-1 relative group">
+                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-zinc-600 transition-colors">
+                                                        <Search className="w-4 h-4" />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search products..."
+                                                        value={searchQuery}
+                                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                                        className="w-full h-11 pl-10 pr-4 rounded-xl text-sm border focus:outline-none focus:ring-2 transition-all"
+                                                        style={{
+                                                            backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
+                                                            borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.06)',
+                                                            color: textColor,
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+
                                             <div className="grid grid-cols-2 gap-3">
-                                                {(featuredProducts.length === 0 ? products : regularProducts).length > 0 ? (
-                                                    (featuredProducts.length === 0 ? products : regularProducts).map((product) => (
+                                                {filteredProducts.length > 0 ? (
+                                                    filteredProducts.map((product) => (
                                                         <div
                                                             key={product._id}
                                                             className="rounded-xl overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-all active:scale-[0.98] group flex flex-col backdrop-blur-xl"
@@ -939,11 +1030,20 @@ const PublicProfile = () => {
                                                     ))
                                                 ) : (
                                                     <div className="col-span-2 text-center py-10 opacity-60">
-                                                        <ShoppingBag className="w-6 h-6 mx-auto mb-2" style={{ color: textColor, opacity: 0.4 }} />
-                                                        <p className="text-xs" style={{ color: textColor, opacity: 0.5 }}>No products found</p>
+                                                        <Search className="w-6 h-6 mx-auto mb-2" style={{ color: textColor, opacity: 0.4 }} />
+                                                        <p className="text-xs" style={{ color: textColor, opacity: 0.5 }}>
+                                                            {searchQuery ? `No results for "${searchQuery}"` : "No products found"}
+                                                        </p>
                                                     </div>
                                                 )}
                                             </div>
+
+                                            {/* Store Updates Section */}
+                                            <StoreUpdates 
+                                                sellerId={profile?.id} 
+                                                textColor={textColor} 
+                                                isDarkTheme={isDarkTheme} 
+                                            />
                                         </div>
                                     </div>
                                 ) : profile?.show_stores_on_profile && activeTab === 'store' ? (
@@ -1153,16 +1253,23 @@ const PublicProfile = () => {
                 }}
             />
 
+            <QuickAuthModal
+                open={quickAuthOpen}
+                onOpenChange={setQuickAuthOpen}
+            />
+
             {/* Link Interstitial Overlay */}
             {selectedBlock && (
-                <div className="fixed inset-0 bg-[#F2F7FD] z-[80] flex flex-col animate-in slide-in-from-bottom-10 duration-300">
+                <div className="fixed inset-0 z-[80] flex flex-col animate-in slide-in-from-bottom-10 duration-300"
+                    style={{ backgroundColor: isDarkTheme ? '#09090b' : '#F2F7FD' }}
+                >
                     {/* Header */}
                     <div className="px-6 py-4 flex items-center justify-between safe-area-top">
                         <div className="flex items-center gap-3">
-                            <Button variant="ghost" size="icon" onClick={() => setSelectedBlock(null)} className="-ml-2 hover:bg-black/5 rounded-full">
-                                <ChevronLeft className="w-6 h-6 text-zinc-800" />
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedBlock(null)} className="-ml-2 hover:bg-black/5 rounded-full" style={{ color: textColor }}>
+                                <ChevronLeft className="w-6 h-6" />
                             </Button>
-                            <span className="font-semibold text-sm text-zinc-500 truncate max-w-[200px]">tapx.bio/{username}</span>
+                            <span className="font-semibold text-sm opacity-50 truncate max-w-[200px]" style={{ color: textColor }}>tapx.bio/{username}</span>
                         </div>
                         <Avatar className="w-9 h-9 border-2 border-white shadow-sm">
                             <AvatarImage src={profile?.avatar} />
@@ -1172,33 +1279,41 @@ const PublicProfile = () => {
 
                     <div className="flex-1 overflow-y-auto px-6 py-4 pb-32">
                         {/* Rating Badge */}
-                        <div className="bg-white w-fit px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1 mb-4">
-                            <Star className="w-3 h-3 text-black fill-black" />
-                            <span className="text-xs font-bold">5.0</span>
+                        <div className="w-fit px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1 mb-4"
+                            style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#ffffff' }}
+                        >
+                            <Star className="w-3 h-3 text-black dark:text-white fill-current" />
+                            <span className="text-xs font-bold" style={{ color: textColor }}>5.0</span>
                         </div>
 
                         {/* Title */}
-                        <h1 className="text-3xl font-black text-zinc-900 leading-tight mb-8 tracking-tight">
+                        <h1 className="text-3xl font-black leading-tight mb-8 tracking-tight" style={{ color: textColor }}>
                             {selectedBlock.title}
                         </h1>
 
                         {/* Info Row */}
-                        <div className="flex border-y border-zinc-200 divide-x divide-zinc-200 mb-8 bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div className="flex border-y divide-x mb-8 rounded-xl shadow-sm overflow-hidden"
+                            style={{ 
+                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : '#ffffff',
+                                borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                divideColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                            }}
+                        >
                             <div className="flex-1 py-4 px-4 flex items-center gap-3">
                                 {(selectedBlock.content?.url || selectedBlock.url) ? (
                                     <Favicon
                                         url={selectedBlock.content?.url || selectedBlock.url}
                                         className="w-5 h-5 object-contain"
-                                        fallback={<ShoppingBag className="w-5 h-5 text-zinc-900" />}
+                                        fallback={<ShoppingBag className="w-5 h-5" style={{ color: textColor }} />}
                                     />
                                 ) : (
-                                    <ShoppingBag className="w-5 h-5 text-zinc-900" />
+                                    <ShoppingBag className="w-5 h-5" style={{ color: textColor }} />
                                 )}
-                                <span className="text-sm font-semibold text-zinc-700">Website Link</span>
+                                <span className="text-sm font-semibold" style={{ color: isDarkTheme ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)' }}>Website Link</span>
                             </div>
                             <div className="flex-1 py-4 px-4 flex items-center gap-3">
-                                <Sparkles className="w-5 h-5 text-zinc-900" />
-                                <span className="text-sm font-semibold text-zinc-700">{selectedBlock.analytics?.clicks || 0} Visits</span>
+                                <Sparkles className="w-5 h-5" style={{ color: isDarkTheme ? '#ffffff' : '#000000' }} />
+                                <span className="text-sm font-semibold" style={{ color: isDarkTheme ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)' }}>{selectedBlock.analytics?.clicks || 0} Visits</span>
                             </div>
                         </div>
 
@@ -1206,13 +1321,17 @@ const PublicProfile = () => {
                         <div className="space-y-6 mb-8">
                             {/* Only show thumbnail if it's a valid URL (not a social icon ID) */}
                             {selectedBlock.thumbnail && (selectedBlock.thumbnail.startsWith('http') || selectedBlock.thumbnail.startsWith('/')) && (
-                                <div className="w-full aspect-video rounded-xl overflow-hidden shadow-sm border border-zinc-100">
+                                <div className="w-full aspect-video rounded-xl overflow-hidden shadow-sm border"
+                                    style={{ borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
+                                >
                                     <img src={selectedBlock.thumbnail} className="w-full h-full object-cover" alt={selectedBlock.title} />
                                 </div>
                             )}
 
                             {selectedBlock.content?.description && (
-                                <div className="prose prose-sm prose-zinc max-w-none text-zinc-600 leading-relaxed">
+                                <div className="prose prose-sm max-w-none leading-relaxed"
+                                    style={{ color: isDarkTheme ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                                >
                                     <p>{selectedBlock.content.description}</p>
                                 </div>
                             )}
@@ -1220,13 +1339,22 @@ const PublicProfile = () => {
                     </div>
 
                     {/* Bottom Sticky Action */}
-                    <div className="fixed bottom-0 w-full bg-white border-t border-zinc-100 p-4 safe-area-bottom shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-[90]">
-                        <p className="text-xs font-medium text-zinc-500 mb-3 text-center animate-pulse">
+                    <div className="fixed bottom-0 w-full border-t p-4 safe-area-bottom shadow-2xl z-[90]"
+                        style={{ 
+                            backgroundColor: isDarkTheme ? '#09090b' : '#ffffff',
+                            borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                        }}
+                    >
+                        <p className="text-xs font-medium mb-3 text-center animate-pulse" style={{ color: isDarkTheme ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>
                             Redirecting to website in {countdown} seconds ...
                         </p>
                         <Button
                             onClick={proceedToLink}
-                            className="w-full h-12 bg-black text-white font-bold text-base rounded-lg hover:bg-zinc-800 transition-all flex items-center justify-center gap-2"
+                            className="w-full h-12 font-bold text-base rounded-lg transition-all flex items-center justify-center gap-2"
+                            style={{
+                                backgroundColor: isDarkTheme ? '#ffffff' : '#000000',
+                                color: isDarkTheme ? '#000000' : '#ffffff'
+                            }}
                         >
                             Continue to Link
                             <ArrowRight className="w-4 h-4" />
@@ -1237,70 +1365,108 @@ const PublicProfile = () => {
 
             {/* Product Detail Overlay */}
             {selectedProduct && (
-                <div className="fixed inset-0 z-[80] flex justify-center bg-zinc-50/50 backdrop-blur-sm animate-in slide-in-from-bottom duration-300">
-                    <div className="w-full max-w-md mx-auto h-full bg-white flex flex-col shadow-2xl relative">
-                        <div className="p-4 border-b border-zinc-100 flex items-center justify-between sticky top-0 bg-white z-10 safe-area-top">
-                            <Button variant="ghost" size="icon" onClick={() => setSelectedProduct(null)} className="-ml-2">
+                <div className="fixed inset-0 z-[80] flex justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="w-full max-w-md mx-auto h-full flex flex-col shadow-2xl relative animate-in slide-in-from-bottom duration-500"
+                        style={{ backgroundColor: isDarkTheme ? '#09090b' : '#ffffff' }}
+                    >
+                        <div className="p-4 border-b flex items-center justify-between sticky top-0 z-10 safe-area-top backdrop-blur-xl"
+                            style={{ 
+                                backgroundColor: isDarkTheme ? 'rgba(9, 9, 11, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                                borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                            }}
+                        >
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedProduct(null)} className="-ml-2" style={{ color: textColor }}>
                                 <ChevronLeft className="w-6 h-6" />
                             </Button>
-                            <span className="font-bold text-sm">Product Details</span>
+                            <span className="font-bold text-sm" style={{ color: textColor }}>Product Details</span>
                             <div className="w-9" />
                         </div>
                         <div className="flex-1 overflow-y-auto p-5 pb-32">
-                            <div className="aspect-video bg-zinc-100 rounded-2xl overflow-hidden mb-6 shadow-sm border border-zinc-100 relative">
+                            <div className="aspect-square rounded-3xl overflow-hidden mb-6 shadow-xl border relative group"
+                                style={{ 
+                                    backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                                    borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                                }}
+                            >
                                 {selectedProduct.image_url ?
-                                    <img src={selectedProduct.image_url} className="w-full h-full object-cover" /> :
+                                    <img src={selectedProduct.image_url} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110" /> :
                                     <div className="w-full h-full flex items-center justify-center text-4xl">🛍️</div>
                                 }
-                                <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
-                                    <div className="bg-white/90 backdrop-blur-md p-2 rounded-full shadow-sm cursor-pointer hover:bg-white transition-colors"
+                                <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
+                                    <div className="backdrop-blur-xl p-3 rounded-full shadow-lg cursor-pointer transition-all hover:scale-110 active:scale-95"
+                                        style={{ 
+                                            backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.9)',
+                                            border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
+                                        }}
                                         onClick={(e) => handleLike(selectedProduct._id, e)}
                                     >
-                                        <Heart className={cn("w-5 h-5", likedProductIds.has(selectedProduct._id) ? "fill-red-500 text-red-500" : "text-zinc-600")} />
+                                        <Heart className={cn("w-5 h-5 transition-all", likedProductIds.has(selectedProduct._id) ? "fill-red-500 text-red-500" : "")} 
+                                            style={{ color: likedProductIds.has(selectedProduct._id) ? undefined : textColor }} 
+                                        />
                                     </div>
                                     {selectedProduct.badge && (
-                                        <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-zinc-900 text-white shadow-lg">
+                                        <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-lg"
+                                            style={{ backgroundColor: buttonColor }}
+                                        >
                                             {selectedProduct.badge}
                                         </div>
                                     )}
                                 </div>
                             </div>
-                            <div className="flex items-center justify-between mb-2">
-                                <h1 className="text-2xl font-black leading-tight text-zinc-900">{selectedProduct.title}</h1>
-                                {selectedProduct.stock_status === 'out_of_stock' && (
-                                    <Badge variant="outline" className="text-red-500 border-red-200 bg-red-50">Out of Stock</Badge>
+                            <div className="space-y-4">
+                                <div className="flex items-start justify-between gap-4">
+                                    <h1 className="text-2xl font-black leading-tight tracking-tight" style={{ color: textColor }}>{selectedProduct.title}</h1>
+                                    {selectedProduct.stock_status === 'out_of_stock' && (
+                                        <Badge variant="outline" className="text-red-500 border-red-500/30 bg-red-500/10 shrink-0">Out of Stock</Badge>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-2xl font-black" style={{ color: textColor }}>₹{selectedProduct.price}</span>
+                                    {selectedProduct.discount_price && (
+                                        <span className="text-sm opacity-40 line-through font-medium" style={{ color: textColor }}>
+                                            ₹{selectedProduct.discount_price}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {selectedProduct.description && (
+                                    <div className="pt-4 border-t" style={{ borderColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+                                        <p className="text-sm leading-relaxed opacity-60" style={{ color: textColor }}>{selectedProduct.description}</p>
+                                    </div>
                                 )}
                             </div>
-                            <div className="flex items-center gap-2 mb-6">
-                                <span className="text-xl font-bold text-green-600">₹{selectedProduct.price}</span>
-                                {selectedProduct.discount_price && <span className="text-sm text-zinc-400 line-through">₹{selectedProduct.discount_price}</span>}
-                            </div>
-
-                            {selectedProduct.description && (
-                                <div className="prose prose-sm prose-zinc max-w-none">
-                                    <p className="text-zinc-600 leading-relaxed">{selectedProduct.description}</p>
-                                </div>
-                            )}
                         </div>
 
-                        {/* Sticky Buy/Enquire Bar - Only if description exists */}
-                        {selectedProduct.description && (
-                            <div className="p-4 border-t border-zinc-100 absolute bottom-0 w-full bg-white safe-area-bottom shadow-[0_-5px_20px_rgba(0,0,0,0.05)] flex gap-3">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => handleProductAction(selectedProduct, 'enquire')}
-                                    className="flex-1 h-12 rounded-xl font-bold text-base border-zinc-200 text-zinc-700 hover:bg-zinc-50"
-                                >
-                                    Enquire Now
-                                </Button>
-                                <Button
-                                    onClick={() => handleProductAction(selectedProduct, 'buy')}
-                                    className="flex-1 h-12 rounded-xl bg-black text-white font-bold text-base shadow-lg hover:bg-zinc-800 transition-colors"
-                                >
-                                    Buy Now
-                                </Button>
-                            </div>
-                        )}
+                        {/* Buy/Enquire Bar */}
+                        <div className="p-4 border-t absolute bottom-0 w-full backdrop-blur-xl safe-area-bottom shadow-2xl flex gap-3"
+                            style={{ 
+                                backgroundColor: isDarkTheme ? 'rgba(9, 9, 11, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                                borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                            }}
+                        >
+                            <Button
+                                variant="outline"
+                                onClick={() => handleProductAction(selectedProduct, 'enquire')}
+                                className="flex-1 h-14 rounded-2xl font-black text-sm uppercase tracking-wider transition-all"
+                                style={{ 
+                                    borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                    backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'transparent',
+                                    color: textColor
+                                }}
+                            >
+                                Enquire Now
+                            </Button>
+                            <Button
+                                onClick={() => handleProductAction(selectedProduct, 'buy')}
+                                className="flex-1 h-14 rounded-2xl font-black text-sm uppercase tracking-wider shadow-lg transition-all hover:opacity-90 active:scale-95"
+                                style={{ 
+                                    backgroundColor: isDarkTheme ? '#ffffff' : '#000000',
+                                    color: isDarkTheme ? '#000000' : '#ffffff'
+                                }}
+                            >
+                                Buy Now
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}

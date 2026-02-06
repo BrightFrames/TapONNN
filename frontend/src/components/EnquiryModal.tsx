@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Send, CheckCircle } from 'lucide-react';
+import { Loader2, Send, CheckCircle, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EnquiryModalProps {
     open: boolean;
@@ -19,12 +20,14 @@ interface EnquiryModalProps {
 }
 
 const EnquiryModal = ({ open, onOpenChange, sellerId, blockId, blockTitle, ctaType, intentId, onComplete }: EnquiryModalProps) => {
+    const { setUser, user: authUser } = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [message, setMessage] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [isNewAccount, setIsNewAccount] = useState(false);
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -62,6 +65,17 @@ const EnquiryModal = ({ open, onOpenChange, sellerId, blockId, blockTitle, ctaTy
 
             const enquiryData = await response.json();
 
+            // 1.5 Handle Auto Account Creation
+            if (enquiryData.token && !authUser) {
+                localStorage.setItem('auth_token', enquiryData.token);
+                if (enquiryData.user) {
+                    setUser(enquiryData.user);
+                }
+                if (enquiryData.is_new_account) {
+                    setIsNewAccount(true);
+                }
+            }
+
             // 2. Complete Intent (if intentId exists)
             if (intentId && enquiryData.enquiry?.id) {
                 const token = getToken();
@@ -90,7 +104,8 @@ const EnquiryModal = ({ open, onOpenChange, sellerId, blockId, blockTitle, ctaTy
                 setPhone('');
                 setMessage('');
                 setSubmitted(false);
-            }, 2000);
+                setIsNewAccount(false);
+            }, isNewAccount ? 5000 : 2000); // Give them more time to read about the new account
         } catch (err: any) {
             console.error('Error submitting enquiry:', err);
             toast.error(err.message || 'Failed to send enquiry');
@@ -112,15 +127,28 @@ const EnquiryModal = ({ open, onOpenChange, sellerId, blockId, blockTitle, ctaTy
     if (submitted) {
         return (
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="max-w-md">
-                    <div className="flex flex-col items-center justify-center py-8 text-center">
-                        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-                            <CheckCircle className="w-8 h-8 text-green-600" />
+                <DialogContent className="max-w-md rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl">
+                    <div className="bg-white dark:bg-zinc-950 p-10 flex flex-col items-center justify-center text-center">
+                        <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mb-6">
+                            <CheckCircle className="w-10 h-10 text-green-500" />
                         </div>
-                        <h3 className="text-xl font-semibold mb-2">Enquiry Sent!</h3>
-                        <p className="text-muted-foreground">
+                        <h3 className="text-2xl font-black tracking-tight mb-3">Enquiry Sent!</h3>
+                        <p className="text-zinc-500 font-medium mb-6">
                             Your message has been sent. They'll get back to you soon.
                         </p>
+                        
+                        {isNewAccount && (
+                             <div className="w-full p-6 bg-indigo-50 rounded-3xl border border-indigo-100 animate-in zoom-in duration-500">
+                                <div className="flex items-center justify-center gap-2 mb-2">
+                                    <Sparkles className="w-5 h-5 text-indigo-600" />
+                                    <span className="text-indigo-900 font-black text-sm uppercase tracking-wider">Bonus!</span>
+                                </div>
+                                <h4 className="text-lg font-bold text-indigo-900 mb-1">Account Created</h4>
+                                <p className="text-indigo-700/80 text-sm font-medium">
+                                    We've created a tapx.bio account for you using your email. Check your inbox for login details!
+                                </p>
+                             </div>
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>

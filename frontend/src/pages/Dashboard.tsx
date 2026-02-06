@@ -247,29 +247,22 @@ const Dashboard = () => {
                             }}
                         />
 
-                        {/* Shop Visibility Toggle */}
+                        {/* Store & Apps Visibility */}
                         <div className="bg-white dark:bg-zinc-900/60 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-zinc-800/60 p-5">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
-                                        <ShoppingBag className="w-5 h-5 text-white" />
+                                    <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center">
+                                        <ShoppingBag className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                                     </div>
                                     <div>
-                                        <h3 className="text-base font-bold text-gray-900 dark:text-white">Show Store on Profile</h3>
-                                        <p className="text-sm text-gray-500 dark:text-zinc-500">
-                                            {stores.length > 0 
-                                                ? `Display your ${stores.length} store${stores.length > 1 ? 's' : ''} on your public profile`
-                                                : 'Create a store to enable this feature'}
-                                        </p>
+                                        <h3 className="text-base font-bold text-gray-900 dark:text-white">Store Visibility</h3>
+                                        <p className="text-sm text-gray-500 dark:text-zinc-500">Show your products on your profile</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Switch
-                                        checked={(user?.visible_stores?.length || 0) > 0 && user?.show_stores_on_profile === true}
-                                        onCheckedChange={handleStoreVisibilityToggle}
-                                        className="data-[state=checked]:bg-emerald-500"
-                                    />
-                                </div>
+                                <Switch 
+                                    checked={user?.show_stores_on_profile} 
+                                    onCheckedChange={handleStoreVisibilityToggle}
+                                />
                             </div>
                         </div>
 

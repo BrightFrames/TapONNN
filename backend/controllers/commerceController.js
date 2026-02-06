@@ -67,7 +67,7 @@ const getPublicProducts = async (req, res) => {
 const createProduct = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { title, description, price, image_url, product_type, file_url, is_featured, discount_price, badge, stock_status } = req.body;
+        const { title, description, price, image_url, images, product_type, file_url, is_featured, discount_price, badge, stock_status } = req.body;
 
         if (!title || price === undefined) {
             return res.status(400).json({ error: 'Title and price are required' });
@@ -79,6 +79,7 @@ const createProduct = async (req, res) => {
             description: description || '',
             price,
             image_url: image_url || '',
+            images: images || [],
             file_url: file_url || '',
             product_type: product_type || 'physical_product',
             is_featured: is_featured || false,

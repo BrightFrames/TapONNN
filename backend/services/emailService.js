@@ -219,9 +219,65 @@ const sendEmail = async (to, subject, htmlContent) => {
     }
 };
 
+// Send notification to store owner when someone subscribes to their store updates
+const sendStoreSubscriptionNotification = async (to, storeName, subscriberEmail, subscriberUsername) => {
+    const transporter = createTransporter();
+    if (!transporter) return { success: false, error: 'Email not configured' };
+
+    const fromName = process.env.EMAIL_FROM_NAME || 'TapX';
+    const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER;
+
+    const subscriberInfo = subscriberUsername 
+        ? `@${subscriberUsername}${subscriberEmail ? ` (${subscriberEmail})` : ''}`
+        : subscriberEmail;
+
+    const mailOptions = {
+        from: `"${fromName}" <${fromEmail}>`,
+        to: to,
+        subject: `New Subscriber for ${storeName}! 📈`,
+        html: `
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <div style="display: inline-block; width: 60px; height: 60px; background: #000; border-radius: 16px; line-height: 60px; color: white; font-size: 24px; font-weight: bold;">T</div>
+                </div>
+                
+                <h1 style="color: #1F2937; font-size: 24px; margin-bottom: 20px; text-align: center;">You have a new subscriber! 📈</h1>
+                
+                <p style="color: #4B5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                    Great news! Someone just subscribed to receive updates from your store <strong>${storeName}</strong>.
+                </p>
+                
+                <div style="background: #F9FAFB; border-radius: 16px; padding: 24px; margin-bottom: 30px; border: 1px solid #F3F4F6; text-align: center;">
+                    <p style="margin: 0; color: #9CA3AF; font-size: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.1em; margin-bottom: 8px;">Subscriber Details</p>
+                    <p style="margin: 0; color: #111827; font-size: 18px; font-weight: bold;">${subscriberInfo}</p>
+                </div>
+                
+                <p style="color: #4B5563; font-size: 16px; line-height: 1.6; margin-bottom: 30px; text-align: center;">
+                    They'll be notified automatically whenever you drop new products!
+                </p>
+                
+                <div style="text-align: center; border-top: 1px solid #E5E7EB; padding-top: 20px;">
+                    <p style="color: #9CA3AF; font-size: 12px; margin: 0;">
+                        © ${new Date().getFullYear()} TapX. Keep building!
+                    </p>
+                </div>
+            </div>
+        `
+    };
+
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('Error sending store subscription notification:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 module.exports = {
     sendWelcomeEmail,
     sendSubscriptionEmail,
     sendPasswordResetEmail,
+    sendStoreSubscriptionNotification,
     sendEmail
 };

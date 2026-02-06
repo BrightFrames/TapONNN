@@ -145,11 +145,11 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContentBottomSheet className="sm:max-w-[425px] p-0 overflow-hidden bg-white dark:bg-zinc-900 text-black dark:text-white">
+            <DialogContentBottomSheet className="sm:max-w-[425px] p-0 overflow-hidden bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-50 border-zinc-200 dark:border-zinc-800">
                 {/* Header Image/Summary */}
-                <div className="bg-gray-50 p-6 border-b border-gray-100">
+                <div className="p-6 border-b bg-zinc-50 dark:bg-zinc-900/50 border-zinc-100 dark:border-zinc-800">
                     <div className="flex gap-4 items-center">
-                        <div className="w-16 h-16 bg-white rounded-lg border border-gray-100 overflow-hidden flex-shrink-0">
+                        <div className="w-16 h-16 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
                             {product.image_url ? (
                                 <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
                             ) : (
@@ -157,8 +157,8 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
                             )}
                         </div>
                         <div>
-                            <h3 className="font-bold text-lg leading-tight">{product.title}</h3>
-                            <p className="font-bold text-primary mt-1">${product.price}</p>
+                            <h3 className="font-black text-lg leading-tight">{product.title}</h3>
+                            <p className="font-black text-xl mt-1">₹{product.price}</p>
                         </div>
                     </div>
                 </div>
@@ -167,36 +167,36 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
                     {/* Step 1: Selection */}
                     {step === 'selection' && (
                         <div className="space-y-4">
-                            <h2 className="text-xl font-bold mb-4">How would you like to proceed?</h2>
+                            <h2 className="text-xl font-black mb-4 tracking-tight">Interested?</h2>
 
                             <Button
                                 variant="outline"
                                 onClick={() => setStep('contact_enquiry')}
-                                className="w-full p-4 h-auto rounded-xl border-2 border-gray-100 hover:border-black transition-all flex items-center gap-4 group text-left hover:bg-transparent"
+                                className="w-full p-4 h-auto rounded-2xl border-zinc-100 dark:border-zinc-800 hover:border-zinc-900 dark:hover:border-zinc-100 transition-all flex items-center gap-4 group text-left hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
                             >
-                                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors">
+                                <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all">
                                     <MessageSquare className="w-5 h-5" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-bold">Send Enquiry</h3>
-                                    <p className="text-sm text-gray-500">Ask a question or request more info.</p>
+                                    <p className="font-black text-sm">Enquire</p>
+                                    <p className="text-xs text-zinc-500">Ask questions or customize</p>
                                 </div>
-                                <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-black" />
+                                <ArrowRight className="w-4 h-4 text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-100" />
                             </Button>
 
                             <Button
                                 variant="outline"
                                 onClick={() => setStep('contact_buy')}
-                                className="w-full p-4 h-auto rounded-xl border-2 border-gray-100 hover:border-black transition-all flex items-center gap-4 group text-left hover:bg-transparent"
+                                className="w-full p-4 h-auto rounded-2xl border-zinc-100 dark:border-zinc-800 hover:border-zinc-900 dark:hover:border-zinc-100 transition-all flex items-center gap-4 group text-left hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
                             >
-                                <div className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors">
+                                <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all">
                                     <ShoppingBag className="w-5 h-5" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-bold">Buy Now</h3>
-                                    <p className="text-sm text-gray-500">Purchase internally via manual payment.</p>
+                                    <p className="font-black text-sm">Buy Now</p>
+                                    <p className="text-xs text-zinc-500">Direct purchase</p>
                                 </div>
-                                <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-black" />
+                                <ArrowRight className="w-4 h-4 text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-100" />
                             </Button>
                         </div>
                     )}

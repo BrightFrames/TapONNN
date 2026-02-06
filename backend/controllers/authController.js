@@ -756,7 +756,7 @@ const checkUsernameAvailability = async (req, res) => {
     }
 };
 
-// QUICK SIGNUP - Send OTP (Step 1)
+// QUICK SIGNUP - Send OTP (Step 1: Check if exists or need to create)
 const quickSignupSendOTP = async (req, res) => {
     const { email } = req.body;
 
@@ -767,14 +767,7 @@ const quickSignupSendOTP = async (req, res) => {
     try {
         // Check if email already exists
         const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.json({
-                success: false,
-                error: "User already exists with this email",
-                isExistingUser: true
-            });
-        }
-
+        
         // Send OTP to email via MSG91
         const msg91Service = require('../services/msg91Service');
         const result = await msg91Service.sendEmailOTP(email);
@@ -784,8 +777,9 @@ const quickSignupSendOTP = async (req, res) => {
             const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, '$1****$3');
             res.json({
                 success: true,
-                message: "OTP sent to your email",
-                maskedEmail
+                message: existingUser ? "Welcome back! Verification code sent." : "OTP sent to your email",
+                maskedEmail,
+                isExistingUser: !!existingUser
             });
         } else {
             res.status(500).json({ error: result.message || "Failed to send OTP" });
@@ -796,12 +790,12 @@ const quickSignupSendOTP = async (req, res) => {
     }
 };
 
-// QUICK SIGNUP - Verify OTP & Create Account (Step 2)
+// QUICK SIGNUP - Verify OTP & Sign In / Create Account (Step 2)
 const quickSignupVerify = async (req, res) => {
     const { email, otp, full_name, phone_number } = req.body;
 
-    if (!email || !otp || !full_name || !phone_number) {
-        return res.status(400).json({ error: "All fields are required" });
+    if (!email || !otp) {
+        return res.status(400).json({ error: "Email and OTP are required" });
     }
 
     try {
@@ -813,84 +807,91 @@ const quickSignupVerify = async (req, res) => {
             return res.status(400).json({ error: otpResult.message || "Invalid OTP" });
         }
 
-        // Double-check email
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.json({
-                success: false,
-                error: "User already exists with this email",
-                isExistingUser: true
+        // Check if user exists
+        let user = await User.findOne({ email });
+        let profile;
+        let isNewUser = false;
+
+        if (!user) {
+            // Create New User & Profile
+            isNewUser = true;
+
+            if (!full_name || !phone_number) {
+                return res.status(400).json({ error: "Name and Phone Number are required for new accounts" });
+            }
+
+            // Generate base username from full_name
+            let baseUsername = full_name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (baseUsername.length < 3) baseUsername = 'user' + baseUsername;
+
+            // Find unique username
+            let username = baseUsername;
+            let counter = 1;
+            while (true) {
+                const existingProfile = await Profile.findOne({ username });
+                if (!existingProfile) break;
+                username = `${baseUsername}${counter}`;
+                counter++;
+            }
+
+            // Generate random secure password
+            const crypto = require('crypto');
+            const password = crypto.randomBytes(16).toString('hex');
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(password, salt);
+
+            // Create User
+            user = new User({
+                email,
+                password_hash: passwordHash
             });
+            await user.save();
+
+            // Generate Avatar
+            const avatarDataUri = generateDiceBearAvatar(full_name, 'other');
+
+            // Create Profile (Personal Mode)
+            profile = new Profile({
+                user_id: user._id,
+                username: username,
+                full_name,
+                email,
+                avatar_url: avatarDataUri,
+                phone_number,
+                phone_verified: false,
+                is_email_verified: true,
+                active_profile_mode: 'personal',
+                selected_theme: 'artemis'
+            });
+            await profile.save();
+
+            // Send Welcome Email (async)
+            sendWelcomeEmail(email, username, full_name).catch(err => {
+                console.error('Failed to send welcome email:', err);
+            });
+        } else {
+            // Existing User - Get Profile
+            profile = await Profile.findOne({ user_id: user._id });
         }
-
-        // Generate base username from full_name
-        let baseUsername = full_name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (baseUsername.length < 3) baseUsername = 'user' + baseUsername;
-
-        // Find unique username
-        let username = baseUsername;
-        let counter = 1;
-        while (true) {
-            const existingProfile = await Profile.findOne({ username });
-            if (!existingProfile) break;
-            username = `${baseUsername}${counter}`;
-            counter++;
-        }
-
-        // Generate random secure password
-        const crypto = require('crypto');
-        const password = crypto.randomBytes(16).toString('hex');
-        const salt = await bcrypt.genSalt(10);
-        const passwordHash = await bcrypt.hash(password, salt);
-
-        // Create User
-        const newUser = new User({
-            email,
-            password_hash: passwordHash
-        });
-        await newUser.save();
-
-        // Generate Avatar
-        const avatarDataUri = generateDiceBearAvatar(full_name, 'other');
-
-        // Create Profile (Personal Mode)
-        const newProfile = new Profile({
-            user_id: newUser._id,
-            username: username,
-            full_name,
-            email,
-            avatar_url: avatarDataUri,
-            phone_number,
-            phone_number,
-            phone_verified: false,
-            is_email_verified: true,
-            active_profile_mode: 'personal',
-            selected_theme: 'artemis'
-        });
-        await newProfile.save();
 
         // Generate Token
         const token = jwt.sign(
-            { id: newUser._id.toString(), email: newUser.email },
+            { id: user._id.toString(), email: user.email },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
-        // Send Welcome Email (async)
-        sendWelcomeEmail(email, username, full_name).catch(err => {
-            console.error('Failed to send welcome email:', err);
-        });
-
         res.json({
             success: true,
             token,
+            isNewUser,
             user: {
-                id: newUser._id,
-                email: newUser.email,
-                username: newProfile.username,
-                full_name: newProfile.full_name,
-                avatar: avatarDataUri,
-                active_profile_mode: 'personal' // Force personal mode initially
+                id: user._id,
+                email: user.email,
+                username: profile.username,
+                full_name: profile.full_name,
+                avatar: profile.avatar_url,
+                active_profile_mode: profile.active_profile_mode
             }
         });
 

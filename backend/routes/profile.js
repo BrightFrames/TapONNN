@@ -3,6 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const profileController = require('../controllers/profileController');
 const analyticsController = require('../controllers/analyticsController');
+const { profileLimiter } = require('../middleware/antiScrape');
 
 // --- Specific routes MUST come before parameterized routes ---
 
@@ -16,12 +17,12 @@ router.post('/theme', authMiddleware, profileController.updateTheme);
 router.post('/switch-mode', authMiddleware, profileController.switchProfileMode);
 
 // GET /api/profile/store/:username (Public) - Get store profile
-router.get('/store/:username', profileController.getPublicStoreProfile);
+router.get('/store/:username', profileLimiter, profileController.getPublicStoreProfile);
 
 // --- Parameterized routes (catch-all patterns) ---
 
 // GET /api/profile/:username (Public)
-router.get('/:username', profileController.getPublicProfile);
+router.get('/:username', profileLimiter, profileController.getPublicProfile);
 
 // POST /api/profile/:profileId/view (Public) - Track view
 

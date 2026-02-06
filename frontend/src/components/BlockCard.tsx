@@ -127,7 +127,6 @@ const BlockCard = ({ block, onEdit, onDelete, onToggleActive, dragHandleProps }:
                     <Switch
                         checked={block.is_active}
                         onCheckedChange={(checked) => onToggleActive(block._id, checked)}
-                        className="data-[state=checked]:bg-green-500"
                     />
 
                     {/* Actions Menu */}

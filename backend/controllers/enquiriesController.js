@@ -1,6 +1,27 @@
 const Enquiry = require('../models/Enquiry');
 const Block = require('../models/Block');
+const User = require('../models/User');
+const Profile = require('../models/Profile');
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { sendWelcomeEmail } = require('../services/msg91Service');
+
+// DiceBear Avatar Generation
+const { createAvatar } = require('@dicebear/core');
+const { initials } = require('@dicebear/collection');
+
+const generateDiceBearAvatar = (seed) => {
+    const avatar = createAvatar(initials, {
+        seed: seed,
+        size: 128,
+        backgroundColor: ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf'],
+        fontWeight: 500,
+        fontSize: 42
+    });
+    return avatar.toDataUriSync();
+};
 
 // Create an enquiry (public - visitors can submit)
 const createEnquiry = async (req, res) => {
@@ -19,8 +40,86 @@ const createEnquiry = async (req, res) => {
 
         // Get visitor ID if authenticated
         let visitor_id = null;
+        let auth_token = null;
+        let created_user = null;
+        let is_new_account = false;
+
         if (req.user) {
             visitor_id = req.user.id;
+        } else {
+            // Check if user already exists with this email
+            let user = await User.findOne({ email: visitor_email.toLowerCase() });
+            let profile;
+
+            if (!user) {
+                // AUTO ACCOUNT CREATION logic
+                is_new_account = true;
+                
+                // 1. Generate unique username
+                let baseUsername = (visitor_name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (baseUsername.length < 3) baseUsername = 'user' + Math.floor(Math.random() * 1000);
+                
+                let username = baseUsername;
+                let counter = 1;
+                while (true) {
+                    const existingProfile = await Profile.findOne({ username });
+                    if (!existingProfile) break;
+                    username = `${baseUsername}${counter}`;
+                    counter++;
+                }
+
+                // 2. Create User
+                const password = crypto.randomBytes(16).toString('hex');
+                const salt = await bcrypt.genSalt(10);
+                const passwordHash = await bcrypt.hash(password, salt);
+
+                user = new User({
+                    email: visitor_email.toLowerCase(),
+                    password_hash: passwordHash
+                });
+                await user.save();
+
+                // 3. Create Profile
+                const avatarDataUri = generateDiceBearAvatar(visitor_name || visitor_email);
+                profile = new Profile({
+                    user_id: user._id,
+                    username: username,
+                    full_name: visitor_name || 'Guest',
+                    email: visitor_email.toLowerCase(),
+                    avatar_url: avatarDataUri,
+                    phone_number: visitor_phone || '',
+                    phone_verified: false,
+                    is_email_verified: false, // They haven't verified via OTP yet, but we have their email
+                    active_profile_mode: 'personal',
+                    selected_theme: 'clean'
+                });
+                await profile.save();
+
+                // 4. Send Welcome Email
+                sendWelcomeEmail(visitor_email, username, visitor_name || 'Friend').catch(err => {
+                    console.error('Failed to send welcome email for enquiry:', err);
+                });
+
+                created_user = {
+                    id: user._id,
+                    email: user.email,
+                    username: profile.username,
+                    full_name: profile.full_name,
+                    avatar: profile.avatar_url,
+                    active_profile_mode: 'personal'
+                };
+            } else {
+                profile = await Profile.findOne({ user_id: user._id });
+            }
+
+            visitor_id = user._id;
+
+            // Generate token for auto-login
+            auth_token = jwt.sign(
+                { id: user._id.toString(), email: user.email },
+                process.env.JWT_SECRET,
+                { expiresIn: '7d' }
+            );
         }
 
         // Create enquiry
@@ -51,7 +150,13 @@ const createEnquiry = async (req, res) => {
             $inc: { 'analytics.enquiries': 1 }
         });
 
-        res.json({ success: true, enquiry: { id: enquiry._id, status: enquiry.status } });
+        res.json({ 
+            success: true, 
+            enquiry: { id: enquiry._id, status: enquiry.status },
+            token: auth_token,
+            user: created_user,
+            is_new_account
+        });
     } catch (err) {
         console.error('Error creating enquiry:', err);
         res.status(500).json({ error: 'Internal Server Error' });

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const commerceController = require('../controllers/commerceController');
+const { profileLimiter } = require('../middleware/antiScrape');
 
 // --- Products ---
 // POST /api/products (Authenticated)
@@ -17,7 +18,7 @@ router.delete('/products/:productId', authMiddleware, commerceController.deleteP
 router.put('/products/:productId', authMiddleware, commerceController.updateProduct);
 
 // GET /api/public/products/:username (Public)
-router.get('/public/products/:username', commerceController.getPublicProducts);
+router.get('/public/products/:username', profileLimiter, commerceController.getPublicProducts);
 
 // --- Orders ---
 // POST /api/orders (Public or Auth)
