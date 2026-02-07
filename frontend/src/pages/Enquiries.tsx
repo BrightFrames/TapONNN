@@ -532,15 +532,15 @@ const Enquiries = () => {
     const isPersonalMode = user?.active_profile_mode === 'personal';
 
     return (
-        <div className="h-screen w-full bg-gray-50 dark:bg-zinc-950 flex items-center justify-center p-0 sm:p-2 overflow-hidden font-sans">
+        <div className="h-screen w-full bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 dark:from-zinc-950 dark:via-black dark:to-zinc-950 flex items-center justify-center p-0 sm:p-3 overflow-hidden font-sans">
             {/* Main Window */}
-            <div className="w-full h-full sm:h-[95vh] sm:w-[98vw] max-w-[1700px] bg-white dark:bg-zinc-900 rounded-none sm:rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-800 flex overflow-hidden relative">
+            <div className="w-full h-full sm:h-[96vh] sm:w-[98vw] max-w-[1800px] bg-white dark:bg-zinc-900 rounded-none sm:rounded-2xl shadow-[0_20px_60px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.5)] border border-gray-200/60 dark:border-zinc-800/60 flex overflow-hidden relative">
 
                 {/* --- LEFT PANEL: LEADS LIST --- */}
-                <div className="w-full sm:w-[380px] flex flex-col border-r border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl z-20 shrink-0">
+                <div className="w-full sm:w-[400px] flex flex-col border-r border-gray-200/60 dark:border-zinc-800/60 bg-gradient-to-b from-white/98 to-gray-50/95 dark:from-zinc-900/98 dark:to-zinc-950/95 backdrop-blur-xl z-20 shrink-0">
 
                     {/* Header */}
-                    <div className="h-16 px-5 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
+                    <div className="h-16 px-6 border-b border-gray-200/60 dark:border-zinc-800/60 flex items-center justify-between shrink-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
                         <div className="flex items-center gap-3">
                             <Button
                                 variant="ghost"
@@ -550,17 +550,17 @@ const Enquiries = () => {
                             >
                                 <ArrowLeft className="w-5 h-5" />
                             </Button>
-                            <div className="relative">
-                                <Avatar className="w-9 h-9 border border-zinc-700 shadow-sm">
+                            <div className="relative group">
+                                <Avatar className="w-10 h-10 border-2 border-gray-200 dark:border-zinc-700 shadow-lg group-hover:shadow-xl transition-all duration-300">
                                     <AvatarImage src={user?.avatar || user?.photo_url} />
-                                    <AvatarFallback>{user?.username?.[0] || 'ME'}</AvatarFallback>
+                                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">{user?.username?.[0] || 'ME'}</AvatarFallback>
                                 </Avatar>
-                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-zinc-900 rounded-full"></span>
+                                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-zinc-900 rounded-full shadow-sm"></span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="font-semibold text-sm text-gray-900 dark:text-zinc-100">{isPersonalMode ? 'Messages' : 'Inbox'}</span>
-                                <span className="text-[10px] text-zinc-500 font-medium">
-                                    {isPersonalMode ? 'Personal Chats' : 'All Enquiries'}
+                                <span className="font-bold text-sm text-gray-900 dark:text-zinc-50">{isPersonalMode ? 'Messages' : 'Inbox'}</span>
+                                <span className="text-[10px] text-gray-500 dark:text-zinc-500 font-semibold uppercase tracking-wider">
+                                    {isPersonalMode ? 'Personal' : 'All Enquiries'}
                                 </span>
                             </div>
                         </div>
@@ -589,12 +589,12 @@ const Enquiries = () => {
                     </div>
 
                     {/* Search & Tabs */}
-                    <div className="p-3 border-b border-gray-200 dark:border-zinc-800 space-y-3 bg-gray-50/50 dark:bg-zinc-900/50">
+                    <div className="p-4 border-b border-gray-200/60 dark:border-zinc-800/60 space-y-3 bg-gradient-to-b from-white to-gray-50/80 dark:from-zinc-900/50 dark:to-zinc-950/50">
                         <div className="relative group">
-                            <Search className="absolute left-3 top-2.5 text-zinc-500 w-4 h-4 group-focus-within:text-zinc-300 transition-colors" />
+                            <Search className="absolute left-3.5 top-3 text-gray-400 dark:text-zinc-500 w-4 h-4 group-focus-within:text-blue-500 dark:group-focus-within:text-emerald-400 transition-colors" />
                             <Input
                                 placeholder={isPersonalMode ? "Search conversations..." : "Search leads, email, phone..."}
-                                className="pl-9 h-10 bg-white dark:bg-zinc-950 border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-zinc-200 placeholder:text-gray-500 dark:placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-zinc-700 transition-all rounded-lg"
+                                className="pl-10 h-11 bg-white dark:bg-zinc-950 border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-emerald-500 focus-visible:border-transparent transition-all rounded-xl shadow-sm font-medium"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -604,21 +604,21 @@ const Enquiries = () => {
                             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                                 <Badge
                                     variant="outline"
-                                    className="cursor-pointer bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border-zinc-700 px-3 py-1 h-7"
+                                    className="cursor-pointer bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 border-0 px-4 py-1.5 h-8 shadow-lg shadow-blue-500/20 font-semibold"
                                 >
                                     All
                                 </Badge>
                                 <Badge
                                     variant="outline"
-                                    className="cursor-pointer hover:bg-zinc-800 text-zinc-500 border-zinc-800 px-3 py-1 h-7"
+                                    className="cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200 border-gray-300 dark:border-zinc-700 px-4 py-1.5 h-8 font-semibold transition-all"
                                 >
                                     Unread
                                 </Badge>
                                 <Badge
                                     variant="outline"
-                                    className="cursor-pointer hover:bg-zinc-800 text-zinc-500 border-zinc-800 px-3 py-1 h-7 flex gap-1"
+                                    className="cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-500/20 px-4 py-1.5 h-8 flex gap-1.5 font-semibold transition-all"
                                 >
-                                    <Zap className="w-3 h-3 text-orange-500" /> Hot
+                                    <Zap className="w-3.5 h-3.5" /> Hot
                                 </Badge>
                             </div>
                         )}
@@ -648,8 +648,8 @@ const Enquiries = () => {
                                         key={lead.id}
                                         onClick={() => isBulkMode ? toggleSelect(lead.id) : setActiveId(lead.id)}
                                         className={`
-                                            group flex items-start gap-4 p-4 cursor-pointer border-b border-gray-100 dark:border-zinc-800/50 hover:bg-gray-50 dark:hover:bg-zinc-800/40 transition-all duration-200 relative
-                                            ${activeId === lead.id && !isBulkMode ? 'bg-blue-50 dark:bg-zinc-800/80 border-l-2 border-l-blue-500 dark:border-l-emerald-500' : 'border-l-2 border-l-transparent'}
+                                            group flex items-start gap-4 p-4 cursor-pointer border-b border-gray-100/60 dark:border-zinc-800/40 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-transparent dark:hover:from-zinc-800/40 dark:hover:to-transparent transition-all duration-200 relative
+                                            ${activeId === lead.id && !isBulkMode ? 'bg-gradient-to-r from-blue-50 to-transparent dark:from-zinc-800/60 dark:to-transparent border-l-[3px] border-l-blue-500 dark:border-l-emerald-400 shadow-sm' : 'border-l-[3px] border-l-transparent'}
                                         `}
                                     >
                                         {isBulkMode && (
@@ -663,14 +663,14 @@ const Enquiries = () => {
                                         )}
 
                                         <div className={`relative shrink-0 ${isBulkMode ? 'opacity-0' : 'opacity-100'} transition-opacity`}>
-                                            <Avatar className="w-11 h-11 border border-zinc-700 shadow-sm">
+                                            <Avatar className="w-12 h-12 border-2 border-gray-200 dark:border-zinc-700 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-200">
                                                 <AvatarImage src={lead.avatar} />
-                                                <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs font-bold">{lead.name[0]}</AvatarFallback>
+                                                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-600 text-white text-sm font-bold">{lead.name[0]}</AvatarFallback>
                                             </Avatar>
                                             {lead.status === 'unread' && (
-                                                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                                <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 ring-2 ring-white dark:ring-zinc-900"></span>
                                                 </span>
                                             )}
                                             {!isPersonalMode && getSourceBadge(lead.source).emoji && (
@@ -680,27 +680,27 @@ const Enquiries = () => {
                                             )}
                                         </div>
 
-                                        <div className={`flex-1 min-w-0 flex flex-col gap-0.5 ${isBulkMode ? 'pl-8' : ''} transition-all`}>
-                                            <div className="flex justify-between items-start">
-                                                <span className={`text-sm truncate ${lead.status === 'unread' ? 'font-bold text-gray-900 dark:text-white' : 'font-medium text-gray-700 dark:text-zinc-300 group-hover:text-black dark:group-hover:text-zinc-200'}`}>
+                                        <div className={`flex-1 min-w-0 flex flex-col gap-1 ${isBulkMode ? 'pl-8' : ''} transition-all`}>
+                                            <div className="flex justify-between items-start gap-2">
+                                                <span className={`text-sm truncate ${lead.status === 'unread' ? 'font-bold text-gray-900 dark:text-white' : 'font-semibold text-gray-700 dark:text-zinc-300 group-hover:text-gray-900 dark:group-hover:text-zinc-100'}`}>
                                                     {lead.name}
                                                 </span>
-                                                <span className={`text-[10px] whitespace-nowrap ${lead.status === 'unread' ? 'text-emerald-500 font-bold' : 'text-zinc-500'}`}>
+                                                <span className={`text-[10px] whitespace-nowrap font-semibold ${lead.status === 'unread' ? 'text-emerald-500' : 'text-gray-400 dark:text-zinc-500'}`}>
                                                     {formatTimestamp(lead.time)}
                                                 </span>
                                             </div>
 
-                                            <p className={`text-xs truncate leading-relaxed ${lead.status === 'unread' ? 'text-gray-800 dark:text-zinc-300' : 'text-gray-500 dark:text-zinc-500 group-hover:text-gray-600 dark:group-hover:text-zinc-400'}`}>
-                                                {lead.from === 'me' && <span className="text-zinc-600 mr-1">You:</span>}
+                                            <p className={`text-xs truncate leading-relaxed ${lead.status === 'unread' ? 'text-gray-700 dark:text-zinc-300 font-medium' : 'text-gray-500 dark:text-zinc-500 group-hover:text-gray-600 dark:group-hover:text-zinc-400'}`}>
+                                                {lead.from === 'me' && <span className="text-blue-600 dark:text-blue-400 mr-1 font-semibold">You:</span>}
                                                 {lead.preview}
                                             </p>
 
                                             {/* Labels / Badges */}
                                             {!isPersonalMode && (
-                                                <div className="flex gap-1.5 items-center flex-wrap mt-2">
+                                                <div className="flex gap-1.5 items-center flex-wrap mt-1.5">
                                                     {lead.score >= 70 && (
-                                                        <Badge variant="secondary" className="text-[9px] px-1.5 h-4 bg-orange-500/10 text-orange-400 border-0 pointer-events-none">
-                                                            High Intent
+                                                        <Badge variant="secondary" className="text-[9px] px-2 h-5 bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 pointer-events-none font-bold shadow-sm">
+                                                            🔥 High Intent
                                                         </Badge>
                                                     )}
                                                     {lead.labels.map((lbl, idx) => (
@@ -737,21 +737,21 @@ const Enquiries = () => {
 
                 {/* --- MIDDLE PANEL: ACTIVE CHAT --- */}
                 {activeLead ? (
-                    <div className="flex flex-col flex-1 h-full w-full relative bg-gray-50/50 dark:bg-zinc-950/50 backdrop-blur-sm">
+                    <div className="flex flex-col flex-1 h-full w-full relative bg-gradient-to-b from-gray-50/30 via-white to-gray-50/30 dark:from-zinc-950/30 dark:via-black dark:to-zinc-950/30 backdrop-blur-sm">
                         {/* Chat Header */}
-                        <div className="h-16 px-6 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between shrink-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md z-20">
+                        <div className="h-16 px-6 border-b border-gray-200/60 dark:border-zinc-800/60 flex items-center justify-between shrink-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl z-20 shadow-sm">
                             <div className="flex items-center gap-3">
-                                <Avatar className="w-10 h-10 border border-zinc-700">
+                                <Avatar className="w-11 h-11 border-2 border-gray-200 dark:border-zinc-700 shadow-md">
                                     <AvatarImage src={activeLead.avatar} />
-                                    <AvatarFallback>{activeLead.name[0]}</AvatarFallback>
+                                    <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-600 text-white font-bold">{activeLead.name[0]}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <h2 className="font-semibold text-sm text-gray-900 dark:text-zinc-100 flex items-center gap-2">
+                                    <h2 className="font-bold text-base text-gray-900 dark:text-zinc-50 flex items-center gap-2">
                                         {activeLead.name}
-                                        {!isPersonalMode && activeLead.score >= 70 && <Badge variant="destructive" className="h-4 px-1 text-[10px]">HOT</Badge>}
+                                        {!isPersonalMode && activeLead.score >= 70 && <Badge variant="destructive" className="h-5 px-2 text-[10px] bg-gradient-to-r from-orange-500 to-red-500 border-0 font-bold shadow-lg">🔥 HOT</Badge>}
                                     </h2>
-                                    <p className="text-xs text-zinc-500 flex items-center gap-1.5">
-                                        {activeLead.role === 'user' && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
+                                    <p className="text-xs text-gray-600 dark:text-zinc-400 flex items-center gap-1.5 font-medium">
+                                        {activeLead.role === 'user' && <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
                                         {activeLead.email}
                                     </p>
                                 </div>
@@ -765,33 +765,33 @@ const Enquiries = () => {
                         </div>
 
                         {/* Chat Area */}
-                        <ScrollArea className="flex-1 p-4 bg-gray-50 dark:bg-[#0A0A0A]">
+                        <ScrollArea className="flex-1 p-6 bg-gradient-to-b from-gray-50 via-white to-gray-50 dark:from-[#0A0A0A] dark:via-black dark:to-[#0A0A0A]">
                             {/* Background Pattern */}
-                            <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+                            <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, #888 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
 
-                            <div className="space-y-6 max-w-3xl mx-auto relative z-10 py-4">
-                                <div className="flex justify-center mb-6">
-                                    <span className="bg-white/80 dark:bg-zinc-900/80 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-500 text-[10px] font-medium px-3 py-1 rounded-full backdrop-blur-sm">
+                            <div className="space-y-6 max-w-4xl mx-auto relative z-10 py-6">
+                                <div className="flex justify-center mb-8">
+                                    <span className="bg-white/90 dark:bg-zinc-900/90 border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-zinc-400 text-[10px] font-semibold px-4 py-1.5 rounded-full backdrop-blur-md shadow-sm">
                                         Today
                                     </span>
                                 </div>
 
                                 {activeLead.messages.map((msg) => (
                                     <div key={msg.id} className={`flex w-full ${msg.from === 'me' ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`flex max-w-[80%] ${msg.from === 'me' ? 'flex-row-reverse' : 'flex-row'} items-end gap-2`}>
+                                        <div className={`flex max-w-[75%] ${msg.from === 'me' ? 'flex-row-reverse' : 'flex-row'} items-end gap-2.5`}>
                                             {/* Avatar only for 'them' */}
                                             {msg.from === 'them' && (
-                                                <Avatar className="w-6 h-6 border border-zinc-800 mb-1">
+                                                <Avatar className="w-7 h-7 border-2 border-gray-200 dark:border-zinc-700 mb-1 shadow-sm">
                                                     <AvatarImage src={activeLead.avatar} />
-                                                    <AvatarFallback>{activeLead.name[0]}</AvatarFallback>
+                                                    <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-600 text-white text-xs font-bold">{activeLead.name[0]}</AvatarFallback>
                                                 </Avatar>
                                             )}
 
                                             <div className={`
-                                                relative px-4 py-2.5 text-sm shadow-sm
+                                                relative px-4 py-3 text-sm shadow-md
                                                 ${msg.from === 'me'
-                                                    ? 'bg-blue-600 dark:bg-zinc-100 text-white dark:text-black rounded-[20px_20px_4px_20px]'
-                                                    : 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 rounded-[20px_20px_20px_4px]'}
+                                                    ? 'bg-gradient-to-br from-blue-600 to-blue-700 dark:from-zinc-100 dark:to-gray-100 text-white dark:text-black rounded-[20px_20px_4px_20px] font-medium'
+                                                    : 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border border-gray-200 dark:border-zinc-700/60 rounded-[20px_20px_20px_4px]'}
                                             `}>
                                                 {msg.type === 'product' ? (
                                                     <div className="w-[220px] bg-white text-black rounded-lg overflow-hidden border border-zinc-200">
@@ -819,8 +819,8 @@ const Enquiries = () => {
                         </ScrollArea>
 
                         {/* Input Area */}
-                        <div className="p-4 bg-white dark:bg-zinc-900 border-t border-gray-200 dark:border-zinc-800 shrink-0">
-                            <div className="max-w-4xl mx-auto flex items-end gap-2 bg-gray-50 dark:bg-zinc-950 p-2 rounded-xl border border-gray-200 dark:border-zinc-800 focus-within:border-zinc-400 dark:focus-within:border-zinc-700 transition-colors shadow-sm">
+                        <div className="p-5 bg-white dark:bg-zinc-900 border-t border-gray-200/60 dark:border-zinc-800/60 shrink-0 shadow-lg">
+                            <div className="max-w-4xl mx-auto flex items-end gap-2 bg-gradient-to-r from-gray-50 to-white dark:from-zinc-950 dark:to-zinc-900 p-3 rounded-2xl border-2 border-gray-200 dark:border-zinc-800 focus-within:border-blue-400 dark:focus-within:border-emerald-500 transition-all shadow-md">
                                 <Button size="icon" variant="ghost" className="h-10 w-10 text-zinc-400 hover:text-white rounded-lg">
                                     <Plus className="w-5 h-5" />
                                 </Button>
@@ -828,7 +828,7 @@ const Enquiries = () => {
                                     value={chatInput}
                                     onChange={(e) => setChatInput(e.target.value)}
                                     placeholder="Type a message..."
-                                    className="flex-1 min-h-[40px] max-h-[120px] bg-transparent border-0 focus-visible:ring-0 resize-none py-2.5 text-gray-900 dark:text-zinc-200 placeholder:text-gray-500 dark:placeholder:text-zinc-600"
+                                    className="flex-1 min-h-[42px] max-h-[120px] bg-transparent border-0 focus-visible:ring-0 resize-none py-2.5 text-gray-900 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 font-medium"
                                     rows={1}
                                 />
                                 <div className="flex items-center gap-1 pb-1">
@@ -837,10 +837,10 @@ const Enquiries = () => {
                                     </Button>
                                     <Button
                                         size="icon"
-                                        className="h-9 w-9 bg-zinc-100 text-black hover:bg-white rounded-lg ml-1 shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all hover:scale-105"
+                                        className="h-10 w-10 bg-gradient-to-br from-blue-600 to-blue-700 dark:from-zinc-100 dark:to-white text-white dark:text-black hover:from-blue-700 hover:to-blue-800 dark:hover:from-white dark:hover:to-gray-100 rounded-xl ml-1 shadow-lg shadow-blue-500/30 dark:shadow-white/20 transition-all hover:scale-105 active:scale-95"
                                         onClick={() => handleSendMessage('text')}
                                     >
-                                        <Send className="w-4 h-4" />
+                                        <Send className="w-4.5 h-4.5" />
                                     </Button>
                                 </div>
                             </div>
@@ -918,81 +918,81 @@ const Enquiries = () => {
                 {/* --- RIGHT PANEL: INFO SIDEBAR - Store Mode Only --- */}
                 {activeLead && !isPersonalMode && (
                     <div
-                        className={`absolute top-0 right-0 h-full w-[350px] bg-white dark:bg-zinc-900 border-l border-gray-200 dark:border-zinc-800 shadow-xl transform transition-transform duration-300 z-50 flex flex-col
+                        className={`absolute top-0 right-0 h-full w-[380px] bg-gradient-to-b from-white via-gray-50/50 to-white dark:from-zinc-900 dark:via-zinc-950/50 dark:to-zinc-900 border-l border-gray-200/60 dark:border-zinc-800/60 shadow-2xl transform transition-transform duration-300 z-50 flex flex-col
                         ${isInfoPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}
                     >
-                        <div className="h-16 px-5 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between shrink-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm">
-                            <span className="text-sm font-semibold text-gray-900 dark:text-zinc-100 uppercase tracking-widest">Lead Intelligence</span>
+                        <div className="h-16 px-6 border-b border-gray-200/60 dark:border-zinc-800/60 flex items-center justify-between shrink-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-sm">
+                            <span className="text-sm font-bold text-gray-900 dark:text-zinc-50 uppercase tracking-wider">Lead Intelligence</span>
                             <Button variant="ghost" size="icon" onClick={() => setIsInfoPanelOpen(false)} className="text-zinc-500 hover:text-white">
                                 <X className="w-4 h-4" />
                             </Button>
                         </div>
 
                         <Tabs defaultValue="info" value={activeTab} onValueChange={(v) => setActiveTab(v as 'info' | 'crm')} className="flex flex-col h-[calc(100%-4rem)]">
-                            <TabsList className="w-full justify-start rounded-none border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0 h-10">
+                            <TabsList className="w-full justify-start rounded-none border-b border-gray-200/60 dark:border-zinc-800/60 bg-gradient-to-r from-white to-gray-50/50 dark:from-zinc-900 dark:to-zinc-950/50 p-0 h-11">
                                 <TabsTrigger
                                     value="info"
-                                    className="flex-1 h-full text-[11px] font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 uppercase tracking-wider text-gray-500 dark:text-zinc-500 hover:bg-gray-50 dark:hover:bg-zinc-800/50"
+                                    className="flex-1 h-full text-[11px] font-bold rounded-none border-b-[3px] border-transparent data-[state=active]:border-emerald-500 dark:data-[state=active]:border-emerald-400 data-[state=active]:bg-gradient-to-b data-[state=active]:from-emerald-50/50 data-[state=active]:to-transparent dark:data-[state=active]:from-emerald-500/10 dark:data-[state=active]:to-transparent data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 uppercase tracking-wider text-gray-500 dark:text-zinc-500 hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all"
                                 >
                                     Insights
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="crm"
-                                    className="flex-1 h-full text-[11px] font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 uppercase tracking-wider text-gray-500 dark:text-zinc-500 hover:bg-gray-50 dark:hover:bg-zinc-800/50"
+                                    className="flex-1 h-full text-[11px] font-bold rounded-none border-b-[3px] border-transparent data-[state=active]:border-emerald-500 dark:data-[state=active]:border-emerald-400 data-[state=active]:bg-gradient-to-b data-[state=active]:from-emerald-50/50 data-[state=active]:to-transparent dark:data-[state=active]:from-emerald-500/10 dark:data-[state=active]:to-transparent data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 uppercase tracking-wider text-gray-500 dark:text-zinc-500 hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all"
                                 >
                                     Actions & CRM
                                 </TabsTrigger>
                             </TabsList>
 
-                            <ScrollArea className="flex-1 bg-gray-50 dark:bg-zinc-950">
-                                <div className="p-5">
+                            <ScrollArea className="flex-1 bg-gradient-to-b from-gray-50/80 via-white to-gray-50/80 dark:from-zinc-950/80 dark:via-black dark:to-zinc-950/80">
+                                <div className="p-6">
                                     <TabsContent value="info" className="mt-0 focus-visible:ring-0 space-y-6">
 
                                         {/* Score Widget */}
-                                        <div className="bg-gradient-to-br from-white to-gray-50 dark:from-zinc-900 dark:to-black border border-gray-200 dark:border-zinc-800 rounded-xl p-5 relative overflow-hidden group">
-                                            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                                                <Zap className="w-20 h-20" />
+                                        <div className="bg-gradient-to-br from-emerald-50 via-white to-blue-50 dark:from-emerald-950/30 dark:via-zinc-900 dark:to-blue-950/30 border-2 border-emerald-200 dark:border-emerald-900/50 rounded-2xl p-6 relative overflow-hidden group shadow-lg hover:shadow-xl transition-all">
+                                            <div className="absolute -top-4 -right-4 opacity-[0.07] dark:opacity-[0.15] group-hover:opacity-[0.12] dark:group-hover:opacity-[0.2] transition-opacity">
+                                                <Zap className="w-28 h-28 text-emerald-500" />
                                             </div>
 
-                                            <div className="flex justify-between items-start mb-4 relative z-10">
+                                            <div className="flex justify-between items-start mb-5 relative z-10">
                                                 <div>
-                                                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-1 block">Lead Score</span>
-                                                    <div className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter shadow-glow">{activeLead.score}</div>
+                                                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-2 block">Lead Score</span>
+                                                    <div className="text-5xl font-black bg-gradient-to-br from-emerald-600 to-blue-600 dark:from-emerald-400 dark:to-blue-400 bg-clip-text text-transparent tracking-tight">{activeLead.score}</div>
                                                 </div>
-                                                <div className={`px-2 py-1 rounded text-[10px] font-bold border uppercase tracking-wider ${activeLead.score >= 70 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`}>
+                                                <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-md ${activeLead.score >= 70 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white' : 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'}`}>
                                                     {activeLead.score >= 70 ? 'High Intent' : 'Moderate'}
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-2 relative z-10">
+                                            <div className="space-y-2.5 relative z-10">
                                                 {activeLead.scoreFactors?.slice(0, 2).map((f, i) => (
-                                                    <div key={i} className="flex items-center gap-2 text-xs text-gray-500 dark:text-zinc-400">
-                                                        <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> {f}
+                                                    <div key={i} className="flex items-center gap-2.5 text-xs text-gray-700 dark:text-zinc-300 font-semibold">
+                                                        <CheckCircle className="w-4 h-4 text-emerald-500 dark:text-emerald-400" /> {f}
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
 
                                         {/* Identity Card */}
-                                        <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-4 space-y-4">
-                                            <div className="flex items-center gap-3 border-b border-gray-100 dark:border-zinc-800 pb-3">
-                                                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-xl">
+                                        <div className="bg-white dark:bg-zinc-900 border-2 border-gray-200 dark:border-zinc-800 rounded-2xl p-5 space-y-4 shadow-md hover:shadow-lg transition-all">
+                                            <div className="flex items-center gap-4 border-b border-gray-100 dark:border-zinc-800 pb-4">
+                                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 flex items-center justify-center text-2xl shadow-sm">
                                                     {getSourceBadge(activeLead.source).emoji || '👤'}
                                                 </div>
                                                 <div>
-                                                    <div className="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase">Source</div>
-                                                    <div className="font-bold text-gray-900 dark:text-zinc-200">{activeLead.source}</div>
+                                                    <div className="text-[10px] font-bold text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Source</div>
+                                                    <div className="font-bold text-base text-gray-900 dark:text-zinc-100">{activeLead.source}</div>
                                                 </div>
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-3">
-                                                <div className="bg-gray-50 dark:bg-zinc-950 p-2 rounded border border-gray-200 dark:border-zinc-800/50">
-                                                    <div className="text-[10px] text-gray-500 dark:text-zinc-500 uppercase">Device</div>
-                                                    <div className="text-xs font-medium text-gray-700 dark:text-zinc-300 truncate" title={activeLead.device}>{activeLead.device}</div>
+                                                <div className="bg-gradient-to-br from-gray-50 to-white dark:from-zinc-950 dark:to-zinc-900 p-3 rounded-xl border border-gray-200 dark:border-zinc-800/50 shadow-sm hover:shadow-md transition-all">
+                                                    <div className="text-[10px] text-gray-500 dark:text-zinc-500 uppercase font-bold tracking-wider mb-1">Device</div>
+                                                    <div className="text-xs font-bold text-gray-800 dark:text-zinc-200 truncate" title={activeLead.device}>{activeLead.device}</div>
                                                 </div>
-                                                <div className="bg-gray-50 dark:bg-zinc-950 p-2 rounded border border-gray-200 dark:border-zinc-800/50">
-                                                    <div className="text-[10px] text-gray-500 dark:text-zinc-500 uppercase">Location</div>
-                                                    <div className="text-xs font-medium text-gray-700 dark:text-zinc-300 truncate" title={activeLead.location}>{activeLead.location}</div>
+                                                <div className="bg-gradient-to-br from-gray-50 to-white dark:from-zinc-950 dark:to-zinc-900 p-3 rounded-xl border border-gray-200 dark:border-zinc-800/50 shadow-sm hover:shadow-md transition-all">
+                                                    <div className="text-[10px] text-gray-500 dark:text-zinc-500 uppercase font-bold tracking-wider mb-1">Location</div>
+                                                    <div className="text-xs font-bold text-gray-800 dark:text-zinc-200 truncate" title={activeLead.location}>{activeLead.location}</div>
                                                 </div>
                                             </div>
                                         </div>

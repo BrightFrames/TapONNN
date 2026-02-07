@@ -3,6 +3,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import { Bell, Info, CheckCircle, AlertTriangle, PartyPopper, ExternalLink, Clock, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { getImageUrl } from "@/utils/imageUtils";
 
 interface Update {
     _id: string;
@@ -128,7 +129,7 @@ const Updates = () => {
                                             <div className="flex items-center gap-2 mb-1">
                                                 <div className="flex items-center gap-1.5">
                                                     {update.profile.avatar ? (
-                                                        <img src={update.profile.avatar} className="w-4 h-4 rounded-full" alt="" />
+                                                        <img src={getImageUrl(update.profile.avatar)} className="w-4 h-4 rounded-full" alt="" />
                                                     ) : (
                                                         <User className="w-4 h-4 text-muted-foreground" />
                                                     )}

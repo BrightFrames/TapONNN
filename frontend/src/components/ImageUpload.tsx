@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, X, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
+import { getImageUrl } from "@/utils/imageUtils";
 
 interface ImageUploadProps {
     value?: string;
@@ -38,7 +39,7 @@ export function ImageUpload({ value, onChange, label = "Upload Image", className
             // Note: Upload endpoint might not be authenticated yet based on my implementation, 
             // but passing token is good practice if we add auth later.
 
-            const res = await fetch(`${API_URL}/upload`, {
+            const res = await fetch(`${API_URL.replace('/api', '')}/upload`, {
                 method: 'POST',
                 body: formData,
                 headers: token ? {
@@ -77,7 +78,7 @@ export function ImageUpload({ value, onChange, label = "Upload Image", className
             {value ? (
                 <div className="relative aspect-video w-full max-w-xs rounded-xl overflow-hidden border border-gray-200 group">
                     <img
-                        src={value}
+                        src={getImageUrl(value)}
                         alt="Uploaded"
                         className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     />

@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Camera, Loader2, ImagePlus } from "lucide-react";
+import { getImageUrl } from "@/utils/imageUtils";
 
 interface AvatarUploadProps {
     currentAvatarUrl?: string;
@@ -69,7 +70,7 @@ const AvatarUpload = ({ currentAvatarUrl, userName, onUploadComplete }: AvatarUp
         }
     };
 
-    const displayUrl = previewUrl || currentAvatarUrl;
+    const displayUrl = previewUrl || getImageUrl(currentAvatarUrl);
 
     return (
         <div className="flex flex-col sm:flex-row items-center gap-6">

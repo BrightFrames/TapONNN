@@ -4,6 +4,7 @@ import { Loader2, Heart, ExternalLink, ShoppingBag, Search } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import ReelModal from '@/components/ReelModal';
+import ProductInteractionModal from '@/components/ProductInteractionModal';
 
 interface Product {
     _id: string;
@@ -17,6 +18,7 @@ interface Product {
     owner_username?: string;
     owner_avatar?: string;
     store_username?: string;
+    user_id?: string;
 }
 
 const Explore = () => {
@@ -29,6 +31,11 @@ const Explore = () => {
     const [searchOpen, setSearchOpen] = useState(false);
     const [reelModalOpen, setReelModalOpen] = useState(false);
     const [selectedProductIndex, setSelectedProductIndex] = useState(0);
+    const [interactionModal, setInteractionModal] = useState<{
+        open: boolean;
+        product: Product | null;
+        initialStep: 'selection' | 'contact_enquiry' | 'contact_buy';
+    }>({ open: false, product: null, initialStep: 'selection' });
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -152,6 +159,25 @@ const Explore = () => {
         });
     };
 
+    const openProductInteraction = (product: Product, action: 'buy' | 'enquire') => {
+        setReelModalOpen(false);
+        setInteractionModal({
+            open: true,
+            product,
+            initialStep: action === 'buy' ? 'contact_buy' : 'contact_enquiry'
+        });
+    };
+
+    const getSellerFromProduct = (product: Product | null) => {
+        if (!product) return null;
+        return {
+            id: product.user_id,
+            full_name: product.owner_name,
+            name: product.owner_name,
+            username: product.owner_username || product.store_username
+        };
+    };
+
     if (loading) {
         return (
             <LinktreeLayout>
@@ -223,12 +249,29 @@ const Explore = () => {
                                                 alt={product.title}
                                                 className="w-full h-auto object-cover hover:scale-105 transition-transform duration-700 ease-out"
                                                 loading="lazy"
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement;
+                                                    target.style.display = 'none';
+                                                    const placeholder = target.nextElementSibling as HTMLDivElement;
+                                                    if (placeholder) placeholder.style.display = 'flex';
+                                                }}
                                             />
-                                        ) : (
-                                            <div className="w-full aspect-[4/5] flex items-center justify-center bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200 dark:from-zinc-800 dark:to-zinc-900">
-                                                <span className="text-4xl opacity-40 dark:opacity-20 grayscale brightness-90">✨</span>
+                                        ) : null}
+                                        {/* Placeholder - shown when no image or image fails to load */}
+                                        <div 
+                                            className="w-full aspect-[4/5] flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 via-white to-gray-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900"
+                                            style={{ display: product.image_url ? 'none' : 'flex' }}
+                                        >
+                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-3 shadow-lg">
+                                                <ShoppingBag className="w-8 h-8 text-white" />
                                             </div>
-                                        )}
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white px-4 text-center line-clamp-2">
+                                                {product.title}
+                                            </p>
+                                            <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+                                                {product.product_type === 'digital_product' ? 'Digital Product' : 'Physical Product'}
+                                            </p>
+                                        </div>
                                         {/* Dark Gradient Overlay */}
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                                     </div>
@@ -294,6 +337,16 @@ const Explore = () => {
                     initialIndex={selectedProductIndex}
                     likedProductIds={likedProductIds}
                     onLike={handleReelLike}
+                    onEnquire={(product) => openProductInteraction(product, 'enquire')}
+                    onBuy={(product) => openProductInteraction(product, 'buy')}
+                />
+
+                <ProductInteractionModal
+                    open={interactionModal.open}
+                    onOpenChange={(open) => setInteractionModal(prev => ({ ...prev, open }))}
+                    product={interactionModal.product}
+                    seller={getSellerFromProduct(interactionModal.product)}
+                    initialStep={interactionModal.initialStep}
                 />
             </div>
         </LinktreeLayout>

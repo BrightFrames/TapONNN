@@ -4,7 +4,7 @@ import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { UserCircle, Layout, Image as ImageIcon, Type, Monitor, Video, Youtube, Pencil } from "lucide-react";
+import { UserCircle, Image as ImageIcon, Type, Monitor, Video, Youtube, Pencil, Heart, Link2, Music, Palette, ShoppingBag, Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,11 @@ import {
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import ProfilePreview from "@/components/dashboard/ProfilePreview";
+import { getImageUrl } from "@/utils/imageUtils";
 import { supabase } from "@/lib/supabase";
+import FeatureCard from "@/components/FeatureCard";
+import ColorSelector from "@/components/ColorSelector";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const Design = () => {
     const { user, selectedTheme, updateTheme, updateProfile, blocks, addBlock, refreshProfile } = useAuth();
@@ -37,7 +41,7 @@ const Design = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token || localStorage.getItem('token');
+            const token = session?.access_token || localStorage.getItem('auth_token') || localStorage.getItem('token');
             if (!token) return;
             try {
                 const res = await fetch(`${API_URL}/products`, {
@@ -65,8 +69,12 @@ const Design = () => {
         coverUrl: '',
         coverColor: '',
         coverYoutubeUrl: '',
+        cardBgType: 'color',
         ...user?.design_config
     });
+
+    const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+    const [activeColorKey, setActiveColorKey] = useState<string | null>(null);
 
     // Sync config when selectedTheme changes
     useEffect(() => {
@@ -168,7 +176,7 @@ const Design = () => {
         }
     };
 
-    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video', isCover = false) => {
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video', isCover = false, isCard = false) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
@@ -182,7 +190,7 @@ const Design = () => {
         const toastId = toast.loading(`Uploading ${type}...`);
 
         const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token || localStorage.getItem('token');
+        const token = session?.access_token || localStorage.getItem('auth_token') || localStorage.getItem('token');
 
         try {
             const res = await axios.post(`${API_URL}/upload`, formData, {
@@ -198,6 +206,9 @@ const Design = () => {
                 if (isCover) {
                     handleConfigChange('coverUrl', newUrl);
                     handleConfigChange('coverType', type);
+                } else if (isCard) {
+                    handleConfigChange('cardImageUrl', newUrl);
+                    handleConfigChange('cardBgType', 'image');
                 } else {
                     if (type === 'image') {
                         handleConfigChange('bgImageUrl', newUrl);
@@ -253,73 +264,41 @@ const Design = () => {
                 </div>
 
                 {/* Right Panel - Design Tools */}
-                <div className="w-[420px] border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black flex flex-col h-full overflow-hidden">
+                <div className="w-[420px] border-l border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 flex flex-col h-full overflow-hidden">
                     <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                        <div className="mb-8">
-                            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Design</h2>
-                            <p className="text-sm text-zinc-500 dark:text-zinc-400">Customize your profile appearance</p>
+                        {/* Header */}
+                        <div className="mb-6 pb-6 border-b border-zinc-200 dark:border-zinc-800">
+                            <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">Design</h2>
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Customize your profile appearance</p>
                         </div>
 
-                        <Tabs defaultValue="theme" className="w-full">
-                            <TabsList className="w-full flex-wrap h-auto gap-2 bg-transparent justify-start mb-6 p-0">
-                                <TabsTrigger value="theme" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                                    Theme
-                                </TabsTrigger>
-                                <TabsTrigger value="cover" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                                    Cover
-                                </TabsTrigger>
-                                <TabsTrigger value="header" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                                    Header
-                                </TabsTrigger>
-                                <TabsTrigger value="text" className="data-[state=active]:bg-zinc-900 dark:data-[state=active]:bg-white data-[state=active]:text-white dark:data-[state=active]:text-black rounded-full px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                                    Text
-                                </TabsTrigger>
-
-                            </TabsList>
-
-                            <TabsContent value="theme" className="space-y-6 mt-0">
-                                <div className="grid grid-cols-2 gap-4">
-                                    {templates.map((t) => (
-                                        <div key={t.id} onClick={() => updateTheme(t.id)} className="cursor-pointer group flex flex-col gap-2">
-                                            <div className={cn("relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-sm transition-all border border-zinc-200 dark:border-zinc-800", selectedTheme === t.id && "ring-2 ring-zinc-900 dark:ring-white ring-offset-2 dark:ring-offset-black")}>
-                                                <div className="absolute inset-0 w-full h-full bg-cover bg-center" style={t.bgImage ? { backgroundImage: `url(${t.bgImage})` } : { backgroundColor: t.id === 'blocks' ? '#7F00FF' : undefined }}>
-                                                    {!t.bgImage && <div className={`w-full h-full ${t.bgClass}`} />}
-                                                </div>
-                                                {selectedTheme === t.id && (
-                                                    <div className="absolute inset-0 bg-black/10 flex items-center justify-center z-20">
-                                                        <div className="bg-white rounded-full p-1 shadow-md">
-                                                            <div className="w-2 h-2 bg-zinc-900 rounded-full" />
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <span className={cn("text-xs font-medium text-center", selectedTheme === t.id ? "text-zinc-900 dark:text-white" : "text-zinc-500")}>{t.name}</span>
-                                        </div>
-                                    ))}
+                        <div className="space-y-6">
+                            {/* Cover Section */}
+                            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                                        <ImageIcon className="w-4 h-4 text-white" />
+                                    </div>
+                                    <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Cover Photo</h3>
                                 </div>
-                            </TabsContent>
-
-                            <TabsContent value="cover" className="space-y-6 mt-0">
                                 <div className="space-y-4">
-                                    <Label>Profile Cover</Label>
                                     <Tabs value={config.coverType || 'none'} onValueChange={(v) => handleConfigChange('coverType', v)} className="w-full">
-                                        <TabsList className="w-full grid grid-cols-5 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-lg">
-                                            <TabsTrigger value="none" className="text-xs rounded-md">None</TabsTrigger>
-                                            <TabsTrigger value="color" className="rounded-md">Color</TabsTrigger>
-                                            <TabsTrigger value="image" className="rounded-md"><ImageIcon className="w-4 h-4" /></TabsTrigger>
-                                            <TabsTrigger value="video" className="rounded-md"><Video className="w-4 h-4" /></TabsTrigger>
-                                            <TabsTrigger value="youtube" className="rounded-md"><Youtube className="w-4 h-4" /></TabsTrigger>
+                                        <TabsList className="w-full grid grid-cols-5 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
+                                            <TabsTrigger value="none" className="text-xs rounded-lg">None</TabsTrigger>
+                                            <TabsTrigger value="color" className="rounded-lg">Color</TabsTrigger>
+                                            <TabsTrigger value="image" className="rounded-lg"><ImageIcon className="w-4 h-4" /></TabsTrigger>
+                                            <TabsTrigger value="video" className="rounded-lg"><Video className="w-4 h-4" /></TabsTrigger>
+                                            <TabsTrigger value="youtube" className="rounded-lg"><Youtube className="w-4 h-4" /></TabsTrigger>
                                         </TabsList>
 
                                         <TabsContent value="none" className="pt-4">
-                                            <div className="text-center p-4 text-zinc-500 text-xs">
+                                            <div className="text-center p-4 text-zinc-500 text-xs bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
                                                 Default gradient will be used if no cover is selected.
                                             </div>
                                         </TabsContent>
 
                                         <TabsContent value="color" className="pt-4">
-                                            <div className="space-y-2">
-                                                <Label className="text-xs text-muted-foreground">Solid Color Background</Label>
+                                            <div className="space-y-4">
                                                 <div className="grid grid-cols-5 gap-2">
                                                     {['#000000', '#ffffff', '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#881337', '#78350f'].map((color) => (
                                                         <button
@@ -329,22 +308,30 @@ const Design = () => {
                                                                 handleConfigChange('coverColor', color);
                                                                 handleConfigChange('coverType', 'color');
                                                             }}
-                                                            className={cn("w-full aspect-square rounded-lg border shadow-sm transition-transform active:scale-95", config.coverColor === color ? "ring-2 ring-zinc-900 dark:ring-white ring-offset-1" : "border-transparent")}
+                                                            className={cn("w-full aspect-square rounded-lg border-2 shadow-sm transition-all hover:scale-105", config.coverColor === color ? "border-zinc-900 dark:border-white scale-105" : "border-zinc-200 dark:border-zinc-700")}
                                                             style={{ backgroundColor: color }}
                                                         />
                                                     ))}
                                                 </div>
+
+                                                <ColorSelector 
+                                                    color={config.coverColor || '#000000'} 
+                                                    onChange={(c) => {
+                                                        handleConfigChange('coverUrl', '');
+                                                        handleConfigChange('coverColor', c);
+                                                        handleConfigChange('coverType', 'color');
+                                                    }}
+                                                />
                                             </div>
                                         </TabsContent>
 
                                         <TabsContent value="image" className="pt-4">
                                             <div className="space-y-2">
-                                                <Label className="text-xs text-muted-foreground">Upload Cover Image</Label>
                                                 <input type="file" id="cover-image-upload" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'image', true)} />
-                                                <Button variant="outline" className="w-full h-24 border-dashed border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-900" onClick={() => document.getElementById('cover-image-upload')?.click()}>
+                                                <Button variant="outline" className="w-full h-28 border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-xl" onClick={() => document.getElementById('cover-image-upload')?.click()}>
                                                     <div className="flex flex-col items-center text-zinc-500">
-                                                        {config.coverUrl ? <img src={config.coverUrl} className="h-12 w-full object-cover rounded shadow-sm" /> : <ImageIcon className="w-6 h-6 mb-2" />}
-                                                        <span className="text-xs font-medium">{config.coverUrl ? 'Change Image' : 'Click to Upload'}</span>
+                                                        {config.coverUrl ? <img src={getImageUrl(config.coverUrl)} className="h-16 w-full object-cover rounded-lg shadow-sm" /> : <ImageIcon className="w-8 h-8 mb-2" />}
+                                                        <span className="text-xs font-medium">{config.coverUrl ? 'Change Image' : 'Upload Cover'}</span>
                                                     </div>
                                                 </Button>
                                             </div>
@@ -352,65 +339,115 @@ const Design = () => {
 
                                         <TabsContent value="video" className="pt-4">
                                             <div className="space-y-2">
-                                                <Label className="text-xs text-muted-foreground">Upload Cover Video (Max 50MB)</Label>
-                                                <Input type="file" accept="video/mp4,video/webm" onChange={(e) => handleFileUpload(e, 'video', true)} className="cursor-pointer" />
+                                                <Label className="text-xs text-zinc-500">Upload Video (Max 50MB)</Label>
+                                                <Input type="file" accept="video/mp4,video/webm" onChange={(e) => handleFileUpload(e, 'video', true)} className="cursor-pointer rounded-xl" />
                                             </div>
                                         </TabsContent>
 
                                         <TabsContent value="youtube" className="pt-4">
                                             <div className="space-y-2">
-                                                <Label className="text-xs text-muted-foreground">YouTube Cover URL</Label>
+                                                <Label className="text-xs text-zinc-500">YouTube URL</Label>
                                                 <Input
                                                     placeholder="https://youtube.com/watch?v=..."
                                                     value={config.coverYoutubeUrl || ''}
                                                     onChange={(e) => handleConfigChange('coverYoutubeUrl', e.target.value)}
+                                                    className="rounded-xl"
                                                 />
                                             </div>
                                         </TabsContent>
                                     </Tabs>
                                 </div>
-                            </TabsContent>
+                            </div>
 
-                            <TabsContent value="header" className="space-y-8 mt-0">
-                                <div className="space-y-4">
-                                    <Label className="text-xs uppercase tracking-wider text-zinc-500 font-bold">Profile Layout</Label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div onClick={() => handleConfigChange('headerLayout', 'classic')} className={cn("cursor-pointer p-4 border-2 rounded-xl flex flex-col items-center gap-3 transition-all", config.headerLayout === 'classic' ? "border-zinc-900 dark:border-white bg-zinc-50 dark:bg-zinc-900" : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700")}>
-                                            <div className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600"></div>
-                                            <span className="text-xs font-medium">Classic</span>
-                                        </div>
-                                        <div onClick={() => handleConfigChange('headerLayout', 'hero')} className={cn("cursor-pointer p-4 border-2 rounded-xl flex flex-col items-center gap-3 transition-all", config.headerLayout === 'hero' ? "border-zinc-900 dark:border-white bg-zinc-50 dark:bg-zinc-900" : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700")}>
-                                            <div className="w-full h-12 bg-zinc-200 dark:bg-zinc-800 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-md"></div>
-                                            <span className="text-xs font-medium">Hero</span>
-                                        </div>
+                            {/* Profile Card Section */}
+                            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                                        <UserCircle className="w-4 h-4 text-white" />
                                     </div>
+                                    <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Profile Card</h3>
                                 </div>
-                            </TabsContent>
+                                
+                                <Tabs defaultValue="color" className="w-full">
+                                    <TabsList className="w-full grid grid-cols-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
+                                        <TabsTrigger value="color" className="rounded-lg">Color</TabsTrigger>
+                                        <TabsTrigger value="image" className="rounded-lg">Image</TabsTrigger>
+                                    </TabsList>
 
-                            <TabsContent value="text" className="space-y-6 mt-0">
+                                    <TabsContent value="color" className="pt-4 space-y-4">
+                                        <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
+                                            <Label className="text-xs font-semibold">Card Background</Label>
+                                            <div 
+                                                className="w-10 h-10 rounded-lg border-2 border-zinc-200 dark:border-zinc-700 shadow-sm"
+                                                style={{ background: config.cardColor || '#FFFFFF' }}
+                                            />
+                                        </div>
+                                        <ColorSelector 
+                                            color={config.cardColor || '#FFFFFF'} 
+                                            onChange={(c) => {
+                                                handleConfigChange('cardColor', c);
+                                                handleConfigChange('cardBgType', 'color');
+                                            }}
+                                        />
+                                    </TabsContent>
+
+                                    <TabsContent value="image" className="pt-4">
+                                        <div className="space-y-2">
+                                            <input type="file" id="card-image-upload" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'image', false, true)} />
+                                            <Button variant="outline" className="w-full h-28 border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-xl" onClick={() => document.getElementById('card-image-upload')?.click()}>
+                                                <div className="flex flex-col items-center text-zinc-500">
+                                                    {config.cardImageUrl ? <img src={getImageUrl(config.cardImageUrl)} className="h-16 w-full object-cover rounded-lg shadow-sm" /> : <ImageIcon className="w-8 h-8 mb-2" />}
+                                                    <span className="text-xs font-medium">{config.cardImageUrl ? 'Change Image' : 'Upload Image'}</span>
+                                                </div>
+                                            </Button>
+                                        </div>
+                                    </TabsContent>
+                                </Tabs>
+                            </div>
+
+                            {/* Text Color Section */}
+                            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                                        <Type className="w-4 h-4 text-white" />
+                                    </div>
+                                    <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Text Color</h3>
+                                </div>
+                                
                                 <div className="space-y-4">
-                                    <Label className="text-xs uppercase tracking-wider text-zinc-500 font-bold">{t('design.textColor')}</Label>
-                                    <div className="grid grid-cols-6 gap-3">
+                                    <div className="grid grid-cols-6 gap-2">
                                         {['#111827', '#374151', '#6B7280', '#FFFFFF', '#7C3AED', '#059669'].map(color => (
                                             <button
                                                 key={color}
                                                 onClick={() => handleConfigChange('textColor', color)}
-                                                className={cn("w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold text-lg shadow-sm transition-transform active:scale-95", config.textColor === color ? "border-zinc-900 dark:border-white scale-110" : "border-transparent bg-zinc-100 dark:bg-zinc-800")}
-                                                style={{ color: color === '#FFFFFF' ? '#000' : color, backgroundColor: color === '#FFFFFF' ? '#f3f4f6' : undefined }}
+                                                className={cn("w-full aspect-square rounded-lg border-2 flex items-center justify-center font-bold text-lg shadow-sm transition-all hover:scale-105", config.textColor === color ? "border-zinc-900 dark:border-white scale-105" : "border-zinc-200 dark:border-zinc-700")}
+                                                style={{ color: color === '#FFFFFF' ? '#000' : color, backgroundColor: color === '#FFFFFF' ? '#f3f4f6' : 'transparent' }}
                                             >
                                                 A
                                             </button>
                                         ))}
                                     </div>
+
+                                    <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <Label className="text-xs font-semibold">Custom Color</Label>
+                                            <div 
+                                                className="w-10 h-10 rounded-lg border-2 border-zinc-200 dark:border-zinc-700 shadow-sm"
+                                                style={{ background: config.textColor || '#FFFFFF' }}
+                                            />
+                                        </div>
+                                        <ColorSelector 
+                                            color={config.textColor || '#FFFFFF'} 
+                                            onChange={(c) => handleConfigChange('textColor', c)}
+                                        />
+                                    </div>
                                 </div>
-                            </TabsContent>
-
-
-                        </Tabs>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black z-10">
-                        <Button size="lg" className="w-full bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 rounded-xl font-bold h-12 shadow-lg" onClick={handleSaveConfig}>
+                    <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                        <Button size="lg" className="w-full bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 rounded-xl font-bold h-12 shadow-lg hover:shadow-xl transition-all" onClick={handleSaveConfig}>
                             Save Changes
                         </Button>
                     </div>

@@ -246,7 +246,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 avatar: data.user.avatar,
                 email: data.user.email,
                 email_confirmed_at: new Date().toISOString(),
-                is_email_verified: data.user.is_email_verified
+                is_email_verified: data.user.is_email_verified,
+                // Ensure profile mode defaults to personal on login
+                active_profile_mode: data.user.active_profile_mode || 'personal',
+                has_store: data.user.has_store || false,
+                role: data.user.role || 'super'
             });
             setIsAuthenticated(true);
 
@@ -299,7 +303,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 avatar: data.user.avatar,
                 gender: data.user.gender,
                 email_confirmed_at: new Date().toISOString(),
-                is_email_verified: data.user.is_email_verified
+                is_email_verified: data.user.is_email_verified,
+                // Ensure profile mode defaults to personal on signup
+                active_profile_mode: 'personal',
+                has_store: false,
+                role: 'super'
             });
             setIsAuthenticated(true);
 
@@ -368,7 +376,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 gender: data.user.gender,
                 phone_verified: data.user.phone_verified,
                 email_confirmed_at: new Date().toISOString(),
-                is_email_verified: true // Set to true after OTP verification
+                is_email_verified: true, // Set to true after OTP verification
+                // Ensure profile mode defaults to personal on signup
+                active_profile_mode: 'personal',
+                has_store: false,
+                role: 'super'
             });
             setIsAuthenticated(true);
 

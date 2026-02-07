@@ -12,8 +12,6 @@ import {
     Search,
     Send,
     MoreVertical,
-    Phone,
-    Video,
     ArrowLeft,
     MessageCircle,
     Check,
@@ -493,17 +491,6 @@ const Messages = () => {
                                             {otherUserTyping && ' • typing...'}
                                         </p>
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="icon" className="text-zinc-400">
-                                        <Phone className="w-5 h-5" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="text-zinc-400">
-                                        <Video className="w-5 h-5" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="text-zinc-400">
-                                        <MoreVertical className="w-5 h-5" />
-                                    </Button>
                                 </div>
                             </div>
 

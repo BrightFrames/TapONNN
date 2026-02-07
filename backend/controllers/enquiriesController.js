@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sendWelcomeEmail } = require('../services/msg91Service');
+const { linkJourneyToEnquiry } = require('./journeyController');
 
 // DiceBear Avatar Generation
 const { createAvatar } = require('@dicebear/core');
@@ -144,6 +145,17 @@ const createEnquiry = async (req, res) => {
         });
 
         await enquiry.save();
+
+        // Link journey events to this enquiry
+        const session_id = req.headers['x-session-id'] || req.body.session_id;
+        if (session_id || visitor_email) {
+            try {
+                await linkJourneyToEnquiry(session_id, enquiry._id, visitor_email);
+            } catch (journeyError) {
+                console.error('Failed to link journey events:', journeyError);
+                // Don't fail the enquiry creation if journey linking fails
+            }
+        }
 
         // Increment block enquiry count
         await Block.findByIdAndUpdate(block_id, {

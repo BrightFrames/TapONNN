@@ -101,7 +101,7 @@ const LoginToContinueModal = ({
                                 sessionStorage.setItem('tap2_pending_intent', intentId);
                                 sessionStorage.setItem('tap2_redirect_after_login', window.location.pathname);
                                 onOpenChange(false);
-                                navigate('/signup');
+                                navigate('/login');
                             }}
                             className="w-full gap-2"
                             size="lg"

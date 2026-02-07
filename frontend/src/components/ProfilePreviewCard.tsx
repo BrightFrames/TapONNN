@@ -1,6 +1,7 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Store } from "lucide-react";
+import { getImageUrl } from "@/utils/imageUtils";
 
 interface DesignConfig {
     backgroundImage?: string;
@@ -38,7 +39,7 @@ export const ProfilePreviewCard = ({
 
     const containerStyle: React.CSSProperties = bgImage
         ? {
-            backgroundImage: `url(${bgImage})`,
+            backgroundImage: `url(${getImageUrl(bgImage)})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat'
@@ -55,7 +56,7 @@ export const ProfilePreviewCard = ({
                 {/* Video Background Support */}
                 {activeDesignConfig?.bgType === 'video' && activeDesignConfig.bgVideoUrl && (
                     <video
-                        src={activeDesignConfig.bgVideoUrl}
+                        src={getImageUrl(activeDesignConfig.bgVideoUrl)}
                         autoPlay
                         muted
                         loop
@@ -91,7 +92,7 @@ export const ProfilePreviewCard = ({
                 {/* Avatar */}
                 <div className="mb-3 transform transition-transform duration-300 group-hover:scale-105">
                     <Avatar className="w-14 h-14 sm:w-16 sm:h-16 border-2 border-white shadow-md">
-                        <AvatarImage src={store_avatar_url} alt={store_name} className="object-cover" />
+                        <AvatarImage src={getImageUrl(store_avatar_url)} alt={store_name} className="object-cover" />
                         <AvatarFallback className="bg-gray-200 text-gray-500">
                             <Store className="w-6 h-6" />
                         </AvatarFallback>

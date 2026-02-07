@@ -24,6 +24,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Loader2, Trash2, MessageSquare, Check, X, Clock, CreditCard, Package, MoreHorizontal, Copy, Edit, BadgeCheck, CheckCircle2, ArrowRight } from "lucide-react";
 import { getIconForThumbnail } from "@/utils/socialIcons";
+import { getImageUrl } from "@/utils/imageUtils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -834,7 +835,6 @@ const Shop = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Product Image Upload Section */}
                                                     <div className="space-y-4">
                                                         <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
                                                             <Upload className="w-3.5 h-3.5" />
@@ -843,7 +843,7 @@ const Shop = () => {
                                                         <div className="grid grid-cols-3 gap-4">
                                                             {newProduct.images.map((img, idx) => (
                                                                 <div key={idx} className="relative aspect-square rounded-[1.5rem] overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 group shadow-lg">
-                                                                    <img src={img} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                                                                    <img src={getImageUrl(img)} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                                                                     {idx === 0 && (
                                                                         <div className="absolute top-2 left-2 px-2.5 py-1 bg-zinc-900/80 text-[7px] font-black text-white uppercase tracking-[0.2em] rounded-full backdrop-blur-md shadow-lg border border-white/10">
                                                                             Thumbnail
@@ -922,7 +922,7 @@ const Shop = () => {
                                                     {/* Product Image */}
                                                     <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
                                                         {product.image_url ? (
-                                                            <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
+                                                            <img src={getImageUrl(product.image_url)} alt={product.title} className="w-full h-full object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-xl bg-gradient-to-br from-purple-100 to-pink-100">🛍️</div>
                                                         )}

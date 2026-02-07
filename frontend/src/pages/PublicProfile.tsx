@@ -15,9 +15,11 @@ import ConnectWithSupplierModal from "@/components/ConnectWithSupplierModal";
 import { MessageSignupModal } from "@/components/MessageSignupModal";
 import { QuickAuthModal } from "@/components/QuickAuthModal";
 import { StoreUpdates } from "@/components/StoreUpdates";
+import ReelModal from "@/components/ReelModal";
 import useIntent, { getPendingIntent, clearPendingIntent } from "@/hooks/useIntent";
 import { toast } from "sonner";
 import { getIconForThumbnail } from "@/utils/socialIcons";
+import { getImageUrl } from "@/utils/imageUtils";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { cn } from "@/lib/utils";
 
@@ -87,6 +89,8 @@ const PublicProfile = () => {
     const [notFound, setNotFound] = useState(false);
     const [likedProductIds, setLikedProductIds] = useState<Set<string>>(new Set());
     const [activeTab, setActiveTab] = useState<'personal' | 'store'>('personal');
+    const [reelModalOpen, setReelModalOpen] = useState(false);
+    const [selectedProductIndex, setSelectedProductIndex] = useState(0);
 
     // Derived Products Data
     const featuredProducts = (products || []).filter(p => p.is_featured);
@@ -445,18 +449,18 @@ const PublicProfile = () => {
         const designConfig = profile.design_config || {};
         const { coverType, coverUrl, coverYoutubeUrl, coverColor } = designConfig;
 
-        // Force cover URL if provided (legacy support)
-        const finalCoverUrl = coverUrl || profile.design_config?.bgImageUrl;
+        // Use coverUrl if provided
+        const finalCoverUrl = coverUrl;
 
         // Handle solid color background
         if (coverType === 'color' && coverColor) {
             return <div className="w-full h-full" style={{ backgroundColor: coverColor }} />;
         }
         if (finalCoverUrl && (!coverType || coverType === 'image')) {
-            return <img src={finalCoverUrl} alt="Cover" className="w-full h-full object-cover" />;
+            return <img src={getImageUrl(finalCoverUrl)} alt="Cover" className="w-full h-full object-cover" />;
         }
         if (coverType === 'video' && finalCoverUrl) {
-            return <video src={finalCoverUrl} className="w-full h-full object-cover" autoPlay muted loop playsInline />;
+            return <video src={getImageUrl(finalCoverUrl)} className="w-full h-full object-cover" autoPlay muted loop playsInline />;
         }
         if (coverType === 'youtube' && coverYoutubeUrl) {
             const videoId = getYouTubeId(coverYoutubeUrl);
@@ -555,7 +559,6 @@ const PublicProfile = () => {
     const buttonTextColor = tailwindToHex(rawButtonTextColor, 'text');
     const blockStyle = designConfig.blockStyle || 'rounded';
 
-    // Helper to determine if a color is light or dark
     const isColorLight = (color: string) => {
         if (!color) return false;
 
@@ -581,19 +584,36 @@ const PublicProfile = () => {
         return brightness > 128;
     };
 
-    // Dark theme detection - check both background and text
-    // If background is dark (not light) OR if it's a gradient, treat as dark theme
-    const bgIsLight = isColorLight(bgColor);
-    const textIsLight = isColorLight(textColor);
-    // A theme is "dark" if background is dark OR if background is a gradient (gradients are usually dark/colorful)
-    // Also check if the background contains gradient keywords or is not a simple light color
-    const isDarkTheme = !bgIsLight || bgColor.includes('gradient') || bgColor.includes('linear') || bgColor.includes('rgb');
+    // Added support for new customization engine fields
+    const bgType = designConfig.bgType || 'color';
+    const bgImageUrl = designConfig.bgImageUrl || '';
+    const cardBgType = designConfig.cardBgType || 'color';
+    const cardImageUrl = designConfig.cardImageUrl || '';
+    
+    // Get the cover URL for blur background
+    const coverUrl = designConfig.coverUrl;
+    const coverType = designConfig.coverType;
+    
+    // Smart card color - ensure readability with blur background
+    // If user has a cover image, use semi-transparent white for glass effect
+    // Otherwise, use the user's card color or smart default
+    const hasCoverImage = !!(coverUrl && (coverType === 'image' || coverType === 'video' || !coverType));
+    const userCardColor = designConfig.cardColor;
+    const cardColor = hasCoverImage 
+        ? "rgba(255,255,255,0.95)" // Glass morphism effect when cover exists
+        : (userCardColor || (isColorLight(bgColor) ? "rgba(255,255,255,0.92)" : "rgba(0,0,0,0.85)"));
+
+    // Dark theme detection - check the card color to determine text contrast
+    // When card is light (glass effect), use dark text. When card is dark, use light text.
+    const cardIsLight = isColorLight(cardColor);
+    const isDarkTheme = !cardIsLight; // Inverted: dark theme = light text on dark card
+    
+    // Override text color for glass morphism - always use dark text on light glass card
+    const finalTextColor = hasCoverImage ? "#18181b" : textColor;
 
     // Card background - semi-transparent for better blending with theme
     // Products should have a subtle overlay effect that works with any background
-    const cardBgColor = isDarkTheme
-        ? 'rgba(255, 255, 255, 0.08)'
-        : 'rgba(255, 255, 255, 0.85)';
+    const cardBgColor = cardColor;
 
     // Helper to get background style object (handles both colors and gradients)
     const getBackgroundStyle = (color: string) => {
@@ -604,33 +624,37 @@ const PublicProfile = () => {
     };
 
     return (
-        <div className="fixed inset-0 w-full h-full font-sans selection:bg-zinc-200 overflow-hidden" style={{ color: textColor }}>
+        <div className="fixed inset-0 w-full h-full font-sans selection:bg-zinc-200 overflow-hidden" style={{ color: finalTextColor }}>
             
-            {/* Background Blur Layer - Fills the entire screen with the cover photo's colors */}
+            {/* Background Layer - Fills the entire screen with the cover photo's colors */}
             <div 
                 className="absolute inset-0 z-0 transition-all duration-1000 ease-out pointer-events-none"
                 style={{
-                    backgroundColor: bgColor,
+                    backgroundColor: hasCoverImage ? '#000000' : bgColor,
                 }}
             >
                 {/* Blurred Cover Image Background */}
-                <div 
-                    className="absolute inset-0 opacity-40 blur-[80px] saturate-[1.8] scale-110"
-                    style={{
-                        background: (profile.design_config?.coverUrl || profile.design_config?.bgImageUrl) 
-                            ? `url(${profile.design_config.coverUrl || profile.design_config.bgImageUrl}) center/cover no-repeat` 
-                            : (profile.design_config?.coverColor || bgColor),
-                    }}
-                />
+                {hasCoverImage && coverUrl && (
+                    <div 
+                        className="absolute inset-0 opacity-100 blur-[25px] saturate-[1.5] scale-[1.1]"
+                        style={{
+                            backgroundImage: `url(${getImageUrl(coverUrl)})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                        }}
+                    />
+                )}
                 
-                {/* Dynamic Gradient Overlay that responds to scroll */}
-                <div 
-                    className="absolute inset-0 transition-opacity duration-700"
-                    style={{
-                        background: `linear-gradient(135deg, ${hexToRgba(bgColor, 0.9)}, ${hexToRgba(bgColor, 0.7)}, ${hexToRgba(buttonColor, 0.3)})`,
-                        opacity: 0.8 + (scrollProgress * 0.2)
-                    }}
-                />
+                {/* Subtle Ambient Overlay for depth - lighter to show more blur */}
+                {hasCoverImage && (
+                    <div 
+                        className="absolute inset-0 transition-opacity duration-700"
+                        style={{
+                            background: 'radial-gradient(circle at center, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.2) 100%)',
+                        }}
+                    />
+                )}
             </div>
 
             {/* 1. Fixed Sticky Header */}
@@ -665,7 +689,7 @@ const PublicProfile = () => {
                                 isScrolled ? "opacity-100 translate-y-0 delay-75" : "opacity-0 translate-y-8"
                             )}>
                             <Avatar className="w-8 h-8 cursor-pointer border border-zinc-200/20">
-                                <AvatarImage src={profile.avatar} className="object-cover" />
+                                <AvatarImage src={getImageUrl(profile.avatar)} className="object-cover" />
                                 <AvatarFallback style={{ backgroundColor: buttonColor, color: buttonTextColor }} className="text-xs">{userInitial}</AvatarFallback>
                             </Avatar>
                             <span className="text-sm font-bold line-clamp-1 truncate max-w-[120px]" style={{ color: textColor }}>{profile.name}</span>
@@ -702,12 +726,13 @@ const PublicProfile = () => {
                 <div className="w-full max-w-md mx-auto min-h-full flex flex-col relative box-border md:my-0 md:min-h-screen">
 
                     {/* Cover Photo - The "Pink" or Image area */}
-                    <div className="h-[28rem] w-full relative z-0 shrink-0 overflow-hidden">
+                    <div className="h-80 w-full relative z-0 shrink-0 overflow-hidden px-4">
                         <div
                             className="w-full h-full transition-all duration-500 ease-out origin-top"
                             style={{
                                 filter: `blur(${scrollProgress * 40}px) saturate(${1 + scrollProgress})`,
                                 transform: `scale(${1 + scrollProgress * 0.2}) translateY(${scrollProgress * 20}px)`,
+                                overflow: 'hidden'
                             }}
                         >
                             {renderCoverMedia() || (
@@ -726,47 +751,41 @@ const PublicProfile = () => {
                     </div>
 
                     {/* Uplifted Card */}
-                    <div className="relative z-10 -mt-24 px-0 pb-12 flex-1 flex flex-col">
+                    <div className="relative z-10 -mt-16 px-4 pb-12 flex-1 flex flex-col">
+                        {/* Avatar - Positioned outside card to prevent clipping */}
+                        <div className="relative z-20 flex justify-center -mb-14">
+                            <div className={cn(
+                                "w-28 h-28 rounded-full border-[6px] shadow-2xl overflow-hidden transition-all duration-300",
+                                scrollProgress > 0.2 ? "scale-90 opacity-80" : "scale-100 opacity-100"
+                            )} style={{ borderColor: '#ffffff', backgroundColor: cardBgColor }}>
+                                <Avatar className="w-full h-full">
+                                    <AvatarImage src={getImageUrl(profile.avatar)} className="object-cover" />
+                                    <AvatarFallback style={{ backgroundColor: buttonColor, color: buttonTextColor }} className="text-4xl font-bold">{userInitial}</AvatarFallback>
+                                </Avatar>
+                            </div>
+                        </div>
+                        
                         <div
-                            className="w-full rounded-[2.5rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] p-5 pt-0 flex flex-col items-center animate-in slide-in-from-bottom-12 duration-1000 fill-mode-both min-h-[70vh] relative overflow-hidden backdrop-blur-md"
+                            className="w-full shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] p-5 pt-16 flex flex-col items-center animate-in slide-in-from-bottom-12 duration-1000 fill-mode-both min-h-[70vh] relative overflow-hidden backdrop-blur-md"
                             style={{
-                                backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.92)',
+                                backgroundColor: cardBgType === 'color' ? cardBgColor : undefined,
+                                backgroundImage: cardBgType === 'image' && cardImageUrl ? `url(${getImageUrl(cardImageUrl)})` : undefined,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
                                 border: isDarkTheme ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.3)',
                                 boxShadow: isDarkTheme ? '0 25px 50px -12px rgba(0,0,0,0.5)' : '0 25px 50px -12px rgba(0,0,0,0.15)'
                             }}
                         >
-                            {/* Profile Avatar Background - Full Silhouette */}
-                            {profile.avatar && (
-                                <div
-                                    className="absolute inset-x-0 top-0 z-0 pointer-events-none"
-                                    style={{
-                                        height: '70%',
-                                        backgroundImage: `url(${profile.avatar})`,
-                                        backgroundSize: 'cover',
-                                        backgroundPosition: 'center top',
-                                        filter: 'brightness(0.35) saturate(1.1)',
-                                    }}
-                                />
-                            )}
-                            {/* Gradient Overlay - Fade to dark at bottom */}
+                            {/* Gradient Overlay - Only if needed for contrast, but let's keep it clean if user didn't ask */}
                             <div
                                 className="absolute inset-0 z-0 pointer-events-none"
                                 style={{
-                                    background: 'linear-gradient(to bottom, transparent 0%, transparent 30%, rgba(0,0,0,0.8) 60%, rgba(0,0,0,1) 100%)',
+                                    background: isDarkTheme ? 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 100%)' : 'transparent',
                                 }}
                             />
 
                             {/* Large Profile Header */}
-                            <div className="relative z-10 pt-14 flex flex-col items-center mb-8 w-full px-6">
-                                <div className={cn(
-                                    "w-28 h-28 rounded-full border-[6px] shadow-2xl overflow-hidden mb-6 transition-all duration-300",
-                                    scrollProgress > 0.2 ? "scale-90 opacity-80" : "scale-100 opacity-100"
-                                )} style={{ borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : '#ffffff', backgroundColor: isDarkTheme ? bgColor : cardBgColor }}>
-                                    <Avatar className="w-full h-full">
-                                        <AvatarImage src={profile.avatar} className="object-cover" />
-                                        <AvatarFallback style={{ backgroundColor: buttonColor, color: buttonTextColor }} className="text-4xl font-bold">{userInitial}</AvatarFallback>
-                                    </Avatar>
-                                </div>
+                            <div className="relative z-10 flex flex-col items-center mb-4 w-full px-6">
                                 <div className={cn(
                                     "text-center transition-all duration-300 w-full",
                                     scrollProgress > 0.4 ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
@@ -883,7 +902,7 @@ const PublicProfile = () => {
                                                             
                                                             <div className="aspect-square relative p-8 flex items-center justify-center" style={{ backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.02)' : 'transparent' }}>
                                                                 {product.image_url ? (
-                                                                    <img src={product.image_url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+                                                                    <img src={getImageUrl(product.image_url)} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
                                                                 ) : (
                                                                     <div className="w-full h-full flex items-center justify-center text-5xl bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl text-zinc-300">🛍️</div>
                                                                 )}
@@ -991,7 +1010,7 @@ const PublicProfile = () => {
                                                         >
                                                             <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }}>
                                                                 {product.image_url ? (
-                                                                    <img src={product.image_url} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                                                                    <img src={getImageUrl(product.image_url)} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
                                                                 ) : (
                                                                     <div className="w-full h-full flex items-center justify-center text-2xl">🛍️</div>
                                                                 )}
@@ -1057,13 +1076,13 @@ const PublicProfile = () => {
                                                         onClick={() => navigate(`/s/${store.username}`)}
                                                         className="w-full p-4 rounded-2xl active:scale-[0.98] transition-all cursor-pointer border flex items-center justify-between group h-20 shadow-sm hover:shadow-md backdrop-blur-xl"
                                                         style={{
-                                                            backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.7)',
-                                                            borderColor: isDarkTheme ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
+                                                            backgroundColor: cardBgType === 'color' ? cardBgColor : '#ffffff',
+                                                            borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
                                                         }}
                                                     >
                                                         <div className="flex items-center gap-4 w-full overflow-hidden">
                                                             <Avatar className="w-12 h-12 border-2 border-white/20">
-                                                                <AvatarImage src={store.avatar_url || profile.avatar} />
+                                                                <AvatarImage src={getImageUrl(store.avatar_url || profile.avatar)} />
                                                                 <AvatarFallback style={{ backgroundColor: buttonColor, color: buttonTextColor }}>
                                                                     {store.store_name?.charAt(0) || 'S'}
                                                                 </AvatarFallback>
@@ -1140,13 +1159,13 @@ const PublicProfile = () => {
                                                     onClick={() => handleBlockInteract(block)}
                                                     className="w-full p-4 rounded-2xl active:scale-[0.98] transition-all cursor-pointer border flex items-center justify-between group h-16 shadow-sm hover:shadow-md"
                                                     style={{
-                                                        backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : `${textColor}08`,
-                                                        borderColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : `${textColor}10`,
+                                                        backgroundColor: cardBgType === 'color' ? cardBgColor : '#ffffff',
+                                                        borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
                                                     }}
                                                 >
                                                     <div className="flex items-center gap-4 w-full overflow-hidden">
                                                         {isUrlThumbnail ? (
-                                                            <img src={block.thumbnail} className="w-10 h-10 rounded-full object-cover border border-zinc-200" />
+                                                            <img src={getImageUrl(block.thumbnail)} className="w-10 h-10 rounded-full object-cover border border-zinc-200" />
                                                         ) : Icon ? (
                                                             <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
                                                                 style={{ backgroundColor: isDarkTheme ? bgColor : cardBgColor, color: textColor, borderColor: `${textColor}15` }}>
@@ -1239,7 +1258,7 @@ const PublicProfile = () => {
                 onOpenChange={setShareOpen}
                 username={profile?.username}
                 url={window.location.href}
-                userAvatar={profile?.avatar}
+                userAvatar={getImageUrl(profile?.avatar)}
                 userName={profile?.name}
             />
 
@@ -1272,7 +1291,7 @@ const PublicProfile = () => {
                             <span className="font-semibold text-sm opacity-50 truncate max-w-[200px]" style={{ color: textColor }}>tapx.bio/{username}</span>
                         </div>
                         <Avatar className="w-9 h-9 border-2 border-white shadow-sm">
-                            <AvatarImage src={profile?.avatar} />
+                            <AvatarImage src={getImageUrl(profile?.avatar)} />
                             <AvatarFallback>{userInitial}</AvatarFallback>
                         </Avatar>
                     </div>
@@ -1324,7 +1343,7 @@ const PublicProfile = () => {
                                 <div className="w-full aspect-video rounded-xl overflow-hidden shadow-sm border"
                                     style={{ borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
                                 >
-                                    <img src={selectedBlock.thumbnail} className="w-full h-full object-cover" alt={selectedBlock.title} />
+                                    <img src={getImageUrl(selectedBlock.thumbnail)} className="w-full h-full object-cover" alt={selectedBlock.title} />
                                 </div>
                             )}
 
@@ -1389,7 +1408,7 @@ const PublicProfile = () => {
                                 }}
                             >
                                 {selectedProduct.image_url ?
-                                    <img src={selectedProduct.image_url} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110" /> :
+                                    <img src={getImageUrl(selectedProduct.image_url)} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110" /> :
                                     <div className="w-full h-full flex items-center justify-center text-4xl">🛍️</div>
                                 }
                                 <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">

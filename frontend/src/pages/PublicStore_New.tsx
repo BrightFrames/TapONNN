@@ -6,6 +6,7 @@ import { Store, Share2, Settings, ShoppingBag, MessageCircle, Sparkles } from "l
 import ShareModal from "@/components/ShareModal";
 import ProductInteractionModal from "@/components/ProductInteractionModal";
 import { getIconForThumbnail } from "@/utils/socialIcons";
+import { getImageUrl } from "@/utils/imageUtils";
 
 interface Product {
     _id: string;
@@ -210,7 +211,7 @@ const PublicStore_New = () => {
                                         </div>
                                     )}
                                     {isUrlThumbnail && (
-                                        <img src={block.thumbnail} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                        <img src={getImageUrl(block.thumbnail)} alt="" className="w-10 h-10 rounded-full object-cover" />
                                     )}
                                     <span className="font-semibold text-gray-900 truncate flex-1">{block.title}</span>
                                     <MessageCircle className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -239,7 +240,7 @@ const PublicStore_New = () => {
                                     <div className="aspect-square relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                                         {product.image_url ? (
                                             <img
-                                                src={product.image_url}
+                                                src={getImageUrl(product.image_url)}
                                                 alt={product.title}
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                             />
@@ -319,7 +320,7 @@ const PublicStore_New = () => {
                                                 <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-3">
                                                     {product.image_url ? (
                                                         <img
-                                                            src={product.image_url}
+                                                            src={getImageUrl(product.image_url)}
                                                             alt={product.title}
                                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                         />
@@ -384,7 +385,7 @@ const PublicStore_New = () => {
                         username={store.username}
                         url={storeUrl}
                         type="store"
-                        userAvatar={store.avatar_url || store.avatar}
+                        userAvatar={getImageUrl(store.avatar_url || store.avatar)}
                         userName={store.full_name || store.name}
                     />
                 </>

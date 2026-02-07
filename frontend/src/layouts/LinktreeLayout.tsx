@@ -4,14 +4,12 @@ import { io } from "socket.io-client";
 import {
     LayoutGrid,
     List,
-    Store,
     Palette,
     Settings,
     Users,
     BarChart3,
     Zap,
     Megaphone,
-    ChevronDown,
     Coins,
     Menu,
     LogOut,
@@ -29,14 +27,13 @@ import {
     Grid,
     ChevronRight,
     Heart,
-    User
+    User,
+    Search,
+    CheckCircle,
+    ShoppingBag,
+    Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
     Sheet,
     SheetContent,
@@ -94,7 +91,7 @@ const NavItem = ({ icon: Icon, label, active = false, count, badge, isNew, onCli
 );
 
 const SidebarSectionTitle = ({ children }: { children: ReactNode }) => (
-    <div className="px-4 mb-2 mt-6 text-xs font-medium text-zinc-600 uppercase tracking-wider">
+    <div className="px-4 mb-2 mt-3 text-xs font-medium text-zinc-600 uppercase tracking-wider">
         {children}
     </div>
 );
@@ -109,6 +106,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
     unreadMessageCount?: number
 }) => {
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+
     const { t } = useTranslation();
     const [isDark, setIsDark] = useState(() => {
         if (typeof window !== "undefined") {
@@ -154,10 +152,51 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                 <ProfileSwitcher />
             </div>
 
-            {/* Main Navigation - Scrollable */}
-            <nav className="flex-1 px-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 hover:scrollbar-thumb-zinc-700 py-2">
+            {/* Fixed MANAGE Section */}
+            <div className="border-b border-zinc-200 dark:border-[#1A1A1A] px-1 bg-white dark:bg-[#050505]">
+                <SidebarSectionTitle>{t('nav.manage')}</SidebarSectionTitle>
+                <div className="space-y-[1px]">
+                    <NavItem
+                        icon={User}
+                        label="Profile"
+                        active={location.pathname === '/design'}
+                        onClick={() => handleNav('/design')}
+                    />
+                    <NavItem
+                        icon={Image}
+                        label={t('nav.media')}
+                        active={location.pathname === '/media'}
+                        onClick={() => handleNav('/media')}
+                        count={142}
+                    />
+                    {/* Show Products for Store profiles, Links & Blocks for Personal profiles */}
+                    {isStoreMode ? (
+                        <NavItem
+                            icon={Package}
+                            label="Products"
+                            active={location.pathname === '/shop' || location.pathname === '/dashboard/business'}
+                            onClick={() => handleNav('/shop')}
+                        />
+                    ) : (
+                        <NavItem
+                            icon={List}
+                            label="Links & Blocks"
+                            active={location.pathname === '/dashboard' || location.pathname.includes('links')}
+                            onClick={() => handleNav('/dashboard')}
+                        />
+                    )}
+                    <NavItem
+                        icon={DollarSign}
+                        label={t('nav.vault')}
+                        active={location.pathname === '/earnings'}
+                        onClick={() => handleNav('/earnings')}
+                    />
+                </div>
+                <div className="pb-2"></div>
+            </div>
 
-                {/* Explore Section - Only for Personal Profile - Moved to Top */}
+            {/* Scrollable Navigation - Only DISCOVER section */}
+            <nav className="flex-1 px-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 hover:scrollbar-thumb-zinc-700">
                 {!isStoreMode && (
                     <>
                         <SidebarSectionTitle>Discover</SidebarSectionTitle>
@@ -177,46 +216,10 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                         </div>
                     </>
                 )}
+            </nav>
 
-                <SidebarSectionTitle>{t('nav.manage')}</SidebarSectionTitle>
-                <div className="space-y-[1px]">
-                    <NavItem
-                        icon={User}
-                        label="Profile"
-                        active={location.pathname === '/design'}
-                        onClick={() => handleNav('/design')}
-                    />
-                    <NavItem
-                        icon={Image}
-                        label={t('nav.media')}
-                        active={location.pathname === '/media'}
-                        onClick={() => handleNav('/media')}
-                        count={142}
-                    />
-                    {/* Show Shop for Store profiles, Links & Blocks for Personal profiles */}
-                    {isStoreMode ? (
-                        <NavItem
-                            icon={Store}
-                            label="Shop"
-                            active={location.pathname === '/dashboard/business' || location.pathname.includes('shop')}
-                            onClick={() => handleNav('/dashboard/business?tab=shop')}
-                        />
-                    ) : (
-                        <NavItem
-                            icon={List}
-                            label="Links & Blocks"
-                            active={location.pathname === '/dashboard' || location.pathname.includes('links')}
-                            onClick={() => handleNav('/dashboard')}
-                        />
-                    )}
-                    <NavItem
-                        icon={DollarSign}
-                        label={t('nav.vault')}
-                        active={location.pathname === '/earnings'}
-                        onClick={() => handleNav('/earnings')}
-                    />
-                </div>
-
+            {/* Fixed Growth Section */}
+            <div className="border-t border-zinc-200 dark:border-[#1A1A1A] px-1 pb-1 bg-white dark:bg-[#050505]">
                 <SidebarSectionTitle>{t('nav.growth')}</SidebarSectionTitle>
                 <div className="space-y-[1px]">
                     <NavItem
@@ -225,6 +228,14 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                         active={location.pathname === '/analytics'}
                         onClick={() => handleNav('/analytics')}
                     />
+                    {isStoreMode && (
+                        <NavItem
+                            icon={ShoppingBag}
+                            label="Orders"
+                            active={location.pathname === '/orders'}
+                            onClick={() => handleNav('/orders')}
+                        />
+                    )}
                     <NavItem
                         icon={MessageCircle}
                         label={isStoreMode ? "Enquiry" : t('nav.message')}
@@ -245,10 +256,10 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                         onClick={() => handleNav('/marketplace')}
                     />
                 </div>
-            </nav>
+            </div>
 
             {/* Fixed System Section with Separator */}
-            <div className="border-t border-zinc-200 dark:border-[#1A1A1A] px-1 pt-2 pb-1 bg-white dark:bg-[#050505]">
+            <div className="border-t border-zinc-200 dark:border-[#1A1A1A] px-1 pb-1 bg-white dark:bg-[#050505]">
                 <SidebarSectionTitle>{t('nav.system')}</SidebarSectionTitle>
                 <div className="space-y-[1px]">
                     <NavItem

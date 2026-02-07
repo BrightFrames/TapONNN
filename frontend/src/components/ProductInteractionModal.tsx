@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2, CheckCircle2, MessageSquare, ShoppingBag, CreditCard, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { getImageUrl } from "@/utils/imageUtils";
 
 interface ProductInteractionModalProps {
     open: boolean;
@@ -151,7 +152,7 @@ const ProductInteractionModal = ({ open, onOpenChange, product, seller, initialS
                     <div className="flex gap-4 items-center">
                         <div className="w-16 h-16 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
                             {product.image_url ? (
-                                <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
+                                <img src={getImageUrl(product.image_url)} alt={product.title} className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-2xl">🛍️</div>
                             )}

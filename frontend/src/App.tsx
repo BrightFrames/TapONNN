@@ -17,6 +17,7 @@ import Shop from "./pages/Shop";
 import Audience from "./pages/Audience";
 import Overview from "./pages/Overview";
 import Earnings from "./pages/Earnings";
+import Orders from "./pages/Orders";
 import EarnOverview from "./pages/EarnOverview";
 import Settings from "./pages/Settings";
 import PublicProfile from "./pages/PublicProfile";
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
             <Route path="/insights" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
             <Route path="/shop" element={<ProtectedRoute><Shop /></ProtectedRoute>} />
+            <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
             <Route path="/audience" element={<ProtectedRoute><Audience /></ProtectedRoute>} />
             <Route path="/earnings" element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
             <Route path="/design" element={<ProtectedRoute><Design /></ProtectedRoute>} />

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Share2, ArrowRight, Sparkles, AlertCircle, ExternalLink, Mail, Phone, ShoppingBag, ChevronLeft, Star, Heart, Upload, Instagram, Twitter, Facebook, Linkedin, Youtube, Github, Music, MessageCircle, Send, Globe, Info, CheckCircle, AlertTriangle, PartyPopper } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getIconForThumbnail } from "@/utils/socialIcons";
+import { getImageUrl } from "@/utils/imageUtils";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
@@ -79,8 +80,9 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
     const username = user?.username || "user";
     const displayName = user?.name || "Display Name";
     const userInitial = displayName[0]?.toUpperCase() || "U";
-    const avatarUrl = user?.avatar;
-    const coverUrl = theme?.coverUrl || user?.design_config?.coverUrl;
+    const avatarUrl = getImageUrl(user?.avatar);
+    const coverType = theme?.coverType || user?.design_config?.coverType || 'none';
+    const coverUrl = getImageUrl(theme?.coverUrl || user?.design_config?.coverUrl);
     const coverColor = theme?.coverColor || user?.design_config?.coverColor;
     const coverYoutubeUrl = theme?.coverYoutubeUrl || user?.design_config?.coverYoutubeUrl;
 
@@ -92,7 +94,9 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
         return (match && match[2].length === 11) ? match[2] : null;
     };
 
-    const youtubeVideoId = coverYoutubeUrl ? getYouTubeVideoId(coverYoutubeUrl) : null;
+    const youtubeVideoId = (coverType === 'youtube' && coverYoutubeUrl) ? getYouTubeVideoId(coverYoutubeUrl) : null;
+    const showCoverImage = (coverType === 'image' || coverType === 'video') && coverUrl;
+    const showCoverColor = coverType === 'color' || (coverType === 'none' && !showCoverImage && !youtubeVideoId);
 
     const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
     const [scrollProgress, setScrollProgress] = useState(0);
@@ -114,16 +118,29 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
 
     const isScrolled = scrollProgress > 0.8;
 
-    // Theme Styles - moved up so they can be used in renderProductList
     const bgColor = theme?.backgroundColor || "#fafafa"; // Zinc-50 equivalent
-    const textColor = theme?.textColor || "#18181b"; // Zinc-900
+    const bgType = theme?.bgType || 'color';
+    const bgImageUrl = getImageUrl(theme?.bgImageUrl || '');
+    const cardBgType = theme?.cardBgType || 'color';
+    const cardImageUrl = getImageUrl(theme?.cardImageUrl || '');
     const buttonColor = theme?.buttonColor || "#000000";
     const buttonTextColor = theme?.buttonTextColor || "#ffffff";
     const blockStyle = theme?.blockStyle || 'rounded'; // rounded, square, fully_rounded
+    
+    // Smart card color - use user selection or fallback
+    const hasCoverImage = !!coverUrl;
+    const userCardColor = theme?.cardColor;
+    const cardColor = userCardColor || (hasCoverImage 
+        ? "rgba(255,255,255,0.95)" // Glass effect fallback
+        : "#ffffff");
+    
+    // Text color - respect user selection or use dark text for glass effect
+    const textColor = theme?.textColor || (hasCoverImage ? "#18181b" : "#18181b");
 
     // Helper to determine if a color is light or dark
     const isColorLight = (color: string) => {
-        if (!color) return false;
+        if (!color) return true; // Default to light
+        if (color === 'transparent') return true;
         let hex = color.replace('#', '');
         
         // Handle gradients - extract the first color
@@ -133,7 +150,7 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
             else return false;
         }
         
-        if (!/^[a-fA-F0-9]{3,6}$/.test(hex)) return false;
+        if (!/^[a-fA-F0-9]{3,6}$/.test(hex)) return true;
         
         // Handle short hex (e.g., #fff)
         const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
@@ -144,12 +161,12 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
         return brightness > 128;
     };
 
-    // Dark theme detection - if background is dark OR a gradient, treat as dark theme
-    const bgIsLight = isColorLight(bgColor);
-    const isDarkTheme = !bgIsLight || bgColor.includes('gradient') || bgColor.includes('linear');
+    // Dark theme detection - check the card color
+    const cardIsLight = isColorLight(cardColor);
+    const isDarkTheme = !cardIsLight; // When card is dark, use light text/borders
 
     const renderProductList = () => (
-        <div className="space-y-4 px-1 pb-24 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
+        <div className="space-y-4 pb-24 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
             <div className="grid grid-cols-2 gap-3">
                 {products.length > 0 ? (
                     products.map((product) => (
@@ -243,6 +260,37 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
         <div className="flex flex-col items-center justify-center p-4 w-full h-full font-sans select-none" style={{ color: textColor }}>
             {/* Phone Mockup Frame */}
             <div className="relative w-[320px] h-[640px] bg-black rounded-[2.5rem] border-[8px] border-zinc-900 shadow-2xl overflow-hidden flex flex-col ring-1 ring-zinc-800 isolate">
+                
+                {/* Background Layer (Matches PublicProfile.tsx) */}
+                <div 
+                    className="absolute inset-0 z-0 transition-all duration-1000 ease-out pointer-events-none"
+                    style={{
+                        backgroundColor: hasCoverImage ? '#000000' : bgColor,
+                    }}
+                >
+                    {/* Blurred Cover Image Background */}
+                    {hasCoverImage && coverUrl && (
+                        <div 
+                            className="absolute inset-0 opacity-100 blur-[20px] saturate-[1.5] scale-[1.1]"
+                            style={{
+                                backgroundImage: `url(${coverUrl})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                backgroundRepeat: 'no-repeat',
+                            }}
+                        />
+                    )}
+                    
+                    {/* Subtle Ambient Overlay - lighter to show more blur */}
+                    {hasCoverImage && (
+                        <div 
+                            className="absolute inset-0 transition-opacity duration-700"
+                            style={{
+                                background: 'radial-gradient(circle at center, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.2) 100%)',
+                            }}
+                        />
+                    )}
+                </div>
 
                 {/* 1. Dynamic Island / Status Bar Area */}
                 <div className="absolute top-0 w-full h-8 z-[70] flex justify-between px-6 items-end pb-1 pointer-events-none">
@@ -299,11 +347,11 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                 <div
                     ref={scrollContainerRef}
                     onScroll={handleScroll}
-                    className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide relative"
-                    style={{ background: bgColor }}
+                    className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide relative z-[1]"
                 >
                     {/* Cover Photo */}
-                    <div className="h-64 w-full relative z-0">
+                    <div className="h-64 w-full relative z-0 px-3">
+                        <div className="w-full h-full overflow-hidden">
                         {youtubeVideoId ? (
                             <div className="w-full h-full relative pointer-events-auto">
                                 <iframe
@@ -314,37 +362,64 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                 />
                                 <div className="absolute inset-0 bg-transparent pointer-events-none" />
                             </div>
-                        ) : coverUrl ? (
-                            <img src={coverUrl} className="w-full h-full object-cover" />
+                        ) : showCoverImage ? (
+                            coverType === 'video' ? (
+                                <video 
+                                    src={coverUrl} 
+                                    className="w-full h-full object-cover" 
+                                    autoPlay 
+                                    muted 
+                                    loop 
+                                    playsInline 
+                                />
+                            ) : (
+                                <img src={coverUrl} className="w-full h-full object-cover" />
+                            )
                         ) : (
                             <div className="w-full h-full" style={{ background: coverColor || 'linear-gradient(to bottom right, #6366f1, #a855f7, #ec4899)' }} />
                         )}
                         <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" />
+                        </div>
                     </div>
 
                     {/* Uplifted Card */}
-                    <div className="relative z-10 -mt-10 px-3 pb-8 min-h-[500px]">
+                    <div className="relative z-10 -mt-16 px-3 pb-8 min-h-[500px]">
+                        {/* Avatar - Positioned outside card to prevent clipping */}
+                        <div className="relative z-20 flex justify-center -mb-14">
+                            <div className={cn(
+                                "w-28 h-28 rounded-full border-[6px] shadow-2xl overflow-hidden transition-all duration-300",
+                                scrollProgress > 0.2 ? "scale-90 opacity-80" : "scale-100 opacity-100"
+                            )} style={{ borderColor: '#ffffff', backgroundColor: cardBgType === 'color' ? cardColor : '#ffffff' }}>
+                                <Avatar className="w-full h-full">
+                                    <AvatarImage src={avatarUrl} className="object-cover" />
+                                    <AvatarFallback style={{ backgroundColor: buttonColor, color: buttonTextColor }} className="text-4xl font-bold">{userInitial}</AvatarFallback>
+                                </Avatar>
+                            </div>
+                        </div>
+                        
                         <div
-                            className="w-full rounded-[1.5rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] p-4 pt-0 flex flex-col items-center animate-in slide-in-from-bottom-8 duration-700 fill-mode-both"
+                            className="w-full shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] p-5 pt-16 flex flex-col items-center animate-in slide-in-from-bottom-12 duration-1000 fill-mode-both min-h-[70vh] relative overflow-hidden backdrop-blur-md"
                             style={{
-                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : '#ffffff',
-                                border: isDarkTheme ? '1px solid rgba(255,255,255,0.1)' : 'none'
+                                backgroundColor: (cardBgType === 'color' || !cardBgType) ? cardColor : undefined,
+                                backgroundImage: cardBgType === 'image' && cardImageUrl ? `url(${cardImageUrl})` : undefined,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                border: isDarkTheme ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.3)',
+                                boxShadow: isDarkTheme ? '0 25px 50px -12px rgba(0,0,0,0.5)' : '0 25px 50px -12px rgba(0,0,0,0.15)'
                             }}
                         >
+                            {/* Gradient Overlay */}
+                            <div
+                                className="absolute inset-0 z-0 pointer-events-none"
+                                style={{
+                                    background: isDarkTheme ? 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 100%)' : 'transparent',
+                                }}
+                            />
 
                             {/* Large Profile Header */}
-                            <div className="relative -top-9 flex flex-col items-center mb-[-20px]">
+                            <div className="relative z-10 flex flex-col items-center mb-4 w-full px-6">
                                 <div className={cn(
-                                    "w-24 h-24 rounded-full border-[5px] shadow-lg overflow-hidden mb-2 transition-all duration-300",
-                                    scrollProgress > 0.2 ? "scale-90 opacity-80" : "scale-100 opacity-100"
-                                )} style={{ borderColor: isDarkTheme ? '#18181b' : '#ffffff', backgroundColor: isDarkTheme ? '#18181b' : '#ffffff' }}>
-                                    <Avatar className="w-full h-full">
-                                        <AvatarImage src={avatarUrl} className="object-cover" />
-                                        <AvatarFallback style={{ backgroundColor: buttonColor, color: buttonTextColor }} className="text-3xl font-bold">{userInitial}</AvatarFallback>
-                                    </Avatar>
-                                </div>
-                                <div className={cn(
-                                    "text-center transition-all duration-300",
+                                    "text-center transition-all duration-300 w-full",
                                     scrollProgress > 0.4 ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
                                 )}>
                                     <h1 className="text-xl font-black tracking-tight" style={{ color: textColor }}>{displayName}</h1>
@@ -352,7 +427,7 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                     
                                     {/* Social Links Icons */}
                                     {user?.social_links && Object.keys(user.social_links).length > 0 && (
-                                        <div className="flex items-center justify-center gap-2 mt-3">
+                                        <div className="flex items-center justify-center gap-2 mt-3 mb-4">
                                             {Object.entries(user.social_links).map(([key, url]) => {
                                                 if (!url) return null;
                                                 const Icon = socialIconMap[key];
@@ -379,7 +454,7 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                             </div>
 
                             {/* Content Area - Show Links or Products based on mode and settings */}
-                            <div className="w-full min-h-[300px]">
+                            <div className="w-full min-h-[300px] relative z-10">
                                 {mode === 'store' ? (
                                     renderProductList()
                                 ) : shouldShowStoreTab ? (
@@ -391,8 +466,8 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                                         key={store._id || (typeof store === 'string' ? store : 'fallback')}
                                                         className="w-full p-3 rounded-2xl border flex items-center justify-between group h-16 shadow-sm"
                                                         style={{
-                                                            backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : `${textColor}08`,
-                                                            borderColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : `${textColor}10`,
+                                                            backgroundColor: cardBgType === 'color' ? (cardColor || '#ffffff') : '#ffffff',
+                                                            borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
                                                         }}
                                                     >
                                                         <div className="flex items-center gap-3 w-full overflow-hidden">
@@ -468,8 +543,8 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                                 <div key={block._id}
                                                     className="w-full p-3.5 rounded-2xl active:scale-[0.98] transition-all cursor-pointer border flex items-center justify-between group h-14"
                                                     style={{
-                                                        backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.08)' : '#fafafa',
-                                                        borderColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : '#f4f4f5',
+                                                        backgroundColor: cardBgType === 'color' ? (cardColor || '#ffffff') : '#ffffff',
+                                                        borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
                                                     }}
                                                 >
                                                     <div className="flex items-center gap-3 w-full overflow-hidden">

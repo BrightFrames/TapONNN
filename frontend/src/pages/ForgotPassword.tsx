@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Mail, Phone, KeyRound, Lock, CheckCircle } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
 type Step = "email" | "otp" | "reset" | "success";
 
@@ -31,7 +31,7 @@ const ForgotPassword = () => {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/api/auth/forgot-password/send-otp`, {
+            const response = await fetch(`${API_URL}/auth/forgot-password/send-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email }),
@@ -59,7 +59,7 @@ const ForgotPassword = () => {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/api/auth/forgot-password/resend-otp`, {
+            const response = await fetch(`${API_URL}/auth/forgot-password/resend-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email }),
@@ -86,7 +86,7 @@ const ForgotPassword = () => {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/api/auth/forgot-password/verify-otp`, {
+            const response = await fetch(`${API_URL}/auth/forgot-password/verify-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, otp }),
@@ -126,7 +126,7 @@ const ForgotPassword = () => {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/api/auth/forgot-password/reset`, {
+            const response = await fetch(`${API_URL}/auth/forgot-password/reset`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ resetToken, newPassword }),

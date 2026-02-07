@@ -98,10 +98,9 @@ router.post('/', upload.single('file'), async (req, res) => {
             }
         }
 
-        // Return the URL to access the file
-        // Use BASE_URL from environment variable for production, or construct from request
-        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-        const fileUrl = `${baseUrl}/uploads/${finalFilename}`;
+        // Return the relative path to access the file
+        // Storing relative paths allows the frontend to prepend the correct domain (localhost or production)
+        const fileUrl = `/uploads/${finalFilename}`;
 
         res.json({
             success: true,

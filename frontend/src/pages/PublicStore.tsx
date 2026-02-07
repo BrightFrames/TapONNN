@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Store, Share2, ShoppingBag, X, ChevronDown, ChevronUp, MessageCircle, ArrowLeft } from "lucide-react";
 import ShareModal from "@/components/ShareModal";
 import ProductInteractionModal from "@/components/ProductInteractionModal";
+import { getImageUrl } from "@/utils/imageUtils";
 
 interface Product {
     _id: string;
@@ -162,7 +163,7 @@ const PublicStore = () => {
                 {/* Store Info */}
                 <div className="flex items-center gap-2">
                     <Avatar className="w-8 h-8 border border-white/20">
-                        <AvatarImage src={store.avatar_url} />
+                        <AvatarImage src={getImageUrl(store.avatar_url)} />
                         <AvatarFallback className="bg-white/10 text-white text-xs">
                             {store.full_name?.[0]?.toUpperCase() || "S"}
                         </AvatarFallback>
@@ -203,7 +204,7 @@ const PublicStore = () => {
                                 <div className="absolute inset-0">
                                     {product.image_url ? (
                                         <img
-                                            src={product.image_url}
+                                            src={getImageUrl(product.image_url)}
                                             alt={product.title}
                                             className="w-full h-full object-cover"
                                         />

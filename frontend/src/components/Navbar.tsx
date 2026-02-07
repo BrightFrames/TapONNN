@@ -107,7 +107,7 @@ const Navbar = () => {
                 Log in
               </Button>
             </Link>
-            <Link to="/signup">
+            <Link to="/login">
               <Button
                 variant="default"
                 size="lg"
@@ -153,7 +153,7 @@ const Navbar = () => {
                     Log in
                   </Button>
                 </Link>
-                <Link to="/signup" className="w-full">
+                <Link to="/login" className="w-full">
                   <Button variant="default" size="lg" className="w-full rounded-full font-bold">
                     Sign up free
                   </Button>

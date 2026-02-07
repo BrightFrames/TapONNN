@@ -149,6 +149,8 @@ const connectRoutes = require('./routes/connect');
 const likesRoutes = require('./routes/likes');
 const chatRoutes = require('./routes/chat');
 const storesRoutes = require('./routes/stores');
+const journeyRoutes = require('./routes/journey');
+const ordersRoutes = require('./routes/orders');
 
 // --- Routes ---
 
@@ -174,6 +176,8 @@ app.use('/api/connect', connectRoutes); // Connect registration flow
 app.use('/api/products', likesRoutes); // Product likes
 app.use('/api/chat', chatRoutes); // Real-time chat
 app.use('/api/stores', storesRoutes); // Multi-store management
+app.use('/api/journey', journeyRoutes); // Customer journey tracking
+app.use('/api/orders', ordersRoutes); // Order management
 
 // Legacy route support - /api/my-links is now under /api/links/my-links
 // But since it was originally at /api/my-links, we add an alias

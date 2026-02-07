@@ -133,7 +133,12 @@ const signup = async (req, res) => {
                 username: newProfile.username,
                 full_name: newProfile.full_name,
                 gender: newProfile.gender,
-                avatar: avatarDataUri
+                avatar: avatarDataUri,
+                // Include profile mode defaults
+                active_profile_mode: 'personal',
+                has_store: false,
+                role: 'super',
+                is_email_verified: false
             }
         });
 
@@ -185,9 +190,13 @@ const login = async (req, res) => {
                 email: user.email,
                 username: profile?.username,
                 full_name: profile?.full_name,
-                full_name: profile?.full_name,
                 avatar: profile?.avatar_url,
-                language: user.language
+                language: user.language,
+                // Include profile mode defaults
+                active_profile_mode: profile?.active_profile_mode || 'personal',
+                has_store: profile?.has_store || false,
+                role: profile?.role || 'super',
+                is_email_verified: profile?.is_email_verified || false
             }
         });
 
@@ -697,7 +706,12 @@ const signupVerifyOTP = async (req, res) => {
                 full_name: newProfile.full_name,
                 gender: newProfile.gender,
                 avatar: avatarDataUri,
-                phone_verified: true
+                phone_verified: true,
+                // Include profile mode defaults
+                active_profile_mode: 'personal',
+                has_store: false,
+                role: 'super',
+                is_email_verified: true
             }
         });
 

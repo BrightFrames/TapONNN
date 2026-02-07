@@ -11,7 +11,11 @@ import {
     FileText,
     ChevronDown,
     Search,
-    Filter
+    Filter,
+    CheckCircle,
+    Clock,
+    XCircle,
+    Package
 } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,6 +24,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 
 interface Order {
@@ -32,6 +43,7 @@ interface Order {
     created_at: string;
     amount: number;
     status: string;
+    delivery_status?: string;
 }
 
 const DUMMY_ORDERS: Order[] = [
@@ -135,6 +147,60 @@ const Earnings = () => {
             setOrders(DUMMY_ORDERS);
             setLoading(false);
         }
+    };
+
+    const updateOrderStatus = async (orderId: string, status: string, delivery_status?: string) => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        try {
+            const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status, delivery_status })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                toast.success('Order status updated successfully');
+                // Update local state
+                setOrders(orders.map(order => 
+                    order._id === orderId 
+                        ? { ...order, status, delivery_status: delivery_status || order.delivery_status }
+                        : order
+                ));
+            } else {
+                toast.error('Failed to update order status');
+            }
+        } catch (error) {
+            console.error('Error updating order status:', error);
+            toast.error('Failed to update order status');
+        }
+    };
+
+    const getStatusBadge = (status: string) => {
+        const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
+            pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400', icon: Clock },
+            paid: { label: 'Paid', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', icon: CheckCircle },
+            processing: { label: 'Processing', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', icon: Package },
+            completed: { label: 'Completed', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle },
+            cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
+            failed: { label: 'Failed', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400', icon: XCircle },
+        };
+
+        const config = statusConfig[status] || statusConfig.pending;
+        const Icon = config.icon;
+
+        return (
+            <Badge className={`${config.color} flex items-center gap-1 px-2 py-0.5 text-xs font-medium border-0`}>
+                <Icon className="w-3 h-3" />
+                {config.label}
+            </Badge>
+        );
     };
 
     const handleDownloadInvoice = (order: Order) => {
@@ -317,9 +383,10 @@ Thank you for your business!
                                                 <TableHead className="font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">{t('earnings.paymentId')}</TableHead>
                                                 <TableHead className="font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">{t('earnings.service')}</TableHead>
                                                 <TableHead className="font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">{t('earnings.paidTitle')}</TableHead>
+                                                <TableHead className="font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">Status</TableHead>
                                                 <TableHead className="font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">{t('earnings.paidAt')}</TableHead>
                                                 <TableHead className="font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider text-right">{t('earnings.amount')}</TableHead>
-                                                <TableHead className="w-[60px]"></TableHead>
+                                                <TableHead className="w-[100px] text-center">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -353,6 +420,9 @@ Thank you for your business!
                                                             </div>
                                                         </TableCell>
                                                         <TableCell>
+                                                            {getStatusBadge(order.status)}
+                                                        </TableCell>
+                                                        <TableCell>
                                                             <span className="text-sm text-slate-500 dark:text-slate-400">
                                                                 {new Date(order.paid_at || order.created_at).toLocaleDateString('en-IN', {
                                                                     day: 'numeric',
@@ -367,21 +437,48 @@ Thank you for your business!
                                                             </span>
                                                         </TableCell>
                                                         <TableCell>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => handleDownloadInvoice(order)}
-                                                                title="Download Invoice"
-                                                                className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                                            >
-                                                                <Download className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                                            </Button>
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                                                                        >
+                                                                            <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end" className="w-48">
+                                                                        <DropdownMenuItem onClick={() => updateOrderStatus(order._id, 'processing')}>
+                                                                            <Package className="w-4 h-4 mr-2" />
+                                                                            Mark as Processing
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem onClick={() => updateOrderStatus(order._id, 'completed', 'delivered')}>
+                                                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                                                            Mark as Completed
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem onClick={() => updateOrderStatus(order._id, 'cancelled')}>
+                                                                            <XCircle className="w-4 h-4 mr-2" />
+                                                                            Cancel Order
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => handleDownloadInvoice(order)}
+                                                                    title="Download Invoice"
+                                                                    className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                                                                >
+                                                                    <Download className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                                                </Button>
+                                                            </div>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))
                                             ) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={7} className="h-40 text-center">
+                                                    <TableCell colSpan={8} className="h-40 text-center">
                                                         <div className="flex flex-col items-center gap-2">
                                                             <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                                                                 <Receipt className="w-6 h-6 text-slate-400" />

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import BlockEditorModal from "@/components/BlockEditorModal";
@@ -30,6 +31,7 @@ import {
 
 const Dashboard = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const { user, addBlock, updateBlock, deleteBlock, blocks, reorderBlocks, selectedTheme, updateProfile } = useAuth();
     const [isAddingBlock, setIsAddingBlock] = useState(false);
     const [editBlockData, setEditBlockData] = useState<any>(null);
@@ -38,6 +40,13 @@ const Dashboard = () => {
     const [isStoreSelectorOpen, setIsStoreSelectorOpen] = useState(false);
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+
+    // Redirect to business dashboard if in store mode
+    useEffect(() => {
+        if (user?.active_profile_mode === 'store') {
+            navigate('/dashboard/business', { replace: true });
+        }
+    }, [user?.active_profile_mode, navigate]);
 
     // Products for Preview
     useEffect(() => {
