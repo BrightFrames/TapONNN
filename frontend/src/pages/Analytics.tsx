@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 import LinktreeLayout from "@/layouts/LinktreeLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,7 +35,19 @@ const Analytics = () => {
     const [data, setData] = useState<any>(null);
     const [isLive, setIsLive] = useState(true);
 
+    // ENTERPRISE: Real-time analytics state
+    const [realtimeStats, setRealtimeStats] = useState({
+        profileViews: 0,
+        linkClicks: 0,
+        uniqueVisitors: 0,
+        totalInteractions: 0,
+        engagementRate: 0
+    });
+    const socketRef = useRef<Socket | null>(null);
+    const [isSocketConnected, setIsSocketConnected] = useState(false);
+
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+    const SOCKET_URL = (import.meta.env.VITE_API_URL || "http://localhost:5001").replace(/\/api\/?$/, '');
 
     // Calculate date range display
     const dateRangeDisplay = useMemo(() => {
@@ -55,6 +68,44 @@ const Analytics = () => {
 
         return `${formatDate(startDate)} - ${formatDate(endDate)}, ${endDate.getFullYear()}`;
     }, [period]);
+
+    // ENTERPRISE: WebSocket connection for live analytics
+    useEffect(() => {
+        if (!isLive || !user?.id) return;
+
+        const socket = io(SOCKET_URL);
+        socketRef.current = socket;
+
+        socket.on('connect', () => {
+            console.log('[Analytics] Socket connected');
+            setIsSocketConnected(true);
+            // Join analytics room for this profile
+            socket.emit('joinAnalytics', user.id);
+        });
+
+        socket.on('analyticsUpdate', (data) => {
+            console.log('[Analytics] Real-time update:', data);
+            setRealtimeStats({
+                profileViews: data.profileViews || 0,
+                linkClicks: data.linkClicks || 0,
+                uniqueVisitors: data.uniqueVisitors || 0,
+                totalInteractions: data.totalInteractions || 0,
+                engagementRate: data.engagementRate || 0
+            });
+        });
+
+        socket.on('disconnect', () => {
+            console.log('[Analytics] Socket disconnected');
+            setIsSocketConnected(false);
+        });
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.emit('leaveAnalytics', user.id);
+                socketRef.current.disconnect();
+            }
+        };
+    }, [isLive, user?.id, SOCKET_URL]);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -362,7 +413,10 @@ const Analytics = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <GradientMetricCard
                                     title="Profile Views"
-                                    value={personalData?.totalViews?.toLocaleString() || 0}
+                                    value={(realtimeStats.profileViews > 0
+                                        ? realtimeStats.profileViews
+                                        : personalData?.totalViews || 0
+                                    ).toLocaleString()}
                                     icon={Users}
                                     gradient="bg-gradient-to-br from-pink-500/80 via-pink-600/60 to-pink-700/40"
                                     iconColor="bg-pink-400/30 text-pink-200"
@@ -370,7 +424,10 @@ const Analytics = () => {
                                 />
                                 <GradientMetricCard
                                     title="Link Clicks"
-                                    value={personalData?.highestVisitedLink?.clicks || 0}
+                                    value={(realtimeStats.linkClicks > 0
+                                        ? realtimeStats.linkClicks
+                                        : personalData?.highestVisitedLink?.clicks || 0
+                                    ).toLocaleString()}
                                     icon={MousePointerClick}
                                     gradient="bg-gradient-to-br from-fuchsia-500/80 via-fuchsia-600/60 to-fuchsia-700/40"
                                     iconColor="bg-fuchsia-400/30 text-fuchsia-200"
@@ -378,7 +435,10 @@ const Analytics = () => {
                                 />
                                 <GradientMetricCard
                                     title="Total Interactions"
-                                    value={(personalData?.totalViews || 0) + (personalData?.highestVisitedLink?.clicks || 0)}
+                                    value={(realtimeStats.totalInteractions > 0
+                                        ? realtimeStats.totalInteractions
+                                        : (personalData?.totalViews || 0) + (personalData?.highestVisitedLink?.clicks || 0)
+                                    ).toLocaleString()}
                                     icon={Activity}
                                     gradient="bg-gradient-to-br from-teal-500/80 via-teal-600/60 to-teal-700/40"
                                     iconColor="bg-teal-400/30 text-teal-200"
@@ -386,9 +446,11 @@ const Analytics = () => {
                                 />
                                 <GradientMetricCard
                                     title="Engagement Rate"
-                                    value={personalData?.totalViews > 0
-                                        ? `${Math.round((personalData?.highestVisitedLink?.clicks || 0) / personalData.totalViews * 100)}%`
-                                        : '0%'
+                                    value={realtimeStats.engagementRate > 0
+                                        ? `${realtimeStats.engagementRate}%`
+                                        : personalData?.totalViews > 0
+                                            ? `${Math.round((personalData?.highestVisitedLink?.clicks || 0) / personalData.totalViews * 100)}%`
+                                            : '0%'
                                     }
                                     icon={TrendingUp}
                                     gradient="bg-gradient-to-br from-zinc-800 via-zinc-900 to-zinc-950 border border-pink-500/30"

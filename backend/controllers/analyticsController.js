@@ -1,6 +1,8 @@
 const AnalyticsEvent = require('../models/AnalyticsEvent');
+const DailyProfileStats = require('../models/DailyProfileStats');
 const Profile = require('../models/Profile');
 const Link = require('../models/Link');
+const analyticsRedis = require('../services/analyticsRedis');
 
 // Track an analytics event
 const trackEvent = async (req, res) => {
@@ -22,6 +24,23 @@ const trackEvent = async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
+        // ENTERPRISE: Check unique visitor and update Redis counters (non-blocking)
+        let isUnique = false;
+        let realtimeCounts = { views: 0, clicks: 0, uniqueVisitors: 0 };
+
+        if (event_type === 'pageview') {
+            // Check if unique visitor
+            isUnique = await analyticsRedis.addUniqueVisitor(profile_id, session_id);
+            // Increment view counter
+            await analyticsRedis.incrProfileViews(profile_id);
+        } else if (event_type === 'click' || event_type === 'product_click') {
+            // Increment click counter
+            await analyticsRedis.incrLinkClicks(profile_id);
+        }
+
+        // Get updated real-time counts for WebSocket push
+        realtimeCounts = await analyticsRedis.getRealtimeCounts(profile_id);
+
         const event = new AnalyticsEvent({
             profile_id,
             session_id,
@@ -39,7 +58,31 @@ const trackEvent = async (req, res) => {
         });
 
         await event.save();
-        res.json({ success: true });
+
+        // UPDATE DAILY STATS (non-blocking, fire-and-forget)
+        // This is ADD-ONLY functionality - does not affect existing tracking
+        updateDailyStats(profile_id, session_id, event_type).catch(err => {
+            console.error('Daily stats update error (non-blocking):', err);
+        });
+
+        // ENTERPRISE: Push real-time update via WebSocket (non-blocking)
+        if (req.io) {
+            const totalInteractions = realtimeCounts.views + realtimeCounts.clicks;
+            const engagementRate = realtimeCounts.views > 0
+                ? ((realtimeCounts.clicks / realtimeCounts.views) * 100).toFixed(1)
+                : 0;
+
+            req.io.to(`analytics_${profile_id}`).emit('analyticsUpdate', {
+                profileViews: realtimeCounts.views,
+                linkClicks: realtimeCounts.clicks,
+                uniqueVisitors: realtimeCounts.uniqueVisitors,
+                totalInteractions,
+                engagementRate: parseFloat(engagementRate),
+                timestamp: Date.now()
+            });
+        }
+
+        res.json({ success: true, isUnique });
 
     } catch (error) {
         console.error('Track event error:', error);
@@ -401,4 +444,149 @@ const getPersonalStats = async (req, res) => {
     }
 };
 
-module.exports = { trackEvent, getStats, getPersonalStats };
+// Helper: Update daily aggregated stats (non-blocking)
+const updateDailyStats = async (profile_id, session_id, event_type) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Midnight of today
+
+    const updateFields = {
+        $inc: { totalInteractions: 1 }
+    };
+
+    // Increment specific counter based on event type
+    if (event_type === 'pageview') {
+        updateFields.$inc.profileViews = 1;
+        // Add session to unique visitors (addToSet prevents duplicates)
+        updateFields.$addToSet = { uniqueVisitorSessions: session_id };
+    } else if (event_type === 'click') {
+        updateFields.$inc.linkClicks = 1;
+    } else if (event_type === 'product_click') {
+        updateFields.$inc.productClicks = 1;
+    }
+
+    await DailyProfileStats.findOneAndUpdate(
+        { profile_id, date: today },
+        updateFields,
+        { upsert: true, new: true }
+    );
+};
+
+// Get Real-Time Stats with period comparison
+const getRealTimeStats = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const mongoose = require('mongoose');
+        const userObjectId = new mongoose.Types.ObjectId(userId);
+        const profile = await Profile.findOne({ user_id: userObjectId });
+
+        if (!profile) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        const profileId = profile._id;
+        const { period = '7d' } = req.query;
+
+        // Calculate date ranges
+        let currentPeriodStart = new Date();
+        let previousPeriodStart = new Date();
+        let periodDays = 7;
+
+        if (period === '24h') {
+            periodDays = 1;
+            currentPeriodStart.setHours(currentPeriodStart.getHours() - 24);
+            previousPeriodStart.setHours(previousPeriodStart.getHours() - 48);
+        } else if (period === '7d') {
+            periodDays = 7;
+            currentPeriodStart.setDate(currentPeriodStart.getDate() - 7);
+            previousPeriodStart.setDate(previousPeriodStart.getDate() - 14);
+        } else {
+            periodDays = 30;
+            currentPeriodStart.setDate(currentPeriodStart.getDate() - 30);
+            previousPeriodStart.setDate(previousPeriodStart.getDate() - 60);
+        }
+
+        // Get current period stats from DailyProfileStats
+        const currentStats = await DailyProfileStats.aggregate([
+            {
+                $match: {
+                    profile_id: profileId,
+                    date: { $gte: currentPeriodStart }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalViews: { $sum: '$profileViews' },
+                    totalClicks: { $sum: '$linkClicks' },
+                    totalInteractions: { $sum: '$totalInteractions' },
+                    allSessions: { $push: '$uniqueVisitorSessions' }
+                }
+            }
+        ]);
+
+        // Get previous period stats for comparison
+        const previousStats = await DailyProfileStats.aggregate([
+            {
+                $match: {
+                    profile_id: profileId,
+                    date: { $gte: previousPeriodStart, $lt: currentPeriodStart }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalViews: { $sum: '$profileViews' },
+                    totalClicks: { $sum: '$linkClicks' },
+                    totalInteractions: { $sum: '$totalInteractions' }
+                }
+            }
+        ]);
+
+        const current = currentStats[0] || { totalViews: 0, totalClicks: 0, totalInteractions: 0, allSessions: [] };
+        const previous = previousStats[0] || { totalViews: 0, totalClicks: 0, totalInteractions: 0 };
+
+        // Flatten and dedupe sessions
+        const uniqueVisitors = [...new Set(current.allSessions?.flat() || [])].length;
+
+        // Calculate engagement rate (clicks / views * 100)
+        const engagementRate = current.totalViews > 0
+            ? ((current.totalClicks / current.totalViews) * 100).toFixed(1)
+            : 0;
+
+        // Calculate percentage changes
+        const calcChange = (curr, prev) => {
+            if (prev === 0) return curr > 0 ? 100 : 0;
+            return Math.round(((curr - prev) / prev) * 100);
+        };
+
+        // Active visitors (last 5 mins) from raw events
+        const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
+        const activeVisitors = (await AnalyticsEvent.distinct('session_id', {
+            profile_id: profileId,
+            timestamp: { $gte: fiveMinsAgo }
+        })).length;
+
+        res.json({
+            currentPeriod: {
+                profileViews: current.totalViews,
+                linkClicks: current.totalClicks,
+                totalInteractions: current.totalInteractions,
+                uniqueVisitors,
+                engagementRate: parseFloat(engagementRate)
+            },
+            changes: {
+                profileViews: calcChange(current.totalViews, previous.totalViews),
+                linkClicks: calcChange(current.totalClicks, previous.totalClicks),
+                totalInteractions: calcChange(current.totalInteractions, previous.totalInteractions)
+            },
+            activeVisitors,
+            period
+        });
+
+    } catch (error) {
+        console.error('Get realtime stats error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+module.exports = { trackEvent, getStats, getPersonalStats, getRealTimeStats };

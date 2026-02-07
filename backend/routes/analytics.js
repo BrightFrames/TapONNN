@@ -12,4 +12,7 @@ router.get('/stats', authMiddleware, analyticsController.getStats);
 // GET /api/analytics/personal-stats (Authenticated - for personal profiles)
 router.get('/personal-stats', authMiddleware, analyticsController.getPersonalStats);
 
+// GET /api/analytics/realtime-stats (Authenticated - for enhanced real-time metrics)
+router.get('/realtime-stats', authMiddleware, analyticsController.getRealTimeStats);
+
 module.exports = router;

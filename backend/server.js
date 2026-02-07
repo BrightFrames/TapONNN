@@ -95,6 +95,20 @@ io.on("connection", (socket) => {
         }
     });
 
+    // ENTERPRISE: Analytics dashboard room for live updates
+    socket.on("joinAnalytics", (profileId) => {
+        if (profileId) {
+            socket.join(`analytics_${profileId}`);
+            console.log(`[AnalyticsDebug] Socket ${socket.id} joined analytics_${profileId}`);
+        }
+    });
+
+    socket.on("leaveAnalytics", (profileId) => {
+        if (profileId) {
+            socket.leave(`analytics_${profileId}`);
+        }
+    });
+
     // Typing indicator
     socket.on("typing", ({ conversationId, userId, isTyping }) => {
         socket.to(`chat_${conversationId}`).emit("userTyping", { userId, isTyping });
