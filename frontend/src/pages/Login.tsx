@@ -178,21 +178,21 @@ const Login = () => {
     };
 
     return (
-        <div className="flex min-h-screen w-full items-center justify-center bg-muted/40 px-4">
+        <div className="dark flex min-h-screen w-full items-center justify-center bg-zinc-950 px-4 relative overflow-hidden">
             {/* Background Pattern */}
-            <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-50"></div>
+            <div className="absolute inset-0 -z-10 h-full w-full bg-black bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
 
             {/* OTP Verification Modal */}
             {showOTPModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <Card className="w-full max-w-[380px] mx-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <Card className="w-full max-w-[380px] mx-4 shadow-2xl border-zinc-800 bg-zinc-900">
                         <CardHeader className="text-center">
-                            <div className="mx-auto mb-2 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Mail className="h-6 w-6 text-primary" />
+                            <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center shadow-sm">
+                                <Mail className="h-8 w-8 text-white" />
                             </div>
-                            <CardTitle>Verify Your Email</CardTitle>
-                            <CardDescription>
-                                Enter the OTP sent to {maskedEmail}
+                            <CardTitle className="text-xl font-bold">Verify Your Email</CardTitle>
+                            <CardDescription className="pt-2">
+                                Enter the OTP sent to <span className="font-semibold text-foreground">{maskedEmail}</span>
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -208,7 +208,7 @@ const Login = () => {
                                 />
                             </div>
                             <Button
-                                className="w-full"
+                                className="w-full bg-white hover:bg-zinc-100 text-black shadow-lg hover:shadow-xl transition-all h-11 font-semibold"
                                 onClick={handleVerifyOTP}
                                 disabled={otpLoading || otp.length < 4}
                             >
@@ -239,14 +239,23 @@ const Login = () => {
                 </div>
             )}
 
-            <Card className="w-full max-w-[420px] shadow-lg border-border/50">
+            <Card className="w-full max-w-[420px] shadow-2xl border-zinc-800 bg-zinc-900">
                 <CardHeader className="space-y-1">
-                    <div className="flex justify-center mb-4">
-                        <div className="h-12 w-12 flex items-center justify-center">
-                            <img src="/logo.svg" alt="TapX" className="w-full h-full object-contain" />
+                    <div className="flex justify-center mb-6">
+                        <div className="relative">
+                            {/* Favicon */}
+                            <div className="h-20 w-20 flex items-center justify-center rounded-2xl border-2 border-zinc-700 shadow-sm bg-zinc-900 p-3">
+                                <img src="/favicon.png" alt="TapX" className="w-full h-full object-contain" />
+                            </div>
+                            {/* Brand Name */}
+                            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                                <h1 className="text-2xl font-black text-white">
+                                    TapX
+                                </h1>
+                            </div>
                         </div>
                     </div>
-                    <CardTitle className="text-2xl text-center font-bold tracking-tight">
+                    <CardTitle className="text-2xl text-center font-bold tracking-tight pt-6">
                         {isLogin ? "Welcome back" : "Create an account"}
                     </CardTitle>
                     <CardDescription className="text-center text-muted-foreground">
@@ -258,7 +267,7 @@ const Login = () => {
                         <Button
                             type="button"
                             variant="outline"
-                            className="w-full relative"
+                            className="w-full relative h-11 border-2 border-zinc-700 hover:bg-zinc-800 transition-all font-medium text-white"
                             onClick={() => loginWithGoogle()}
                         >
                             <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
@@ -269,10 +278,10 @@ const Login = () => {
 
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t" />
+                                <span className="w-full border-t border-zinc-800" />
                             </div>
                             <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-card px-2 text-muted-foreground">
+                                <span className="bg-zinc-900 px-3 text-zinc-400 font-medium">
                                     Or continue with
                                 </span>
                             </div>
@@ -400,7 +409,7 @@ const Login = () => {
                         </div>
                     </CardContent>
                     <CardFooter className="flex flex-col gap-4">
-                        <Button className="w-full h-10 font-semibold" type="submit" disabled={loading}>
+                        <Button className="w-full h-11 font-semibold bg-white hover:bg-zinc-100 text-black shadow-lg hover:shadow-xl transition-all" type="submit" disabled={loading}>
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {isLogin ? "Sign In" : (
                                 <>
