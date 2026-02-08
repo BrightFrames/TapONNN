@@ -178,7 +178,7 @@ const BlockTypeSelector = ({ open, onOpenChange, onSelect }: BlockTypeSelectorPr
                     <Tabs defaultValue="content" className="w-full flex-1 flex flex-col">
                         <TabsList className="grid w-full grid-cols-5 mb-4 shrink-0">
                             <TabsTrigger value="content" className="text-[10px] sm:text-xs">Content</TabsTrigger>
-                            <TabsTrigger value="commerce" className="text-[10px] sm:text-xs">Store</TabsTrigger>
+                            <TabsTrigger value="commerce" className="text-[10px] sm:text-xs">Shop</TabsTrigger>
                             <TabsTrigger value="contact" className="text-[10px] sm:text-xs">Contact</TabsTrigger>
                             <TabsTrigger value="social" className="text-[10px] sm:text-xs">Social</TabsTrigger>
                             <TabsTrigger value="utility" className="text-[10px] sm:text-xs">Utility</TabsTrigger>

@@ -1,4 +1,4 @@
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { Button } from "@/components/ui/button";
 import {
     Download,
@@ -239,7 +239,7 @@ Thank you for your business!
     }, []);
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto font-sans min-h-full bg-slate-50 dark:bg-[#0a0a0a]">
                 {/* Header */}
                 <div className="mb-6">
@@ -515,7 +515,7 @@ Thank you for your business!
                     </Tabs>
                 </div>
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

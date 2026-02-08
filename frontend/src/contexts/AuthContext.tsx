@@ -742,7 +742,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 toast.error(error.error || 'Failed to switch profile mode');
                 await fetchUserData(); // Revert
             } else {
-                toast.success(`Switched to ${mode === 'personal' ? 'Personal Profile' : 'Store Profile'}`);
+                toast.success(`Switched to ${mode === 'personal' ? 'Personal Profile' : 'Business Profile'}`);
                 // Fetch updated user data to get correct username, avatar, etc. for the new mode
                 await fetchUserData();
             }

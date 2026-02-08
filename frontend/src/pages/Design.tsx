@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -89,6 +89,13 @@ const Design = () => {
 
                 // Handle Text Colors (Simple mapping)
                 if (type === 'text') {
+                    const tailwindTextMap: Record<string, string> = {
+                        'text-gray-900': '#111827',
+                        'text-slate-800': '#1e293b',
+                        'text-green-800': '#166534',
+                        'text-cyan-400': '#22d3ee',
+                    };
+                    if (tailwindTextMap[cls]) return tailwindTextMap[cls];
                     if (cls.includes('white')) return '#ffffff';
                     if (cls.includes('black')) return '#000000';
                     if (cls.includes('zinc-900') || cls.includes('gray-900') || cls.includes('slate-900')) return '#18181b';
@@ -239,7 +246,7 @@ const Design = () => {
     const currentTemplate = templates.find(t => t.id === selectedTheme) || templates[0];
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="flex h-full w-full bg-black min-h-screen font-sans overflow-hidden">
                 {/* Center Panel - Profile Preview */}
                 <div className="flex-1 flex flex-col items-center justify-center p-8 bg-black relative overflow-y-auto custom-scrollbar">
@@ -443,6 +450,61 @@ const Design = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Link Blocks Color Section */}
+                            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                                        <Link2 className="w-4 h-4 text-white" />
+                                    </div>
+                                    <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Link Blocks Color</h3>
+                                </div>
+                                
+                                <div className="space-y-4">
+                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Set the default background color for all your link blocks</p>
+                                    
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {['#FFFFFF', '#F3F4F6', '#E0E7FF', '#FCE7F3', '#FEF3C7', '#D1FAE5', '#E0F2FE', '#F5F3FF'].map(color => (
+                                            <button
+                                                key={color}
+                                                onClick={() => handleConfigChange('linkBlocksColor', color)}
+                                                className={cn(
+                                                    "w-full aspect-square rounded-lg border-2 flex items-center justify-center transition-all hover:scale-105",
+                                                    config.linkBlocksColor === color ? "border-zinc-900 dark:border-white scale-105 ring-2 ring-offset-2 ring-zinc-900 dark:ring-white" : "border-zinc-200 dark:border-zinc-700"
+                                                )}
+                                                style={{ backgroundColor: color }}
+                                            >
+                                                {config.linkBlocksColor === color && (
+                                                    <div className="w-3 h-3 rounded-full bg-zinc-900 dark:bg-white"></div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <Label className="text-xs font-semibold">Custom Link Color</Label>
+                                            <div 
+                                                className="w-10 h-10 rounded-lg border-2 border-zinc-200 dark:border-zinc-700 shadow-sm"
+                                                style={{ background: config.linkBlocksColor || '#FFFFFF' }}
+                                            />
+                                        </div>
+                                        <ColorSelector 
+                                            color={config.linkBlocksColor || '#FFFFFF'} 
+                                            onChange={(c) => handleConfigChange('linkBlocksColor', c)}
+                                        />
+                                    </div>
+
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full"
+                                        onClick={() => handleConfigChange('linkBlocksColor', '')}
+                                    >
+                                        Reset to Card Background
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -453,7 +515,7 @@ const Design = () => {
                     </div>
                 </div>
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

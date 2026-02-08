@@ -93,7 +93,7 @@ const PublicStore_New = () => {
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
                 <div className="flex flex-col items-center space-y-4">
                     <div className="w-16 h-16 rounded-full border-4 border-gray-200 border-t-black animate-spin" />
-                    <p className="text-gray-600 text-sm">Loading store...</p>
+                    <p className="text-gray-600 text-sm">Loading shop...</p>
                 </div>
             </div>
         );
@@ -105,8 +105,8 @@ const PublicStore_New = () => {
                 <div className="bg-white p-6 rounded-full mb-4 shadow-lg">
                     <Store className="w-12 h-12 text-gray-400" />
                 </div>
-                <h2 className="text-3xl font-bold tracking-tight mb-2 text-gray-900">Store not found</h2>
-                <p className="text-gray-600 mb-6 max-w-md">This store doesn't exist or isn't published yet.</p>
+                <h2 className="text-3xl font-bold tracking-tight mb-2 text-gray-900">Shop not found</h2>
+                <p className="text-gray-600 mb-6 max-w-md">This shop doesn't exist or isn't published yet.</p>
                 <Button
                     className="bg-black hover:bg-gray-800 text-white rounded-full px-8"
                     onClick={() => navigate('/')}
@@ -160,10 +160,10 @@ const PublicStore_New = () => {
 
                 {/* Title */}
                 <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
-                    TapX Store
+                    TapX Shop
                 </h1>
                 <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-                    Give your visitors the perfect destination to shop products with store!
+                    Give your visitors the perfect destination to shop your products!
                 </p>
 
                 {/* Toggle */}
@@ -221,7 +221,7 @@ const PublicStore_New = () => {
                     ) : (
                         <div className="text-center py-12 text-gray-500">
                             <Store className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                            <p>No links added to this store yet.</p>
+                            <p>No links added to this shop yet.</p>
                         </div>
                     )}
                 </div>
@@ -266,7 +266,7 @@ const PublicStore_New = () => {
                                                     if (navigator.share) {
                                                         navigator.share({
                                                             title: product.title,
-                                                            text: `Check out ${product.title} on ${store.name || store.username}'s store`,
+                                                            text: `Check out ${product.title} on ${store.name || store.username}'s shop`,
                                                             url: productUrl,
                                                         }).catch(console.error);
                                                     } else {
@@ -346,7 +346,7 @@ const PublicStore_New = () => {
                         <ShoppingBag className="w-20 h-20 text-gray-300 mx-auto mb-6" />
                         <h3 className="text-2xl font-bold text-gray-900 mb-2">No products yet</h3>
                         <p className="text-gray-600 mb-8">
-                            This store doesn't have any products available at the moment.
+                            This shop doesn't have any products available at the moment.
                         </p>
                         <Button
                             className="bg-black hover:bg-gray-800 text-white rounded-full px-8"
@@ -365,7 +365,7 @@ const PublicStore_New = () => {
                     onClick={() => window.open('https://taponn.com/signup', '_blank')}
                 >
                     <Sparkles className="w-5 h-5 mr-2" />
-                    Create your own store on TapX
+                    Create your own shop on TapX
                 </Button>
             </div>
 

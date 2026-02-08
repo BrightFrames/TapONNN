@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { io, Socket } from "socket.io-client";
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -360,7 +360,7 @@ const Analytics = () => {
     // Personal Profile Analytics View
     if (user && !user.has_store) {
         return (
-            <LinktreeLayout>
+            <TapxLayout>
                 <div className="p-6 md:p-10 max-w-6xl mx-auto font-sans text-gray-900 dark:text-white bg-gray-50 dark:bg-zinc-950 min-h-full">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
@@ -810,14 +810,14 @@ const Analytics = () => {
                         </div>
                     )}
                 </div>
-            </LinktreeLayout>
+            </TapxLayout>
         );
     }
 
 
     // Store Analytics View
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="p-6 md:p-10 max-w-6xl mx-auto font-sans text-gray-900 dark:text-white bg-gray-50 dark:bg-zinc-950 min-h-full">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
@@ -1304,7 +1304,7 @@ const Analytics = () => {
                     </div>
                 )}
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

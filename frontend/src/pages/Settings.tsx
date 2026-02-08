@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -155,13 +155,13 @@ const Settings = () => {
 
             if (response.ok) {
                 setStorePublished(checked);
-                toast.success(checked ? "Store published!" : "Store unpublished");
+                toast.success(checked ? "Shop published!" : "Shop unpublished");
             } else {
-                toast.error("Failed to update store settings");
+                toast.error("Failed to update shop settings");
             }
         } catch (err) {
             console.error("Error updating store:", err);
-            toast.error("Failed to update store");
+            toast.error("Failed to update shop");
         } finally {
             setSavingStore(false);
         }
@@ -305,7 +305,7 @@ const Settings = () => {
     };
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="min-h-screen bg-gradient-to-b from-gray-50/50 to-white dark:from-black dark:to-zinc-950 p-4 md:p-8 text-gray-900 dark:text-zinc-100">
                 <div className="max-w-4xl mx-auto space-y-8">
                     {/* Enhanced Header */}
@@ -612,7 +612,7 @@ const Settings = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

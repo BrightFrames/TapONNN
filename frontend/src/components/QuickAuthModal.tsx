@@ -115,13 +115,13 @@ export function QuickAuthModal({ open, onOpenChange }: QuickAuthModalProps) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden rounded-[2rem] border-none shadow-2xl">
-                <div className="bg-white dark:bg-zinc-950 p-8">
+            <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden rounded-[2rem] border border-zinc-200 shadow-2xl">
+                <div className="bg-white p-8 text-zinc-900">
                     <div className="flex flex-col items-center text-center mb-8">
-                        <div className="w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center mb-4 shadow-2xl shadow-black/5 border border-zinc-100 p-4">
+                        <div className="w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center mb-4 shadow-2xl shadow-black/5 border border-zinc-200 p-4">
                             <img src="/favicon.png" alt="tapx.bio" className="w-full h-full object-contain grayscale" />
                         </div>
-                        <DialogTitle className="text-2xl font-black tracking-tight mb-2">
+                        <DialogTitle className="text-2xl font-black tracking-tight mb-2 text-zinc-900">
                             {step === 1 ? "Join tapx.bio" : "Verify Email"}
                         </DialogTitle>
                         <p className="text-zinc-500 text-sm font-medium">
@@ -135,10 +135,10 @@ export function QuickAuthModal({ open, onOpenChange }: QuickAuthModalProps) {
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <div className="relative">
-                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                     <Input
                                         placeholder="Full Name"
-                                        className="pl-10 h-12 rounded-xl bg-zinc-50 border-zinc-100 focus:bg-white transition-all"
+                                        className="pl-10 h-12 rounded-xl bg-white border-zinc-200 focus:border-black focus:ring-0 transition-all"
                                         value={formData.fullName}
                                         onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                                     />
@@ -147,11 +147,11 @@ export function QuickAuthModal({ open, onOpenChange }: QuickAuthModalProps) {
 
                             <div className="space-y-2">
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                     <Input
                                         type="email"
                                         placeholder="Email Address"
-                                        className="pl-10 h-12 rounded-xl bg-zinc-50 border-zinc-100 focus:bg-white transition-all"
+                                        className="pl-10 h-12 rounded-xl bg-white border-zinc-200 focus:border-black focus:ring-0 transition-all"
                                         value={formData.email}
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                                     />
@@ -160,10 +160,10 @@ export function QuickAuthModal({ open, onOpenChange }: QuickAuthModalProps) {
 
                             <div className="space-y-2">
                                 <div className="relative">
-                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                     <Input
                                         placeholder="Mobile Number"
-                                        className="pl-10 h-12 rounded-xl bg-zinc-50 border-zinc-100 focus:bg-white transition-all"
+                                        className="pl-10 h-12 rounded-xl bg-white border-zinc-200 focus:border-black focus:ring-0 transition-all"
                                         value={formData.phoneNumber}
                                         onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
                                     />
@@ -173,7 +173,7 @@ export function QuickAuthModal({ open, onOpenChange }: QuickAuthModalProps) {
                             <Button 
                                 onClick={handleSendOTP}
                                 disabled={loading}
-                                className="w-full h-12 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold transition-all shadow-lg shadow-black/10"
+                                className="w-full h-12 rounded-xl bg-black hover:bg-zinc-900 text-white font-bold transition-all shadow-lg shadow-black/10"
                             >
                                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                                     <span className="flex items-center gap-2">
@@ -184,17 +184,17 @@ export function QuickAuthModal({ open, onOpenChange }: QuickAuthModalProps) {
 
                             <div className="relative py-2">
                                 <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-zinc-100"></div>
+                                    <div className="w-full border-t border-zinc-200"></div>
                                 </div>
                                 <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-white px-2 text-zinc-400 font-bold">Or continue with</span>
+                                    <span className="bg-white px-2 text-zinc-500 font-bold">Or continue with</span>
                                 </div>
                             </div>
 
                             <Button 
                                 variant="outline" 
                                 onClick={() => loginWithGoogle()}
-                                className="w-full h-12 rounded-xl border-zinc-100 hover:bg-zinc-50 font-bold transition-all"
+                                className="w-full h-12 rounded-xl border-zinc-200 hover:bg-zinc-50 font-bold transition-all text-zinc-900"
                             >
                                 <GoogleIcon className="w-5 h-5 mr-3 grayscale opacity-70" />
                                 Google
@@ -206,7 +206,7 @@ export function QuickAuthModal({ open, onOpenChange }: QuickAuthModalProps) {
                                 <Input
                                     autoFocus
                                     placeholder="Enter 6-digit code"
-                                    className="h-16 text-center text-2xl font-black tracking-[0.5em] rounded-2xl bg-zinc-50 border-zinc-100 focus:border-black focus:ring-0 transition-all"
+                                    className="h-16 text-center text-2xl font-black tracking-[0.5em] rounded-2xl bg-white border-zinc-200 focus:border-black focus:ring-0 transition-all"
                                     maxLength={6}
                                     value={formData.otp}
                                     onChange={(e) => setFormData({...formData, otp: e.target.value})}
@@ -216,7 +216,7 @@ export function QuickAuthModal({ open, onOpenChange }: QuickAuthModalProps) {
                             <Button 
                                 onClick={handleVerifyOTP}
                                 disabled={loading}
-                                className="w-full h-12 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold transition-all"
+                                className="w-full h-12 rounded-xl bg-black hover:bg-zinc-900 text-white font-bold transition-all"
                             >
                                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                                     <span className="flex items-center gap-2">
@@ -227,18 +227,18 @@ export function QuickAuthModal({ open, onOpenChange }: QuickAuthModalProps) {
 
                             <button 
                                 onClick={() => setStep(1)}
-                                className="w-full text-sm font-bold text-zinc-400 hover:text-black transition-colors"
+                                className="w-full text-sm font-bold text-zinc-500 hover:text-black transition-colors"
                             >
                                 Change Email Address
                             </button>
                         </div>
                     )}
 
-                    <p className="mt-8 text-[11px] text-zinc-400 text-center leading-relaxed">
+                    <p className="mt-8 text-[11px] text-zinc-500 text-center leading-relaxed">
                         By continuing, you agree to tapx.bio's 
-                        <span className="text-black dark:text-white font-bold mx-1">Terms of Service</span> 
+                        <span className="text-black font-bold mx-1">Terms of Service</span> 
                         and 
-                        <span className="text-black dark:text-white font-bold mx-1">Privacy Policy</span>.
+                        <span className="text-black font-bold mx-1">Privacy Policy</span>.
                     </p>
                 </div>
             </DialogContent>

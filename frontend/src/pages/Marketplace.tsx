@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -504,7 +504,7 @@ const Marketplace = () => {
 
     if (loading) {
         return (
-            <LinktreeLayout>
+            <TapxLayout>
                 <div className="flex flex-col items-center justify-center min-h-screen bg-transparent p-6 text-center">
                     <div className="relative">
                         <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center animate-pulse">
@@ -514,7 +514,7 @@ const Marketplace = () => {
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-6">Loading Marketplace...</h2>
                     <p className="text-gray-500 dark:text-zinc-500 max-w-md mt-2">Discovering amazing plugins and apps</p>
                 </div>
-            </LinktreeLayout>
+            </TapxLayout>
         );
     }
 
@@ -757,7 +757,7 @@ const Marketplace = () => {
     };
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-black dark:to-zinc-950 font-sans text-gray-900 dark:text-zinc-100">
                 {/* Hero Section */}
                 <div className="relative overflow-hidden border-b border-gray-200 dark:border-zinc-800">
@@ -969,7 +969,7 @@ const Marketplace = () => {
                     onSave={saveConfig}
                 />
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

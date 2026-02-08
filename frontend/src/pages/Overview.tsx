@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -116,7 +116,7 @@ const Overview = () => {
         : {};
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="flex h-full">
                 {/* Main Content */}
                 <div className="flex-1 max-w-4xl py-8 px-6 md:px-10 overflow-y-auto">
@@ -404,7 +404,7 @@ const Overview = () => {
                     </div>
                 </div>
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import BlockEditorModal from "@/components/BlockEditorModal";
 import StoreSelectorModal from "@/components/StoreSelectorModal";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ const Dashboard = () => {
     const [products, setProducts] = useState<any[]>([]);
     const [stores, setStores] = useState<any[]>([]);
     const [isStoreSelectorOpen, setIsStoreSelectorOpen] = useState(false);
+    const [isStoresLoading, setIsStoresLoading] = useState(false);
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
@@ -69,48 +70,68 @@ const Dashboard = () => {
     }, []);
 
     // Fetch user stores
+    const fetchStores = useCallback(async () => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            console.log('[Dashboard] No auth token found');
+            return [];
+        }
+        setIsStoresLoading(true);
+        try {
+            console.log('[Dashboard] Fetching stores from:', `${API_URL}/stores/my-stores`);
+            const res = await fetch(`${API_URL}/stores/my-stores`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            console.log('[Dashboard] Stores fetch response status:', res.status);
+            if (res.ok) {
+                const data = await res.json();
+                console.log('[Dashboard] Stores data received:', data);
+                const nextStores = data.stores || [];
+                setStores(nextStores);
+                console.log('[Dashboard] Stores count:', nextStores.length);
+                return nextStores;
+            } else {
+                console.error('[Dashboard] Stores fetch failed:', res.status, res.statusText);
+            }
+        } catch (error) {
+            console.error("[Dashboard] Failed to fetch stores", error);
+        } finally {
+            setIsStoresLoading(false);
+        }
+        return [];
+    }, [API_URL]);
+
     useEffect(() => {
-        const fetchStores = async () => {
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
-                console.log('[Dashboard] No auth token found');
-                return;
-            }
-            try {
-                console.log('[Dashboard] Fetching stores from:', `${API_URL}/stores/my-stores`);
-                const res = await fetch(`${API_URL}/stores/my-stores`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                console.log('[Dashboard] Stores fetch response status:', res.status);
-                if (res.ok) {
-                    const data = await res.json();
-                    console.log('[Dashboard] Stores data received:', data);
-                    setStores(data.stores || []);
-                    console.log('[Dashboard] Stores count:', data.stores?.length || 0);
-                } else {
-                    console.error('[Dashboard] Stores fetch failed:', res.status, res.statusText);
-                }
-            } catch (error) {
-                console.error("[Dashboard] Failed to fetch stores", error);
-            }
-        };
         fetchStores();
-    }, []);
+    }, [fetchStores]);
 
     const handleStoreVisibilityToggle = async (checked: boolean) => {
-        if (stores.length === 0 && checked) {
-            toast.error("Create a store first to enable this feature");
-            return;
-        }
-        
         if (checked) {
+            if (isStoresLoading) return;
+
+            const availableStores = stores.length > 0 ? stores : await fetchStores();
+
+            if (availableStores.length === 0) {
+                toast.error("Create a shop first to enable this feature");
+                return;
+            }
+
+            if (availableStores.length === 1) {
+                await updateProfile({
+                    show_stores_on_profile: true,
+                    visible_stores: [availableStores[0].id]
+                } as any);
+                toast.success("Shop is now visible on your profile");
+                return;
+            }
+
             setIsStoreSelectorOpen(true);
         } else {
             await updateProfile({ 
                 show_stores_on_profile: false,
                 visible_stores: [] 
             } as any);
-            toast.success("Stores hidden from profile");
+            toast.success("Shops hidden from profile");
         }
     };
 
@@ -122,21 +143,21 @@ const Dashboard = () => {
             } as any);
             setIsStoreSelectorOpen(false);
             if (storeIds.length > 0) {
-                toast.success(`${storeIds.length} store${storeIds.length > 1 ? 's' : ''} now visible on your profile`);
+                toast.success(`${storeIds.length} shop${storeIds.length > 1 ? 's' : ''} now visible on your profile`);
             } else {
-                toast.success("All stores hidden from profile");
+                toast.success("All shops hidden from profile");
             }
         } catch (error) {
             console.error("Failed to update visible stores", error);
-            toast.error("Failed to update store visibility");
+            toast.error("Failed to update shop visibility");
         }
     };
 
     // Current config/theme for preview
     const currentThemeConfig = {
+        // Start from template defaults, then let user overrides win
+        ...(templates.find(t => t.id === selectedTheme) || {}),
         ...user?.design_config,
-        // If theme is selected from templates but not overridden by custom config:
-        ...(templates.find(t => t.id === selectedTheme) || {})
     };
 
     // Dnd Sensors
@@ -169,7 +190,8 @@ const Dashboard = () => {
         position: block.position,
         thumbnail: block.thumbnail,
         isFeatured: block.is_featured,
-        isArchived: block.is_archived
+        isArchived: block.is_archived,
+        blockColor: block.content?.blockColor
     });
 
     const handleUpdate = async (id: string, field: string, value: any) => {
@@ -184,7 +206,7 @@ const Dashboard = () => {
     };
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="min-h-screen bg-[#F3F3F1] dark:bg-black p-4 lg:p-10 transition-colors">
                 <div className="flex flex-col xl:flex-row gap-8 max-w-7xl mx-auto">
 
@@ -264,7 +286,7 @@ const Dashboard = () => {
                                         <ShoppingBag className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                                     </div>
                                     <div>
-                                        <h3 className="text-base font-bold text-gray-900 dark:text-white">Store Visibility</h3>
+                                        <h3 className="text-base font-bold text-gray-900 dark:text-white">Shop Visibility</h3>
                                         <p className="text-sm text-gray-500 dark:text-zinc-500">Show your products on your profile</p>
                                     </div>
                                 </div>
@@ -335,14 +357,14 @@ const Dashboard = () => {
                                         <div className="w-4 h-4 rounded-full bg-green-500/20 flex items-center justify-center">
                                             <div className="w-2 h-2 rounded-full bg-green-500"></div>
                                         </div>
-                                        <span>{stores.length} store{stores.length > 1 ? 's' : ''} active</span>
+                                        <span>{stores.length} shop{stores.length > 1 ? 's' : ''} active</span>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-2 justify-center text-xs text-zinc-400">
                                         <div className="w-4 h-4 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center">
                                             <div className="w-2 h-2 rounded-full bg-zinc-400"></div>
                                         </div>
-                                        <span>No stores yet</span>
+                                        <span>No shops yet</span>
                                     </div>
                                 )}
                             </div>
@@ -374,7 +396,7 @@ const Dashboard = () => {
                 onSave={handleSaveVisibleStores}
             />
 
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

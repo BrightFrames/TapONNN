@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,7 +83,7 @@ const CreateStore = () => {
         }
 
         if (!formData.store_name.trim()) {
-            toast.error("Store name is required");
+            toast.error("Shop name is required");
             return;
         }
 
@@ -102,22 +102,22 @@ const CreateStore = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                toast.success("Store created successfully!");
+                toast.success("Shop created successfully!");
                 navigate('/settings'); // Or navigate to store management page
             } else {
                 const error = await response.json();
-                toast.error(error.error || "Failed to create store");
+                toast.error(error.error || "Failed to create shop");
             }
         } catch (err) {
             console.error("Error creating store:", err);
-            toast.error("Failed to create store");
+            toast.error("Failed to create shop");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="max-w-2xl mx-auto p-6">
                 <Button
                     variant="ghost"
@@ -135,9 +135,9 @@ const CreateStore = () => {
                                 <Store className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <CardTitle className="text-2xl">Create New Store</CardTitle>
+                                <CardTitle className="text-2xl">Create New Shop</CardTitle>
                                 <CardDescription>
-                                    Set up your digital store in minutes
+                                    Set up your digital shop in minutes
                                 </CardDescription>
                             </div>
                         </div>
@@ -147,7 +147,7 @@ const CreateStore = () => {
                             {/* Username Field */}
                             <div className="space-y-2">
                                 <Label htmlFor="username">
-                                    Store Username <span className="text-red-500">*</span>
+                                    Shop Username <span className="text-red-500">*</span>
                                 </Label>
                                 <div className="relative">
                                     <div className="flex items-center gap-2">
@@ -179,19 +179,19 @@ const CreateStore = () => {
                                     )}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    This will be your store's unique URL. Use only letters, numbers, _ and -
+                                    This will be your shop's unique URL. Use only letters, numbers, _ and -
                                 </p>
                             </div>
 
                             {/* Store Name */}
                             <div className="space-y-2">
                                 <Label htmlFor="store_name">
-                                    Store Name <span className="text-red-500">*</span>
+                                    Shop Name <span className="text-red-500">*</span>
                                 </Label>
                                 <Input
                                     id="store_name"
                                     type="text"
-                                    placeholder="My Amazing Store"
+                                    placeholder="My Amazing Shop"
                                     value={formData.store_name}
                                     onChange={(e) => setFormData({ ...formData, store_name: e.target.value })}
                                     required
@@ -203,10 +203,10 @@ const CreateStore = () => {
 
                             {/* Bio */}
                             <div className="space-y-2">
-                                <Label htmlFor="bio">Store Description</Label>
+                                <Label htmlFor="bio">Shop Description</Label>
                                 <Textarea
                                     id="bio"
-                                    placeholder="Tell people what your store is about..."
+                                    placeholder="Tell people what your shop is about..."
                                     value={formData.bio}
                                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                                     rows={4}
@@ -248,7 +248,7 @@ const CreateStore = () => {
                                     ) : (
                                         <>
                                             <Store className="w-4 h-4 mr-2" />
-                                            Create Store
+                                            Create Shop
                                         </>
                                     )}
                                 </Button>
@@ -268,7 +268,7 @@ const CreateStore = () => {
                                 <Store className="w-10 h-10 text-white" />
                             </div>
                             <h3 className="font-bold text-xl mb-2">
-                                {formData.store_name || "Your Store Name"}
+                                {formData.store_name || "Your Shop Name"}
                             </h3>
                             {formData.username && (
                                 <p className="text-sm text-muted-foreground mb-2">
@@ -291,7 +291,7 @@ const CreateStore = () => {
                     </CardContent>
                 </Card>
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

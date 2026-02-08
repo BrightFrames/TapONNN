@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowRight, Sparkles, ShoppingCart, Info, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import LinktreeLayout from '@/layouts/LinktreeLayout';
+import TapxLayout from '@/layouts/TapxLayout';
 
 const NFC_PRODUCTS = [
     {
@@ -110,7 +110,7 @@ const ProductCard = ({ product }: { product: typeof NFC_PRODUCTS[0] }) => (
 
 const NfcStore = () => {
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="max-w-7xl mx-auto p-6 md:p-8">
                 <div className="mb-10 text-center">
                     <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 dark:text-white">
@@ -127,7 +127,7 @@ const NfcStore = () => {
                     ))}
                 </div>
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

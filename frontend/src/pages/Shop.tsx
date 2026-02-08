@@ -1,4 +1,4 @@
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { templates } from "@/data/templates";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -586,7 +586,7 @@ const Shop = () => {
     };
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="flex h-full">
                 {/* Main Editor */}
                 <div className="flex-1 py-8 px-6 md:px-10">
@@ -617,7 +617,7 @@ const Shop = () => {
                                                     window.open(url, '_blank');
                                                 }}
                                                 className="bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-zinc-300 pr-10 border border-zinc-800 cursor-pointer truncate max-w-[200px]"
-                                                title="Click to open store"
+                                                title="Click to open shop"
                                             >
                                                 {window.location.hostname === 'localhost' ? 'localhost' : 'tapx.bio'}/s/{username}
                                             </div>
@@ -628,7 +628,7 @@ const Shop = () => {
                                                 onClick={() => {
                                                     const url = `${window.location.origin}/s/${username}`;
                                                     navigator.clipboard.writeText(url);
-                                                    toast.success("Store link copied!");
+                                                    toast.success("Shop link copied!");
                                                 }}
                                             >
                                                 <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -1116,7 +1116,7 @@ const Shop = () => {
                 currentConfig={selectedConfig}
                 onSave={savePluginConfig}
             />
-        </LinktreeLayout >
+        </TapxLayout >
     );
 };
 

@@ -1,11 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Share2, ArrowRight, Sparkles, AlertCircle, ExternalLink, Mail, Phone, ShoppingBag, ChevronLeft, Star, Heart, Upload, Instagram, Twitter, Facebook, Linkedin, Youtube, Github, Music, MessageCircle, Send, Globe, Info, CheckCircle, AlertTriangle, PartyPopper } from "lucide-react";
+import { Share2, ArrowRight, Sparkles, AlertCircle, ExternalLink, Mail, Phone, ShoppingBag, ChevronLeft, Star, Heart, Upload, Instagram, Twitter, Facebook, Linkedin, Youtube, Github, Music, MessageCircle, Send, Globe, Info, CheckCircle, AlertTriangle, PartyPopper, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getIconForThumbnail } from "@/utils/socialIcons";
 import { getImageUrl } from "@/utils/imageUtils";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { StoreUpdates } from "@/components/StoreUpdates";
 
 // Helper function to get favicon URL from a link
 const getFaviconUrl = (url: string): string | null => {
@@ -95,10 +96,13 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
     };
 
     const youtubeVideoId = (coverType === 'youtube' && coverYoutubeUrl) ? getYouTubeVideoId(coverYoutubeUrl) : null;
+    const youtubeThumbUrl = youtubeVideoId ? `https://img.youtube.com/vi/${youtubeVideoId}/hqdefault.jpg` : '';
     const showCoverImage = (coverType === 'image' || coverType === 'video') && coverUrl;
     const showCoverColor = coverType === 'color' || (coverType === 'none' && !showCoverImage && !youtubeVideoId);
 
     const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+    const [likedProductIds, setLikedProductIds] = useState<Set<string>>(new Set());
+    const [searchQuery, setSearchQuery] = useState('');
     const [scrollProgress, setScrollProgress] = useState(0);
     const [activeTab, setActiveTab] = useState<'personal' | 'store'>(mode || 'personal');
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -126,13 +130,21 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
     const buttonColor = theme?.buttonColor || "#000000";
     const buttonTextColor = theme?.buttonTextColor || "#ffffff";
     const blockStyle = theme?.blockStyle || 'rounded'; // rounded, square, fully_rounded
+    const linkBlocksColor = theme?.linkBlocksColor; // Global color for link blocks
+    const featuredProducts = (products || []).filter(p => p.is_featured);
+    const filteredProducts = (products || []).filter(p => 
+        p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
     
     // Smart card color - use user selection or fallback
     const hasCoverImage = !!coverUrl;
+    const hasCoverBackdrop = hasCoverImage || !!youtubeVideoId;
     const userCardColor = theme?.cardColor;
     const cardColor = userCardColor || (hasCoverImage 
         ? "rgba(255,255,255,0.95)" // Glass effect fallback
         : "#ffffff");
+    const cardSurfaceColor = (cardBgType === 'color' && userCardColor) ? userCardColor : undefined;
     
     // Text color - respect user selection or use dark text for glass effect
     const textColor = theme?.textColor || (hasCoverImage ? "#18181b" : "#18181b");
@@ -166,40 +178,151 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
     const isDarkTheme = !cardIsLight; // When card is dark, use light text/borders
 
     const renderProductList = () => (
-        <div className="space-y-4 pb-24 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
-            <div className="grid grid-cols-2 gap-3">
-                {products.length > 0 ? (
-                    products.map((product) => (
-                        <div
-                            key={product._id}
-                            className="rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-all active:scale-[0.98] group flex flex-col"
-                            style={{
-                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.03)',
-                                borderWidth: '1px',
-                                borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
-                            }}
-                            onClick={() => setSelectedProduct(product)}
-                        >
-                            <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
-                                {product.image_url ? (
-                                    <img src={product.image_url} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-2xl">🛍️</div>
+        <div className="space-y-6 pb-24 animate-in slide-in-from-bottom duration-700 fade-in fill-mode-both" style={{ animationDelay: '100ms' }}>
+            {featuredProducts.length > 0 && (
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                        <h2 className="text-sm font-black tracking-tight flex items-center gap-2" style={{ color: textColor }}>
+                            <Sparkles className="w-3.5 h-3.5" style={{ color: isDarkTheme ? '#ffffff' : '#000000' }} />
+                            Top Picks
+                        </h2>
+                    </div>
+                    <div className="flex flex-nowrap overflow-x-auto gap-4 pb-4 scrollbar-hide snap-x px-1">
+                        {featuredProducts.map((product) => (
+                            <div
+                                key={product._id}
+                                onClick={() => setSelectedProduct(product)}
+                                className="min-w-[220px] snap-center rounded-[2rem] overflow-hidden border relative flex flex-col group transition-all active:scale-[0.98] shadow-xl backdrop-blur-xl"
+                                style={{ 
+                                    backgroundColor: cardSurfaceColor || (isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.9)'),
+                                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.06)',
+                                    boxShadow: isDarkTheme ? '0 20px 50px rgba(0,0,0,0.5)' : '0 10px 40px rgba(0,0,0,0.04)'
+                                }}
+                            >
+                                {product.badge && (
+                                    <div className="absolute top-4 right-4 z-20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm text-white"
+                                        style={{ backgroundColor: buttonColor }}
+                                    >
+                                        {product.badge}
+                                    </div>
                                 )}
+                                <div className="aspect-square relative p-6 flex items-center justify-center" style={{ backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.02)' : 'transparent' }}>
+                                    {product.image_url ? (
+                                        <img src={product.image_url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-4xl">🛍️</div>
+                                    )}
+                                </div>
+                                <div className="px-5 pb-6 pt-1 flex flex-col">
+                                    <h3 className="text-base font-bold leading-tight line-clamp-2 mb-2" style={{ color: textColor }}>{product.title}</h3>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="text-xs font-semibold opacity-50" style={{ color: textColor }}>Price:</span>
+                                        <span className="text-sm font-black" style={{ color: textColor }}>₹{product.price}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <Button 
+                                            variant="outline"
+                                            className="flex-1 rounded-2xl h-10 font-bold text-xs transition-all"
+                                            style={{ 
+                                                borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'white',
+                                                color: textColor
+                                            }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                            }}
+                                        >
+                                            Enquire
+                                        </Button>
+                                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center border transition-colors"
+                                            style={{ 
+                                                borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                                backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'white'
+                                            }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setLikedProductIds(prev => {
+                                                    const next = new Set(prev);
+                                                    if (next.has(product._id)) next.delete(product._id);
+                                                    else next.add(product._id);
+                                                    return next;
+                                                });
+                                            }}
+                                        >
+                                            <Heart className={cn("w-4 h-4 transition-all", likedProductIds.has(product._id) ? "fill-red-500 text-red-500" : "text-zinc-300")} />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="p-3">
-                                <h3 className="font-semibold text-xs line-clamp-1" style={{ color: textColor }}>{product.title}</h3>
-                                <p className="text-[10px] mt-1" style={{ color: textColor, opacity: 0.6 }}>₹{product.price}</p>
-                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <div className="space-y-3">
+                {products.length > 0 && (
+                    <div className="px-1 relative group">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-zinc-600 transition-colors">
+                            <Search className="w-4 h-4" />
                         </div>
-                    ))
-                ) : (
-                    <div className="col-span-2 text-center py-10 opacity-60">
-                        <ShoppingBag className="w-6 h-6 mx-auto mb-2" style={{ color: textColor, opacity: 0.3 }} />
-                        <p className="text-xs" style={{ color: textColor, opacity: 0.4 }}>No products found</p>
+                        <input
+                            type="text"
+                            placeholder="Search products..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full h-11 pl-10 pr-4 rounded-xl text-xs border focus:outline-none focus:ring-2 transition-all"
+                            style={{
+                                backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
+                                borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.06)',
+                                color: textColor,
+                            }}
+                        />
                     </div>
                 )}
+
+                <div className="grid grid-cols-2 gap-3">
+                    {filteredProducts.length > 0 ? (
+                        filteredProducts.map((product) => (
+                            <div
+                                key={product._id}
+                                className="rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-all active:scale-[0.98] group flex flex-col backdrop-blur-xl"
+                                style={{
+                                    backgroundColor: cardSurfaceColor || (isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.7)'),
+                                    borderWidth: '1px',
+                                    borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                                }}
+                                onClick={() => setSelectedProduct(product)}
+                            >
+                                <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+                                    {product.image_url ? (
+                                        <img src={product.image_url} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-2xl">🛍️</div>
+                                    )}
+                                </div>
+                                <div className="p-3 backdrop-blur-xl">
+                                    <h3 className="font-semibold text-xs line-clamp-1" style={{ color: textColor }}>{product.title}</h3>
+                                    <p className="text-[10px] mt-1" style={{ color: textColor, opacity: 0.6 }}>₹{product.price}</p>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-span-2 text-center py-10 opacity-60">
+                            <Search className="w-6 h-6 mx-auto mb-2" style={{ color: textColor, opacity: 0.4 }} />
+                            <p className="text-xs" style={{ color: textColor, opacity: 0.5 }}>
+                                {searchQuery ? `No results for "${searchQuery}"` : "No products found"}
+                            </p>
+                        </div>
+                    )}
+                </div>
             </div>
+
+            <StoreUpdates 
+                sellerId={user?.id || ''} 
+                textColor={textColor} 
+                isDarkTheme={isDarkTheme} 
+                surfaceColor={cardSurfaceColor}
+            />
         </div>
     );
 
@@ -209,45 +332,59 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
         // Hide description and actions if no description provided (Gallery Mode)
         const hasDescription = !!selectedProduct.description;
 
+        const detailBg = cardSurfaceColor || (isDarkTheme ? '#09090b' : '#ffffff');
+        const detailHeaderBg = cardSurfaceColor || (isDarkTheme ? 'rgba(9, 9, 11, 0.85)' : 'rgba(255, 255, 255, 0.9)');
+        const detailBorder = isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+
         return (
-            <div className="absolute inset-0 bg-white z-[60] flex flex-col animate-in slide-in-from-bottom duration-300">
-                <div className="p-4 border-b border-zinc-100 flex items-center justify-between sticky top-0 bg-white z-10 pt-12">
-                    <Button variant="ghost" size="icon" onClick={() => setSelectedProduct(null)} className="-ml-2">
+            <div className="absolute inset-0 z-[60] flex flex-col animate-in slide-in-from-bottom duration-300" style={{ backgroundColor: detailBg }}>
+                <div className="p-4 border-b flex items-center justify-between sticky top-0 z-10 pt-12 backdrop-blur-xl"
+                    style={{ backgroundColor: detailHeaderBg, borderColor: detailBorder }}
+                >
+                    <Button variant="ghost" size="icon" onClick={() => setSelectedProduct(null)} className="-ml-2" style={{ color: textColor }}>
                         <ChevronLeft className="w-6 h-6" />
                     </Button>
-                    <span className="font-bold text-sm">Product</span>
+                    <span className="font-bold text-sm" style={{ color: textColor }}>Product</span>
                     <div className="w-9" />
                 </div>
                 <div className="flex-1 overflow-y-auto p-5 pb-24">
-                    <div className="aspect-video bg-zinc-100 rounded-2xl overflow-hidden mb-6 shadow-sm border border-zinc-100 relative">
+                    <div className="aspect-video rounded-2xl overflow-hidden mb-6 shadow-sm border relative"
+                        style={{ backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)', borderColor: detailBorder }}
+                    >
                         {selectedProduct.image_url ?
                             <img src={selectedProduct.image_url} className="w-full h-full object-cover" /> :
                             <div className="w-full h-full flex items-center justify-center text-4xl">🛍️</div>
                         }
                     </div>
-                    <h1 className="text-2xl font-black mb-2 leading-tight">{selectedProduct.title}</h1>
+                    <h1 className="text-2xl font-black mb-2 leading-tight" style={{ color: textColor }}>{selectedProduct.title}</h1>
                     <div className="flex items-center gap-2 mb-6">
-                        <span className="text-xl font-bold text-green-600">₹{selectedProduct.price}</span>
-                        {selectedProduct.originalPrice && <span className="text-sm text-zinc-400 line-through">₹{selectedProduct.originalPrice}</span>}
+                        <span className="text-xl font-bold" style={{ color: textColor }}>₹{selectedProduct.price}</span>
+                        {selectedProduct.originalPrice && <span className="text-sm opacity-50 line-through" style={{ color: textColor }}>₹{selectedProduct.originalPrice}</span>}
                     </div>
 
                     {hasDescription && (
-                        <div className="prose prose-sm prose-zinc max-w-none">
-                            <p className="text-zinc-600 leading-relaxed">{selectedProduct.description}</p>
+                        <div className="prose prose-sm max-w-none">
+                            <p className="leading-relaxed opacity-70" style={{ color: textColor }}>{selectedProduct.description}</p>
                         </div>
                     )}
                 </div>
 
                 {/* Buy/Enquire Bar - Only if description exists */}
                 {hasDescription && (
-                    <div className="p-4 border-t border-zinc-100 absolute bottom-0 w-full bg-white safe-area-bottom flex gap-3">
+                    <div className="p-4 border-t absolute bottom-0 w-full safe-area-bottom flex gap-3 backdrop-blur-xl"
+                        style={{ backgroundColor: detailHeaderBg, borderColor: detailBorder }}
+                    >
                         <Button
                             variant="outline"
-                            className="flex-1 h-12 rounded-xl font-bold text-base border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                            className="flex-1 h-12 rounded-xl font-bold text-base transition-all"
+                            style={{ borderColor: detailBorder, color: textColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'transparent' }}
                         >
                             Enquire Now
                         </Button>
-                        <Button className="flex-1 h-12 rounded-2xl bg-black text-white font-bold text-base shadow-lg">
+                        <Button
+                            className="flex-1 h-12 rounded-2xl font-bold text-base shadow-lg"
+                            style={{ backgroundColor: isDarkTheme ? '#ffffff' : '#000000', color: isDarkTheme ? '#000000' : '#ffffff' }}
+                        >
                             Buy Now
                         </Button>
                     </div>
@@ -265,11 +402,20 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                 <div 
                     className="absolute inset-0 z-0 transition-all duration-1000 ease-out pointer-events-none"
                     style={{
-                        backgroundColor: hasCoverImage ? '#000000' : bgColor,
+                        backgroundColor: hasCoverBackdrop ? '#000000' : bgColor,
                     }}
                 >
                     {/* Blurred Cover Image Background */}
-                    {hasCoverImage && coverUrl && (
+                    {coverType === 'video' && coverUrl ? (
+                        <video
+                            src={coverUrl}
+                            className="absolute inset-0 w-full h-full object-cover blur-[20px] saturate-[1.5] scale-[1.1]"
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                        />
+                    ) : hasCoverImage && coverUrl ? (
                         <div 
                             className="absolute inset-0 opacity-100 blur-[20px] saturate-[1.5] scale-[1.1]"
                             style={{
@@ -279,10 +425,21 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                 backgroundRepeat: 'no-repeat',
                             }}
                         />
+                    ) : null}
+                    {!hasCoverImage && youtubeThumbUrl && (
+                        <div
+                            className="absolute inset-0 opacity-100 blur-[20px] saturate-[1.5] scale-[1.1]"
+                            style={{
+                                backgroundImage: `url(${youtubeThumbUrl})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                backgroundRepeat: 'no-repeat',
+                            }}
+                        />
                     )}
                     
                     {/* Subtle Ambient Overlay - lighter to show more blur */}
-                    {hasCoverImage && (
+                    {hasCoverBackdrop && (
                         <div 
                             className="absolute inset-0 transition-opacity duration-700"
                             style={{
@@ -379,6 +536,15 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                             <div className="w-full h-full" style={{ background: coverColor || 'linear-gradient(to bottom right, #6366f1, #a855f7, #ec4899)' }} />
                         )}
                         <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" />
+                        <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{
+                                opacity: Math.max(0, scrollProgress - 0.2),
+                                backdropFilter: `blur(${Math.max(0, scrollProgress - 0.2) * 20}px)`,
+                                WebkitBackdropFilter: `blur(${Math.max(0, scrollProgress - 0.2) * 20}px)`,
+                                background: 'linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.35))'
+                            }}
+                        />
                         </div>
                     </div>
 
@@ -476,7 +642,7 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                                             </div>
                                                             <div className="flex flex-col text-left overflow-hidden">
                                                                 <span className="text-sm font-bold truncate" style={{ color: textColor }}>
-                                                                    {typeof store === 'string' ? 'Your Store' : (store.store_name || 'Store')}
+                                                                    {typeof store === 'string' ? 'Your Shop' : (store.store_name || 'Shop')}
                                                                 </span>
                                                                 <span className="text-[10px] opacity-60 truncate" style={{ color: textColor }}>
                                                                     @{typeof store === 'string' ? 'username' : (store.username || 'store')}
@@ -508,10 +674,19 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                             const config = styleConfig[style as keyof typeof styleConfig] || styleConfig.info;
                                             const UpdateIcon = config.icon;
                                             
+                                            const handleUpdateClick = () => {
+                                                if (block.content?.url) {
+                                                    let url = block.content.url;
+                                                    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+                                                    window.open(url, '_blank');
+                                                }
+                                            };
+                                            
                                             return (
                                                 <div
                                                     key={block._id}
-                                                    className={`w-full p-3 rounded-2xl transition-all border ${block.content?.url ? 'cursor-pointer active:scale-[0.98]' : ''}`}
+                                                    onClick={handleUpdateClick}
+                                                    className={`w-full p-3 rounded-2xl transition-all border ${block.content?.url ? 'cursor-pointer active:scale-[0.98] hover:shadow-md' : ''}`}
                                                     style={{
                                                         backgroundColor: config.bg,
                                                         borderColor: config.border,
@@ -539,11 +714,23 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                         {blocks.filter(b => b.is_active !== false && b.block_type !== 'update').map((block) => {
                                             const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
                                             const blockUrl = block.content?.url || block.url;
+                                            const customBlockColor = block.content?.blockColor;
+                                            const finalBlockColor = customBlockColor || linkBlocksColor || (cardBgType === 'color' ? (cardColor || '#ffffff') : '#ffffff');
+                                            
+                                            const handleBlockClick = () => {
+                                                if (blockUrl) {
+                                                    let url = blockUrl;
+                                                    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+                                                    window.open(url, '_blank');
+                                                }
+                                            };
+                                            
                                             return (
                                                 <div key={block._id}
-                                                    className="w-full p-3.5 rounded-2xl active:scale-[0.98] transition-all cursor-pointer border flex items-center justify-between group h-14"
+                                                    onClick={handleBlockClick}
+                                                    className="w-full p-3.5 rounded-2xl active:scale-[0.98] transition-all cursor-pointer border flex items-center justify-between group h-14 hover:shadow-md"
                                                     style={{
-                                                        backgroundColor: cardBgType === 'color' ? (cardColor || '#ffffff') : '#ffffff',
+                                                        backgroundColor: finalBlockColor,
                                                         borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
                                                     }}
                                                 >
@@ -562,6 +749,9 @@ const ProfilePreview = ({ blocks = [], theme, products = [], mode = 'personal', 
                                                             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: isDarkTheme ? '#000' : '#fff', color: textColor }}><ExternalLink className="w-4 h-4" /></div>
                                                         )}
                                                         <span className="text-sm font-bold truncate flex-1 text-left" style={{ color: textColor }}>{block.title}</span>
+                                                    </div>
+                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <ArrowRight className="w-3.5 h-3.5 opacity-50" style={{ color: textColor }} />
                                                     </div>
                                                 </div>
                                             )

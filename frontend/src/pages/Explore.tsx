@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import LinktreeLayout from '@/layouts/LinktreeLayout';
+import TapxLayout from '@/layouts/TapxLayout';
 import { Loader2, Heart, ExternalLink, ShoppingBag, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
@@ -180,11 +180,11 @@ const Explore = () => {
 
     if (loading) {
         return (
-            <LinktreeLayout>
+            <TapxLayout>
                 <div className="flex items-center justify-center min-h-screen bg-white dark:bg-black">
                     <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-white" />
                 </div>
-            </LinktreeLayout>
+            </TapxLayout>
         );
     }
 
@@ -193,7 +193,7 @@ const Explore = () => {
     );
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="min-h-screen bg-gray-50 dark:bg-black text-gray-900 dark:text-white p-4 md:p-8">
                 {/* Minimized Search - Top Right */}
                 <div className="max-w-[1600px] mx-auto mb-6 flex items-center justify-end sticky top-0 z-30 bg-gray-50/80 dark:bg-black/80 backdrop-blur-xl py-4 transition-all">
@@ -349,7 +349,7 @@ const Explore = () => {
                     initialStep={interactionModal.initialStep}
                 />
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

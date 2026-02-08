@@ -9,9 +9,10 @@ interface StoreUpdatesProps {
     sellerId: string;
     textColor?: string;
     isDarkTheme?: boolean;
+    surfaceColor?: string;
 }
 
-export function StoreUpdates({ sellerId, textColor = "#000000", isDarkTheme = false }: StoreUpdatesProps) {
+export function StoreUpdates({ sellerId, textColor = "#000000", isDarkTheme = false, surfaceColor }: StoreUpdatesProps) {
     const [inputValue, setInputValue] = useState("");
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -78,12 +79,17 @@ export function StoreUpdates({ sellerId, textColor = "#000000", isDarkTheme = fa
         }
     };
 
+    const containerBg = surfaceColor || (isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.5)');
+    const containerBorder = surfaceColor
+        ? (isDarkTheme ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)')
+        : (isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)');
+
     if (success) {
         return (
             <div className="mt-12 p-8 rounded-[2.5rem] text-center animate-in zoom-in duration-500"
                 style={{ 
-                    backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
-                    border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
+                    backgroundColor: containerBg,
+                    border: `1px solid ${containerBorder}`
                 }}
             >
                 <div className="w-12 h-12 bg-green-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -91,7 +97,7 @@ export function StoreUpdates({ sellerId, textColor = "#000000", isDarkTheme = fa
                 </div>
                 <h3 className="text-lg font-black tracking-tight mb-2" style={{ color: textColor }}>You're on the list!</h3>
                 <p className="text-xs opacity-60 font-medium" style={{ color: textColor }}>
-                    We'll notify you when this store drops new products or updates.
+                    We'll notify you when this shop drops new products or updates.
                 </p>
                 <Button 
                     variant="ghost" 
@@ -108,8 +114,8 @@ export function StoreUpdates({ sellerId, textColor = "#000000", isDarkTheme = fa
     return (
         <div className="mt-12 p-8 rounded-[2.5rem] relative overflow-hidden group"
             style={{ 
-                backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.5)',
-                border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+                backgroundColor: containerBg,
+                border: `1px solid ${containerBorder}`,
                 backdropBlur: '12px'
             }}
         >

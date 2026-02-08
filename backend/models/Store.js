@@ -11,6 +11,12 @@ const storeSchema = new mongoose.Schema({
         ref: 'Profile',
         required: true
     },
+    profile_username: {
+        type: String,
+        lowercase: true,
+        trim: true,
+        index: true
+    },
     username: {
         type: String,
         required: true,
@@ -67,6 +73,7 @@ const storeSchema = new mongoose.Schema({
 // Index for faster lookups
 storeSchema.index({ user_id: 1 });
 storeSchema.index({ profile_id: 1 });
+storeSchema.index({ profile_username: 1 });
 
 const Store = mongoose.model('Store', storeSchema);
 

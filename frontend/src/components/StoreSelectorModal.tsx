@@ -94,10 +94,10 @@ const StoreSelectorModal = ({ open, onClose, currentVisibleStores, onSave }: Sto
                 <DialogHeader className="pt-6 sm:pt-0">
                     <DialogTitle className="flex items-center gap-2">
                         <Store className="w-5 h-5" />
-                        Select Stores to Display
+                        Select Shops to Display
                     </DialogTitle>
                     <DialogDescription>
-                        Choose which stores to show on your personal profile. You can select multiple stores.
+                        Choose which shops to show on your personal profile. You can select multiple shops.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -109,8 +109,8 @@ const StoreSelectorModal = ({ open, onClose, currentVisibleStores, onSave }: Sto
                     ) : stores.length === 0 ? (
                         <div className="text-center py-8">
                             <Store className="w-12 h-12 mx-auto text-muted-foreground mb-3 opacity-50" />
-                            <p className="text-sm text-muted-foreground">No stores found</p>
-                            <p className="text-xs text-muted-foreground mt-1">Create a store to display it on your profile</p>
+                            <p className="text-sm text-muted-foreground">No shops found</p>
+                            <p className="text-xs text-muted-foreground mt-1">Create a shop to display it on your profile</p>
                         </div>
                     ) : (
                         <div className="space-y-3 max-h-[400px] overflow-y-auto">

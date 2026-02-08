@@ -33,7 +33,7 @@ const checkUsernameAvailability = async (req, res) => {
 // Create a new store
 const createStore = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.user.id || req.user.userId;
         const { username, store_name, bio, avatar_url, category } = req.body;
 
         if (!username || !store_name) {
@@ -63,6 +63,7 @@ const createStore = async (req, res) => {
         const newStore = new Store({
             user_id: userId,
             profile_id: profile._id,
+            profile_username: profile.username,
             username: normalizedUsername,
             store_name: store_name.trim(),
             bio: bio || '',
@@ -93,9 +94,38 @@ const createStore = async (req, res) => {
 // Get all stores for the authenticated user
 const getUserStores = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.user.id || req.user.userId;
+        const profile = await Profile.findOne({ user_id: userId });
 
-        const stores = await Store.find({ user_id: userId }).sort({ created_at: -1 });
+        if (!profile) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        let stores = await Store.find({ profile_id: profile._id }).sort({ created_at: -1 });
+
+        // Legacy fallback: if profile has store identity but no Store docs, create one
+        if (stores.length === 0 && profile.store_username) {
+            const existingByProfile = await Store.findOne({ profile_id: profile._id });
+            const existingByUsername = await Store.findOne({ username: profile.store_username.toLowerCase() });
+
+            if (!existingByProfile && !existingByUsername) {
+                const legacyStore = new Store({
+                    user_id: userId,
+                    profile_id: profile._id,
+                    profile_username: profile.username,
+                    username: profile.store_username.toLowerCase(),
+                    store_name: profile.store_name || `${profile.full_name}'s Business`,
+                    bio: profile.store_bio || '',
+                    avatar_url: profile.store_avatar_url || profile.avatar_url || '',
+                    published: profile.store_published || false,
+                    selected_theme: profile.store_selected_theme || profile.selected_theme || 'clean',
+                    design_config: profile.store_design_config || profile.design_config || {},
+                });
+                await legacyStore.save();
+            }
+
+            stores = await Store.find({ profile_id: profile._id }).sort({ created_at: -1 });
+        }
 
         res.json({
             stores: stores.map(store => ({
@@ -118,7 +148,7 @@ const getUserStores = async (req, res) => {
 // Get a specific store by ID
 const getStoreById = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.user.id || req.user.userId;
         const { storeId } = req.params;
 
         const store = await Store.findOne({ _id: storeId, user_id: userId });
@@ -150,7 +180,7 @@ const getStoreById = async (req, res) => {
 // Update store
 const updateStore = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.user.id || req.user.userId;
         const { storeId } = req.params;
         const updates = req.body;
 

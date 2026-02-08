@@ -1,4 +1,4 @@
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { Smartphone, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 const NFCCards = () => {
     const { t } = useTranslation();
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="flex flex-col items-center justify-center h-full p-8 text-center text-muted-foreground">
                 <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6">
                     <Smartphone className="w-10 h-10" />
@@ -21,7 +21,7 @@ const NFCCards = () => {
                     <p>{t('media.comingSoon')}</p>
                 </div>
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

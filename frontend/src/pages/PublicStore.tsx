@@ -118,7 +118,7 @@ const PublicStore = () => {
             <div className="fixed inset-0 bg-black flex items-center justify-center">
                 <div className="flex flex-col items-center space-y-4">
                     <div className="w-16 h-16 rounded-full border-2 border-white/20 border-t-white animate-spin" />
-                    <p className="text-white/60 text-sm">Loading store...</p>
+                    <p className="text-white/60 text-sm">Loading shop...</p>
                 </div>
             </div>
         );
@@ -130,8 +130,8 @@ const PublicStore = () => {
                 <div className="bg-white/10 p-4 rounded-full mb-4">
                     <Store className="w-8 h-8 text-white/60" />
                 </div>
-                <h2 className="text-2xl font-bold tracking-tight mb-2 text-white">Store not found</h2>
-                <p className="text-white/60 mb-6">This store doesn't exist or isn't published yet.</p>
+                <h2 className="text-2xl font-bold tracking-tight mb-2 text-white">Shop not found</h2>
+                <p className="text-white/60 mb-6">This shop doesn't exist or isn't published yet.</p>
                 <Button
                     variant="outline"
                     className="border-white/20 text-white hover:bg-white/10"

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '@/contexts/AuthContext';
-import LinktreeLayout from '@/layouts/LinktreeLayout';
+import TapxLayout from '@/layouts/TapxLayout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -372,7 +372,7 @@ const Messages = () => {
     }
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="flex h-full bg-gray-50 dark:bg-black">
                 {/* Conversation List */}
                 <div className={cn(
@@ -595,7 +595,7 @@ const Messages = () => {
                     )}
                 </div>
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

@@ -26,6 +26,50 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useState } from "react";
+
+// Helper function to get favicon URL from a link
+const getFaviconUrl = (url: string): string | null => {
+    if (!url) return null;
+    try {
+        // Add protocol if missing
+        let fullUrl = url;
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            fullUrl = 'https://' + url;
+        }
+        const urlObj = new URL(fullUrl);
+        const domain = urlObj.hostname;
+        // Use Google's favicon service for reliable favicon fetching
+        return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+    } catch {
+        return null;
+    }
+};
+
+// Favicon component with fallback
+const Favicon = ({ url, fallback, className, style }: {
+    url: string;
+    fallback: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+}) => {
+    const [error, setError] = useState(false);
+    const faviconUrl = getFaviconUrl(url);
+
+    if (error || !faviconUrl) {
+        return <>{fallback}</>;
+    }
+
+    return (
+        <img
+            src={faviconUrl}
+            alt=""
+            className={className}
+            style={style}
+            onError={() => setError(true)}
+        />
+    );
+};
 
 interface Link {
     id: string;
@@ -40,6 +84,7 @@ interface Link {
     isArchived?: boolean;
     scheduledStart?: string;
     scheduledEnd?: string;
+    blockColor?: string;
 }
 
 interface SortableLinkCardProps {
@@ -71,16 +116,38 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit, onDuplicate }: Sor
         toast.success("Copied to clipboard");
     };
 
+    const openLink = (e: React.MouseEvent) => {
+        if (link.url) {
+            // Prevent if clicking on interactive elements
+            const target = e.target as HTMLElement;
+            if (
+                target.closest('button') || 
+                target.closest('input') || 
+                target.closest('[role="switch"]') ||
+                target.closest('[role="menuitem"]')
+            ) {
+                return;
+            }
+            
+            let url = link.url;
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            window.open(url, '_blank');
+        }
+    };
+
     const ThumbnailIcon = link.thumbnail ? getIconForThumbnail(link.thumbnail) : null;
 
     return (
         <div
             ref={setNodeRef}
             style={style}
+            onClick={openLink}
+            title={link.url ? `Click to open: ${link.url}` : undefined}
             className={`
                 group relative
                 bg-white dark:bg-zinc-900/60 backdrop-blur-md rounded-[20px] overflow-hidden border border-gray-200 dark:border-zinc-800/60
                 transition-all duration-300 ease-out hover:border-gray-300 dark:hover:border-zinc-700 shadow-sm hover:shadow-lg dark:hover:shadow-black/20
+                ${link.url ? 'cursor-pointer hover:scale-[1.01] active:scale-[0.99]' : ''}
                 ${isDragging
                     ? 'shadow-2xl shadow-black/10 dark:shadow-black/50 scale-[1.02] ring-2 ring-purple-500/20 dark:ring-white/10 z-50'
                     : ''
@@ -93,6 +160,7 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit, onDuplicate }: Sor
                 <div
                     {...attributes}
                     {...listeners}
+                    onClick={(e) => e.stopPropagation()}
                     className="flex items-center justify-center w-8 cursor-grab active:cursor-grabbing hover:bg-gray-50 dark:hover:bg-white/5 transition-colors border-r border-transparent group-hover:border-gray-100 dark:group-hover:border-white/5"
                 >
                     <GripVertical className="w-4 h-4 text-gray-400 dark:text-zinc-600 group-hover:text-gray-600 dark:group-hover:text-zinc-400 transition-colors" />
@@ -110,7 +178,7 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit, onDuplicate }: Sor
                                 w-[56px] h-[56px] rounded-2xl flex items-center justify-center overflow-hidden shadow-inner
                                 ${ThumbnailIcon
                                     ? 'bg-gradient-to-br from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-black border border-gray-200 dark:border-zinc-700'
-                                    : link.thumbnail ? 'bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800' : 'bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-800 border-dashed'
+                                    : link.thumbnail ? 'bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800' : 'bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-800'
                                 }
                                 transition-all duration-300 group-hover/thumb:scale-105 group-hover/thumb:border-gray-300 dark:group-hover/thumb:border-zinc-600
                             `}>
@@ -118,6 +186,12 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit, onDuplicate }: Sor
                                     <ThumbnailIcon className="w-7 h-7 text-gray-700 dark:text-white" />
                                 ) : link.thumbnail ? (
                                     <img src={link.thumbnail} alt="" className="w-full h-full object-cover" />
+                                ) : link.url ? (
+                                    <Favicon
+                                        url={link.url}
+                                        className="w-7 h-7 object-contain"
+                                        fallback={<Link2 className="w-6 h-6 text-gray-400 dark:text-zinc-600 group-hover/thumb:text-gray-600 dark:group-hover/thumb:text-zinc-400 transition-colors" />}
+                                    />
                                 ) : (
                                     <Link2 className="w-6 h-6 text-gray-400 dark:text-zinc-600 group-hover/thumb:text-gray-600 dark:group-hover/thumb:text-zinc-400 transition-colors" />
                                 )}
@@ -131,13 +205,22 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit, onDuplicate }: Sor
 
                     {/* Text Content */}
                     <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-                        <Input
-                            type="text"
-                            className="w-full font-bold text-[16px] text-gray-900 dark:text-white bg-transparent border-none p-0 h-auto focus-visible:ring-0 placeholder:text-gray-400 dark:placeholder:text-zinc-600 shadow-none hover:text-black dark:hover:text-white/90 transition-colors"
-                            value={link.title}
-                            placeholder="Title"
-                            onChange={(e) => onUpdate(link.id, 'title', e.target.value)}
-                        />
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="text"
+                                className="flex-1 font-bold text-[16px] text-gray-900 dark:text-white bg-transparent border-none p-0 h-auto focus-visible:ring-0 placeholder:text-gray-400 dark:placeholder:text-zinc-600 shadow-none hover:text-black dark:hover:text-white/90 transition-colors"
+                                value={link.title}
+                                placeholder="Title"
+                                onChange={(e) => onUpdate(link.id, 'title', e.target.value)}
+                            />
+                            {link.blockColor && (
+                                <div 
+                                    className="w-4 h-4 rounded border border-gray-300 dark:border-zinc-600 shrink-0"
+                                    style={{ backgroundColor: link.blockColor }}
+                                    title={`Custom color: ${link.blockColor}`}
+                                />
+                            )}
+                        </div>
                         <Input
                             type="text"
                             className="w-full text-[14px] text-gray-500 dark:text-zinc-400 bg-transparent border-none p-0 h-auto focus-visible:ring-0 placeholder:text-gray-400 dark:placeholder:text-zinc-700 shadow-none font-medium hover:text-gray-700 dark:hover:text-zinc-300 transition-colors"
@@ -250,6 +333,11 @@ const SortableLinkCard = ({ link, onUpdate, onDelete, onEdit, onDuplicate }: Sor
                     </div>
                 </div>
             </div>
+            
+            {/* Click to Open Indicator */}
+            {link.url && (
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+            )}
         </div>
     );
 };

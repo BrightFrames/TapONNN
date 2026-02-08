@@ -1,4 +1,4 @@
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { Image, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 const Media = () => {
     const { t } = useTranslation();
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-in fade-in zoom-in duration-500 font-sans">
                 <div className="max-w-md w-full space-y-8">
 
@@ -35,7 +35,7 @@ const Media = () => {
 
                 </div>
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

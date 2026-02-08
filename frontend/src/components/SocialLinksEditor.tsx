@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 // Available social platforms
 const SOCIAL_PLATFORMS = [
@@ -47,6 +48,7 @@ interface SocialLinksEditorProps {
 }
 
 const SocialLinksEditor = ({ socialLinks, onSave }: SocialLinksEditorProps) => {
+    const { t } = useTranslation();
     const [links, setLinks] = useState<Record<string, string>>(socialLinks || {});
     const [isOpen, setIsOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -80,10 +82,10 @@ const SocialLinksEditor = ({ socialLinks, onSave }: SocialLinksEditorProps) => {
         setIsSaving(true);
         try {
             await onSave(links);
-            toast.success("Social links saved!");
+            toast.success(t('socialLinks.saved'));
             setIsOpen(false);
         } catch (error) {
-            toast.error("Failed to save social links");
+            toast.error(t('socialLinks.saveFailed'));
         } finally {
             setIsSaving(false);
         }
@@ -102,19 +104,19 @@ const SocialLinksEditor = ({ socialLinks, onSave }: SocialLinksEditorProps) => {
         <div className="bg-white dark:bg-zinc-900/60 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-zinc-800/60 p-5">
             <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Social Links</h3>
-                    <p className="text-sm text-gray-500 dark:text-zinc-500">Add your social media profiles</p>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('socialLinks.title')}</h3>
+                    <p className="text-sm text-gray-500 dark:text-zinc-500">{t('socialLinks.description')}</p>
                 </div>
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
                         <Button variant="outline" size="sm" className="rounded-full">
                             <Pencil className="w-4 h-4 mr-2" />
-                            Edit
+                            {t('common.edit')}
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-md bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
                         <DialogHeader>
-                            <DialogTitle className="text-gray-900 dark:text-white">Edit Social Links</DialogTitle>
+                            <DialogTitle className="text-gray-900 dark:text-white">{t('socialLinks.editTitle')}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4 mt-4 max-h-[60vh] overflow-y-auto pr-2">
                             {/* Current Links */}
@@ -240,13 +242,13 @@ const SocialLinksEditor = ({ socialLinks, onSave }: SocialLinksEditorProps) => {
                 </div>
             ) : (
                 <div className="text-center py-6 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-dashed border-gray-200 dark:border-zinc-700">
-                    <p className="text-sm text-gray-500 dark:text-zinc-500">No social links added yet</p>
+                    <p className="text-sm text-gray-500 dark:text-zinc-500">{t('socialLinks.noLinksAdded')}</p>
                     <Button 
                         variant="link" 
                         className="text-green-600 mt-1"
                         onClick={() => setIsOpen(true)}
                     >
-                        Add your first social link
+                        {t('socialLinks.description')}
                     </Button>
                 </div>
             )}

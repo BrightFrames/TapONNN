@@ -1,11 +1,11 @@
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { Button } from "@/components/ui/button";
 import { Settings, BookOpen, Calendar, CloudDownload, ArrowRight, Video, Users, FileText, Sparkles } from "lucide-react";
 
 
 const EarnOverview = () => {
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="p-8 max-w-5xl mx-auto font-sans">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -124,7 +124,7 @@ const EarnOverview = () => {
                     <a href="#" className="underline decoration-1 underline-offset-2 hover:text-black">Share feedback</a>
                 </div>
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

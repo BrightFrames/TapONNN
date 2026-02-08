@@ -6,10 +6,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Palette } from 'lucide-react';
 import { ImageUpload } from "@/components/ImageUpload";
 import { FileUpload } from "@/components/FileUpload";
 import { ProductPluginSuggestions } from "@/components/shop/ProductPluginSuggestions";
+import ColorSelector from "@/components/ColorSelector";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface Block {
     _id?: string;
@@ -162,6 +168,47 @@ const BlockEditorModal = ({
                                 onChange={(e) => updateContent('description', e.target.value)}
                                 rows={2}
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Block Color (optional)</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button 
+                                        variant="outline" 
+                                        className="w-full justify-start text-left font-normal"
+                                    >
+                                        <div className="flex items-center gap-2 w-full">
+                                            <div 
+                                                className="w-8 h-8 rounded border border-gray-300"
+                                                style={{ 
+                                                    background: formData.content.blockColor || '#ffffff'
+                                                }}
+                                            />
+                                            <span className="flex-1 truncate">
+                                                {formData.content.blockColor || 'Default (Card background)'}
+                                            </span>
+                                            <Palette className="w-4 h-4 opacity-50" />
+                                        </div>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80 p-4" align="start">
+                                    <div className="space-y-3">
+                                        <ColorSelector
+                                            color={formData.content.blockColor || '#ffffff'}
+                                            onChange={(color) => updateContent('blockColor', color)}
+                                        />
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-full"
+                                            onClick={() => updateContent('blockColor', '')}
+                                        >
+                                            Reset to Default
+                                        </Button>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                            <p className="text-xs text-gray-500">Customize the background color for this link block</p>
                         </div>
                     </div>
                 );

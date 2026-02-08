@@ -152,13 +152,35 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                 <ProfileSwitcher />
             </div>
 
+            {/* Fixed DISCOVER Section */}
+            {!isStoreMode && (
+                <div className="border-b border-zinc-200 dark:border-[#1A1A1A] px-1 bg-white dark:bg-[#050505]">
+                    <SidebarSectionTitle>{t('nav.discover')}</SidebarSectionTitle>
+                    <div className="space-y-[1px]">
+                        <NavItem
+                            icon={Grid}
+                            label={t('nav.explore')}
+                            active={location.pathname === '/explore'}
+                            onClick={() => handleNav('/explore')}
+                        />
+                        <NavItem
+                            icon={Heart}
+                            label={t('nav.liked')}
+                            active={location.pathname === '/liked'}
+                            onClick={() => handleNav('/liked')}
+                        />
+                    </div>
+                    <div className="pb-2"></div>
+                </div>
+            )}
+
             {/* Fixed MANAGE Section */}
             <div className="border-b border-zinc-200 dark:border-[#1A1A1A] px-1 bg-white dark:bg-[#050505]">
                 <SidebarSectionTitle>{t('nav.manage')}</SidebarSectionTitle>
                 <div className="space-y-[1px]">
                     <NavItem
                         icon={User}
-                        label="Profile"
+                        label={t('nav.profile')}
                         active={location.pathname === '/design'}
                         onClick={() => handleNav('/design')}
                     />
@@ -173,14 +195,14 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                     {isStoreMode ? (
                         <NavItem
                             icon={Package}
-                            label="Products"
+                            label={t('nav.products')}
                             active={location.pathname === '/shop' || location.pathname === '/dashboard/business'}
                             onClick={() => handleNav('/shop')}
                         />
                     ) : (
                         <NavItem
                             icon={List}
-                            label="Links & Blocks"
+                            label={t('nav.links')}
                             active={location.pathname === '/dashboard' || location.pathname.includes('links')}
                             onClick={() => handleNav('/dashboard')}
                         />
@@ -195,27 +217,8 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
                 <div className="pb-2"></div>
             </div>
 
-            {/* Scrollable Navigation - Only DISCOVER section */}
+            {/* Scrollable Navigation - Empty spacer for scrolling */}
             <nav className="flex-1 px-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 hover:scrollbar-thumb-zinc-700">
-                {!isStoreMode && (
-                    <>
-                        <SidebarSectionTitle>Discover</SidebarSectionTitle>
-                        <div className="space-y-[1px]">
-                            <NavItem
-                                icon={Grid}
-                                label="Explore"
-                                active={location.pathname === '/explore'}
-                                onClick={() => handleNav('/explore')}
-                            />
-                            <NavItem
-                                icon={Heart}
-                                label="Liked"
-                                active={location.pathname === '/liked'}
-                                onClick={() => handleNav('/liked')}
-                            />
-                        </div>
-                    </>
-                )}
             </nav>
 
             {/* Fixed Growth Section */}
@@ -310,7 +313,7 @@ const SidebarContent = ({ navigate, location, onClose, onShare, onLogout, unread
     );
 };
 
-const LinktreeLayout = ({ children }: { children: ReactNode }) => {
+const TapxLayout = ({ children }: { children: ReactNode }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -458,4 +461,4 @@ const LinktreeLayout = ({ children }: { children: ReactNode }) => {
     );
 };
 
-export default LinktreeLayout;
+export default TapxLayout;

@@ -155,14 +155,14 @@ const PricingSection = () => {
                     });
 
                     if (res.ok) {
-                        toast.success("Store successfully activated!");
+                        toast.success("Shop successfully activated!");
                         // Force validation of new role
                         window.location.href = '/dashboard';
                     } else {
-                        toast.error("Failed to activate store.");
+                        toast.error("Failed to activate shop.");
                     }
                 } catch (error) {
-                    console.error("Store activation error:", error);
+                    console.error("Shop activation error:", error);
                     toast.error("Something went wrong.");
                 }
                 return;
@@ -297,7 +297,7 @@ const PricingSection = () => {
                             : "text-muted-foreground hover:text-foreground hover:bg-transparent"
                             }`}
                     >
-                        DIGITAL STORE
+                        DIGITAL SHOP
                     </Button>
                 </div>
 

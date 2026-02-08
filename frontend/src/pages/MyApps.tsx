@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import {
     Loader2,
@@ -100,14 +99,14 @@ const MyApps = () => {
 
     const fetchUserPlugins = async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.access_token) {
+            const token = localStorage.getItem("auth_token");
+            if (!token) {
                 setLoading(false);
                 return;
             }
 
             const response = await fetch(`${API_URL}/marketplace/my-plugins`, {
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
             if (response.ok) {
@@ -125,12 +124,12 @@ const MyApps = () => {
     const handleToggle = async (pluginId: string) => {
         setActionLoading(pluginId);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.access_token) return;
+            const token = localStorage.getItem("auth_token");
+            if (!token) return;
 
             const response = await fetch(`${API_URL}/marketplace/toggle/${pluginId}`, {
                 method: 'PUT',
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
             if (response.ok) {
@@ -153,12 +152,12 @@ const MyApps = () => {
 
         setActionLoading(pluginId);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.access_token) return;
+            const token = localStorage.getItem("auth_token");
+            if (!token) return;
 
             const response = await fetch(`${API_URL}/marketplace/uninstall/${pluginId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
             if (response.ok) {
@@ -175,16 +174,16 @@ const MyApps = () => {
 
     if (loading) {
         return (
-            <LinktreeLayout>
+            <TapxLayout>
                 <div className="flex items-center justify-center h-[60vh]">
                     <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
                 </div>
-            </LinktreeLayout>
+            </TapxLayout>
         );
     }
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="py-8 px-6 md:px-10 max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
@@ -287,7 +286,7 @@ const MyApps = () => {
                     </div>
                 )}
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

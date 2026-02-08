@@ -6,6 +6,7 @@ const marketplaceController = require('../controllers/marketplaceController');
 // Public routes
 router.get('/plugins', marketplaceController.getAllPlugins);
 router.get('/plugins/category/:category', marketplaceController.getPluginsByCategory);
+router.get('/public/plugins/:username', marketplaceController.getPublicUserPlugins);
 
 // Protected routes (require authentication)
 router.get('/my-plugins', authMiddleware, marketplaceController.getUserPlugins);

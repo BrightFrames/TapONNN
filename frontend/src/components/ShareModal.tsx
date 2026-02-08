@@ -97,7 +97,7 @@ const ShareModal = ({ open, onOpenChange, username, url, type = 'profile', userA
 
     const title = type === 'store' ? 'Share TapX' : 'Share TapX';
     const shareMessage = type === 'store'
-        ? `Check out my store on TapX: ${url}`
+        ? `Check out my shop on TapX: ${url}`
         : `Check out my TapX profile: ${url}`;
 
     const handleCopy = () => {

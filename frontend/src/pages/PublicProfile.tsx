@@ -16,6 +16,7 @@ import { MessageSignupModal } from "@/components/MessageSignupModal";
 import { QuickAuthModal } from "@/components/QuickAuthModal";
 import { StoreUpdates } from "@/components/StoreUpdates";
 import ReelModal from "@/components/ReelModal";
+import PluginRenderer from "@/components/PluginRenderer";
 import useIntent, { getPendingIntent, clearPendingIntent } from "@/hooks/useIntent";
 import { toast } from "sonner";
 import { getIconForThumbnail } from "@/utils/socialIcons";
@@ -83,6 +84,7 @@ const PublicProfile = () => {
     const [profile, setProfile] = useState<any>(null);
     const [blocks, setBlocks] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
+    const [plugins, setPlugins] = useState<any[]>([]);
     const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
     const [selectedBlock, setSelectedBlock] = useState<any | null>(null); // For Link Interstitial
     const [searchQuery, setSearchQuery] = useState('');
@@ -218,7 +220,13 @@ const PublicProfile = () => {
                 ? `${API_URL}/profile/store/${username}`
                 : `${API_URL}/profile/${username}`;
 
-            const profileRes = await fetch(profileEndpoint);
+            // Add cache busting to ensure fresh data
+            const profileRes = await fetch(profileEndpoint, {
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            });
             if (!profileRes.ok) {
                 setNotFound(true);
                 return;
@@ -250,6 +258,13 @@ const PublicProfile = () => {
             if (productsRes.ok) {
                 const publicProducts = await productsRes.json();
                 setProducts(publicProducts.products || publicProducts || []);
+            }
+
+            // Fetch active plugins
+            const pluginsRes = await fetch(`${API_URL}/marketplace/public/plugins/${userProfile.username}`);
+            if (pluginsRes.ok) {
+                const userPlugins = await pluginsRes.json();
+                setPlugins(userPlugins || []);
             }
 
         } catch (error) {
@@ -510,7 +525,9 @@ const PublicProfile = () => {
     }
 
     const designConfig = profile.design_config || {};
-    const theme = profile.selectedTheme || {};
+    const themeId = profile.selectedTheme || 'clean';
+    const themeTemplate = templates.find(t => t.id === themeId);
+    const theme = themeTemplate || {};
 
     // Helper to convert Tailwind class names to hex colors
     const tailwindToHex = (cls: string, type: 'text' | 'bg'): string => {
@@ -519,6 +536,14 @@ const PublicProfile = () => {
         if (cls.startsWith('rgb')) return cls;
         // Pass through gradients as-is
         if (cls.includes('gradient') || cls.includes('linear')) return cls;
+
+        const tailwindTextMap: Record<string, string> = {
+            'text-gray-900': '#111827',
+            'text-slate-800': '#1e293b',
+            'text-green-800': '#166534',
+            'text-cyan-400': '#22d3ee',
+        };
+        if (type === 'text' && tailwindTextMap[cls]) return tailwindTextMap[cls];
 
         // Handle text colors
         if (cls.includes('white')) return '#ffffff';
@@ -547,16 +572,18 @@ const PublicProfile = () => {
     };
 
     // Theme Variables with Fallbacks - prioritize design_config from profile
-    // Convert any Tailwind classes to proper hex values
-    const rawBgColor = designConfig.backgroundColor || theme.backgroundColor || "#fafafa";
-    const rawTextColor = designConfig.textColor || theme.textColor || "#18181b";
-    const rawButtonColor = designConfig.buttonColor || theme.buttonColor || "#000000";
-    const rawButtonTextColor = designConfig.buttonTextColor || theme.buttonTextColor || "#ffffff";
+    // design_config stores hex colors directly, theme uses Tailwind classes
+    const rawBgColor = designConfig.backgroundColor || (theme.bgClass ? tailwindToHex(theme.bgClass || '', 'bg') : "#fafafa");
+    const rawTextColor = designConfig.textColor || designConfig.text_color || designConfig.textColour || designConfig.fontColor
+        || (theme.textColor ? tailwindToHex(theme.textColor || '', 'text') : "#18181b");
+    const rawButtonColor = designConfig.buttonColor || "#000000";
+    const rawButtonTextColor = designConfig.buttonTextColor || "#ffffff";
 
-    const bgColor = tailwindToHex(rawBgColor, 'bg');
-    const textColor = tailwindToHex(rawTextColor, 'text');
-    const buttonColor = tailwindToHex(rawButtonColor, 'bg');
-    const buttonTextColor = tailwindToHex(rawButtonTextColor, 'text');
+    // Only convert if they're Tailwind classes (design_config already has hex)
+    const bgColor = rawBgColor.startsWith('#') || rawBgColor.includes('gradient') || rawBgColor.includes('rgb') ? rawBgColor : tailwindToHex(rawBgColor, 'bg');
+    const textColor = rawTextColor.startsWith('#') || rawTextColor.includes('gradient') || rawTextColor.includes('rgb') ? rawTextColor : tailwindToHex(rawTextColor, 'text');
+    const buttonColor = rawButtonColor.startsWith('#') || rawButtonColor.includes('gradient') || rawButtonColor.includes('rgb') ? rawButtonColor : tailwindToHex(rawButtonColor, 'bg');
+    const buttonTextColor = rawButtonTextColor.startsWith('#') || rawButtonTextColor.includes('gradient') || rawButtonTextColor.includes('rgb') ? rawButtonTextColor : tailwindToHex(rawButtonTextColor, 'text');
     const blockStyle = designConfig.blockStyle || 'rounded';
 
     const isColorLight = (color: string) => {
@@ -589,27 +616,25 @@ const PublicProfile = () => {
     const bgImageUrl = designConfig.bgImageUrl || '';
     const cardBgType = designConfig.cardBgType || 'color';
     const cardImageUrl = designConfig.cardImageUrl || '';
+    const resolvedCardBgType = cardBgType === 'image' && !cardImageUrl ? 'color' : cardBgType;
     
-    // Get the cover URL for blur background
+    // Get the cover URL
     const coverUrl = designConfig.coverUrl;
     const coverType = designConfig.coverType;
     
-    // Smart card color - ensure readability with blur background
-    // If user has a cover image, use semi-transparent white for glass effect
-    // Otherwise, use the user's card color or smart default
+    // Smart card color - use user's preference or default solid colors
     const hasCoverImage = !!(coverUrl && (coverType === 'image' || coverType === 'video' || !coverType));
     const userCardColor = designConfig.cardColor;
-    const cardColor = hasCoverImage 
-        ? "rgba(255,255,255,0.95)" // Glass morphism effect when cover exists
-        : (userCardColor || (isColorLight(bgColor) ? "rgba(255,255,255,0.92)" : "rgba(0,0,0,0.85)"));
+    const prefersCardColor = resolvedCardBgType === 'color' && !!userCardColor;
+    const cardSurfaceColor = prefersCardColor ? userCardColor : undefined;
+    const cardColor = userCardColor || (isColorLight(bgColor) ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.90)");
 
     // Dark theme detection - check the card color to determine text contrast
-    // When card is light (glass effect), use dark text. When card is dark, use light text.
     const cardIsLight = isColorLight(cardColor);
-    const isDarkTheme = !cardIsLight; // Inverted: dark theme = light text on dark card
+    const isDarkTheme = !cardIsLight;
     
-    // Override text color for glass morphism - always use dark text on light glass card
-    const finalTextColor = hasCoverImage ? "#18181b" : textColor;
+    // Use the configured text color
+    const finalTextColor = textColor;
 
     // Card background - semi-transparent for better blending with theme
     // Products should have a subtle overlay effect that works with any background
@@ -626,36 +651,13 @@ const PublicProfile = () => {
     return (
         <div className="fixed inset-0 w-full h-full font-sans selection:bg-zinc-200 overflow-hidden" style={{ color: finalTextColor }}>
             
-            {/* Background Layer - Fills the entire screen with the cover photo's colors */}
+            {/* Background Layer - Fills the entire screen with the background color */}
             <div 
                 className="absolute inset-0 z-0 transition-all duration-1000 ease-out pointer-events-none"
                 style={{
-                    backgroundColor: hasCoverImage ? '#000000' : bgColor,
+                    backgroundColor: bgColor,
                 }}
-            >
-                {/* Blurred Cover Image Background */}
-                {hasCoverImage && coverUrl && (
-                    <div 
-                        className="absolute inset-0 opacity-100 blur-[25px] saturate-[1.5] scale-[1.1]"
-                        style={{
-                            backgroundImage: `url(${getImageUrl(coverUrl)})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            backgroundRepeat: 'no-repeat',
-                        }}
-                    />
-                )}
-                
-                {/* Subtle Ambient Overlay for depth - lighter to show more blur */}
-                {hasCoverImage && (
-                    <div 
-                        className="absolute inset-0 transition-opacity duration-700"
-                        style={{
-                            background: 'radial-gradient(circle at center, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.2) 100%)',
-                        }}
-                    />
-                )}
-            </div>
+            />
 
             {/* 1. Fixed Sticky Header */}
             <div className="fixed top-0 left-0 right-0 z-[60] pointer-events-none">
@@ -745,8 +747,13 @@ const PublicProfile = () => {
                         
                         {/* Scroll-dependent overlay to darken/blur as we move down */}
                         <div 
-                            className="absolute inset-0 bg-black/10 backdrop-blur-sm transition-opacity duration-300 pointer-events-none"
-                            style={{ opacity: Math.max(0, scrollProgress - 0.2) }}
+                            className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+                            style={{ 
+                                opacity: Math.max(0, scrollProgress - 0.2),
+                                backdropFilter: `blur(${Math.max(0, scrollProgress - 0.2) * 20}px)`,
+                                WebkitBackdropFilter: `blur(${Math.max(0, scrollProgress - 0.2) * 20}px)`,
+                                background: 'linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.35))'
+                            }}
                         />
                     </div>
 
@@ -766,12 +773,15 @@ const PublicProfile = () => {
                         </div>
                         
                         <div
-                            className="w-full shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] p-5 pt-16 flex flex-col items-center animate-in slide-in-from-bottom-12 duration-1000 fill-mode-both min-h-[70vh] relative overflow-hidden backdrop-blur-md"
+                            className="w-full shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] p-5 pt-16 flex flex-col items-center animate-in slide-in-from-bottom-12 duration-1000 fill-mode-both min-h-[70vh] relative overflow-hidden"
                             style={{
-                                backgroundColor: cardBgType === 'color' ? cardBgColor : undefined,
-                                backgroundImage: cardBgType === 'image' && cardImageUrl ? `url(${getImageUrl(cardImageUrl)})` : undefined,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
+                                ...(resolvedCardBgType === 'image' && cardImageUrl
+                                    ? {
+                                        backgroundImage: `url(${getImageUrl(cardImageUrl)})`,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center',
+                                    }
+                                    : getBackgroundStyle(cardBgColor)),
                                 border: isDarkTheme ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.3)',
                                 boxShadow: isDarkTheme ? '0 25px 50px -12px rgba(0,0,0,0.5)' : '0 25px 50px -12px rgba(0,0,0,0.15)'
                             }}
@@ -884,9 +894,9 @@ const PublicProfile = () => {
                                                         <div
                                                             key={product._id}
                                                             onClick={() => setSelectedProduct(product)}
-                                                            className="min-w-[280px] snap-center rounded-[2.5rem] overflow-hidden border relative flex flex-col group transition-all active:scale-[0.98] shadow-2xl backdrop-blur-xl"
+                                                            className="min-w-[280px] snap-center rounded-[2.5rem] overflow-hidden border relative flex flex-col group transition-all active:scale-[0.98] shadow-2xl"
                                                             style={{ 
-                                                                backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.9)',
+                                                                backgroundColor: cardSurfaceColor || (isDarkTheme ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.95)'),
                                                                 borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.06)',
                                                                 boxShadow: isDarkTheme ? '0 20px 50px rgba(0,0,0,0.5)' : '0 10px 40px rgba(0,0,0,0.04)'
                                                             }}
@@ -998,9 +1008,9 @@ const PublicProfile = () => {
                                                     filteredProducts.map((product) => (
                                                         <div
                                                             key={product._id}
-                                                            className="rounded-xl overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-all active:scale-[0.98] group flex flex-col backdrop-blur-xl"
+                                                            className="rounded-xl overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-all active:scale-[0.98] group flex flex-col"
                                                             style={{ 
-                                                                backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.7)',
+                                                                backgroundColor: cardSurfaceColor || (isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.95)'),
                                                                 border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)'}`,
                                                                 boxShadow: isDarkTheme 
                                                                     ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
@@ -1025,8 +1035,8 @@ const PublicProfile = () => {
                                                                 )}
 
                                                                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <div className="backdrop-blur-md p-1.5 rounded-full shadow-sm cursor-pointer transition-colors"
-                                                                        style={{ backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.9)' }}
+                                                                    <div className="p-1.5 rounded-full shadow-sm cursor-pointer transition-colors"
+                                                                        style={{ backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.95)' }}
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
                                                                             handleLike(product._id, e);
@@ -1036,7 +1046,7 @@ const PublicProfile = () => {
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <div className="p-3 backdrop-blur-xl" style={{ backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.5)' }}>
+                                                            <div className="p-3" style={{ backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.7)' }}>
                                                                 <h3 className="font-semibold text-xs line-clamp-1" style={{ color: textColor }}>{product.title}</h3>
                                                                 <div className="flex items-center gap-1.5 mt-1">
                                                                     <p className="text-[10px] font-bold" style={{ color: textColor, opacity: 0.8 }}>₹{product.price}</p>
@@ -1062,6 +1072,7 @@ const PublicProfile = () => {
                                                 sellerId={profile?.id} 
                                                 textColor={textColor} 
                                                 isDarkTheme={isDarkTheme} 
+                                                surfaceColor={cardSurfaceColor}
                                             />
                                         </div>
                                     </div>
@@ -1074,9 +1085,9 @@ const PublicProfile = () => {
                                                     <div
                                                         key={store._id}
                                                         onClick={() => navigate(`/s/${store.username}`)}
-                                                        className="w-full p-4 rounded-2xl active:scale-[0.98] transition-all cursor-pointer border flex items-center justify-between group h-20 shadow-sm hover:shadow-md backdrop-blur-xl"
+                                                        className="w-full p-4 rounded-2xl active:scale-[0.98] transition-all cursor-pointer border flex items-center justify-between group h-20 shadow-sm hover:shadow-md"
                                                         style={{
-                                                            backgroundColor: cardBgType === 'color' ? cardBgColor : '#ffffff',
+                                                            backgroundColor: resolvedCardBgType === 'color' ? cardBgColor : '#ffffff',
                                                             borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
                                                         }}
                                                     >
@@ -1152,6 +1163,9 @@ const PublicProfile = () => {
                                             const Icon = block.thumbnail ? getIconForThumbnail(block.thumbnail) : null;
                                             const isUrlThumbnail = block.thumbnail && !Icon;
                                             const blockUrl = block.content?.url || block.url;
+                                            const customBlockColor = block.content?.blockColor;
+                                            const globalLinkColor = designConfig.linkBlocksColor;
+                                            const finalBlockColor = customBlockColor || globalLinkColor || (resolvedCardBgType === 'color' ? cardBgColor : '#ffffff');
 
                                             return (
                                                 <div
@@ -1159,7 +1173,7 @@ const PublicProfile = () => {
                                                     onClick={() => handleBlockInteract(block)}
                                                     className="w-full p-4 rounded-2xl active:scale-[0.98] transition-all cursor-pointer border flex items-center justify-between group h-16 shadow-sm hover:shadow-md"
                                                     style={{
-                                                        backgroundColor: cardBgType === 'color' ? cardBgColor : '#ffffff',
+                                                        backgroundColor: finalBlockColor,
                                                         borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
                                                     }}
                                                 >
@@ -1194,7 +1208,16 @@ const PublicProfile = () => {
                                                 </div>
                                             )
                                         })}
-                                        {blocks.filter(b => b.is_active).length === 0 && (
+
+                                        {/* Active Plugins */}
+                                        <PluginRenderer
+                                            plugins={plugins}
+                                            cardBgColor={resolvedCardBgType === 'color' ? cardBgColor : '#ffffff'}
+                                            cardBgType={resolvedCardBgType}
+                                            theme={currentTheme}
+                                        />
+
+                                        {blocks.filter(b => b.is_active).length === 0 && plugins.length === 0 && (
                                             <div className="text-center py-12 opacity-50">
                                                 <p className="text-sm font-medium" style={{ color: textColor }}>No links added yet.</p>
                                             </div>
@@ -1386,11 +1409,11 @@ const PublicProfile = () => {
             {selectedProduct && (
                 <div className="fixed inset-0 z-[80] flex justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="w-full max-w-md mx-auto h-full flex flex-col shadow-2xl relative animate-in slide-in-from-bottom duration-500"
-                        style={{ backgroundColor: isDarkTheme ? '#09090b' : '#ffffff' }}
+                        style={{ backgroundColor: resolvedCardBgType === 'color' ? cardBgColor : (isDarkTheme ? '#09090b' : '#ffffff') }}
                     >
                         <div className="p-4 border-b flex items-center justify-between sticky top-0 z-10 safe-area-top backdrop-blur-xl"
                             style={{ 
-                                backgroundColor: isDarkTheme ? 'rgba(9, 9, 11, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                                backgroundColor: resolvedCardBgType === 'color' ? cardBgColor : (isDarkTheme ? 'rgba(9, 9, 11, 0.8)' : 'rgba(255, 255, 255, 0.8)'),
                                 borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
                             }}
                         >
@@ -1459,7 +1482,7 @@ const PublicProfile = () => {
                         {/* Buy/Enquire Bar */}
                         <div className="p-4 border-t absolute bottom-0 w-full backdrop-blur-xl safe-area-bottom shadow-2xl flex gap-3"
                             style={{ 
-                                backgroundColor: isDarkTheme ? 'rgba(9, 9, 11, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                                backgroundColor: resolvedCardBgType === 'color' ? cardBgColor : (isDarkTheme ? 'rgba(9, 9, 11, 0.9)' : 'rgba(255, 255, 255, 0.9)'),
                                 borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
                             }}
                         >

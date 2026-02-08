@@ -185,8 +185,8 @@ const Login = () => {
             {/* OTP Verification Modal */}
             {showOTPModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <Card className="w-full max-w-[380px] mx-4 shadow-2xl border-zinc-800 bg-zinc-900">
-                        <CardHeader className="text-center">
+                    <Card className="w-full max-w-[380px] mx-4 shadow-2xl border-zinc-800 bg-zinc-900 auth-fade-up">
+                        <CardHeader className="text-center auth-stagger">
                             <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center shadow-sm">
                                 <Mail className="h-8 w-8 text-white" />
                             </div>
@@ -195,7 +195,7 @@ const Login = () => {
                                 Enter the OTP sent to <span className="font-semibold text-foreground">{maskedEmail}</span>
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-4 auth-stagger">
                             <div className="flex justify-center gap-2">
                                 <Input
                                     type="text"
@@ -226,7 +226,7 @@ const Login = () => {
                                 </button>
                             </div>
                         </CardContent>
-                        <CardFooter>
+                        <CardFooter className="auth-stagger">
                             <Button
                                 variant="ghost"
                                 className="w-full"
@@ -239,8 +239,8 @@ const Login = () => {
                 </div>
             )}
 
-            <Card className="w-full max-w-[420px] shadow-2xl border-zinc-800 bg-zinc-900">
-                <CardHeader className="space-y-1">
+            <Card className="w-full max-w-[420px] shadow-2xl border-zinc-800 bg-zinc-900 auth-fade-up">
+                <CardHeader className="space-y-1 auth-stagger">
                     <div className="flex justify-center mb-6">
                         <div className="relative">
                             {/* Favicon */}
@@ -263,7 +263,7 @@ const Login = () => {
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleSubmit}>
-                    <CardContent className="grid gap-4">
+                    <CardContent className="grid gap-4 auth-stagger">
                         <Button
                             type="button"
                             variant="outline"
@@ -408,7 +408,7 @@ const Login = () => {
                             )}
                         </div>
                     </CardContent>
-                    <CardFooter className="flex flex-col gap-4">
+                    <CardFooter className="flex flex-col gap-4 auth-stagger">
                         <Button className="w-full h-11 font-semibold bg-white hover:bg-zinc-100 text-black shadow-lg hover:shadow-xl transition-all" type="submit" disabled={loading}>
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {isLogin ? "Sign In" : (

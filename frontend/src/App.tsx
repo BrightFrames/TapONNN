@@ -23,7 +23,7 @@ import Settings from "./pages/Settings";
 import PublicProfile from "./pages/PublicProfile";
 import PublicStore from "./pages/PublicStore_New";
 import BusinessProfile from "./pages/BusinessProfile";
-import LinktreeMarketplace from "./pages/LinktreeMarketplace";
+import Marketplace from "./pages/Marketplace";
 import MyApps from "./pages/MyApps";
 import Enquiries from "./pages/Enquiries";
 import Media from "./pages/Media";
@@ -70,7 +70,7 @@ const App = () => (
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/enquiries" element={<ProtectedRoute><Enquiries /></ProtectedRoute>} />
             <Route path="/dashboard/business" element={<ProtectedRoute><BusinessProfile /></ProtectedRoute>} />
-            <Route path="/marketplace" element={<ProtectedRoute><LinktreeMarketplace /></ProtectedRoute>} />
+            <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
             <Route path="/my-apps" element={<ProtectedRoute><MyApps /></ProtectedRoute>} />
             <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
             <Route path="/nfc-cards" element={<ProtectedRoute><NFCCards /></ProtectedRoute>} />

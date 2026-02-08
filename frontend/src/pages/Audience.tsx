@@ -1,4 +1,4 @@
-import LinktreeLayout from "@/layouts/LinktreeLayout";
+import TapxLayout from "@/layouts/TapxLayout";
 import { Button } from "@/components/ui/button";
 import { Settings, Bell, User, List, Plus } from "lucide-react";
 import { useState } from "react";
@@ -7,7 +7,7 @@ const Audience = () => {
     const [activeTab, setActiveTab] = useState("contacts");
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="p-6 max-w-5xl mx-auto font-sans">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
@@ -88,7 +88,7 @@ const Audience = () => {
                     </Button>
                 </div>
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

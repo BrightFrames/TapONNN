@@ -151,6 +151,9 @@ const updateProfile = async (req, res) => {
             if (rawUpdateData.design_config) {
                 profile.store_design_config = rawUpdateData.design_config;
                 profile.markModified('store_design_config');
+                // Also sync to personal design_config for consistency
+                profile.design_config = rawUpdateData.design_config;
+                profile.markModified('design_config');
             }
         } else {
             if (rawUpdateData.username) profile.username = rawUpdateData.username.toLowerCase().trim();
@@ -161,6 +164,9 @@ const updateProfile = async (req, res) => {
             if (rawUpdateData.design_config) {
                 profile.design_config = rawUpdateData.design_config;
                 profile.markModified('design_config');
+                // Also sync to store design_config for consistency
+                profile.store_design_config = rawUpdateData.design_config;
+                profile.markModified('store_design_config');
             }
 
             if (rawUpdateData.social_links) {

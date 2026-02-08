@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import LinktreeLayout from '@/layouts/LinktreeLayout';
+import TapxLayout from '@/layouts/TapxLayout';
 import { Loader2, Heart, ExternalLink, ShoppingBag, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -69,16 +69,16 @@ const LikedProducts = () => {
 
     if (loading) {
         return (
-            <LinktreeLayout>
+            <TapxLayout>
                 <div className="flex items-center justify-center min-h-screen bg-white dark:bg-black">
                     <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-zinc-400" />
                 </div>
-            </LinktreeLayout>
+            </TapxLayout>
         );
     }
 
     return (
-        <LinktreeLayout>
+        <TapxLayout>
             <div className="min-h-screen bg-gray-50 dark:bg-black p-4 md:p-8">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
@@ -154,7 +154,7 @@ const LikedProducts = () => {
                     )}
                 </div>
             </div>
-        </LinktreeLayout>
+        </TapxLayout>
     );
 };
 

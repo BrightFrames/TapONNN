@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
 
 interface PluginConfigModalProps {
     isOpen: boolean;

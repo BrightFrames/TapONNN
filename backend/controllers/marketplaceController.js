@@ -40,6 +40,33 @@ const getUserPlugins = async (req, res) => {
     }
 };
 
+// Get public active plugins for a user (by username)
+const getPublicUserPlugins = async (req, res) => {
+    try {
+        const { username } = req.params;
+        const User = require('../models/User');
+        
+        // Find user by username
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Get active plugins for this user
+        const userPlugins = await UserPlugin.find({ 
+            user_id: user._id,
+            is_active: true 
+        })
+            .populate('plugin_id')
+            .sort({ installed_at: -1 });
+
+        res.json(userPlugins);
+    } catch (error) {
+        console.error('Error fetching public user plugins:', error);
+        res.status(500).json({ error: 'Failed to fetch plugins' });
+    }
+};
+
 // Install a plugin for user
 const installPlugin = async (req, res) => {
     try {
@@ -278,6 +305,7 @@ module.exports = {
     getAllPlugins,
     getPluginsByCategory,
     getUserPlugins,
+    getPublicUserPlugins,
     installPlugin,
     uninstallPlugin,
     togglePluginStatus,

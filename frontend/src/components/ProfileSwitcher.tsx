@@ -104,12 +104,12 @@ const ProfileSwitcher = () => {
                             <div className="text-left">
                                 <div className="text-[13px] font-semibold leading-none text-gray-900 dark:text-zinc-100">
                                     <span className="flex items-center gap-1">
-                                        {currentMode === 'store' ? `${user.username}'s Store` : user.username}
+                                        {currentMode === 'store' ? `${user.username}'s Business` : user.username}
                                         {user.is_email_verified && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-500/10" />}
                                     </span>
                                 </div>
                                 <div className="text-[11px] text-gray-500 dark:text-zinc-500 mt-1">
-                                    {currentMode === 'store' ? 'Digital Store' : 'Personal Profile'}
+                                    {currentMode === 'store' ? 'Business Profile' : 'Personal Profile'}
                                 </div>
                             </div>
                         </div>
@@ -145,7 +145,7 @@ const ProfileSwitcher = () => {
                         <>
                             <DropdownMenuSeparator className="bg-gray-100 dark:bg-[#1A1A1A]" />
                             <div className="px-3 py-2 text-[10px] font-semibold text-gray-500 dark:text-zinc-600 uppercase tracking-wider">
-                                Your Stores
+                                Your Businesses
                             </div>
                             {stores.map((store) => (
                                 <DropdownMenuItem
@@ -184,9 +184,9 @@ const ProfileSwitcher = () => {
                                     <Store className="w-3.5 h-3.5 text-orange-500 dark:text-orange-400" />
                                 </div>
                                 <div>
-                                    <div className="text-sm font-medium">{user.username}'s Store</div>
+                                    <div className="text-sm font-medium">{user.username}'s Business</div>
                                     <div className="text-[10px] text-gray-500 dark:text-zinc-500">
-                                        Digital Store
+                                        Business Profile
                                     </div>
                                 </div>
                             </div>
@@ -214,10 +214,10 @@ const ProfileSwitcher = () => {
                         </div>
                         <div>
                             <div className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
-                                Add New Store
+                                Add New Business
                             </div>
                             <div className="text-[10px] text-gray-500 dark:text-zinc-500">
-                                Create another store
+                                Create another business
                             </div>
                         </div>
                     </DropdownMenuItem>
